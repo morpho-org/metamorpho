@@ -100,7 +100,7 @@ library BytesLib {
     function toUint16(
         bytes memory data,
         uint256 start
-    ) internal pure returns (uint24 value) {
+    ) internal pure returns (uint16 value) {
         uint256 length = data.length;
         if (length < start + 2) revert CastOutOfBounds(length);
 
