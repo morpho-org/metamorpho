@@ -17,4 +17,6 @@ interface IPool {
         address onBehalf,
         address receiver
     ) external;
+
+    function liquidity(uint256 maxLtv) external returns (uint256);
 }

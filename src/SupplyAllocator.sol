@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {IPool} from "src/interfaces/IPool.sol";
 import {ISupplyAllocator} from "src/interfaces/ISupplyAllocator.sol";
 
+import {Math} from "@morpho-utils/math/Math.sol";
 import {PoolLib} from "src/libraries/PoolLib.sol";
 import {PoolAddress} from "src/libraries/PoolAddress.sol";
 import {BytesLib, POOL_OFFSET} from "src/libraries/BytesLib.sol";
@@ -72,6 +73,34 @@ contract SupplyAllocator is ISupplyAllocator {
             }
         }
 
-        allocation = abi.encodePacked(lowestCollateralLtv, amount);
+        // Also check for available liquidity to guarantee optimal liquidity (at the cost of sub-optimal APR):
+
+        (address lowestCollateral, uint16 lowestMaxLtv) = lowestCollateralLtv
+            .decodeCollateralLtv(0);
+        IPool pool = getPool(lowestCollateral, asset);
+
+        uint256 withdrawn = Math.min(amount, pool.liquidity(lowestMaxLtv));
+
+        allocation = abi.encodePacked(lowestCollateralLtv, withdrawn);
+        amount -= withdrawn;
+
+        uint256 start;
+        while (amount > 0 && start < length) {
+            (address collateral, uint16 maxLtv) = collateralization
+                .decodeCollateralLtv(start);
+
+            start += POOL_OFFSET;
+
+            if (collateral == lowestCollateral) continue;
+
+            withdrawn = Math.min(amount, pool.liquidity(maxLtv));
+            allocation = abi.encodePacked(
+                allocation,
+                collateral,
+                maxLtv,
+                withdrawn
+            );
+            amount -= withdrawn;
+        }
     }
 }
