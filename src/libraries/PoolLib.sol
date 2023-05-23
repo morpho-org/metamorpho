@@ -4,12 +4,11 @@ pragma solidity ^0.8.0;
 import {IPool} from "src/interfaces/IPool.sol";
 
 library PoolLib {
-    /// @dev Calculates the hypothetical APR after having supplied and/or withdrawn liquidity at maxLtv on the given pool.
+    /// @dev Calculates the hypothetical APR after having supplied liquidity at maxLtv on the given pool.
     function apr(
         IPool pool,
         uint256 maxLtv,
-        uint256 supplied,
-        uint256 withdrawn
+        uint256 supplied
     ) external returns (uint256) {
         // TODO: implement a way to calculate the hypothetical APR
     }
