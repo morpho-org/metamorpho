@@ -61,10 +61,8 @@ contract SupplyAllocator is ISupplyAllocator {
         uint256 lowestApr;
         bytes memory lowestCollateralLtv;
 
-        uint256 start;
-
         uint256 length = collateralization.length;
-        for (; start < length; start += POOL_OFFSET) {
+        for (uint256 start; start < length; start += POOL_OFFSET) {
             (address collateral, uint16 maxLtv) = collateralization
                 .decodeCollateralLtv(start);
 
@@ -81,15 +79,15 @@ contract SupplyAllocator is ISupplyAllocator {
         (address lowestCollateral, uint16 lowestMaxLtv) = lowestCollateralLtv
             .decodeCollateralLtv(0);
 
-        uint256 withdrawn = Math.min(
+        (amount, allocation) = _maxWithdraw(
+            asset,
+            lowestCollateral,
+            lowestMaxLtv,
             amount,
-            getPool(lowestCollateral, asset).liquidity(lowestMaxLtv)
+            allocation
         );
 
-        allocation = abi.encodePacked(lowestCollateralLtv, withdrawn);
-        amount -= withdrawn;
-
-        for (start = 0; start < length; start += POOL_OFFSET) {
+        for (uint256 start; start < length; start += POOL_OFFSET) {
             if (amount == 0) break;
 
             (address collateral, uint16 maxLtv) = collateralization
@@ -97,18 +95,31 @@ contract SupplyAllocator is ISupplyAllocator {
 
             if (collateral == lowestCollateral) continue;
 
-            withdrawn = Math.min(
-                amount,
-                getPool(collateral, asset).liquidity(maxLtv)
-            );
-
-            allocation = abi.encodePacked(
-                allocation,
+            (amount, allocation) = _maxWithdraw(
+                asset,
                 collateral,
                 maxLtv,
-                withdrawn
+                amount,
+                allocation
             );
-            amount -= withdrawn;
         }
+    }
+
+    function _maxWithdraw(
+        address asset,
+        address collateral,
+        uint16 maxLtv,
+        uint256 amount,
+        bytes memory allocation
+    ) internal view returns (uint256, bytes memory) {
+        uint256 withdrawn = Math.min(
+            amount,
+            getPool(collateral, asset).liquidity(maxLtv)
+        );
+
+        return (
+            amount - withdrawn,
+            abi.encodePacked(allocation, collateral, maxLtv, withdrawn)
+        );
     }
 }
