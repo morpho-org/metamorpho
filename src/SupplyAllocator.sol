@@ -30,7 +30,7 @@ contract SupplyAllocator is ISupplyAllocator {
         address asset,
         uint256 amount,
         bytes memory collateralization
-    ) external returns (bytes memory allocation) {
+    ) external view returns (bytes memory allocation) {
         uint256 highestApr;
         bytes memory highestCollateralLtv;
 
@@ -55,7 +55,7 @@ contract SupplyAllocator is ISupplyAllocator {
         address asset,
         uint256 amount,
         bytes memory collateralization
-    ) external returns (bytes memory allocation) {
+    ) external view returns (bytes memory allocation) {
         uint256 lowestApr;
         bytes memory lowestCollateralLtv;
 

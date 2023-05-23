@@ -9,7 +9,7 @@ library PoolLib {
         IPool pool,
         uint256 maxLtv,
         uint256 supplied
-    ) external returns (uint256) {
+    ) external view returns (uint256) {
         // TODO: implement a way to calculate the hypothetical APR
     }
 }

@@ -6,11 +6,11 @@ interface ISupplyAllocator {
         address asset,
         uint256 amount,
         bytes memory collateralization
-    ) external returns (bytes memory allocation);
+    ) external view returns (bytes memory allocation);
 
     function allocateWithdraw(
         address asset,
         uint256 amount,
         bytes memory collateralization
-    ) external returns (bytes memory allocation);
+    ) external view returns (bytes memory allocation);
 }
