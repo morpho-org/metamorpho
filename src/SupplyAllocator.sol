@@ -39,8 +39,10 @@ contract SupplyAllocator is ISupplyAllocator {
             (address collateral, uint16 maxLtv) = collateralization
                 .decodeCollateralLtv(start);
 
-            IPool pool = getPool(collateral, asset);
-            uint256 hypotheticalApr = pool.apr(maxLtv, amount);
+            uint256 hypotheticalApr = getPool(collateral, asset).apr(
+                maxLtv,
+                amount
+            );
 
             if (highestApr < hypotheticalApr) {
                 highestApr = hypotheticalApr;
@@ -59,7 +61,6 @@ contract SupplyAllocator is ISupplyAllocator {
         uint256 lowestApr;
         bytes memory lowestCollateralLtv;
 
-        IPool pool;
         uint256 start;
 
         uint256 length = collateralization.length;
@@ -67,8 +68,7 @@ contract SupplyAllocator is ISupplyAllocator {
             (address collateral, uint16 maxLtv) = collateralization
                 .decodeCollateralLtv(start);
 
-            pool = getPool(collateral, asset);
-            uint256 hypotheticalApr = pool.apr(maxLtv, 0);
+            uint256 hypotheticalApr = getPool(collateral, asset).apr(maxLtv, 0);
 
             if (lowestApr > hypotheticalApr) {
                 lowestApr = hypotheticalApr;
@@ -81,8 +81,10 @@ contract SupplyAllocator is ISupplyAllocator {
         (address lowestCollateral, uint16 lowestMaxLtv) = lowestCollateralLtv
             .decodeCollateralLtv(0);
 
-        pool = getPool(lowestCollateral, asset);
-        uint256 withdrawn = Math.min(amount, pool.liquidity(lowestMaxLtv));
+        uint256 withdrawn = Math.min(
+            amount,
+            getPool(lowestCollateral, asset).liquidity(lowestMaxLtv)
+        );
 
         allocation = abi.encodePacked(lowestCollateralLtv, withdrawn);
         amount -= withdrawn;
@@ -95,8 +97,10 @@ contract SupplyAllocator is ISupplyAllocator {
 
             if (collateral == lowestCollateral) continue;
 
-            pool = getPool(collateral, asset);
-            withdrawn = Math.min(amount, pool.liquidity(maxLtv));
+            withdrawn = Math.min(
+                amount,
+                getPool(collateral, asset).liquidity(maxLtv)
+            );
 
             allocation = abi.encodePacked(
                 allocation,
