@@ -1,4 +1,4 @@
-import { minimize_GradientDescent } from "./gradient-descent";
+import { minimize } from "./gradient-descent";
 
 const L = 1000;
 const dt = 1; // 1 year
@@ -21,7 +21,7 @@ const dr = (x: number, remaining: number, a: number, b: number) => {
   );
 };
 
-const { x, fx } = minimize_GradientDescent(
+const { x, fx } = minimize(
   ([x, y, z]) => {
     const remaining = L - (x + y + z);
 
