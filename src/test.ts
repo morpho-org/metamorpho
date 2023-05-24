@@ -1,10 +1,10 @@
 import { minimize } from "./gradient-descent";
 
-const L = 1000;
+const L = 100000;
 const dt = 1; // 1 year
 
-const penalty = 100_000;
-const penaltySlope = 1;
+const penalty = 100;
+const penaltySlope = 10;
 
 const [a1, b1] = [20, 1000];
 const [a2, b2] = [30, 2000];
@@ -32,7 +32,8 @@ const { x, fx } = minimize(
 
     return [-dr(x, remaining, a1, b1), -dr(x, remaining, a2, b2), -dr(x, remaining, a3, b3)];
   },
-  [L / 4, L / 4, L / 4]
+  [L / 4, L / 4, L / 4],
+  L / 10
 );
 
 const total = x.reduce((a, tot) => a + tot);

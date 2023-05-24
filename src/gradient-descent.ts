@@ -14,58 +14,40 @@ export const minimize = function (
   fnc: (args: number[]) => number,
   grd: (args: number[]) => number[],
   x0: number[],
-  eps = 2e-3,
-  alpha = 0.01
+  alpha = 1000,
+  improvement = 1e-6
 ) {
   const dim = x0.length;
+
   let x = x0.slice();
-  let pfx = fnc(x);
-  let fx = pfx;
+  let fx = fnc(x);
+
+  let pfx = fx;
+  const best = { x, fx };
 
   while (true) {
     const g = grd(x);
 
-    if (absLe(g, eps)) return { x, fx };
-
-    // a simple step size selection rule. Near x function acts linear
-    // (this is assumed at least) and thus very small values of alpha
-    // should lead to (small) improvement. Increasing alpha would
-    // yield better improvement up to certain alpha size.
-
     let xn = x.slice();
 
-    while (true) {
-      for (let i = 0; i < dim; i++) xn[i] = xn[i] - alpha * g[i]; // perform step
+    for (let i = 0; i < dim; i++) xn[i] = xn[i] - alpha * g[i]; // perform step
 
-      fx = fnc(xn);
+    fx = fnc(xn);
 
-      if (pfx >= fx) {
-        alpha *= 1.1;
-        break;
-      }
-
-      alpha *= 0.7;
-
-      xn = x.slice();
+    if (fx < pfx) {
+      best.x = xn;
+      best.fx = fx;
     }
+
+    if (Math.abs(pfx - fx) < improvement || isNaN(fx) || Math.abs(fx) >= Infinity) return best;
+
+    alpha *= 0.999;
 
     x = xn;
     pfx = fx;
+
+    console.log("x", x);
+    console.log("g", g);
+    console.log("fx", fx);
   }
 };
-
-/**
- * Checks whether absolute values in a vector are greater than
- * some threshold.
- * @ignore
- * @param {Array} x Vector that is checked.
- * @param {Number} eps Threshold.
- */
-function absLe(x: number[], eps: number) {
-  // this procedure is used for stopping criterion check
-  for (let i = 0; i < x.length; i++) {
-    if (Math.abs(x[i]) >= eps) return false;
-  }
-
-  return true;
-}
