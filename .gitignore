@@ -19,3 +19,6 @@ docs/
 # data
 data/
 broadcast/
+
+# Node.js
+node_modules/
