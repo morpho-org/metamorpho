@@ -32,7 +32,8 @@ contract SupplyAllocator is ISupplyAllocator {
         bytes memory collateralization
     ) external view returns (bytes memory allocation) {
         uint256 highestApr;
-        bytes memory highestCollateralLtv;
+        address highestCollateral;
+        uint16 highestMaxLtv;
 
         uint256 length = collateralization.length;
         for (uint256 start; start < length; start += POOL_OFFSET) {
@@ -46,11 +47,12 @@ contract SupplyAllocator is ISupplyAllocator {
 
             if (highestApr < hypotheticalApr) {
                 highestApr = hypotheticalApr;
-                highestCollateralLtv = abi.encodePacked(asset, maxLtv);
+                highestCollateral = asset;
+                highestMaxLtv = maxLtv;
             }
         }
 
-        allocation = abi.encodePacked(highestCollateralLtv, amount);
+        allocation = abi.encodePacked(highestCollateral, highestMaxLtv, amount);
     }
 
     function allocateWithdraw(
@@ -59,7 +61,8 @@ contract SupplyAllocator is ISupplyAllocator {
         bytes memory collateralization
     ) external view returns (bytes memory allocation) {
         uint256 lowestApr;
-        bytes memory lowestCollateralLtv;
+        address lowestCollateral;
+        uint16 lowestMaxLtv;
 
         uint256 length = collateralization.length;
         for (uint256 start; start < length; start += POOL_OFFSET) {
@@ -70,14 +73,12 @@ contract SupplyAllocator is ISupplyAllocator {
 
             if (lowestApr > hypotheticalApr) {
                 lowestApr = hypotheticalApr;
-                lowestCollateralLtv = abi.encodePacked(asset, maxLtv);
+                lowestCollateral = asset;
+                lowestMaxLtv = maxLtv;
             }
         }
 
         // Also check for available liquidity to guarantee optimal liquidity (at the cost of sub-optimal APR):
-
-        (address lowestCollateral, uint16 lowestMaxLtv) = lowestCollateralLtv
-            .decodeCollateralLtv(0);
 
         (amount, allocation) = _maxWithdraw(
             asset,
