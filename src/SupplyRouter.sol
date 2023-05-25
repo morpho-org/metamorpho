@@ -5,11 +5,11 @@ import {IPool} from "src/interfaces/IPool.sol";
 import {ISupplyRouter} from "src/interfaces/ISupplyRouter.sol";
 
 import {PoolAddress} from "src/libraries/PoolAddress.sol";
-import {AllocationLib, POOL_OFFSET} from "src/libraries/AllocationLib.sol";
+import {BytesLib, POOL_OFFSET} from "src/libraries/BytesLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 contract SupplyRouter is ISupplyRouter {
-    using AllocationLib for bytes;
+    using BytesLib for bytes;
     using SafeTransferLib for ERC20;
 
     address internal immutable FACTORY;
@@ -34,7 +34,7 @@ contract SupplyRouter is ISupplyRouter {
 
         for (uint256 start; start < length; start += POOL_OFFSET) {
             (address collateral, uint256 amount, uint16 maxLtv) = allocation
-                .decode(start);
+                .decodePoolAllocation(start);
 
             ERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -52,7 +52,7 @@ contract SupplyRouter is ISupplyRouter {
 
         for (uint256 start; start < length; start += POOL_OFFSET) {
             (address collateral, uint256 amount, uint16 maxLtv) = allocation
-                .decode(start);
+                .decodePoolAllocation(start);
 
             IPool pool = getPool(collateral, asset);
             pool.withdraw(
