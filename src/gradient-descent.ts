@@ -19,7 +19,7 @@ export const minimize = function (
 ) {
   const dim = x0.length;
 
-  let x = x0.slice();
+  let x = x0;
   let fx = fnc(x);
 
   let pfx = fx;
