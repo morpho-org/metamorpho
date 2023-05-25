@@ -14,7 +14,7 @@ export const minimize = function (
   fnc: (args: number[]) => number,
   grd: (args: number[]) => number[],
   x0: number[],
-  alpha = 1000,
+  alpha = 1,
   improvement = 1e-6
 ) {
   const dim = x0.length;
@@ -25,12 +25,13 @@ export const minimize = function (
   let pfx = fx;
   const best = { x, fx };
 
-  while (true) {
+  let i = 0;
+  for (; i < 25_000; ++i) {
     const g = grd(x);
 
     let xn = x.slice();
 
-    for (let i = 0; i < dim; i++) xn[i] = xn[i] - alpha * g[i]; // perform step
+    for (let j = 0; j < dim; j++) xn[j] = xn[j] - alpha * g[j]; // perform step
 
     fx = fnc(xn);
 
@@ -39,15 +40,13 @@ export const minimize = function (
       best.fx = fx;
     }
 
-    if (Math.abs(pfx - fx) < improvement || isNaN(fx) || Math.abs(fx) >= Infinity) return best;
+    if (Math.abs(pfx - fx) < improvement || isNaN(fx) || Math.abs(fx) >= Infinity) break;
 
-    alpha *= 0.999;
+    alpha *= 0.9999;
 
     x = xn;
     pfx = fx;
-
-    console.log("x", x);
-    console.log("g", g);
-    console.log("fx", fx);
   }
+
+  return { best, i };
 };
