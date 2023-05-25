@@ -1,6 +1,6 @@
 import { minimize } from "./gradient-descent";
 
-const L = 100;
+const L = 10;
 const dt = 1; // 1 year
 
 const negPenaltySlope = 1e5;
@@ -31,10 +31,7 @@ const dGasPenalty = (x: number) =>
 const dr = (x: number, a: number, b: number) =>
   dInterests(x, a, b) - dNegPenalty(x) - dGasPenalty(x);
 
-const {
-  best: { x, fx },
-  i,
-} = minimize(
+const { x, i } = minimize(
   ([x, y, z]) => {
     const remaining = L - (x + y + z);
 
@@ -54,4 +51,14 @@ const {
 );
 
 const total = x.reduce((a, tot) => a + tot);
-console.log(x.concat([L - total]), total, (-fx * 100) / (L * dt), i);
+const l = x.concat([L - total]);
+console.log(
+  l,
+  ((interests(l[0], a1, b1) +
+    interests(l[1], a2, b2) +
+    interests(l[2], a3, b3) +
+    interests(l[3], a4, b4)) *
+    100) /
+    (L * dt),
+  i
+);

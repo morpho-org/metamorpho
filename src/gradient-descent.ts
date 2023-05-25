@@ -6,15 +6,18 @@
  * @param {function} grd A gradient function of the objective.
  * @param {Array} x0 An array of values of size N, which is an initialization
  *  to the minimization algorithm.
+ * @param {number} alpha The gradient factor.
+ * @param {number} multiplier The factor to multiply alpha by at each step. Values closer to 1 may converge slower but closer to a minima.
+ * @param {number} improvement The minimum improvement in objective between 2 steps to keep searching.
  * @return {Object} An object instance with two fields: x, which
- * denotes the best argument found thus far, and fx, which is a
- * value of the function at the best found argument.
+ * denotes the best argument found, and i, which represents the number of loops performed.
  */
 export const minimize = function (
   fnc: (args: number[]) => number,
   grd: (args: number[]) => number[],
   x0: number[],
   alpha = 1,
+  multiplier = 0.9999,
   improvement = 1e-6
 ) {
   const dim = x0.length;
@@ -23,7 +26,7 @@ export const minimize = function (
   let fx = fnc(x);
 
   let pfx = fx;
-  const best = { x, fx };
+  let best = x;
 
   let i = 0;
   for (; i < 25_000; ++i) {
@@ -35,18 +38,15 @@ export const minimize = function (
 
     fx = fnc(xn);
 
-    if (fx < pfx) {
-      best.x = xn;
-      best.fx = fx;
-    }
+    if (fx < pfx) best = xn;
 
     if (Math.abs(pfx - fx) < improvement || isNaN(fx) || Math.abs(fx) >= Infinity) break;
 
-    alpha *= 0.9999;
+    alpha *= multiplier;
 
     x = xn;
     pfx = fx;
   }
 
-  return { best, i };
+  return { x: best, i };
 };
