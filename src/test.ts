@@ -1,64 +1,79 @@
-import { minimize } from "./gradient-descent";
+import { maximize } from "./gradient-descent";
 
-const L = 10;
+const L = 1;
 const dt = 1; // 1 year
 
-const negPenaltySlope = 1e5;
-const gasPenaltySlope = 1e5;
-const gasPenaltyShift = 1e-4;
+const pools = [
+  [20, 1000],
+  [30, 2000],
+  [20, 2000],
+  [15, 3000],
+];
 
-const poolGasCost = 50e5; // arbitrary value
-const gasPrice = 30e-9; // let's assume asset is ETH and gas price is 30 gwei
-
-const [a1, b1] = [20, 1000];
-const [a2, b2] = [30, 2000];
-const [a3, b3] = [20, 1500];
-const [a4, b4] = [15, 3000];
+const dim = pools.length;
 
 const interests = (x: number, a: number, b: number) => (a / (b + x)) * x * dt;
-const negPenalty = (x: number) => Math.exp(-negPenaltySlope * x);
-const gasPenalty = (x: number) =>
-  (poolGasCost * gasPrice) / (1 + Math.exp(-gasPenaltySlope * (x - gasPenaltyShift)));
-
-const r = (x: number, a: number, b: number) => interests(x, a, b) - negPenalty(x) - gasPenalty(x);
-
 const dInterests = (x: number, a: number, b: number) => (a * b * dt) / (b + x) ** 2;
-const dNegPenalty = (x: number) => -negPenaltySlope * Math.exp(-negPenaltySlope * x);
-const dGasPenalty = (x: number) =>
-  -(gasPenaltySlope * poolGasCost * gasPrice * Math.exp(-gasPenaltySlope * (x - gasPenaltyShift))) /
-  (1 + Math.exp(-gasPenaltySlope * (x - gasPenaltyShift))) ** 2;
 
-const dr = (x: number, a: number, b: number) =>
-  dInterests(x, a, b) - dNegPenalty(x) - dGasPenalty(x);
+const nu = (x: number, a: number, b: number) => {
+  if (Math.abs(x) >= Infinity) return 1; // first-order approximation
 
-const { x, i } = minimize(
-  ([x, y, z]) => {
-    const remaining = L - (x + y + z);
+  return interests(x, a, b);
+};
 
-    return -(r(x, a1, b1) + r(y, a2, b2) + r(z, a3, b3) + r(remaining, a4, b4));
+const dNu = (x: number, a: number, b: number) => {
+  if (Math.abs(x) >= Infinity) return 0; // first-order approximation
+
+  return dInterests(x, a, b);
+};
+
+const { x, i } = maximize(
+  (x) =>
+    x
+      .map((xi, i) => {
+        const [a, b] = pools[i];
+
+        return nu(xi, a, b);
+      })
+      .reduce((n, tot) => n + tot),
+  (x) => {
+    const grad = x.map((xi, i) => {
+      const [a, b] = pools[i];
+
+      return dNu(xi, a, b) * L;
+    });
+
+    let nH2 = dim; // norm 2 of liquidity hyperplane's normal vector
+    let dotH = grad.reduce((g, tot) => g + tot); // dot product of gradient and liquidity hyperplane's normal vector
+    let gradH = grad.map((g) => g - dotH / nH2); // gradient projected on liquidity hyperplane
+
+    let vH = new Array(dim).fill(1); // constraint sub vector space's definition vector
+    for (let i = 0; i < dim; ++i) {
+      console.log("underflow", x[i], gradH[i], x[i] + gradH[i]);
+      if (x[i] + gradH[i] < 0) {
+        gradH[i] = 0; // TODO: prevents converging to 0 ; need to find a way to clip it to zero
+        vH[i] = 0;
+        nH2 -= 1;
+      }
+    }
+
+    dotH = gradH.reduce((g, tot) => g + tot); // dot product of gradient and sub vector space's definition vector
+    gradH = gradH.map((g, i) => g - (dotH * vH[i]) / nH2); // gradient projected on sub vector space
+
+    // TODO: xn can still be < 0 because projected gradient on sub vector space may be too large
+
+    return gradH;
   },
-  ([x, y, z]) => {
-    const remaining = L - (x + y + z);
-
-    return [
-      -(dr(x, a1, b1) - dr(remaining, a4, b4)),
-      -(dr(y, a2, b2) - dr(remaining, a4, b4)),
-      -(dr(z, a3, b3) - dr(remaining, a4, b4)),
-    ];
-  },
-  [L / 4, L / 4, L / 4],
-  L / 10
+  new Array(dim).fill(L / dim)
 );
 
-const total = x.reduce((a, tot) => a + tot);
-const l = x.concat([L - total]);
-console.log(
-  l,
-  ((interests(l[0], a1, b1) +
-    interests(l[1], a2, b2) +
-    interests(l[2], a3, b3) +
-    interests(l[3], a4, b4)) *
-    100) /
-    (L * dt),
-  i
-);
+console.log(x, i);
+
+const totalInterests = x.map((xi, i) => {
+  const [a, b] = pools[i];
+
+  return interests(xi, a, b);
+});
+const totalAccrued = totalInterests.reduce((a, tot) => a + tot);
+
+console.log(totalInterests, totalAccrued, (totalAccrued * 100) / (L * dt));
