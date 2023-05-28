@@ -1,6 +1,6 @@
 import { maximize } from "./gradient-descent";
 
-const L = 1;
+const L = 10;
 const dt = 1; // 1 year
 
 const pools = [
@@ -48,19 +48,25 @@ const { x, i } = maximize(
     let gradH = grad.map((g) => g - dotH / nH2); // gradient projected on liquidity hyperplane
 
     let vH = new Array(dim).fill(1); // constraint sub vector space's definition vector
-    for (let i = 0; i < dim; ++i) {
-      console.log("underflow", x[i], gradH[i], x[i] + gradH[i]);
-      if (x[i] + gradH[i] < 0) {
-        gradH[i] = 0; // TODO: prevents converging to 0 ; need to find a way to clip it to zero
-        vH[i] = 0;
-        nH2 -= 1;
+
+    let underflow = false;
+    do {
+      underflow = false;
+
+      for (let i = 0; i < dim; ++i) {
+        if (x[i] + gradH[i] < 0) {
+          underflow = true;
+          gradH[i] = 0; // TODO: prevents converging to 0 ; need to find a way to clip it to zero
+          vH[i] = 0;
+          nH2 -= 1;
+        }
       }
-    }
 
-    dotH = gradH.reduce((g, tot) => g + tot); // dot product of gradient and sub vector space's definition vector
-    gradH = gradH.map((g, i) => g - (dotH * vH[i]) / nH2); // gradient projected on sub vector space
+      if (nH2 <= 0) return gradH.fill(0);
 
-    // TODO: xn can still be < 0 because projected gradient on sub vector space may be too large
+      dotH = gradH.reduce((g, tot) => g + tot); // dot product of gradient and sub vector space's definition vector
+      gradH = gradH.map((g, i) => g - (dotH * vH[i]) / nH2); // gradient projected on sub vector space
+    } while (underflow);
 
     return gradH;
   },
