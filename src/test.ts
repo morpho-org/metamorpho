@@ -1,6 +1,6 @@
 import { maximize } from "./gradient-descent";
 
-const L = 900;
+const L = 3300;
 const dt = 1; // 1 year
 
 const pools = [
@@ -19,7 +19,7 @@ const interests = (x: number, a: number, b: number) => {
 };
 const dInterests = (x: number, a: number, b: number) => (a * b * dt) / (b + x) ** 2;
 
-const gasPenaltySlope = 1e3;
+const gasPenaltySlope = 1e5;
 const depositThreshold = L / 200;
 
 const poolGasCost = 80_000; // arbitrary value
@@ -55,25 +55,32 @@ const { x, i } = maximize(
     let gradH = grad.map((g) => g - dotH / nH2); // gradient projected on constant sum hyperplane
 
     let vH = new Array(dim).fill(1); // constant sum sub vector space's definition vector
+    let extraH = 0;
 
-    let underflow = false;
-    do {
-      underflow = false;
+    while (true) {
+      let underflow = false;
 
       for (let i = 0; i < dim; ++i) {
-        if (x[i] + gradH[i] < 0) {
+        const extra = x[i] + gradH[i];
+
+        if (extra < 0) {
           underflow = true;
-          gradH[i] = 0; // TODO: prevents converging to 0 ; need to find a way to clip it to zero
+          extraH += extra;
+          gradH[i] = -x[i];
           vH[i] = 0;
           nH2 -= 1;
         }
       }
 
+      if (!underflow) break;
+
       if (nH2 <= 0) return gradH.fill(0);
 
-      dotH = gradH.reduce((g, tot) => g + tot); // dot product of gradient and sub vector space's definition vector
+      dotH = gradH.reduce((tot, g, i) => g * vH[i] + tot); // dot product of gradient and sub vector space's definition vector
       gradH = gradH.map((g, i) => g - (dotH * vH[i]) / nH2); // gradient projected on sub vector space
-    } while (underflow);
+    }
+
+    if (extraH > 0) gradH = gradH.map((g, i) => g - (extraH * vH[i]) / nH2); // extra added to gradient projection
 
     return gradH;
   },
@@ -96,7 +103,7 @@ for (let i = 0; i < dim; ++i) {
 
 if (nH2 <= 0) xH.fill(0);
 else {
-  const dotH = xH.reduce((xi, tot) => xi + tot) - L; // dot product of x and liquidity sub vector space's definition vector
+  const dotH = xH.reduce((tot, xi) => xi + tot) - L; // dot product of x and liquidity sub vector space's definition vector
   xH = xH.map((xi, i) => xi - (dotH * vH[i]) / nH2); // x projected on sub vector space
 }
 
@@ -107,7 +114,7 @@ const totalInterests = xH.map((xi, i) => {
 
   return interests(xi, a, b);
 });
-const totalAccrued = totalInterests.reduce((a, tot) => a + tot);
+const totalAccrued = totalInterests.reduce((tot, a) => a + tot);
 const cost = nH2 * poolGasCost * gasPrice;
 
 console.log(totalInterests, totalAccrued - cost, ((totalAccrued - cost) * 100) / (L * dt));
