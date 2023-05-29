@@ -19,20 +19,13 @@ const interests = (x: number, a: number, b: number) => {
 };
 const dInterests = (x: number, a: number, b: number) => (a * b * dt) / (b + x) ** 2;
 
-const gasPenaltySlope = 1e5;
 const depositThreshold = L / 200;
 
 const poolGasCost = 80_000; // arbitrary value
 const gasPrice = 30e-9; // let's assume asset is ETH and gas price is 30 gwei
 
-const gasPenalty = (x: number) =>
-  (poolGasCost * gasPrice) / (1 + Math.exp(-gasPenaltySlope * (x - depositThreshold)));
-const dGasPenalty = (x: number) =>
-  (gasPenaltySlope * poolGasCost * gasPrice * Math.exp(-gasPenaltySlope * (x - depositThreshold))) /
-  (1 + Math.exp(-gasPenaltySlope * (x - depositThreshold))) ** 2;
-
-const nu = (x: number, a: number, b: number) => interests(x, a, b) - gasPenalty(x);
-const dNu = (x: number, a: number, b: number) => dInterests(x, a, b) - dGasPenalty(x);
+const nu = (x: number, a: number, b: number) => interests(x, a, b);
+const dNu = (x: number, a: number, b: number) => dInterests(x, a, b);
 
 const { x, i } = maximize(
   (x) =>
