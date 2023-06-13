@@ -24,18 +24,12 @@ library BytesLib {
     /// @param data The bytes containing data.
     /// @param start The index at which the bytes slice starts.
     /// @return value The decoded address.
-    function toAddress(
-        bytes memory data,
-        uint256 start
-    ) internal pure returns (address value) {
+    function toAddress(bytes memory data, uint256 start) internal pure returns (address value) {
         uint256 length = data.length;
         if (length < start + ADDR_LENGTH) revert CastOutOfBounds(length);
 
         assembly {
-            value := div(
-                mload(add(data, add(start, 0x20))),
-                0x1000000000000000000000000
-            )
+            value := div(mload(add(data, add(start, 0x20))), 0x1000000000000000000000000)
         }
     }
 
@@ -43,10 +37,7 @@ library BytesLib {
     /// @param data The bytes containing data.
     /// @param start The index at which the bytes slice starts.
     /// @return value The decoded uint16.
-    function toUint16(
-        bytes memory data,
-        uint256 start
-    ) internal pure returns (uint16 value) {
+    function toUint16(bytes memory data, uint256 start) internal pure returns (uint16 value) {
         uint256 length = data.length;
         if (length < start + MAX_LTV_LENGTH) revert CastOutOfBounds(length);
 
@@ -59,10 +50,7 @@ library BytesLib {
     /// @param data The bytes containing data.
     /// @param start The index at which the bytes slice starts.
     /// @return value The decoded uint256.
-    function toUint256(
-        bytes memory data,
-        uint256 start
-    ) internal pure returns (uint256 value) {
+    function toUint256(bytes memory data, uint256 start) internal pure returns (uint256 value) {
         uint256 length = data.length;
         if (length < start + AMOUNT_LENGTH) revert CastOutOfBounds(length);
 
@@ -77,10 +65,11 @@ library BytesLib {
     /// @return asset The collateral asset to lend against.
     /// @return amount The amount to lend.
     /// @return maxLtv The maximum LTV to lend this liquidity at.
-    function decodePoolAllocation(
-        bytes memory allocation,
-        uint256 start
-    ) internal pure returns (address asset, uint256 amount, uint16 maxLtv) {
+    function decodePoolAllocation(bytes memory allocation, uint256 start)
+        internal
+        pure
+        returns (address asset, uint256 amount, uint16 maxLtv)
+    {
         asset = toAddress(allocation, start);
         maxLtv = toUint16(allocation, start + ADDR_LENGTH);
         amount = toUint256(allocation, start + AMOUNT_OFFSET);
@@ -91,10 +80,11 @@ library BytesLib {
     /// @param start The index at which to decode the pool.
     /// @return asset The collateral asset to lend against.
     /// @return maxLtv The maximum LTV to lend the associated liquidity at.
-    function decodeCollateralLtv(
-        bytes memory collateralization,
-        uint256 start
-    ) internal pure returns (address asset, uint16 maxLtv) {
+    function decodeCollateralLtv(bytes memory collateralization, uint256 start)
+        internal
+        pure
+        returns (address asset, uint16 maxLtv)
+    {
         asset = toAddress(collateralization, start);
         maxLtv = toUint16(collateralization, start + ADDR_LENGTH);
     }
