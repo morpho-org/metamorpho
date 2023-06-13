@@ -41,6 +41,14 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step {
         _setCollateralEnabled(collateral, enabled);
     }
 
+    function setCollateralConfig(address collateral, CollateralConfig calldata collateralConfig)
+        external
+        virtual
+        onlyRiskManager
+    {
+        _setCollateralConfig(collateral, collateralConfig);
+    }
+
     function reallocate(bytes calldata withdrawn, bytes calldata supplied) external virtual onlyRiskManager {
         _reallocate(withdrawn, supplied);
     }
@@ -88,6 +96,10 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step {
         } else {
             _config.collaterals.remove(collateral);
         }
+    }
+
+    function _setCollateralConfig(address collateral, CollateralConfig calldata collateralConfig) internal virtual {
+        _config.collateralConfig[collateral] = collateralConfig;
     }
 
     function _reallocate(bytes calldata withdrawn, bytes calldata supplied) internal virtual {
