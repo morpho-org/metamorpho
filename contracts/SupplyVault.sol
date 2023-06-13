@@ -7,11 +7,16 @@ import {ISupplyRouter} from "contracts/interfaces/ISupplyRouter.sol";
 
 import {PoolAddress} from "contracts/libraries/PoolAddress.sol";
 import {BytesLib, POOL_OFFSET} from "contracts/libraries/BytesLib.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {SafeTransferLib, ERC20 as ERC20Solmate} from "@solmate/utils/SafeTransferLib.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IERC20, ERC20, ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step {
+    using SafeTransferLib for ERC20Solmate;
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     ISupplyRouter private immutable _ROUTER;
 
     address private _riskManager;
@@ -47,18 +52,18 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step {
     }
 
     function config(address collateral) public view virtual returns (CollateralConfig memory) {
-        return _config.collateralConfig[collateral];
+        return _collateralConfig(collateral);
     }
 
     /**
      * @dev See {IERC4626-totalAssets}.
      */
     function totalAssets() public view virtual override returns (uint256 assets) {
-        address[] storage collaterals = _config.collaterals;
+        EnumerableSet.AddressSet storage collaterals = _config.collaterals;
 
-        uint256 nbCollaterals = collaterals.length;
+        uint256 nbCollaterals = collaterals.length();
         for (uint256 i; i < nbCollaterals; ++i) {
-            address collateral = collaterals[i];
+            address collateral = collaterals.at(i);
             CollateralConfig storage collateralConfig = _collateralConfig(collateral);
 
             assets += collateralConfig.pool.supplyBalanceOf(address(this), collateralConfig.bucket);
@@ -76,9 +81,13 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step {
     }
 
     function _setCollateralEnabled(address collateral, bool enabled) internal virtual {
-        CollateralConfig storage collateralConfig = _collateralConfig(collateral);
+        if (enabled) {
+            _config.collaterals.add(collateral);
 
-        collateralConfig.enabled = enabled;
+            ERC20Solmate(asset()).safeApprove(address(_ROUTER), type(uint256).max);
+        } else {
+            _config.collaterals.remove(collateral);
+        }
     }
 
     function _reallocate(bytes calldata withdrawn, bytes calldata supplied) internal virtual {

@@ -3,6 +3,8 @@ pragma solidity >=0.5.0;
 
 import {IPool} from "contracts/interfaces/IPool.sol";
 
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 interface ISupplyVault {
     /* STRUCTS */
 
@@ -10,11 +12,10 @@ interface ISupplyVault {
         IPool pool;
         uint256 bucket;
         uint256 cap;
-        bool enabled;
     }
 
     struct Config {
-        address[] collaterals;
+        EnumerableSet.AddressSet collaterals;
         mapping(address collateral => CollateralConfig config) collateralConfig;
     }
 
