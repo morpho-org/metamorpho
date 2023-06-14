@@ -2,25 +2,23 @@
 pragma solidity ^0.8.0;
 
 import {IPool} from "contracts/interfaces/IPool.sol";
+import {IFactory} from "contracts/interfaces/IFactory.sol";
 import {ISupplyAllocator} from "contracts/interfaces/ISupplyAllocator.sol";
 
 import {Math} from "@morpho-utils/math/Math.sol";
 import {PoolLib} from "contracts/libraries/PoolLib.sol";
-import {PoolAddress} from "contracts/libraries/PoolAddress.sol";
+import {FactoryLib} from "contracts/libraries/FactoryLib.sol";
 import {BytesLib, POOL_OFFSET} from "contracts/libraries/BytesLib.sol";
 
 contract SupplyAllocator is ISupplyAllocator {
     using PoolLib for IPool;
     using BytesLib for bytes;
+    using FactoryLib for IFactory;
 
-    address internal immutable FACTORY;
+    IFactory internal immutable _FACTORY;
 
     constructor(address factory) {
-        FACTORY = factory;
-    }
-
-    function getPool(address collateral, address asset) internal view returns (IPool) {
-        return IPool(PoolAddress.computeAddress(FACTORY, collateral, asset));
+        _FACTORY = IFactory(factory);
     }
 
     function allocateSupply(address asset, uint256 amount, bytes memory collateralization)
@@ -36,7 +34,7 @@ contract SupplyAllocator is ISupplyAllocator {
         for (uint256 start; start < length; start += POOL_OFFSET) {
             (address collateral, uint16 maxLtv) = collateralization.decodeCollateralLtv(start);
 
-            uint256 hypotheticalApr = getPool(collateral, asset).apr(maxLtv, amount);
+            uint256 hypotheticalApr = _FACTORY.getPool(asset, collateral).apr(maxLtv, amount);
 
             if (highestApr < hypotheticalApr) {
                 highestApr = hypotheticalApr;
@@ -61,7 +59,7 @@ contract SupplyAllocator is ISupplyAllocator {
         for (uint256 start; start < length; start += POOL_OFFSET) {
             (address collateral, uint16 maxLtv) = collateralization.decodeCollateralLtv(start);
 
-            uint256 hypotheticalApr = getPool(collateral, asset).apr(maxLtv, 0);
+            uint256 hypotheticalApr = _FACTORY.getPool(asset, collateral).apr(maxLtv, 0);
 
             if (lowestApr > hypotheticalApr) {
                 lowestApr = hypotheticalApr;
@@ -90,7 +88,7 @@ contract SupplyAllocator is ISupplyAllocator {
         view
         returns (uint256, bytes memory)
     {
-        uint256 withdrawn = Math.min(amount, getPool(collateral, asset).liquidity(maxLtv));
+        uint256 withdrawn = Math.min(amount, _FACTORY.getPool(asset, collateral).liquidity(maxLtv));
 
         return (amount - withdrawn, abi.encodePacked(allocation, collateral, maxLtv, withdrawn));
     }

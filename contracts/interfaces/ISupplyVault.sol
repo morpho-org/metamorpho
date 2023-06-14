@@ -9,7 +9,6 @@ interface ISupplyVault {
     /* STRUCTS */
 
     struct CollateralConfig {
-        IPool pool;
         uint256 bucket;
         uint256 cap;
     }
@@ -22,4 +21,6 @@ interface ISupplyVault {
     /* ERRORS */
 
     error OnlyRiskManager();
+
+    error OnlyAllocationManager();
 }
