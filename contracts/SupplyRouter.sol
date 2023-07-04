@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
+import {MarketAllocation} from "./libraries/Types.sol";
+
 import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
 
 contract SupplyRouter is InternalSupplyRouter {
@@ -8,11 +10,11 @@ contract SupplyRouter is InternalSupplyRouter {
 
     /* EXTERNAL */
 
-    function supply(address asset, bytes calldata allocation, address onBehalf) external {
-        _supply(asset, allocation, onBehalf);
+    function supply(MarketAllocation[] calldata allocation, address onBehalf) external {
+        _supplyAll(allocation, onBehalf);
     }
 
-    function withdraw(address asset, bytes calldata allocation, address receiver) external {
-        _withdraw(asset, allocation, receiver);
+    function withdraw(MarketAllocation[] calldata allocation, address onBehalf, address receiver) external {
+        _withdrawAll(allocation, onBehalf, receiver);
     }
 }

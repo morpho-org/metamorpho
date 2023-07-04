@@ -1,58 +1,56 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {IPool} from "contracts/interfaces/IPool.sol";
-import {IFactory} from "contracts/interfaces/IFactory.sol";
+import {IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
-import {FactoryLib} from "contracts/libraries/FactoryLib.sol";
-import {BytesLib, POOL_OFFSET} from "contracts/libraries/BytesLib.sol";
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+import {MarketAllocation} from "contracts/libraries/Types.sol";
+import {MarketKey, MarketKeyLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
+import {Permit2Lib, ERC20} from "@permit2/libraries/Permit2Lib.sol";
 
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 
 contract InternalSupplyRouter is Context {
-    using BytesLib for bytes;
-    using FactoryLib for IFactory;
-    using SafeTransferLib for ERC20;
+    using MarketKeyLib for MarketKey;
+    using Permit2Lib for ERC20;
 
-    IFactory internal immutable _FACTORY;
+    IMorpho internal immutable _MORPHO;
 
-    constructor(address factory) {
-        _FACTORY = IFactory(factory);
+    constructor(address morpho) {
+        _MORPHO = IMorpho(morpho);
     }
 
     /* INTERNAL */
 
-    function _decodePoolAllocation(address asset, bytes calldata allocation, uint256 start)
+    function _supplyAll(MarketAllocation[] calldata allocations, address onBehalf) internal virtual {
+        uint256 nbMarkets = allocations.length;
+
+        for (uint256 i; i < nbMarkets; ++i) {
+            MarketAllocation calldata allocation = allocations[i];
+
+            _supply(allocation, onBehalf);
+        }
+    }
+
+    function _withdrawAll(MarketAllocation[] calldata allocations, address onBehalf, address receiver)
         internal
-        view
-        returns (IPool pool, uint256 amount, uint16 bucket)
+        virtual
     {
-        address collateral;
-        (collateral, amount, bucket) = allocation.decodePoolAllocation(start);
+        uint256 nbMarkets = allocations.length;
 
-        pool = _FACTORY.getPool(asset, collateral);
-    }
+        for (uint256 i; i < nbMarkets; ++i) {
+            MarketAllocation calldata allocation = allocations[i];
 
-    function _supply(address asset, bytes calldata allocation, address onBehalf) internal {
-        uint256 length = allocation.length;
-
-        for (uint256 start; start < length; start += POOL_OFFSET) {
-            (IPool pool, uint256 amount, uint16 maxLtv) = _decodePoolAllocation(asset, allocation, start);
-
-            ERC20(asset).safeTransferFrom(_msgSender(), address(this), amount);
-
-            pool.supply(amount, maxLtv, onBehalf);
+            _withdraw(allocation, onBehalf, receiver);
         }
     }
 
-    function _withdraw(address asset, bytes calldata allocation, address receiver) internal {
-        uint256 length = allocation.length;
+    function _supply(MarketAllocation calldata allocation, address onBehalf) internal virtual {
+        ERC20(allocation.marketKey.asset).transferFrom2(_msgSender(), address(this), allocation.assets);
 
-        for (uint256 start; start < length; start += POOL_OFFSET) {
-            (IPool pool, uint256 amount, uint16 maxLtv) = _decodePoolAllocation(asset, allocation, start);
+        _MORPHO.deposit(allocation.marketKey, allocation.trancheId, allocation.assets, onBehalf);
+    }
 
-            pool.withdraw(amount, maxLtv, _msgSender(), receiver);
-        }
+    function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal virtual {
+        _MORPHO.withdraw(allocation.marketKey, allocation.trancheId, allocation.assets, onBehalf, receiver);
     }
 }

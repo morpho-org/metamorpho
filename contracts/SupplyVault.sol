@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.18;
 
-import {IPool} from "contracts/interfaces/IPool.sol";
-import {IFactory} from "contracts/interfaces/IFactory.sol";
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 
-import {FactoryLib} from "contracts/libraries/FactoryLib.sol";
-import {BytesLib, POOL_OFFSET} from "contracts/libraries/BytesLib.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {MarketConfig, ConfigSet} from "./libraries/Types.sol";
+import {ConfigSetLib} from "./libraries/ConfigSetLib.sol";
+import {MarketKey, TrancheId, Tranche, TrancheShares} from "@morpho-blue/libraries/Types.sol";
 import {SafeTransferLib, ERC20 as ERC20Solmate} from "@solmate/utils/SafeTransferLib.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -15,19 +13,18 @@ import {IERC20, ERC20, ERC4626} from "@openzeppelin/contracts/token/ERC20/extens
 import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRouter {
-    using FactoryLib for IFactory;
     using SafeTransferLib for ERC20Solmate;
-    using EnumerableSet for EnumerableSet.AddressSet;
+    using ConfigSetLib for ConfigSet;
 
     address private _riskManager;
     address private _allocationManager;
 
-    Config private _config;
+    ConfigSet private _config;
 
-    constructor(address factory, string memory name_, string memory symbol_, IERC20 asset_)
+    constructor(address morpho, string memory name_, string memory symbol_, IERC20 asset_)
         ERC4626(asset_)
         ERC20(name_, symbol_)
-        InternalSupplyRouter(factory)
+        InternalSupplyRouter(morpho)
     {}
 
     modifier onlyRiskManager() {
@@ -42,16 +39,16 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     /* EXTERNAL */
 
-    function setCollateralEnabled(address collateral, bool enabled) external virtual onlyRiskManager {
-        _setCollateralEnabled(collateral, enabled);
+    function disableMarket(MarketKey calldata marketKey) external virtual onlyRiskManager {
+        _config.remove(marketKey);
     }
 
-    function setCollateralConfig(address collateral, CollateralConfig calldata collateralConfig)
+    function setMarketConfig(MarketKey calldata marketKey, MarketConfig calldata marketConfig)
         external
         virtual
         onlyRiskManager
     {
-        _setCollateralConfig(collateral, collateralConfig);
+        _config.set(marketKey, marketConfig);
     }
 
     function reallocate(bytes calldata withdrawn, bytes calldata supplied) external virtual onlyAllocationManager {
@@ -68,22 +65,30 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         return _allocationManager;
     }
 
-    function config(address collateral) public view virtual returns (CollateralConfig memory) {
-        return _collateralConfig(collateral);
+    function config(MarketKey calldata marketKey) public view virtual returns (MarketConfig memory) {
+        return _marketConfig(marketKey);
     }
 
     /**
      * @dev See {IERC4626-totalAssets}.
      */
     function totalAssets() public view virtual override returns (uint256 assets) {
-        EnumerableSet.AddressSet storage collaterals = _config.collaterals;
+        address _asset = asset();
+        uint256 nbMarkets = _config.length();
 
-        uint256 nbCollaterals = collaterals.length();
-        for (uint256 i; i < nbCollaterals; ++i) {
-            address collateral = collaterals.at(i);
-            CollateralConfig storage collateralConfig = _collateralConfig(collateral);
+        for (uint256 i; i < nbMarkets; ++i) {
+            MarketKey storage marketKey = _config.at(i);
+            MarketConfig storage marketConfig = _marketConfig(marketKey);
 
-            assets += _FACTORY.getPool(asset(), collateral).supplyBalanceOf(address(this), collateralConfig.bucket);
+            uint256 nbTranches = marketConfig.trancheIds.length;
+            for (uint256 j; j < nbTranches; ++j) {
+                TrancheId trancheId = marketConfig.trancheIds[j];
+
+                Tranche memory tranche = _MORPHO.trancheAt(marketKey, trancheId);
+                TrancheShares memory shares = _MORPHO.sharesOf(marketKey, trancheId, address(this));
+
+                assets += tranche.toSupplyAssets(shares.supply);
+            }
         }
     }
 
@@ -97,23 +102,16 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         if (allocationManager() != _msgSender()) revert OnlyAllocationManager();
     }
 
-    function _collateralConfig(address collateral) internal view virtual returns (CollateralConfig storage) {
-        return _config.collateralConfig[collateral];
-    }
-
-    function _setCollateralEnabled(address collateral, bool enabled) internal virtual {
-        if (enabled) _config.collaterals.add(collateral);
-        else _config.collaterals.remove(collateral);
-    }
-
-    function _setCollateralConfig(address collateral, CollateralConfig calldata collateralConfig) internal virtual {
-        _config.collateralConfig[collateral] = collateralConfig;
+    function _marketConfig(MarketKey calldata marketKey) internal view virtual returns (MarketConfig storage) {
+        return _config.marketConfig(marketKey);
     }
 
     function _reallocate(bytes calldata withdrawn, bytes calldata supplied) internal virtual {
         address _asset = asset();
 
-        _withdraw(_asset, withdrawn, address(this));
-        _supply(_asset, supplied, address(this));
+        // if (_config.collaterals.) revert UnauthorizedMarket(_asset);
+
+        _withdrawAll(_asset, withdrawn, address(this));
+        _supplyAll(_asset, supplied, address(this));
     }
 }
