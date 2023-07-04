@@ -3,10 +3,13 @@ pragma solidity ^0.8.18;
 
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 
-import {MarketAllocation, MarketConfig, ConfigSet} from "./libraries/Types.sol";
+import {MarketAllocation, MarketConfig, Market, ConfigSet} from "./libraries/Types.sol";
+import {SupplyOverCap} from "./libraries/Errors.sol";
 import {ConfigSetLib} from "./libraries/ConfigSetLib.sol";
-import {MarketKey, TrancheId, Tranche, TrancheShares} from "@morpho-blue/libraries/Types.sol";
+import {MarketLib} from "./libraries/MarketLib.sol";
 import {TrancheMemLib} from "@morpho-blue/libraries/TrancheLib.sol";
+import {MarketKey, TrancheId, Tranche, TrancheShares} from "@morpho-blue/libraries/Types.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IERC20, ERC20, ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
@@ -15,6 +18,8 @@ import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
 contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRouter {
     using ConfigSetLib for ConfigSet;
     using TrancheMemLib for Tranche;
+
+    using MarketLib for Market;
 
     address private _riskManager;
     address private _allocationManager;
@@ -70,7 +75,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
     }
 
     function config(MarketKey calldata marketKey) public view virtual returns (MarketConfig memory) {
-        return _marketConfig(marketKey);
+        return _market(marketKey).config;
     }
 
     /**
@@ -81,11 +86,11 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
         for (uint256 i; i < nbMarkets; ++i) {
             MarketKey storage marketKey = _config.at(i);
-            MarketConfig storage marketConfig = _marketConfig(marketKey);
+            Market storage market = _market(marketKey);
 
-            uint256 nbTranches = marketConfig.trancheIds.length;
+            uint256 nbTranches = market.nbTranches();
             for (uint256 j; j < nbTranches; ++j) {
-                TrancheId trancheId = marketConfig.trancheIds[j];
+                TrancheId trancheId = market.trancheAt(j);
 
                 Tranche memory tranche = _MORPHO.trancheAt(marketKey, trancheId);
                 (, TrancheShares memory shares) = _MORPHO.sharesOf(marketKey, trancheId, address(this));
@@ -105,8 +110,35 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         if (allocationManager() != _msgSender()) revert OnlyAllocationManager();
     }
 
-    function _marketConfig(MarketKey memory marketKey) internal view virtual returns (MarketConfig storage) {
-        return _config.marketConfig(marketKey);
+    function _market(MarketKey memory marketKey) internal view virtual returns (Market storage) {
+        return _config.getMarket(marketKey);
+    }
+
+    function _supply(MarketAllocation calldata allocation, address onBehalf) internal override {
+        Market storage market = _market(allocation.marketKey);
+
+        uint256 cap = market.config.cap;
+        if (cap > 0) {
+            uint256 supply = allocation.assets;
+
+            uint256 nbTranches = market.nbTranches();
+            for (uint256 i; i < nbTranches; ++i) {
+                TrancheId trancheId = market.trancheAt(i);
+
+                Tranche memory tranche = _MORPHO.trancheAt(allocation.marketKey, trancheId);
+                (, TrancheShares memory shares) = _MORPHO.sharesOf(allocation.marketKey, trancheId, address(this));
+
+                supply += tranche.toSupplyAssets(shares);
+            }
+
+            if (cap < supply) revert SupplyOverCap(supply);
+        }
+
+        super._supply(allocation, onBehalf);
+    }
+
+    function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal override {
+        super._withdraw(allocation, onBehalf, receiver);
     }
 
     function _reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)

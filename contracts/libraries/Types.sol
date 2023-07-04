@@ -17,6 +17,7 @@ struct MarketConfig {
 struct Market {
     uint256 rank;
     MarketConfig config;
+    mapping(TrancheId => uint256 rank) trancheRank;
 }
 
 struct ConfigSet {

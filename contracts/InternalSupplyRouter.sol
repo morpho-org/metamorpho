@@ -48,17 +48,7 @@ contract InternalSupplyRouter is Context {
     function _supply(MarketAllocation calldata allocation, address onBehalf) internal virtual {
         ERC20(allocation.marketKey.asset).transferFrom2(_msgSender(), address(this), allocation.assets);
 
-        _MORPHO.deposit(
-            MarketKey({
-                asset: allocation.marketKey.asset,
-                collateral: allocation.marketKey.collateral,
-                oracle: allocation.marketKey.oracle,
-                rateModel: allocation.marketKey.rateModel
-            }),
-            allocation.trancheId,
-            allocation.assets,
-            onBehalf
-        );
+        _MORPHO.deposit(allocation.marketKey, allocation.trancheId, allocation.assets, onBehalf);
     }
 
     function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal virtual {

@@ -2,27 +2,31 @@
 pragma solidity ^0.8.0;
 
 import {Market, MarketConfig, ConfigSet} from "./Types.sol";
+import {MarketLib} from "./MarketLib.sol";
 
 import {MarketKey} from "@morpho-blue/libraries/Types.sol";
 import {MarketKeyMemLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
 
 library ConfigSetLib {
+    using MarketLib for Market;
     using MarketKeyMemLib for MarketKey;
 
     /**
      * @dev Add a value to a set. O(1).
      */
-    function add(ConfigSet storage set, MarketKey calldata key, MarketConfig calldata config) internal {
-        Market storage market = set.market[key.toId()];
+    function add(ConfigSet storage set, MarketKey calldata key, MarketConfig calldata config) internal returns (bool) {
+        Market storage market = getMarket(set, key);
 
-        if (!contains(set, key)) {
-            set.markets.push(key);
-            // The value is stored at length-1, but we add 1 to all indexes
-            // and use 0 as a sentinel value
-            market.rank = set.markets.length;
-        }
+        market.setConfig(config);
 
-        market.config = config;
+        if (contains(set, key)) return false;
+
+        set.markets.push(key);
+        // The value is stored at length-1, but we add 1 to all indexes
+        // and use 0 as a sentinel value
+        market.rank = set.markets.length;
+
+        return true;
     }
 
     /**
@@ -33,19 +37,27 @@ library ConfigSetLib {
      */
     function remove(ConfigSet storage set, MarketKey calldata key) internal returns (bool) {
         bytes32 id = key.toId();
+        Market storage market = set.market[id];
 
         // We read and store the value's index to prevent multiple reads from the same storage slot
-        uint256 rank = set.market[id].rank;
+        uint256 rank = market.rank;
 
         if (rank == 0) return false;
+
+        market.deleteTranches();
 
         // Equivalent to contains(set, value)
         // To delete an element from the markets array in O(1), we swap the element to delete with the last one in
         // the array, and then remove the last element (sometimes called as 'swap and pop').
         // This modifies the order of the array, as noted in {at}.
 
-        uint256 toDeleteIndex = rank - 1;
-        uint256 lastIndex = set.markets.length - 1;
+        uint256 toDeleteIndex;
+        uint256 lastIndex;
+
+        unchecked {
+            toDeleteIndex = rank - 1;
+            lastIndex = set.markets.length - 1;
+        }
 
         if (lastIndex != toDeleteIndex) {
             MarketKey memory lastValue = set.markets[lastIndex];
@@ -96,7 +108,7 @@ library ConfigSetLib {
     /**
      * @dev Returns the market config stored for a given market. O(1).
      */
-    function marketConfig(ConfigSet storage set, MarketKey memory key) internal view returns (MarketConfig storage) {
-        return set.market[key.toId()].config;
+    function getMarket(ConfigSet storage set, MarketKey memory key) internal view returns (Market storage) {
+        return set.market[key.toId()];
     }
 }
