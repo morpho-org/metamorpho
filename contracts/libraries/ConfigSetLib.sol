@@ -3,10 +3,11 @@ pragma solidity ^0.8.0;
 
 import {Market, MarketConfig, ConfigSet} from "./Types.sol";
 
-import {MarketKey, MarketKeyLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
+import {MarketKey} from "@morpho-blue/libraries/Types.sol";
+import {MarketKeyMemLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
 
 library ConfigSetLib {
-    using MarketKeyLib for MarketKey;
+    using MarketKeyMemLib for MarketKey;
 
     /**
      * @dev Add a value to a set. O(1).
@@ -31,9 +32,10 @@ library ConfigSetLib {
      * present.
      */
     function remove(ConfigSet storage set, MarketKey calldata key) internal returns (bool) {
-        Market storage market = set.market[key.toId()];
+        bytes32 id = key.toId();
+
         // We read and store the value's index to prevent multiple reads from the same storage slot
-        uint256 rank = market.rank;
+        uint256 rank = set.market[id].rank;
 
         if (rank == 0) return false;
 
@@ -46,19 +48,19 @@ library ConfigSetLib {
         uint256 lastIndex = set.markets.length - 1;
 
         if (lastIndex != toDeleteIndex) {
-            bytes32 lastValue = set.markets[lastIndex];
+            MarketKey memory lastValue = set.markets[lastIndex];
 
             // Move the last value to the index where the value to delete is
             set.markets[toDeleteIndex] = lastValue;
             // Update the index for the moved value
-            set.market[lastValue] = rank; // Replace lastValue's index to rank
+            set.market[lastValue.toId()].rank = rank; // Replace lastValue's index to rank
         }
 
         // Delete the slot where the moved value was stored
         set.markets.pop();
 
         // Delete the index for the deleted slot
-        delete market;
+        delete set.market[id];
 
         return true;
     }
@@ -94,7 +96,7 @@ library ConfigSetLib {
     /**
      * @dev Returns the market config stored for a given market. O(1).
      */
-    function marketConfig(ConfigSet storage set, MarketKey calldata key) internal view returns (MarketConfig storage) {
+    function marketConfig(ConfigSet storage set, MarketKey memory key) internal view returns (MarketConfig storage) {
         return set.market[key.toId()].config;
     }
 }

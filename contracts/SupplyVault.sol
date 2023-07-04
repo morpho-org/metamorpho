@@ -3,18 +3,18 @@ pragma solidity ^0.8.18;
 
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 
-import {MarketConfig, ConfigSet} from "./libraries/Types.sol";
+import {MarketAllocation, MarketConfig, ConfigSet} from "./libraries/Types.sol";
 import {ConfigSetLib} from "./libraries/ConfigSetLib.sol";
 import {MarketKey, TrancheId, Tranche, TrancheShares} from "@morpho-blue/libraries/Types.sol";
-import {SafeTransferLib, ERC20 as ERC20Solmate} from "@solmate/utils/SafeTransferLib.sol";
+import {TrancheMemLib} from "@morpho-blue/libraries/TrancheLib.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IERC20, ERC20, ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRouter {
-    using SafeTransferLib for ERC20Solmate;
     using ConfigSetLib for ConfigSet;
+    using TrancheMemLib for Tranche;
 
     address private _riskManager;
     address private _allocationManager;
@@ -48,10 +48,14 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         virtual
         onlyRiskManager
     {
-        _config.set(marketKey, marketConfig);
+        _config.add(marketKey, marketConfig);
     }
 
-    function reallocate(bytes calldata withdrawn, bytes calldata supplied) external virtual onlyAllocationManager {
+    function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
+        external
+        virtual
+        onlyAllocationManager
+    {
         _reallocate(withdrawn, supplied);
     }
 
@@ -73,7 +77,6 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
      * @dev See {IERC4626-totalAssets}.
      */
     function totalAssets() public view virtual override returns (uint256 assets) {
-        address _asset = asset();
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
@@ -85,9 +88,9 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
                 TrancheId trancheId = marketConfig.trancheIds[j];
 
                 Tranche memory tranche = _MORPHO.trancheAt(marketKey, trancheId);
-                TrancheShares memory shares = _MORPHO.sharesOf(marketKey, trancheId, address(this));
+                (, TrancheShares memory shares) = _MORPHO.sharesOf(marketKey, trancheId, address(this));
 
-                assets += tranche.toSupplyAssets(shares.supply);
+                assets += tranche.toSupplyAssets(shares);
             }
         }
     }
@@ -102,16 +105,17 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         if (allocationManager() != _msgSender()) revert OnlyAllocationManager();
     }
 
-    function _marketConfig(MarketKey calldata marketKey) internal view virtual returns (MarketConfig storage) {
+    function _marketConfig(MarketKey memory marketKey) internal view virtual returns (MarketConfig storage) {
         return _config.marketConfig(marketKey);
     }
 
-    function _reallocate(bytes calldata withdrawn, bytes calldata supplied) internal virtual {
-        address _asset = asset();
-
+    function _reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
+        internal
+        virtual
+    {
         // if (_config.collaterals.) revert UnauthorizedMarket(_asset);
 
-        _withdrawAll(_asset, withdrawn, address(this));
-        _supplyAll(_asset, supplied, address(this));
+        _withdrawAll(withdrawn, address(this), address(this));
+        _supplyAll(supplied, address(this));
     }
 }

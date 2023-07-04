@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import {IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {MarketAllocation} from "contracts/libraries/Types.sol";
-import {MarketKey, MarketKeyLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
+import {MarketKey, TrancheId} from "@morpho-blue/libraries/Types.sol";
+import {MarketKeyLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
 import {Permit2Lib, ERC20} from "@permit2/libraries/Permit2Lib.sol";
 
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
@@ -47,7 +48,17 @@ contract InternalSupplyRouter is Context {
     function _supply(MarketAllocation calldata allocation, address onBehalf) internal virtual {
         ERC20(allocation.marketKey.asset).transferFrom2(_msgSender(), address(this), allocation.assets);
 
-        _MORPHO.deposit(allocation.marketKey, allocation.trancheId, allocation.assets, onBehalf);
+        _MORPHO.deposit(
+            MarketKey({
+                asset: allocation.marketKey.asset,
+                collateral: allocation.marketKey.collateral,
+                oracle: allocation.marketKey.oracle,
+                rateModel: allocation.marketKey.rateModel
+            }),
+            allocation.trancheId,
+            allocation.assets,
+            onBehalf
+        );
     }
 
     function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal virtual {
