@@ -4,11 +4,10 @@ pragma solidity ^0.8.18;
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 
 import {MarketAllocation, MarketConfig, Market, ConfigSet} from "./libraries/Types.sol";
-import {SupplyOverCap} from "./libraries/Errors.sol";
+import {UnauthorizedMarket, InconsistentAsset, SupplyOverCap} from "./libraries/Errors.sol";
 import {ConfigSetLib} from "./libraries/ConfigSetLib.sol";
-import {MarketLib} from "./libraries/MarketLib.sol";
-import {TrancheMemLib} from "@morpho-blue/libraries/TrancheLib.sol";
-import {MarketKey, TrancheId, Tranche, TrancheShares} from "@morpho-blue/libraries/Types.sol";
+import {MarketKey, MarketState, MarketShares, Position} from "@morpho-blue/libraries/Types.sol";
+import {MarketStateMemLib} from "@morpho-blue/libraries/MarketStateLib.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -17,9 +16,8 @@ import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRouter {
     using ConfigSetLib for ConfigSet;
-    using TrancheMemLib for Tranche;
 
-    using MarketLib for Market;
+    using MarketStateMemLib for MarketState;
 
     address private _riskManager;
     address private _allocationManager;
@@ -44,16 +42,19 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     /* EXTERNAL */
 
-    function disableMarket(MarketKey calldata marketKey) external virtual onlyRiskManager {
-        _config.remove(marketKey);
-    }
-
     function setMarketConfig(MarketKey calldata marketKey, MarketConfig calldata marketConfig)
         external
         virtual
         onlyRiskManager
     {
+        address _asset = address(marketKey.asset);
+        if (_asset != asset()) revert InconsistentAsset(_asset);
+
         _config.add(marketKey, marketConfig);
+    }
+
+    function disableMarket(MarketKey calldata marketKey) external virtual onlyRiskManager {
+        _config.remove(marketKey);
     }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
@@ -86,17 +87,11 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
         for (uint256 i; i < nbMarkets; ++i) {
             MarketKey storage marketKey = _config.at(i);
-            Market storage market = _market(marketKey);
 
-            uint256 nbTranches = market.nbTranches();
-            for (uint256 j; j < nbTranches; ++j) {
-                TrancheId trancheId = market.trancheAt(j);
+            MarketState memory state = _MORPHO.stateAt(marketKey);
+            Position memory position = _MORPHO.positionOf(marketKey, address(this));
 
-                Tranche memory tranche = _MORPHO.trancheAt(marketKey, trancheId);
-                (, TrancheShares memory shares) = _MORPHO.sharesOf(marketKey, trancheId, address(this));
-
-                assets += tranche.toSupplyAssets(shares);
-            }
+            assets += state.toSupplyAssets(position.shares);
         }
     }
 
@@ -114,40 +109,51 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         return _config.getMarket(marketKey);
     }
 
-    function _supply(MarketAllocation calldata allocation, address onBehalf) internal override {
+    function _deposit(MarketAllocation calldata allocation, address onBehalf) internal override {
+        if (!_config.contains(allocation.marketKey)) revert UnauthorizedMarket(allocation.marketKey);
+
         Market storage market = _market(allocation.marketKey);
 
         uint256 cap = market.config.cap;
         if (cap > 0) {
-            uint256 supply = allocation.assets;
+            MarketState memory state = _MORPHO.stateAt(allocation.marketKey);
+            Position memory position = _MORPHO.positionOf(allocation.marketKey, address(this));
 
-            uint256 nbTranches = market.nbTranches();
-            for (uint256 i; i < nbTranches; ++i) {
-                TrancheId trancheId = market.trancheAt(i);
+            uint256 supply = allocation.assets + state.toSupplyAssets(position.shares);
 
-                Tranche memory tranche = _MORPHO.trancheAt(allocation.marketKey, trancheId);
-                (, TrancheShares memory shares) = _MORPHO.sharesOf(allocation.marketKey, trancheId, address(this));
-
-                supply += tranche.toSupplyAssets(shares);
-            }
-
-            if (cap < supply) revert SupplyOverCap(supply);
+            if (supply > cap) revert SupplyOverCap(supply);
         }
 
-        super._supply(allocation, onBehalf);
-    }
-
-    function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal override {
-        super._withdraw(allocation, onBehalf, receiver);
+        super._deposit(allocation, onBehalf);
     }
 
     function _reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         internal
         virtual
     {
-        // if (_config.collaterals.) revert UnauthorizedMarket(_asset);
-
         _withdrawAll(withdrawn, address(this), address(this));
-        _supplyAll(supplied, address(this));
+        _depositAll(supplied, address(this));
+    }
+
+    /* ERC4626 */
+
+    // TODO: maxWithdraw, maxRedeem are limited by markets liquidity
+
+    /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
+    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
+        // TODO: deposit hook
+
+        super._deposit(caller, receiver, assets, shares);
+    }
+
+    /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
+    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
+        internal
+        virtual
+        override
+    {
+        // TODO: withdraw hook
+
+        super._withdraw(caller, receiver, owner, assets, shares);
     }
 }

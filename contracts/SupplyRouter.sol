@@ -10,8 +10,8 @@ contract SupplyRouter is InternalSupplyRouter {
 
     /* EXTERNAL */
 
-    function supply(MarketAllocation[] calldata allocation, address onBehalf) external {
-        _supplyAll(allocation, onBehalf);
+    function deposit(MarketAllocation[] calldata allocation, address onBehalf) external {
+        _depositAll(allocation, onBehalf);
     }
 
     function withdraw(MarketAllocation[] calldata allocation, address onBehalf, address receiver) external {

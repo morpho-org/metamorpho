@@ -2,13 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {Market, MarketConfig, ConfigSet} from "./Types.sol";
-import {MarketLib} from "./MarketLib.sol";
 
 import {MarketKey} from "@morpho-blue/libraries/Types.sol";
 import {MarketKeyMemLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
 
 library ConfigSetLib {
-    using MarketLib for Market;
     using MarketKeyMemLib for MarketKey;
 
     /**
@@ -17,7 +15,7 @@ library ConfigSetLib {
     function add(ConfigSet storage set, MarketKey calldata key, MarketConfig calldata config) internal returns (bool) {
         Market storage market = getMarket(set, key);
 
-        market.setConfig(config);
+        market.config = config;
 
         if (contains(set, key)) return false;
 
@@ -37,14 +35,11 @@ library ConfigSetLib {
      */
     function remove(ConfigSet storage set, MarketKey calldata key) internal returns (bool) {
         bytes32 id = key.toId();
-        Market storage market = set.market[id];
 
         // We read and store the value's index to prevent multiple reads from the same storage slot
-        uint256 rank = market.rank;
+        uint256 rank = set.market[id].rank;
 
         if (rank == 0) return false;
-
-        market.deleteTranches();
 
         // Equivalent to contains(set, value)
         // To delete an element from the markets array in O(1), we swap the element to delete with the last one in

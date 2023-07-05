@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {MarketAllocation} from "contracts/libraries/Types.sol";
-import {MarketKey, TrancheId} from "@morpho-blue/libraries/Types.sol";
+import {MarketKey} from "@morpho-blue/libraries/Types.sol";
 import {MarketKeyLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
 import {Permit2Lib, ERC20} from "@permit2/libraries/Permit2Lib.sol";
 
@@ -22,13 +22,13 @@ contract InternalSupplyRouter is Context {
 
     /* INTERNAL */
 
-    function _supplyAll(MarketAllocation[] calldata allocations, address onBehalf) internal virtual {
+    function _depositAll(MarketAllocation[] calldata allocations, address onBehalf) internal virtual {
         uint256 nbMarkets = allocations.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
             MarketAllocation calldata allocation = allocations[i];
 
-            _supply(allocation, onBehalf);
+            _deposit(allocation, onBehalf);
         }
     }
 
@@ -45,13 +45,13 @@ contract InternalSupplyRouter is Context {
         }
     }
 
-    function _supply(MarketAllocation calldata allocation, address onBehalf) internal virtual {
+    function _deposit(MarketAllocation calldata allocation, address onBehalf) internal virtual {
         ERC20(allocation.marketKey.asset).transferFrom2(_msgSender(), address(this), allocation.assets);
 
-        _MORPHO.deposit(allocation.marketKey, allocation.trancheId, allocation.assets, onBehalf);
+        _MORPHO.deposit(allocation.marketKey, allocation.assets, onBehalf);
     }
 
     function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal virtual {
-        _MORPHO.withdraw(allocation.marketKey, allocation.trancheId, allocation.assets, onBehalf, receiver);
+        _MORPHO.withdraw(allocation.marketKey, allocation.assets, onBehalf, receiver);
     }
 }
