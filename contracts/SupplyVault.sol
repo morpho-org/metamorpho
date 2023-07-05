@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 import {IVaultAllocationManager} from "contracts/interfaces/IVaultAllocationManager.sol";
 
+import {Events} from "./libraries/Events.sol";
 import {MarketAllocation, MarketConfig, Market, ConfigSet} from "./libraries/Types.sol";
 import {UnauthorizedMarket, InconsistentAsset, SupplyOverCap} from "./libraries/Errors.sol";
 import {ConfigSetLib} from "./libraries/ConfigSetLib.sol";
@@ -43,6 +44,14 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     /* EXTERNAL */
 
+    function setRiskManager(address newRiskManager) external onlyOwner {
+        _setRiskManager(newRiskManager);
+    }
+
+    function setAllocationManager(address newAllocationManager) external onlyOwner {
+        _setAllocationManager(newAllocationManager);
+    }
+
     function setMarketConfig(MarketKey calldata marketKey, MarketConfig calldata marketConfig)
         external
         virtual
@@ -80,10 +89,9 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         return _market(marketKey).config;
     }
 
-    /**
-     * @dev See {IERC4626-totalAssets}.
-     */
-    function totalAssets() public view virtual override returns (uint256 assets) {
+    /* ERC4626 */
+
+    function totalAssets() public view override returns (uint256 assets) {
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
@@ -96,12 +104,10 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         }
     }
 
-    /* ERC4626 */
-
     // TODO: maxWithdraw, maxRedeem are limited by markets liquidity
 
     /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
-    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal virtual override {
+    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
         super._deposit(caller, owner, assets, shares);
 
         // TODO: MarketAllocation[] could be bytes and save gas
@@ -115,7 +121,6 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
-        virtual
         override
     {
         (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
@@ -128,16 +133,28 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     /* INTERNAL */
 
-    function _checkRiskManager() internal view virtual {
+    function _checkRiskManager() internal view {
         if (riskManager() != _msgSender()) revert OnlyRiskManager();
     }
 
-    function _checkAllocationManager() internal view virtual {
+    function _checkAllocationManager() internal view {
         if (allocationManager() != _msgSender()) revert OnlyAllocationManager();
     }
 
-    function _market(MarketKey memory marketKey) internal view virtual returns (Market storage) {
+    function _market(MarketKey memory marketKey) internal view returns (Market storage) {
         return _config.getMarket(marketKey);
+    }
+
+    function _setRiskManager(address newRiskManager) internal {
+        _riskManager = newRiskManager;
+
+        emit Events.RiskManagerSet(newRiskManager);
+    }
+
+    function _setAllocationManager(address newAllocationManager) internal {
+        _riskManager = newAllocationManager;
+
+        emit Events.AllocationManagerSet(newAllocationManager);
     }
 
     function _deposit(MarketAllocation memory allocation, address onBehalf) internal override {
@@ -158,7 +175,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         super._deposit(allocation, onBehalf);
     }
 
-    function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal virtual {
+    function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
         _withdrawAll(withdrawn, address(this), address(this));
         _depositAll(supplied, address(this));
     }
