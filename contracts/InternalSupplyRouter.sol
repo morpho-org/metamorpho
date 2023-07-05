@@ -22,36 +22,33 @@ contract InternalSupplyRouter is Context {
 
     /* INTERNAL */
 
-    function _depositAll(MarketAllocation[] calldata allocations, address onBehalf) internal virtual {
+    function _depositAll(MarketAllocation[] memory allocations, address onBehalf) internal virtual {
         uint256 nbMarkets = allocations.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
-            MarketAllocation calldata allocation = allocations[i];
+            MarketAllocation memory allocation = allocations[i];
 
             _deposit(allocation, onBehalf);
         }
     }
 
-    function _withdrawAll(MarketAllocation[] calldata allocations, address onBehalf, address receiver)
-        internal
-        virtual
-    {
+    function _withdrawAll(MarketAllocation[] memory allocations, address onBehalf, address receiver) internal virtual {
         uint256 nbMarkets = allocations.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
-            MarketAllocation calldata allocation = allocations[i];
+            MarketAllocation memory allocation = allocations[i];
 
             _withdraw(allocation, onBehalf, receiver);
         }
     }
 
-    function _deposit(MarketAllocation calldata allocation, address onBehalf) internal virtual {
+    function _deposit(MarketAllocation memory allocation, address onBehalf) internal virtual {
         ERC20(allocation.marketKey.asset).transferFrom2(_msgSender(), address(this), allocation.assets);
 
         _MORPHO.deposit(allocation.marketKey, allocation.assets, onBehalf);
     }
 
-    function _withdraw(MarketAllocation calldata allocation, address onBehalf, address receiver) internal virtual {
+    function _withdraw(MarketAllocation memory allocation, address onBehalf, address receiver) internal virtual {
         _MORPHO.withdraw(allocation.marketKey, allocation.assets, onBehalf, receiver);
     }
 }

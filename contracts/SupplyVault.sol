@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
+import {IVaultAllocationManager} from "contracts/interfaces/IVaultAllocationManager.sol";
 
 import {MarketAllocation, MarketConfig, Market, ConfigSet} from "./libraries/Types.sol";
 import {UnauthorizedMarket, InconsistentAsset, SupplyOverCap} from "./libraries/Errors.sol";
@@ -95,6 +96,36 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         }
     }
 
+    /* ERC4626 */
+
+    // TODO: maxWithdraw, maxRedeem are limited by markets liquidity
+
+    /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
+    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal virtual override {
+        super._deposit(caller, owner, assets, shares);
+
+        // TODO: MarketAllocation[] could be bytes and save gas
+
+        (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
+            IVaultAllocationManager(_allocationManager).allocateSupply(caller, owner, assets, shares);
+
+        _reallocate(withdrawn, supplied);
+    }
+
+    /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
+    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
+        internal
+        virtual
+        override
+    {
+        (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
+            IVaultAllocationManager(_allocationManager).allocateWithdraw(caller, receiver, owner, assets, shares);
+
+        _reallocate(withdrawn, supplied);
+
+        super._withdraw(caller, receiver, owner, assets, shares);
+    }
+
     /* INTERNAL */
 
     function _checkRiskManager() internal view virtual {
@@ -109,7 +140,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         return _config.getMarket(marketKey);
     }
 
-    function _deposit(MarketAllocation calldata allocation, address onBehalf) internal override {
+    function _deposit(MarketAllocation memory allocation, address onBehalf) internal override {
         if (!_config.contains(allocation.marketKey)) revert UnauthorizedMarket(allocation.marketKey);
 
         Market storage market = _market(allocation.marketKey);
@@ -127,33 +158,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         super._deposit(allocation, onBehalf);
     }
 
-    function _reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
-        internal
-        virtual
-    {
+    function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal virtual {
         _withdrawAll(withdrawn, address(this), address(this));
         _depositAll(supplied, address(this));
-    }
-
-    /* ERC4626 */
-
-    // TODO: maxWithdraw, maxRedeem are limited by markets liquidity
-
-    /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
-        // TODO: deposit hook
-
-        super._deposit(caller, receiver, assets, shares);
-    }
-
-    /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
-    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
-        internal
-        virtual
-        override
-    {
-        // TODO: withdraw hook
-
-        super._withdraw(caller, receiver, owner, assets, shares);
     }
 }

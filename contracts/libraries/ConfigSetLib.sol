@@ -75,7 +75,7 @@ library ConfigSetLib {
     /**
      * @dev Returns true if the value is in the set. O(1).
      */
-    function contains(ConfigSet storage set, MarketKey calldata key) internal view returns (bool) {
+    function contains(ConfigSet storage set, MarketKey memory key) internal view returns (bool) {
         return set.market[key.toId()].rank != 0;
     }
 
