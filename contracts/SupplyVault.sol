@@ -134,11 +134,12 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
     /* INTERNAL */
 
     function _checkRiskManager() internal view {
-        if (riskManager() != _msgSender()) revert OnlyRiskManager();
+        if (
+            _msgSender() != riskManager()) revert OnlyRiskManager();
     }
 
     function _checkAllocationManager() internal view {
-        if (allocationManager() != _msgSender()) revert OnlyAllocationManager();
+        if (_msgSender() != allocationManager()) revert OnlyAllocationManager();
     }
 
     function _market(MarketKey memory marketKey) internal view returns (Market storage) {
