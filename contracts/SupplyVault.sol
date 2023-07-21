@@ -26,10 +26,10 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     ConfigSet private _config;
 
-    constructor(address morpho, string memory name_, string memory symbol_, IERC20 asset_)
+    constructor(address morpho, address forwarder, string memory name_, string memory symbol_, IERC20 asset_)
         ERC4626(asset_)
         ERC20(name_, symbol_)
-        InternalSupplyRouter(morpho)
+        InternalSupplyRouter(morpho, forwarder)
     {}
 
     modifier onlyRiskManager() {
@@ -134,8 +134,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
     /* INTERNAL */
 
     function _checkRiskManager() internal view {
-        if (
-            _msgSender() != riskManager()) revert OnlyRiskManager();
+        if (_msgSender() != riskManager()) revert OnlyRiskManager();
     }
 
     function _checkAllocationManager() internal view {

@@ -8,15 +8,15 @@ import {MarketKey} from "@morpho-blue/libraries/Types.sol";
 import {MarketKeyLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
 import {Permit2Lib, ERC20} from "@permit2/libraries/Permit2Lib.sol";
 
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
-contract InternalSupplyRouter is Context {
+contract InternalSupplyRouter is ERC2771Context {
     using MarketKeyLib for MarketKey;
     using Permit2Lib for ERC20;
 
     IMorpho internal immutable _MORPHO;
 
-    constructor(address morpho) {
+    constructor(address morpho, address forwarder) ERC2771Context(forwarder) {
         _MORPHO = IMorpho(morpho);
     }
 
