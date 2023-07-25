@@ -1,19 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {Market, MarketConfig, ConfigSet} from "./Types.sol";
+import {Id, Market, MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
 
-import {MarketKey} from "@morpho-blue/libraries/Types.sol";
-import {MarketKeyMemLib} from "@morpho-blue/libraries/MarketKeyLib.sol";
+struct MarketConfigData {
+    uint256 cap;
+}
+
+struct MarketConfig {
+    uint256 rank;
+    MarketConfigData config;
+}
+
+struct ConfigSet {
+    Market[] markets;
+    mapping(Id marketId => MarketConfig) market;
+}
 
 library ConfigSetLib {
-    using MarketKeyMemLib for MarketKey;
+    using MarketLib for Market;
 
     /**
      * @dev Add a value to a set. O(1).
      */
-    function add(ConfigSet storage set, MarketKey calldata key, MarketConfig calldata config) internal returns (bool) {
-        Market storage market = getMarket(set, key);
+    function add(ConfigSet storage set, Market memory key, MarketConfigData calldata config) internal returns (bool) {
+        MarketConfig storage market = getMarket(set, key);
 
         market.config = config;
 
@@ -33,8 +44,8 @@ library ConfigSetLib {
      * Returns true if the value was removed from the set, that is if it was
      * present.
      */
-    function remove(ConfigSet storage set, MarketKey calldata key) internal returns (bool) {
-        bytes32 id = key.toId();
+    function remove(ConfigSet storage set, Market memory key) internal returns (bool) {
+        Id id = key.id();
 
         // We read and store the value's index to prevent multiple reads from the same storage slot
         uint256 rank = set.market[id].rank;
@@ -55,12 +66,12 @@ library ConfigSetLib {
         }
 
         if (lastIndex != toDeleteIndex) {
-            MarketKey memory lastValue = set.markets[lastIndex];
+            Market memory lastValue = set.markets[lastIndex];
 
             // Move the last value to the index where the value to delete is
             set.markets[toDeleteIndex] = lastValue;
             // Update the index for the moved value
-            set.market[lastValue.toId()].rank = rank; // Replace lastValue's index to rank
+            set.market[lastValue.id()].rank = rank; // Replace lastValue's index to rank
         }
 
         // Delete the slot where the moved value was stored
@@ -75,8 +86,8 @@ library ConfigSetLib {
     /**
      * @dev Returns true if the value is in the set. O(1).
      */
-    function contains(ConfigSet storage set, MarketKey memory key) internal view returns (bool) {
-        return set.market[key.toId()].rank != 0;
+    function contains(ConfigSet storage set, Market memory key) internal view returns (bool) {
+        return set.market[key.id()].rank != 0;
     }
 
     /**
@@ -96,14 +107,14 @@ library ConfigSetLib {
      *
      * - `index` must be strictly less than {length}.
      */
-    function at(ConfigSet storage set, uint256 index) internal view returns (MarketKey storage) {
+    function at(ConfigSet storage set, uint256 index) internal view returns (Market storage) {
         return set.markets[index];
     }
 
     /**
      * @dev Returns the market config stored for a given market. O(1).
      */
-    function getMarket(ConfigSet storage set, MarketKey memory key) internal view returns (Market storage) {
-        return set.market[key.toId()];
+    function getMarket(ConfigSet storage set, Market memory key) internal view returns (MarketConfig storage) {
+        return set.market[key.id()];
     }
 }

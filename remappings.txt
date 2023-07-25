@@ -5,8 +5,8 @@ test/=test/
 
 @morpho-blue/=lib/morpho-blue/src/
 @solmate/=lib/morpho-blue/lib/solmate/src/
-@morpho-utils/=lib/morpho-blue/lib/morpho-utils/src/
-@openzeppelin/contracts/=lib/morpho-blue/lib/openzeppelin-contracts/contracts/
-@permit2/=lib/morpho-blue/lib/permit2/src/
+@morpho-utils/=lib/morpho-utils/src/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@permit2/=lib/permit2/src/
 
 solmate/=lib/morpho-blue/lib/solmate/

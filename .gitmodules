@@ -5,3 +5,12 @@
 	path = lib/morpho-blue
 	url = https://github.com/morpho-labs/blue
 	branch = poc/rubilmax
+[submodule "lib/permit2"]
+	path = lib/permit2
+	url = https://github.com/Uniswap/permit2
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "lib/morpho-utils"]
+	path = lib/morpho-utils
+	url = https://github.com/morpho-dao/morpho-utils

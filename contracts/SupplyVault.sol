@@ -4,12 +4,11 @@ pragma solidity ^0.8.18;
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 import {IVaultAllocationManager} from "contracts/interfaces/IVaultAllocationManager.sol";
 
-import {Events} from "./libraries/Events.sol";
-import {MarketAllocation, MarketConfig, Market, ConfigSet} from "./libraries/Types.sol";
-import {UnauthorizedMarket, InconsistentAsset, SupplyOverCap} from "./libraries/Errors.sol";
-import {ConfigSetLib} from "./libraries/ConfigSetLib.sol";
-import {MarketKey, MarketState, MarketShares, Position} from "@morpho-blue/libraries/Types.sol";
-import {MarketStateMemLib} from "@morpho-blue/libraries/MarketStateLib.sol";
+import {Events} from "contracts/libraries/Events.sol";
+import {MarketAllocation, Signature} from "contracts/libraries/Types.sol";
+import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "contracts/libraries/Errors.sol";
+import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "contracts/libraries/ConfigSetLib.sol";
+import {Market} from "@morpho-blue/libraries/MarketLib.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -18,8 +17,6 @@ import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRouter {
     using ConfigSetLib for ConfigSet;
-
-    using MarketStateMemLib for MarketState;
 
     address private _riskManager;
     address private _allocationManager;
@@ -52,19 +49,19 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         _setAllocationManager(newAllocationManager);
     }
 
-    function setMarketConfig(MarketKey calldata marketKey, MarketConfig calldata marketConfig)
+    function setMarketConfig(Market memory market, MarketConfigData calldata marketConfig)
         external
         virtual
         onlyRiskManager
     {
-        address _asset = address(marketKey.asset);
+        address _asset = address(market.borrowableAsset);
         if (_asset != asset()) revert InconsistentAsset(_asset);
 
-        _config.add(marketKey, marketConfig);
+        _config.add(market, marketConfig);
     }
 
-    function disableMarket(MarketKey calldata marketKey) external virtual onlyRiskManager {
-        _config.remove(marketKey);
+    function disableMarket(Market memory market) external virtual onlyRiskManager {
+        _config.remove(market);
     }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
@@ -85,8 +82,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         return _allocationManager;
     }
 
-    function config(MarketKey calldata marketKey) public view virtual returns (MarketConfig memory) {
-        return _market(marketKey).config;
+    function config(Market memory market) public view virtual returns (MarketConfigData memory) {
+        return _market(market).config;
     }
 
     /* ERC4626 */
@@ -95,12 +92,9 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
-            MarketKey storage marketKey = _config.at(i);
+            Market storage market = _config.at(i);
 
-            MarketState memory state = _MORPHO.stateAt(marketKey);
-            Position memory position = _MORPHO.positionOf(marketKey, address(this));
-
-            assets += state.toSupplyAssets(position.shares);
+            // assets += _supplyBalance(allocation.market);
         }
     }
 
@@ -141,8 +135,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         if (_msgSender() != allocationManager()) revert OnlyAllocationManager();
     }
 
-    function _market(MarketKey memory marketKey) internal view returns (Market storage) {
-        return _config.getMarket(marketKey);
+    function _market(Market memory market) internal view returns (MarketConfig storage) {
+        return _config.getMarket(market);
     }
 
     function _setRiskManager(address newRiskManager) internal {
@@ -157,19 +151,20 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         emit Events.AllocationManagerSet(newAllocationManager);
     }
 
-    function _deposit(MarketAllocation memory allocation, address onBehalf) internal override {
-        if (!_config.contains(allocation.marketKey)) revert UnauthorizedMarket(allocation.marketKey);
+    function _supplyBalance(Market memory market) internal returns (uint256) {
+        // TODO: use accrued interests
+    }
 
-        Market storage market = _market(allocation.marketKey);
+    function _deposit(MarketAllocation memory allocation, address onBehalf) internal {
+        if (!_config.contains(allocation.market)) revert UnauthorizedMarket(allocation.market);
+
+        MarketConfig storage market = _market(allocation.market);
 
         uint256 cap = market.config.cap;
         if (cap > 0) {
-            MarketState memory state = _MORPHO.stateAt(allocation.marketKey);
-            Position memory position = _MORPHO.positionOf(allocation.marketKey, address(this));
+            uint256 newSupply = allocation.assets + _supplyBalance(allocation.market);
 
-            uint256 supply = allocation.assets + state.toSupplyAssets(position.shares);
-
-            if (supply > cap) revert SupplyOverCap(supply);
+            if (newSupply > cap) revert SupplyCapExceeded(newSupply);
         }
 
         super._deposit(allocation, onBehalf);
@@ -177,6 +172,6 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
         _withdrawAll(withdrawn, address(this), address(this));
-        _depositAll(supplied, address(this));
+        _supplyAll(supplied, address(this));
     }
 }

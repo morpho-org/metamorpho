@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {MarketKey} from "@morpho-blue/libraries/Types.sol";
+import {Market} from "@morpho-blue/libraries/MarketLib.sol";
 
-error UnauthorizedMarket(MarketKey marketKey);
+error UnauthorizedMarket(Market market);
 
 error InconsistentAsset(address asset);
 
-error SupplyOverCap(uint256 supply);
+error SupplyCapExceeded(uint256 supply);
