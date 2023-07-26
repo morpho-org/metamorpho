@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity 0.8.21;
 
-import {Blue} from "@morpho-blue/Blue.sol";
+import {IBlue} from "@morpho-blue/interfaces/IBlue.sol";
 
 import {MarketAllocation} from "contracts/libraries/Types.sol";
 import {Permit2Lib, ERC20 as ERC20Permit2} from "@permit2/libraries/Permit2Lib.sol";
@@ -13,10 +13,10 @@ contract InternalSupplyRouter is ERC2771Context {
     using Permit2Lib for ERC20;
     using SafeTransferLib for ERC20;
 
-    Blue internal immutable _BLUE;
+    IBlue internal immutable _BLUE;
 
     constructor(address blue, address forwarder) ERC2771Context(forwarder) {
-        _BLUE = Blue(blue);
+        _BLUE = IBlue(blue);
     }
 
     /* INTERNAL */

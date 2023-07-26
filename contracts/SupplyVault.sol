@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
+import {Market} from "@morpho-blue/interfaces/IBlue.sol";
 import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 import {IVaultAllocationManager} from "contracts/interfaces/IVaultAllocationManager.sol";
 
@@ -8,14 +9,13 @@ import {Events} from "contracts/libraries/Events.sol";
 import {MarketAllocation, Signature} from "contracts/libraries/Types.sol";
 import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "contracts/libraries/Errors.sol";
 import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "contracts/libraries/ConfigSetLib.sol";
-import {Market} from "@morpho-blue/libraries/MarketLib.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {IERC20, ERC20, ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {InternalSupplyRouter} from "contracts/InternalSupplyRouter.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {InternalSupplyRouter, ERC2771Context} from "contracts/InternalSupplyRouter.sol";
+import {IERC20, ERC20, ERC4626, Context} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRouter {
+contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
     using ConfigSetLib for ConfigSet;
 
     address private _riskManager;
@@ -24,8 +24,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
     ConfigSet private _config;
 
     constructor(address morpho, address forwarder, string memory name_, string memory symbol_, IERC20 asset_)
-        ERC4626(asset_)
         ERC20(name_, symbol_)
+        ERC4626(asset_)
         InternalSupplyRouter(morpho, forwarder)
     {}
 
@@ -127,6 +127,14 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
 
     /* INTERNAL */
 
+    function _msgSender() internal view override(Context, ERC2771Context) returns (address) {
+        return ERC2771Context._msgSender();
+    }
+
+    function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
+        return ERC2771Context._msgData();
+    }
+
     function _checkRiskManager() internal view {
         if (_msgSender() != riskManager()) revert OnlyRiskManager();
     }
@@ -155,7 +163,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
         // TODO: use accrued interests
     }
 
-    function _deposit(MarketAllocation memory allocation, address onBehalf) internal {
+    function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
         if (!_config.contains(allocation.market)) revert UnauthorizedMarket(allocation.market);
 
         MarketConfig storage market = _market(allocation.market);
@@ -167,7 +175,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable2Step, InternalSupplyRoute
             if (newSupply > cap) revert SupplyCapExceeded(newSupply);
         }
 
-        super._deposit(allocation, onBehalf);
+        super._supply(allocation, onBehalf);
     }
 
     function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {

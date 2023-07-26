@@ -36,6 +36,10 @@ interface IBlueBulker {
         REPAY,
         WITHDRAW,
         WITHDRAW_COLLATERAL,
+        WRAP_ETH,
+        UNWRAP_ETH,
+        WRAP_ST_ETH,
+        UNWRAP_ST_ETH,
         SKIM
     }
 
