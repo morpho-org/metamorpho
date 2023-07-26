@@ -22,3 +22,10 @@ broadcast/
 
 # Node.js
 node_modules/
+
+# Hardhat
+/types
+/cache_hardhat
+/artifacts
+
+*.log

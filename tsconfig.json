@@ -1,17 +1,18 @@
 {
-    "compilerOptions": {
-      "incremental": true,
-      "target": "esnext",
-      "module": "commonjs",
-      "declaration": true,
-      "outDir": "lib",
-      "rootDir": ".",
-      "baseUrl": ".",
-      "strict": true,
-      "esModuleInterop": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true,
-      "resolveJsonModule": true
-    },
-    "include": ["src", "test"]
-  }
+  "compilerOptions": {
+    "incremental": true,
+    "target": "esnext",
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "lib",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src", "test/hardhaat"],
+  "files": ["./hardhat.config.ts"]
+}

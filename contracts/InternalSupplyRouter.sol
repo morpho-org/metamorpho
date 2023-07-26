@@ -10,7 +10,7 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 contract InternalSupplyRouter is ERC2771Context {
-    using Permit2Lib for ERC20;
+    using Permit2Lib for ERC20Permit2;
     using SafeTransferLib for ERC20;
 
     IBlue internal immutable _BLUE;
@@ -42,7 +42,9 @@ contract InternalSupplyRouter is ERC2771Context {
     }
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal virtual {
-        ERC20(address(allocation.market.borrowableAsset)).transferFrom2(_msgSender(), address(this), allocation.assets);
+        ERC20Permit2(address(allocation.market.borrowableAsset)).transferFrom2(
+            _msgSender(), address(this), allocation.assets
+        );
 
         _BLUE.supply(allocation.market, allocation.assets, onBehalf);
     }
