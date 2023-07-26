@@ -162,6 +162,8 @@ contract BlueBulker is IBlueBulker {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.borrow(market, amount, msg.sender);
+
+        if (receiver != address(this)) ERC20(address(market.borrowableAsset)).safeTransfer(receiver, amount);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
@@ -181,6 +183,8 @@ contract BlueBulker is IBlueBulker {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.withdraw(market, amount, msg.sender);
+
+        if (receiver != address(this)) ERC20(address(market.borrowableAsset)).safeTransfer(receiver, amount);
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
@@ -188,6 +192,8 @@ contract BlueBulker is IBlueBulker {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.withdrawCollateral(market, amount, msg.sender);
+
+        if (receiver != address(this)) ERC20(address(market.collateralAsset)).safeTransfer(receiver, amount);
     }
 
     /// @dev Wraps the given input of ETH to WETH.
