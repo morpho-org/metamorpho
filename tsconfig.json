@@ -1,18 +1,15 @@
 {
   "compilerOptions": {
-    "incremental": true,
     "target": "esnext",
-    "module": "commonjs",
-    "declaration": true,
-    "outDir": "lib",
-    "rootDir": ".",
-    "baseUrl": ".",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "rootDir": ".",
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "declaration": true
   },
-  "include": ["src", "test/hardhaat"],
+  "include": ["src", "test/hardhat"],
   "files": ["./hardhat.config.ts"]
 }

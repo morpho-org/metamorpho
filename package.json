@@ -70,26 +70,5 @@
     "*.ts": "yarn prettier",
     "*.json": "yarn prettier",
     "*.yml": "yarn prettier"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testTimeout": 30000,
-    "testMatch": [
-      "<rootDir>/test/**/*.spec.ts"
-    ],
-    "collectCoverageFrom": [
-      "<rootDir>/src/**/*.ts",
-      "!<rootDir>/src/types/**/*.ts"
-    ],
-    "transform": {
-      "\\.tsx?$": [
-        "ts-jest",
-        {
-          "diagnostics": false,
-          "isolatedModules": true
-        }
-      ]
-    }
   }
 }
