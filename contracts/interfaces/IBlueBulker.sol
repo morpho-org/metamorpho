@@ -43,7 +43,12 @@ interface IBlueBulker {
         SKIM
     }
 
+    struct Action {
+        ActionType actionType;
+        bytes data;
+    }
+
     /* FUNCTIONS */
 
-    function execute(ActionType[] calldata actions, bytes[] calldata data) external payable;
+    function execute(Action[] calldata actions) external payable;
 }

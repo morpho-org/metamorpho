@@ -52,54 +52,47 @@ contract BlueBulker is IBlueBulker {
     ///         Those actions, if not performed in the correct order, with the proper action's configuration
     ///         and with the proper inclusion of skim final calls, could leave funds in the Bulker contract.
     /// @param actions The batch of action to execute, one after the other.
-    /// @param data The array of data corresponding to each input action.
-    function execute(ActionType[] calldata actions, bytes[] calldata data) external payable {
+    function execute(Action[] calldata actions) external payable {
         uint256 nbActions = actions.length;
-        if (nbActions != data.length) {
-            revert InconsistentParameters(nbActions, data.length);
-        }
-
         for (uint256 i; i < nbActions; ++i) {
-            _performAction(actions[i], data[i]);
+            _performAction(actions[i]);
         }
     }
 
     /* INTERNAL */
 
-    /// @dev Performs the given action, given its associated parameters.
-    /// @param action The type of action to perform on behalf of the caller.
-    /// @param data The data to decode, associated with the action.
-    function _performAction(ActionType action, bytes calldata data) internal {
-        if (action == ActionType.APPROVE2) {
-            _approve2(data);
-        } else if (action == ActionType.TRANSFER_FROM2) {
-            _transferFrom2(data);
-        } else if (action == ActionType.SET_APPROVAL) {
-            _setApproval(data);
-        } else if (action == ActionType.SUPPLY) {
-            _supply(data);
-        } else if (action == ActionType.SUPPLY_COLLATERAL) {
-            _supplyCollateral(data);
-        } else if (action == ActionType.BORROW) {
-            _borrow(data);
-        } else if (action == ActionType.REPAY) {
-            _repay(data);
-        } else if (action == ActionType.WITHDRAW) {
-            _withdraw(data);
-        } else if (action == ActionType.WITHDRAW_COLLATERAL) {
-            _withdrawCollateral(data);
-        } else if (action == ActionType.WRAP_ETH) {
-            _wrapEth(data);
-        } else if (action == ActionType.UNWRAP_ETH) {
-            _unwrapEth(data);
-        } else if (action == ActionType.WRAP_ST_ETH) {
-            _wrapStEth(data);
-        } else if (action == ActionType.UNWRAP_ST_ETH) {
-            _unwrapStEth(data);
-        } else if (action == ActionType.SKIM) {
-            _skim(data);
+    /// @dev Performs the given action.
+    function _performAction(Action calldata action) internal {
+        if (action.actionType == ActionType.APPROVE2) {
+            _approve2(action.data);
+        } else if (action.actionType == ActionType.TRANSFER_FROM2) {
+            _transferFrom2(action.data);
+        } else if (action.actionType == ActionType.SET_APPROVAL) {
+            _setApproval(action.data);
+        } else if (action.actionType == ActionType.SUPPLY) {
+            _supply(action.data);
+        } else if (action.actionType == ActionType.SUPPLY_COLLATERAL) {
+            _supplyCollateral(action.data);
+        } else if (action.actionType == ActionType.BORROW) {
+            _borrow(action.data);
+        } else if (action.actionType == ActionType.REPAY) {
+            _repay(action.data);
+        } else if (action.actionType == ActionType.WITHDRAW) {
+            _withdraw(action.data);
+        } else if (action.actionType == ActionType.WITHDRAW_COLLATERAL) {
+            _withdrawCollateral(action.data);
+        } else if (action.actionType == ActionType.WRAP_ETH) {
+            _wrapEth(action.data);
+        } else if (action.actionType == ActionType.UNWRAP_ETH) {
+            _unwrapEth(action.data);
+        } else if (action.actionType == ActionType.WRAP_ST_ETH) {
+            _wrapStEth(action.data);
+        } else if (action.actionType == ActionType.UNWRAP_ST_ETH) {
+            _unwrapStEth(action.data);
+        } else if (action.actionType == ActionType.SKIM) {
+            _skim(action.data);
         } else {
-            revert UnsupportedAction(action);
+            revert UnsupportedAction(action.actionType);
         }
     }
 
