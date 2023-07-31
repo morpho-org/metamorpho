@@ -81,11 +81,6 @@ contract BlueBulker is IBlueBulker {
 
     /* INTERNAL */
 
-    /// @notice Decodes the data passed as parameter as an array of actions.
-    function _decodeActions(bytes calldata data) internal pure returns (Action[] memory) {
-        return abi.decode(data, (Action[]));
-    }
-
     /// @notice Decodes and executes actions encoded as parameter.
     function _decodeExecute(bytes calldata data) internal {
         Action[] memory actions = _decodeActions(data);
@@ -139,10 +134,15 @@ contract BlueBulker is IBlueBulker {
         }
     }
 
-    /* INTERNAL ACTIONS */
+    /* PRIVATE */
+
+    /// @notice Decodes the data passed as parameter as an array of actions.
+    function _decodeActions(bytes calldata data) private pure returns (Action[] memory) {
+        return abi.decode(data, (Action[]));
+    }
 
     /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.
-    function _approve2(bytes memory data) internal {
+    function _approve2(bytes memory data) private {
         (address asset, uint256 amount, uint256 deadline, Signature memory signature) =
             abi.decode(data, (address, uint256, uint256, Signature));
         if (amount == 0) revert AmountIsZero();
@@ -153,7 +153,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Transfers the given `amount` of `asset` from sender to this contract via ERC20 transfer with Permit2 fallback.
-    function _transferFrom2(bytes memory data) internal {
+    function _transferFrom2(bytes memory data) private {
         (address asset, uint256 amount) = abi.decode(data, (address, uint256));
         if (amount == 0) revert AmountIsZero();
 
@@ -161,7 +161,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
-    function _setApproval(bytes memory data) internal {
+    function _setApproval(bytes memory data) private {
         (bool isAllowed, uint256 nonce, uint256 deadline, Signature memory signature) =
             abi.decode(data, (bool, uint256, uint256, Signature));
 
@@ -170,7 +170,7 @@ contract BlueBulker is IBlueBulker {
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
     ///         The supplied amount cannot be used as collateral but is eligible for the peer-to-peer matching.
-    function _supply(bytes memory data) internal {
+    function _supply(bytes memory data) private {
         (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
             abi.decode(data, (Market, uint256, address, bytes));
         if (onBehalf == address(this)) revert AddressIsBulker();
@@ -183,7 +183,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
-    function _supplyCollateral(bytes memory data) internal {
+    function _supplyCollateral(bytes memory data) private {
         (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
             abi.decode(data, (Market, uint256, address, bytes));
         if (onBehalf == address(this)) revert AddressIsBulker();
@@ -196,7 +196,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Morpho.
-    function _borrow(bytes memory data) internal {
+    function _borrow(bytes memory data) private {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.borrow(market, amount, msg.sender);
@@ -205,7 +205,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
-    function _repay(bytes memory data) internal {
+    function _repay(bytes memory data) private {
         (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
             abi.decode(data, (Market, uint256, address, bytes));
         if (onBehalf == address(this)) revert AddressIsBulker();
@@ -218,7 +218,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of `onBehalf`. Sender must have previously approved the bulker as their manager on Morpho.
-    function _withdraw(bytes memory data) internal {
+    function _withdraw(bytes memory data) private {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.withdraw(market, amount, msg.sender);
@@ -227,7 +227,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
-    function _withdrawCollateral(bytes memory data) internal {
+    function _withdrawCollateral(bytes memory data) private {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.withdrawCollateral(market, amount, msg.sender);
@@ -236,7 +236,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Wraps the given input of ETH to WETH.
-    function _wrapEth(bytes memory data) internal {
+    function _wrapEth(bytes memory data) private {
         (uint256 amount) = abi.decode(data, (uint256));
 
         amount = Math.min(amount, address(this).balance);
@@ -246,7 +246,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Unwraps the given input of WETH to ETH.
-    function _unwrapEth(bytes memory data) internal {
+    function _unwrapEth(bytes memory data) private {
         (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();
@@ -260,7 +260,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Wraps the given input of stETH to wstETH.
-    function _wrapStEth(bytes memory data) internal {
+    function _wrapStEth(bytes memory data) private {
         (uint256 amount) = abi.decode(data, (uint256));
 
         amount = Math.min(amount, ERC20(_ST_ETH).balanceOf(address(this)));
@@ -270,7 +270,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Unwraps the given input of wstETH to stETH.
-    function _unwrapStEth(bytes memory data) internal {
+    function _unwrapStEth(bytes memory data) private {
         (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();
@@ -284,7 +284,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Sends any ERC20 in this contract to the receiver.
-    function _skim(bytes memory data) internal {
+    function _skim(bytes memory data) private {
         (address asset, address receiver) = abi.decode(data, (address, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();
@@ -293,10 +293,8 @@ contract BlueBulker is IBlueBulker {
         ERC20(asset).safeTransfer(receiver, balance);
     }
 
-    /* INTERNAL HELPERS */
-
     /// @dev Gives the max approval to the Morpho contract to spend the given `asset` if not already approved.
-    function _approveMaxBlue(address asset) internal {
+    function _approveMaxBlue(address asset) private {
         if (ERC20(asset).allowance(address(this), address(_BLUE)) == 0) {
             ERC20(asset).safeApprove(address(_BLUE), type(uint256).max);
         }
