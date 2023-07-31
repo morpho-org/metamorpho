@@ -56,28 +56,22 @@ contract BlueBulker is IBlueBulker {
         _execute(actions);
     }
 
-    function onBlueSupply(uint256, bytes memory data) external {
+    function onBlueSupply(uint256, bytes calldata data) external {
         if (msg.sender != address(_BLUE)) revert OnlyBlue();
 
-        Action[] memory actions = abi.decode(data, (Action[]));
-
-        _execute(actions);
+        _decodeExecute(data);
     }
 
-    function onBlueSupplyCollateral(uint256, bytes memory data) external {
+    function onBlueSupplyCollateral(uint256, bytes calldata data) external {
         if (msg.sender != address(_BLUE)) revert OnlyBlue();
 
-        Action[] memory actions = abi.decode(data, (Action[]));
-
-        _execute(actions);
+        _decodeExecute(data);
     }
 
-    function onBlueRepay(uint256, bytes memory data) external {
+    function onBlueRepay(uint256, bytes calldata data) external {
         if (msg.sender != address(_BLUE)) revert OnlyBlue();
 
-        Action[] memory actions = abi.decode(data, (Action[]));
-
-        _execute(actions);
+        _decodeExecute(data);
     }
 
     /// @dev Only the WETH contract is allowed to transfer ETH to this contract, without any calldata.
@@ -86,6 +80,18 @@ contract BlueBulker is IBlueBulker {
     }
 
     /* INTERNAL */
+
+    /// @notice Decodes the data passed as parameter as an array of actions.
+    function _decodeActions(bytes calldata data) internal pure returns (Action[] memory) {
+        return abi.decode(data, (Action[]));
+    }
+
+    /// @notice Decodes and executes actions encoded as parameter.
+    function _decodeExecute(bytes calldata data) internal {
+        Action[] memory actions = _decodeActions(data);
+
+        _execute(actions);
+    }
 
     /// @notice Executes the given batch of actions, with the given input data.
     ///         Those actions, if not performed in the correct order, with the proper action's configuration
