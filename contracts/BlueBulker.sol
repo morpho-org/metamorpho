@@ -81,13 +81,6 @@ contract BlueBulker is IBlueBulker {
 
     /* INTERNAL */
 
-    /// @notice Decodes and executes actions encoded as parameter.
-    function _decodeExecute(bytes calldata data) internal {
-        Action[] memory actions = _decodeActions(data);
-
-        _execute(actions);
-    }
-
     /// @notice Executes the given batch of actions, with the given input data.
     ///         Those actions, if not performed in the correct order, with the proper action's configuration
     ///         and with the proper inclusion of skim final calls, could leave funds in the Bulker contract.
@@ -132,6 +125,13 @@ contract BlueBulker is IBlueBulker {
         } else {
             revert UnsupportedAction(action.actionType);
         }
+    }
+
+    /// @notice Decodes and executes actions encoded as parameter.
+    function _decodeExecute(bytes calldata data) internal {
+        Action[] memory actions = _decodeActions(data);
+
+        _execute(actions);
     }
 
     /* PRIVATE */
