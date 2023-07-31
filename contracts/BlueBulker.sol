@@ -6,8 +6,8 @@ import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IWSTETH} from "contracts/interfaces/IWSTETH.sol";
 import {IBlueBulker} from "contracts/interfaces/IBlueBulker.sol";
 
-import {Signature} from "contracts/libraries/Types.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
+import {Signature} from "contracts/libraries/Types.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 
@@ -52,17 +52,54 @@ contract BlueBulker is IBlueBulker {
     ///         Those actions, if not performed in the correct order, with the proper action's configuration
     ///         and with the proper inclusion of skim final calls, could leave funds in the Bulker contract.
     /// @param actions The batch of action to execute, one after the other.
-    function execute(Action[] calldata actions) external payable {
+    function execute(Action[] memory actions) external payable {
+        _execute(actions);
+    }
+
+    function onBlueSupply(uint256, bytes memory data) external {
+        if (msg.sender != address(_BLUE)) revert OnlyBlue();
+
+        Action[] memory actions = abi.decode(data, (Action[]));
+
+        _execute(actions);
+    }
+
+    function onBlueSupplyCollateral(uint256, bytes memory data) external {
+        if (msg.sender != address(_BLUE)) revert OnlyBlue();
+
+        Action[] memory actions = abi.decode(data, (Action[]));
+
+        _execute(actions);
+    }
+
+    function onBlueRepay(uint256, bytes memory data) external {
+        if (msg.sender != address(_BLUE)) revert OnlyBlue();
+
+        Action[] memory actions = abi.decode(data, (Action[]));
+
+        _execute(actions);
+    }
+
+    /// @dev Only the WETH contract is allowed to transfer ETH to this contract, without any calldata.
+    receive() external payable {
+        if (msg.sender != _WETH) revert OnlyWETH();
+    }
+
+    /* INTERNAL */
+
+    /// @notice Executes the given batch of actions, with the given input data.
+    ///         Those actions, if not performed in the correct order, with the proper action's configuration
+    ///         and with the proper inclusion of skim final calls, could leave funds in the Bulker contract.
+    /// @param actions The batch of action to execute, one after the other.
+    function _execute(Action[] memory actions) internal {
         uint256 nbActions = actions.length;
         for (uint256 i; i < nbActions; ++i) {
             _performAction(actions[i]);
         }
     }
 
-    /* INTERNAL */
-
     /// @dev Performs the given action.
-    function _performAction(Action calldata action) internal {
+    function _performAction(Action memory action) internal {
         if (action.actionType == ActionType.APPROVE2) {
             _approve2(action.data);
         } else if (action.actionType == ActionType.TRANSFER_FROM2) {
@@ -99,7 +136,7 @@ contract BlueBulker is IBlueBulker {
     /* INTERNAL ACTIONS */
 
     /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.
-    function _approve2(bytes calldata data) internal {
+    function _approve2(bytes memory data) internal {
         (address asset, uint256 amount, uint256 deadline, Signature memory signature) =
             abi.decode(data, (address, uint256, uint256, Signature));
         if (amount == 0) revert AmountIsZero();
@@ -110,7 +147,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Transfers the given `amount` of `asset` from sender to this contract via ERC20 transfer with Permit2 fallback.
-    function _transferFrom2(bytes calldata data) internal {
+    function _transferFrom2(bytes memory data) internal {
         (address asset, uint256 amount) = abi.decode(data, (address, uint256));
         if (amount == 0) revert AmountIsZero();
 
@@ -118,7 +155,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
-    function _setApproval(bytes calldata data) internal {
+    function _setApproval(bytes memory data) internal {
         (bool isAllowed, uint256 nonce, uint256 deadline, Signature memory signature) =
             abi.decode(data, (bool, uint256, uint256, Signature));
 
@@ -127,31 +164,33 @@ contract BlueBulker is IBlueBulker {
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
     ///         The supplied amount cannot be used as collateral but is eligible for the peer-to-peer matching.
-    function _supply(bytes calldata data) internal {
-        (Market memory market, uint256 amount, address onBehalf) = abi.decode(data, (Market, uint256, address));
+    function _supply(bytes memory data) internal {
+        (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
+            abi.decode(data, (Market, uint256, address, bytes));
         if (onBehalf == address(this)) revert AddressIsBulker();
 
         amount = Math.min(amount, ERC20(address(market.borrowableAsset)).balanceOf(address(this)));
 
         _approveMaxBlue(address(market.borrowableAsset));
 
-        _BLUE.supply(market, amount, onBehalf);
+        _BLUE.supply(market, amount, onBehalf, callbackData);
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
-    function _supplyCollateral(bytes calldata data) internal {
-        (Market memory market, uint256 amount, address onBehalf) = abi.decode(data, (Market, uint256, address));
+    function _supplyCollateral(bytes memory data) internal {
+        (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
+            abi.decode(data, (Market, uint256, address, bytes));
         if (onBehalf == address(this)) revert AddressIsBulker();
 
         amount = Math.min(amount, ERC20(address(market.collateralAsset)).balanceOf(address(this)));
 
         _approveMaxBlue(address(market.collateralAsset));
 
-        _BLUE.supplyCollateral(market, amount, onBehalf);
+        _BLUE.supplyCollateral(market, amount, onBehalf, callbackData);
     }
 
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Morpho.
-    function _borrow(bytes calldata data) internal {
+    function _borrow(bytes memory data) internal {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.borrow(market, amount, msg.sender);
@@ -160,19 +199,20 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
-    function _repay(bytes calldata data) internal {
-        (Market memory market, uint256 amount, address onBehalf) = abi.decode(data, (Market, uint256, address));
+    function _repay(bytes memory data) internal {
+        (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
+            abi.decode(data, (Market, uint256, address, bytes));
         if (onBehalf == address(this)) revert AddressIsBulker();
 
         amount = Math.min(amount, ERC20(address(market.borrowableAsset)).balanceOf(address(this)));
 
         _approveMaxBlue(address(market.borrowableAsset));
 
-        _BLUE.repay(market, amount, onBehalf);
+        _BLUE.repay(market, amount, onBehalf, callbackData);
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of `onBehalf`. Sender must have previously approved the bulker as their manager on Morpho.
-    function _withdraw(bytes calldata data) internal {
+    function _withdraw(bytes memory data) internal {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.withdraw(market, amount, msg.sender);
@@ -181,7 +221,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
-    function _withdrawCollateral(bytes calldata data) internal {
+    function _withdrawCollateral(bytes memory data) internal {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
         _BLUE.withdrawCollateral(market, amount, msg.sender);
@@ -190,7 +230,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Wraps the given input of ETH to WETH.
-    function _wrapEth(bytes calldata data) internal {
+    function _wrapEth(bytes memory data) internal {
         (uint256 amount) = abi.decode(data, (uint256));
 
         amount = Math.min(amount, address(this).balance);
@@ -200,7 +240,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Unwraps the given input of WETH to ETH.
-    function _unwrapEth(bytes calldata data) internal {
+    function _unwrapEth(bytes memory data) internal {
         (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();
@@ -214,7 +254,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Wraps the given input of stETH to wstETH.
-    function _wrapStEth(bytes calldata data) internal {
+    function _wrapStEth(bytes memory data) internal {
         (uint256 amount) = abi.decode(data, (uint256));
 
         amount = Math.min(amount, ERC20(_ST_ETH).balanceOf(address(this)));
@@ -224,7 +264,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Unwraps the given input of wstETH to stETH.
-    function _unwrapStEth(bytes calldata data) internal {
+    function _unwrapStEth(bytes memory data) internal {
         (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();
@@ -238,7 +278,7 @@ contract BlueBulker is IBlueBulker {
     }
 
     /// @dev Sends any ERC20 in this contract to the receiver.
-    function _skim(bytes calldata data) internal {
+    function _skim(bytes memory data) internal {
         (address asset, address receiver) = abi.decode(data, (address, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();

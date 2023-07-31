@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.5.0;
 
-interface IBlueBulker {
+import {
+    IBlueRepayCallback,
+    IBlueSupplyCallback,
+    IBlueSupplyCollateralCallback
+} from "@morpho-blue/interfaces/IBlueCallbacks.sol";
+
+interface IBlueBulker is IBlueSupplyCallback, IBlueRepayCallback, IBlueSupplyCollateralCallback {
     /* ERRORS */
 
     /// @notice Thrown when execution parameters don't have the same length.
@@ -11,6 +17,9 @@ interface IBlueBulker {
 
     /// @notice Thrown when another address than WETH sends ETH to the contract.
     error OnlyWETH();
+
+    /// @notice Thrown when another address than Blue calls the bulker's callback functions.
+    error OnlyBlue();
 
     /// @notice Thrown when an address used as parameter is the zero address.
     error AddressIsZero();
