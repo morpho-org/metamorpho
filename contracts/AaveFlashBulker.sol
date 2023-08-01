@@ -14,7 +14,7 @@ abstract contract AaveFlashBulker is BaseBulker {
         uint256[] calldata fees,
         address,
         bytes calldata data
-    ) external payable override returns (bool) {
+    ) external returns (bool) {
         _checkInitiated();
 
         _decodeExecute(data);

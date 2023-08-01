@@ -13,7 +13,7 @@ abstract contract BalancerFlashBulker is BaseBulker {
         uint256[] calldata amounts,
         uint256[] calldata fees,
         bytes calldata data
-    ) external payable override {
+    ) external {
         _checkInitiated();
 
         _decodeExecute(data);

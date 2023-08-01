@@ -14,7 +14,6 @@ import {IBalancerFlashBorrower} from "./interfaces/IBalancerFlashBorrower.sol";
 import {IFlashBorrower} from "@morpho-blue/interfaces/IFlashBorrower.sol";
 
 import {Math} from "@morpho-utils/math/Math.sol";
-import {Signature} from "@morpho-blue/libraries/AuthorizationLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 
@@ -97,19 +96,25 @@ abstract contract BaseBulker is
     }
 
     function onBlueSupply(uint256, bytes calldata data) external {
-        if (msg.sender != address(_BLUE)) revert OnlyBlue();
+        _checkInitiated();
 
         _decodeExecute(data);
     }
 
     function onBlueSupplyCollateral(uint256, bytes calldata data) external {
-        if (msg.sender != address(_BLUE)) revert OnlyBlue();
+        _checkInitiated();
 
         _decodeExecute(data);
     }
 
     function onBlueRepay(uint256, bytes calldata data) external {
-        if (msg.sender != address(_BLUE)) revert OnlyBlue();
+        _checkInitiated();
+
+        _decodeExecute(data);
+    }
+
+    function onBlueFlashLoan(address, address, uint256, bytes calldata data) external {
+        _checkInitiated();
 
         _decodeExecute(data);
     }
@@ -193,8 +198,8 @@ abstract contract BaseBulker is
 
     /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.
     function _approve2(bytes memory data) private {
-        (address asset, uint256 amount, uint256 deadline, Signature memory signature) =
-            abi.decode(data, (address, uint256, uint256, Signature));
+        (address asset, uint256 amount, uint256 deadline, IBlue.Signature memory signature) =
+            abi.decode(data, (address, uint256, uint256, IBlue.Signature));
         if (amount == 0) revert AmountIsZero();
 
         ERC20Permit2(asset).simplePermit2(
@@ -212,8 +217,8 @@ abstract contract BaseBulker is
 
     /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
     function _setAuthorization(bytes memory data) private {
-        (address authorizer, bool isAuthorized, uint256 deadline, Signature memory signature) =
-            abi.decode(data, (address, bool, uint256, Signature));
+        (address authorizer, bool isAuthorized, uint256 deadline, IBlue.Signature memory signature) =
+            abi.decode(data, (address, bool, uint256, IBlue.Signature));
 
         _BLUE.setAuthorization(authorizer, address(this), isAuthorized, deadline, signature);
     }
@@ -340,6 +345,8 @@ abstract contract BaseBulker is
     /// @dev Triggers a flash loan on Blue.
     function _blueFlashLoan(bytes memory data) private {
         (address asset, uint256 amount, bytes memory callbackData) = abi.decode(data, (address, uint256, bytes));
+
+        _approveMaxBlue(asset);
 
         _BLUE.flashLoan(this, asset, amount, callbackData);
     }

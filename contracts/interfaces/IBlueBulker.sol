@@ -18,9 +18,6 @@ interface IBlueBulker is IBlueSupplyCallback, IBlueRepayCallback, IBlueSupplyCol
     /// @notice Thrown when another address than WETH sends ETH to the contract.
     error OnlyWETH();
 
-    /// @notice Thrown when another address than Blue calls the bulker's callback functions.
-    error OnlyBlue();
-
     /// @notice Thrown when an address used as parameter is the zero address.
     error AddressIsZero();
 

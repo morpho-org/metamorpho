@@ -19,5 +19,5 @@ interface IAaveFlashBorrower {
         uint256[] calldata premiums,
         address initiator,
         bytes calldata params
-    ) external payable returns (bool);
+    ) external returns (bool);
 }

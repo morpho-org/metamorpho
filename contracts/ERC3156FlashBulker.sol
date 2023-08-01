@@ -12,8 +12,6 @@ abstract contract ERC3156FlashBulker is BaseBulker {
 
     function onFlashLoan(address, address asset, uint256 amount, uint256 fee, bytes calldata data)
         external
-        payable
-        override
         returns (bytes32)
     {
         _checkInitiated();
