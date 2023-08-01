@@ -50,8 +50,6 @@ contract InternalSupplyRouter is ERC2771Context {
     }
 
     function _withdraw(MarketAllocation memory allocation, address onBehalf, address receiver) internal virtual {
-        _BLUE.withdraw(allocation.market, allocation.assets, onBehalf);
-
-        ERC20(address(allocation.market.borrowableAsset)).safeTransfer(receiver, allocation.assets);
+        _BLUE.withdraw(allocation.market, allocation.assets, onBehalf, receiver);
     }
 }

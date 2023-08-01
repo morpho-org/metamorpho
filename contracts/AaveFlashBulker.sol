@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {IAaveFlashBorrower} from "contracts/interfaces/IAaveFlashBorrower.sol";
-
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseBulker} from "contracts/BaseBulker.sol";
 
-abstract contract AaveFlashBulker is BaseBulker, IAaveFlashBorrower {
+abstract contract AaveFlashBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
     function executeOperation(

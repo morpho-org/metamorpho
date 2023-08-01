@@ -6,7 +6,7 @@ import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
 import {IVaultAllocationManager} from "contracts/interfaces/IVaultAllocationManager.sol";
 
 import {Events} from "contracts/libraries/Events.sol";
-import {MarketAllocation, Signature} from "contracts/libraries/Types.sol";
+import {MarketAllocation} from "contracts/libraries/Types.sol";
 import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "contracts/libraries/Errors.sol";
 import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "contracts/libraries/ConfigSetLib.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";

@@ -3,14 +3,18 @@ pragma solidity 0.8.21;
 
 import {IWETH} from "./interfaces/IWETH.sol";
 import {IWSTETH} from "./interfaces/IWSTETH.sol";
-import {IBaseBulker} from "./interfaces/IBlueBulker.sol";
+import {IBlueBulker} from "./interfaces/IBlueBulker.sol";
 import {Market, IBlue} from "@morpho-blue/interfaces/IBlue.sol";
 import {IAaveFlashLender} from "./interfaces/IAaveFlashLender.sol";
 import {IERC3156FlashLender} from "./interfaces/IERC3156FlashLender.sol";
 import {IBalancerFlashLender} from "./interfaces/IBalancerFlashLender.sol";
+import {IAaveFlashBorrower} from "./interfaces/IAaveFlashBorrower.sol";
+import {IERC3156FlashBorrower} from "./interfaces/IERC3156FlashBorrower.sol";
+import {IBalancerFlashBorrower} from "./interfaces/IBalancerFlashBorrower.sol";
+import {IFlashBorrower} from "@morpho-blue/interfaces/IFlashBorrower.sol";
 
-import {Signature} from "./libraries/Types.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
+import {Signature} from "@morpho-blue/libraries/AuthorizationLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 
@@ -18,7 +22,13 @@ import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.s
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
 /// @notice Contract allowing to bundle multiple interactions with Blue together.
-contract BaseBulker is IBaseBulker {
+abstract contract BaseBulker is
+    IBlueBulker,
+    IFlashBorrower,
+    IAaveFlashBorrower,
+    IERC3156FlashBorrower,
+    IBalancerFlashBorrower
+{
     using SafeTransferLib for ERC20;
     using Permit2Lib for ERC20Permit2;
 
@@ -129,7 +139,7 @@ contract BaseBulker is IBaseBulker {
         } else if (action.actionType == ActionType.TRANSFER_FROM2) {
             _transferFrom2(action.data);
         } else if (action.actionType == ActionType.SET_APPROVAL) {
-            _setApproval(action.data);
+            _setAuthorization(action.data);
         } else if (action.actionType == ActionType.SUPPLY) {
             _supply(action.data);
         } else if (action.actionType == ActionType.SUPPLY_COLLATERAL) {
@@ -152,6 +162,16 @@ contract BaseBulker is IBaseBulker {
             _unwrapStEth(action.data);
         } else if (action.actionType == ActionType.SKIM) {
             _skim(action.data);
+        } else if (action.actionType == ActionType.BLUE_FLASH_LOAN) {
+            _aaveFlashLoan(_AAVE_V2, action.data);
+        } else if (action.actionType == ActionType.AAVE_V2_FLASH_LOAN) {
+            _aaveFlashLoan(_AAVE_V2, action.data);
+        } else if (action.actionType == ActionType.AAVE_V3_FLASH_LOAN) {
+            _aaveFlashLoan(_AAVE_V3, action.data);
+        } else if (action.actionType == ActionType.MAKER_FLASH_LOAN) {
+            _makerFlashLoan(action.data);
+        } else if (action.actionType == ActionType.BALANCER_FLASH_LOAN) {
+            _balancerFlashLoan(action.data);
         } else {
             revert UnsupportedAction(action.actionType);
         }
@@ -191,11 +211,11 @@ contract BaseBulker is IBaseBulker {
     }
 
     /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
-    function _setApproval(bytes memory data) private {
-        (bool isAllowed, uint256 nonce, uint256 deadline, Signature memory signature) =
-            abi.decode(data, (bool, uint256, uint256, Signature));
+    function _setAuthorization(bytes memory data) private {
+        (address authorizer, bool isAuthorized, uint256 deadline, Signature memory signature) =
+            abi.decode(data, (address, bool, uint256, Signature));
 
-        // TODO: _BLUE.setApproval(msg.sender, address(this), isAllowed, nonce, deadline, signature);
+        _BLUE.setAuthorization(authorizer, address(this), isAuthorized, deadline, signature);
     }
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
@@ -229,9 +249,7 @@ contract BaseBulker is IBaseBulker {
     function _borrow(bytes memory data) private {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
-        _BLUE.borrow(market, amount, msg.sender);
-
-        if (receiver != address(this)) ERC20(address(market.borrowableAsset)).safeTransfer(receiver, amount);
+        _BLUE.borrow(market, amount, msg.sender, receiver);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
@@ -251,18 +269,14 @@ contract BaseBulker is IBaseBulker {
     function _withdraw(bytes memory data) private {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
-        _BLUE.withdraw(market, amount, msg.sender);
-
-        if (receiver != address(this)) ERC20(address(market.borrowableAsset)).safeTransfer(receiver, amount);
+        _BLUE.withdraw(market, amount, msg.sender, receiver);
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
     function _withdrawCollateral(bytes memory data) private {
         (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
 
-        _BLUE.withdrawCollateral(market, amount, msg.sender);
-
-        if (receiver != address(this)) ERC20(address(market.collateralAsset)).safeTransfer(receiver, amount);
+        _BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
     }
 
     /// @dev Wraps the given input of ETH to WETH.
@@ -321,6 +335,38 @@ contract BaseBulker is IBaseBulker {
 
         uint256 balance = ERC20(asset).balanceOf(address(this));
         ERC20(asset).safeTransfer(receiver, balance);
+    }
+
+    /// @dev Triggers a flash loan on Blue.
+    function _blueFlashLoan(bytes memory data) private {
+        (address asset, uint256 amount, bytes memory callbackData) = abi.decode(data, (address, uint256, bytes));
+
+        _BLUE.flashLoan(this, asset, amount, callbackData);
+    }
+
+    /// @dev Triggers a flash loan on Aave.
+    function _aaveFlashLoan(address aave, bytes memory data) private {
+        (address[] memory assets, uint256[] memory amounts, bytes memory callbackData) =
+            abi.decode(data, (address[], uint256[], bytes));
+
+        IAaveFlashLender(aave).flashLoan(
+            address(this), assets, amounts, new uint256[](assets.length), address(this), callbackData, 0
+        );
+    }
+
+    /// @dev Triggers a flash loan on Maker.
+    function _makerFlashLoan(bytes memory data) private {
+        (address asset, uint256 amount, bytes memory callbackData) = abi.decode(data, (address, uint256, bytes));
+
+        IERC3156FlashLender(_MAKER_VAULT).flashLoan(address(this), asset, amount, callbackData);
+    }
+
+    /// @dev Triggers a flash loan on AaveV3.
+    function _balancerFlashLoan(bytes memory data) private {
+        (address[] memory assets, uint256[] memory amounts, bytes memory callbackData) =
+            abi.decode(data, (address[], uint256[], bytes));
+
+        IBalancerFlashLender(_BALANCER_VAULT).flashLoan(address(this), assets, amounts, callbackData);
     }
 
     /// @dev Gives the max approval to the Morpho contract to spend the given `asset` if not already approved.

@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {IBalancerFlashBorrower} from "./interfaces/IBalancerFlashBorrower.sol";
-
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseBulker} from "./BaseBulker.sol";
 
-abstract contract BalancerFlashBulker is BaseBulker, IBalancerFlashBorrower {
+abstract contract BalancerFlashBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
     function receiveFlashLoan(

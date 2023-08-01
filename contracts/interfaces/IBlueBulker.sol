@@ -6,11 +6,8 @@ import {
     IBlueSupplyCallback,
     IBlueSupplyCollateralCallback
 } from "@morpho-blue/interfaces/IBlueCallbacks.sol";
-import {IERC3156FlashBorrower} from "./IERC3156FlashBorrower.sol";
-import {IAaveFlashBorrower} from "./IAaveFlashBorrower.sol";
-import {IBalancerFlashBorrower} from "./IBalancerFlashBorrower.sol";
 
-interface IBaseBulker is IBlueSupplyCallback, IBlueRepayCallback, IBlueSupplyCollateralCallback {
+interface IBlueBulker is IBlueSupplyCallback, IBlueRepayCallback, IBlueSupplyCollateralCallback {
     /* ERRORS */
 
     /// @notice Thrown when execution parameters don't have the same length.
@@ -53,6 +50,7 @@ interface IBaseBulker is IBlueSupplyCallback, IBlueRepayCallback, IBlueSupplyCol
         WRAP_ST_ETH,
         UNWRAP_ST_ETH,
         SKIM,
+        BLUE_FLASH_LOAN,
         AAVE_V2_FLASH_LOAN,
         AAVE_V3_FLASH_LOAN,
         MAKER_FLASH_LOAN,
@@ -68,5 +66,3 @@ interface IBaseBulker is IBlueSupplyCallback, IBlueRepayCallback, IBlueSupplyCol
 
     function execute(Action[] calldata actions) external payable;
 }
-
-interface IBlueBulker is IBaseBulker, IAaveFlashBorrower, IBalancerFlashBorrower, IERC3156FlashBorrower {}
