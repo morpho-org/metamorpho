@@ -20,6 +20,10 @@ enum BulkActionType {
   WRAP_ST_ETH,
   UNWRAP_ST_ETH,
   SKIM,
+  AAVE_V2_FLASH_LOAN,
+  AAVE_V3_FLASH_LOAN,
+  MAKER_FLASH_LOAN,
+  BALANCER_FLASH_LOAN,
 }
 
 const marketParamtype = ParamType.from({
@@ -214,6 +218,62 @@ class BulkAction {
     return {
       actionType: BulkActionType.SKIM,
       data: defaultAbiCoder.encode(["address", "address"], [asset, receiver]),
+    };
+  }
+
+  static aaveV2FlashLoan(
+    assets: string[],
+    amounts: BigNumberish[],
+    callbackActions: IBlueBulker.ActionStruct[],
+  ): IBlueBulker.ActionStruct {
+    return {
+      actionType: BulkActionType.AAVE_V2_FLASH_LOAN,
+      data: defaultAbiCoder.encode(
+        ["address[]", "uint256[]", "bytes"],
+        [assets, amounts, BulkBatch.encode(callbackActions)],
+      ),
+    };
+  }
+
+  static aaveV3FlashLoan(
+    assets: string[],
+    amounts: BigNumberish[],
+    callbackActions: IBlueBulker.ActionStruct[],
+  ): IBlueBulker.ActionStruct {
+    return {
+      actionType: BulkActionType.AAVE_V3_FLASH_LOAN,
+      data: defaultAbiCoder.encode(
+        ["address[]", "uint256[]", "bytes"],
+        [assets, amounts, BulkBatch.encode(callbackActions)],
+      ),
+    };
+  }
+
+  static makerFlashLoan(
+    asset: string,
+    amount: BigNumberish,
+    callbackActions: IBlueBulker.ActionStruct[],
+  ): IBlueBulker.ActionStruct {
+    return {
+      actionType: BulkActionType.MAKER_FLASH_LOAN,
+      data: defaultAbiCoder.encode(
+        ["address", "uint256", "bytes"],
+        [asset, amount, BulkBatch.encode(callbackActions)],
+      ),
+    };
+  }
+
+  static balancerFlashLoan(
+    assets: string[],
+    amounts: BigNumberish[],
+    callbackActions: IBlueBulker.ActionStruct[],
+  ): IBlueBulker.ActionStruct {
+    return {
+      actionType: BulkActionType.BALANCER_FLASH_LOAN,
+      data: defaultAbiCoder.encode(
+        ["address[]", "uint256[]", "bytes"],
+        [assets, amounts, BulkBatch.encode(callbackActions)],
+      ),
     };
   }
 }
