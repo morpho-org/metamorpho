@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "contracts/BaseBulker.sol";
+import {BaseBulker} from "./BaseBulker.sol";
 
 abstract contract AaveFlashBulker is BaseBulker {
     using SafeTransferLib for ERC20;

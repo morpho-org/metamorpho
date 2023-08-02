@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
-import {IWETH} from "./interfaces/IWETH.sol";
-import {IWSTETH} from "./interfaces/IWSTETH.sol";
+import {IWETH} from "../interfaces/IWETH.sol";
+import {IWSTETH} from "../interfaces/IWSTETH.sol";
 import {IBlueBulker} from "./interfaces/IBlueBulker.sol";
 import {Market, IBlue} from "@morpho-blue/interfaces/IBlue.sol";
 import {IAaveFlashLender} from "./interfaces/IAaveFlashLender.sol";
