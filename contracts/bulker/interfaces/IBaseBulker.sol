@@ -5,25 +5,31 @@ interface IBaseBulker {
     /* TYPES */
 
     enum ActionType {
-        APPROVE2,
-        TRANSFER_FROM2,
-        SET_AUTHORIZATION,
-        SUPPLY,
-        SUPPLY_COLLATERAL,
-        BORROW,
-        REPAY,
-        WITHDRAW,
-        WITHDRAW_COLLATERAL,
-        WRAP_ETH,
-        UNWRAP_ETH,
+        SKIM, // Common
+        // ERC20
+        ERC20_APPROVE2,
+        ERC20_TRANSFER_FROM2,
+        // Blue
+        BLUE_SET_AUTHORIZATION,
+        BLUE_SUPPLY,
+        BLUE_SUPPLY_COLLATERAL,
+        BLUE_BORROW,
+        BLUE_REPAY,
+        BLUE_WITHDRAW,
+        BLUE_WITHDRAW_COLLATERAL,
+        BLUE_FLASH_LOAN,
+        // Native token
+        WRAP_NATIVE,
+        UNWRAP_NATIVE,
+        // StEth token
         WRAP_ST_ETH,
         UNWRAP_ST_ETH,
-        SKIM,
+        // Swaps
         UNI_SWAP,
         CRV_V1_SWAP,
         CRV_V2_SWAP,
         BALANCER_V2_SWAP,
-        BLUE_FLASH_LOAN,
+        // Flash Loans
         AAVE_V2_FLASH_LOAN,
         AAVE_V3_FLASH_LOAN,
         MAKER_FLASH_LOAN,

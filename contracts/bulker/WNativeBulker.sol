@@ -42,10 +42,10 @@ contract WNativeBulker is BaseBulker, IWNativeBulker {
     function _dispatch(Action memory action) internal virtual override returns (bool) {
         if (super._dispatch(action)) return true;
 
-        if (action.actionType == ActionType.WRAP_ST_ETH) {
-            _wrapEth(action.data);
-        } else if (action.actionType == ActionType.UNWRAP_ETH) {
-            _unwrapEth(action.data);
+        if (action.actionType == ActionType.WRAP_NATIVE) {
+            _wrapNative(action.data);
+        } else if (action.actionType == ActionType.UNWRAP_NATIVE) {
+            _unwrapNative(action.data);
         } else {
             return false;
         }
@@ -56,7 +56,7 @@ contract WNativeBulker is BaseBulker, IWNativeBulker {
     /* PRIVATE */
 
     /// @dev Wraps the given input of ETH to WETH.
-    function _wrapEth(bytes memory data) private {
+    function _wrapNative(bytes memory data) private {
         (uint256 amount) = abi.decode(data, (uint256));
 
         amount = Math.min(amount, address(this).balance);
@@ -66,7 +66,7 @@ contract WNativeBulker is BaseBulker, IWNativeBulker {
     }
 
     /// @dev Unwraps the given input of WETH to ETH.
-    function _unwrapEth(bytes memory data) private {
+    function _unwrapNative(bytes memory data) private {
         (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
         if (receiver == address(this)) revert AddressIsBulker();
         if (receiver == address(0)) revert AddressIsZero();

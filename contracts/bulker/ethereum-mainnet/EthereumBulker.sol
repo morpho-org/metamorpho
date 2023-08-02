@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {MakerBulker} from "../MakerBulker.sol";
+import {MakerBulker} from "./MakerBulker.sol";
 import {AaveV2Bulker} from "../AaveV2Bulker.sol";
 import {AaveV3Bulker} from "../AaveV3Bulker.sol";
 import {BalancerBulker} from "../BalancerBulker.sol";

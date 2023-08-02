@@ -18,9 +18,9 @@ contract ERC20Bulker is BaseBulker {
     function _dispatch(Action memory action) internal virtual override returns (bool) {
         if (super._dispatch(action)) return true;
 
-        if (action.actionType == ActionType.APPROVE2) {
+        if (action.actionType == ActionType.ERC20_APPROVE2) {
             _approve2(action.data);
-        } else if (action.actionType == ActionType.TRANSFER_FROM2) {
+        } else if (action.actionType == ActionType.ERC20_TRANSFER_FROM2) {
             _transferFrom2(action.data);
         } else {
             return false;

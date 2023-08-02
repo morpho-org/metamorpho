@@ -60,19 +60,19 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     function _dispatch(Action memory action) internal virtual override returns (bool) {
         if (super._dispatch(action)) return true;
 
-        if (action.actionType == ActionType.SET_AUTHORIZATION) {
+        if (action.actionType == ActionType.BLUE_SET_AUTHORIZATION) {
             _setAuthorization(action.data);
-        } else if (action.actionType == ActionType.SUPPLY) {
+        } else if (action.actionType == ActionType.BLUE_SUPPLY) {
             _supply(action.data);
-        } else if (action.actionType == ActionType.SUPPLY_COLLATERAL) {
+        } else if (action.actionType == ActionType.BLUE_SUPPLY_COLLATERAL) {
             _supplyCollateral(action.data);
-        } else if (action.actionType == ActionType.BORROW) {
+        } else if (action.actionType == ActionType.BLUE_BORROW) {
             _borrow(action.data);
-        } else if (action.actionType == ActionType.REPAY) {
+        } else if (action.actionType == ActionType.BLUE_REPAY) {
             _repay(action.data);
-        } else if (action.actionType == ActionType.WITHDRAW) {
+        } else if (action.actionType == ActionType.BLUE_WITHDRAW) {
             _withdraw(action.data);
-        } else if (action.actionType == ActionType.WITHDRAW_COLLATERAL) {
+        } else if (action.actionType == ActionType.BLUE_WITHDRAW_COLLATERAL) {
             _withdrawCollateral(action.data);
         } else if (action.actionType == ActionType.BLUE_FLASH_LOAN) {
             _blueFlashLoan(action.data);
