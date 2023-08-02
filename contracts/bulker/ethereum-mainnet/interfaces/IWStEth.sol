@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.5.0;
 
-interface IWSTETH {
+interface IWStEth {
     function DOMAIN_SEPARATOR() external view returns (bytes32);
 
     function allowance(address owner, address spender) external view returns (uint256);
