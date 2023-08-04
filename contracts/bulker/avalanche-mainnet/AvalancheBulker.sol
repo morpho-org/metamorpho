@@ -17,12 +17,4 @@ contract AvalancheBulker is ERC20Bulker, WNativeBulker, BlueBulker, AaveV2Bulker
         AaveV3Bulker(0x794a61358D6845594F94dc1DB02A252b5b4814aD)
         BalancerBulker(0xBA12222222228d8Ba445958a75a0704d566BF2C8)
     {}
-
-    function _dispatch(Action memory action)
-        internal
-        override(ERC20Bulker, WNativeBulker, BlueBulker, AaveV2Bulker, AaveV3Bulker, BalancerBulker)
-        returns (bool)
-    {
-        return super._dispatch(action);
-    }
 }

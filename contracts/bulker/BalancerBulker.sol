@@ -36,21 +36,6 @@ contract BalancerBulker is BaseBulker, IBalancerFlashBorrower {
         }
     }
 
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.BALANCER_FLASH_LOAN) {
-            _balancerFlashLoan(action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
-
     /* PRIVATE */
 
     /// @dev Triggers a flash loan on Balancer.

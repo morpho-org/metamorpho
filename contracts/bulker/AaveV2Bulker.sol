@@ -18,19 +18,4 @@ contract AaveV2Bulker is BaseBulker, AaveBulker {
 
         _AAVE_V2 = IAaveFlashLender(aaveV2);
     }
-
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.AAVE_V2_FLASH_LOAN) {
-            _aaveFlashLoan(_AAVE_V2, action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
 }

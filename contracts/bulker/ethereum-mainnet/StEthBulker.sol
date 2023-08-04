@@ -29,23 +29,6 @@ contract StEthBulker is BaseBulker {
         ERC20(_ST_ETH).safeApprove(_WST_ETH, type(uint256).max);
     }
 
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.WRAP_ST_ETH) {
-            _wrapStEth(action.data);
-        } else if (action.actionType == ActionType.UNWRAP_ST_ETH) {
-            _unwrapStEth(action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
-
     /* PRIVATE */
 
     /// @dev Wraps the given input of stETH to wstETH.

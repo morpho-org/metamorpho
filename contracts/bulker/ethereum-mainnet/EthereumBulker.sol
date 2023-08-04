@@ -29,14 +29,4 @@ contract EthereumBulker is
         BalancerBulker(0xBA12222222228d8Ba445958a75a0704d566BF2C8)
         MakerBulker(0x60744434d6339a6B27d73d9Eda62b6F66a0a04FA)
     {}
-
-    function _dispatch(Action memory action)
-        internal
-        override(
-            ERC20Bulker, WNativeBulker, StEthBulker, BlueBulker, AaveV2Bulker, AaveV3Bulker, BalancerBulker, MakerBulker
-        )
-        returns (bool)
-    {
-        return super._dispatch(action);
-    }
 }

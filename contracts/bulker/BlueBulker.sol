@@ -30,58 +30,13 @@ contract BlueBulker is BaseBulker, IBlueBulker {
 
     /* EXTERNAL */
 
-    function onBlueSupply(uint256, bytes calldata data) external {
-        _checkInitiated();
+    function onBlueSupply(uint256, bytes calldata data) external callback(data) {}
 
-        _decodeExecute(data);
-    }
+    function onBlueSupplyCollateral(uint256, bytes calldata data) external callback(data) {}
 
-    function onBlueSupplyCollateral(uint256, bytes calldata data) external {
-        _checkInitiated();
+    function onBlueRepay(uint256, bytes calldata data) external callback(data) {}
 
-        _decodeExecute(data);
-    }
-
-    function onBlueRepay(uint256, bytes calldata data) external {
-        _checkInitiated();
-
-        _decodeExecute(data);
-    }
-
-    function onBlueFlashLoan(address, address, uint256, bytes calldata data) external {
-        _checkInitiated();
-
-        _decodeExecute(data);
-    }
-
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.BLUE_SET_AUTHORIZATION) {
-            _setAuthorization(action.data);
-        } else if (action.actionType == ActionType.BLUE_SUPPLY) {
-            _supply(action.data);
-        } else if (action.actionType == ActionType.BLUE_SUPPLY_COLLATERAL) {
-            _supplyCollateral(action.data);
-        } else if (action.actionType == ActionType.BLUE_BORROW) {
-            _borrow(action.data);
-        } else if (action.actionType == ActionType.BLUE_REPAY) {
-            _repay(action.data);
-        } else if (action.actionType == ActionType.BLUE_WITHDRAW) {
-            _withdraw(action.data);
-        } else if (action.actionType == ActionType.BLUE_WITHDRAW_COLLATERAL) {
-            _withdrawCollateral(action.data);
-        } else if (action.actionType == ActionType.BLUE_FLASH_LOAN) {
-            _blueFlashLoan(action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
+    function onBlueFlashLoan(address, address, uint256, bytes calldata data) external callback(data) {}
 
     /* PRIVATE */
 

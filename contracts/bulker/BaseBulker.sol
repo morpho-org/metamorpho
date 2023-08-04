@@ -5,11 +5,13 @@ import {IBaseBulker} from "./interfaces/IBaseBulker.sol";
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
+import {Multicall} from "./Multicall.sol";
+
 /// @title BaseBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
 /// @notice Base abstract contract allowing to dispatch a batch of actions down the inheritance tree.
-abstract contract BaseBulker is IBaseBulker {
+abstract contract BaseBulker is Multicall, IBaseBulker {
     using SafeTransferLib for ERC20;
 
     /* STORAGE */
@@ -30,19 +32,9 @@ abstract contract BaseBulker is IBaseBulker {
     modifier callback(bytes calldata data) {
         _checkInitiated();
 
-        _decodeExecute(data);
+        _multicall(abi.decode(data, (bytes[])));
 
         _;
-    }
-
-    /* EXTERNAL */
-
-    /// @notice Executes the given batch of actions, with the given input data.
-    ///         Those actions, if not performed in the correct order, with the proper action's configuration
-    ///         and with the proper inclusion of skim final calls, could leave funds in the Bulker contract.
-    /// @param actions The batch of action to execute, one after the other.
-    function execute(Action[] memory actions) external payable {
-        _execute(actions);
     }
 
     /* INTERNAL */
@@ -51,44 +43,7 @@ abstract contract BaseBulker is IBaseBulker {
         require(_initiator != address(0), "2");
     }
 
-    /// @notice Decodes and executes actions encoded as parameter.
-    function _decodeExecute(bytes calldata data) internal {
-        Action[] memory actions = _decodeActions(data);
-
-        _execute(actions);
-    }
-
-    /// @notice Executes the given batch of actions, with the given input data.
-    ///         Those actions, if not performed in the correct order, with the proper action's configuration
-    ///         and with the proper inclusion of skim final calls, could leave funds in the Bulker contract.
-    /// @param actions The batch of action to execute, one after the other.
-    function _execute(Action[] memory actions) internal {
-        uint256 nbActions = actions.length;
-        for (uint256 i; i < nbActions; ++i) {
-            Action memory action = actions[i];
-
-            if (!_dispatch(action)) revert UnsupportedAction(action.actionType);
-        }
-    }
-
-    /// @dev Performs the given action.
-    /// @return Whether the action was successfully dispatched.
-    function _dispatch(Action memory action) internal virtual returns (bool) {
-        if (action.actionType == ActionType.SKIM) {
-            _skim(action.data);
-
-            return true;
-        }
-
-        return false;
-    }
-
     /* PRIVATE */
-
-    /// @notice Decodes the data passed as parameter as an array of actions.
-    function _decodeActions(bytes calldata data) private pure returns (Action[] memory) {
-        return abi.decode(data, (Action[]));
-    }
 
     /// @dev Sends any ERC20 in this contract to the receiver.
     function _skim(bytes memory data) private {

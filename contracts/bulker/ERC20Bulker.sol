@@ -12,23 +12,6 @@ import {BaseBulker} from "./BaseBulker.sol";
 contract ERC20Bulker is BaseBulker {
     using Permit2Lib for ERC20Permit2;
 
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.ERC20_APPROVE2) {
-            _approve2(action.data);
-        } else if (action.actionType == ActionType.ERC20_TRANSFER_FROM2) {
-            _transferFrom2(action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
-
     /* PRIVATE */
 
     /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.

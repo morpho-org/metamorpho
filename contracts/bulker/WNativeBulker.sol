@@ -36,23 +36,6 @@ contract WNativeBulker is BaseBulker, IWNativeBulker {
         if (msg.sender != _WRAPPED_NATIVE) revert OnlyWNative();
     }
 
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.WRAP_NATIVE) {
-            _wrapNative(action.data);
-        } else if (action.actionType == ActionType.UNWRAP_NATIVE) {
-            _unwrapNative(action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
-
     /* PRIVATE */
 
     /// @dev Wraps the given input of ETH to WETH.

@@ -18,19 +18,4 @@ contract MakerBulker is BaseBulker, ERC3156Bulker {
 
         _MAKER_VAULT = IERC3156FlashLender(makerVault);
     }
-
-    /* INTERNAL */
-
-    /// @inheritdoc BaseBulker
-    function _dispatch(Action memory action) internal virtual override returns (bool) {
-        if (super._dispatch(action)) return true;
-
-        if (action.actionType == ActionType.MAKER_FLASH_LOAN) {
-            _erc3156FlashLoan(_MAKER_VAULT, action.data);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
 }
