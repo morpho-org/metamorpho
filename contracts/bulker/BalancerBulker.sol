@@ -1,8 +1,10 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
 import {IBalancerFlashLender} from "./interfaces/IBalancerFlashLender.sol";
 import {IBalancerFlashBorrower} from "./interfaces/IBalancerFlashBorrower.sol";
+
+import {Errors} from "./libraries/Errors.sol";
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
@@ -17,10 +19,10 @@ contract BalancerBulker is BaseBulker, IBalancerFlashBorrower {
 
     /* CONSTRUCTOR */
 
-    constructor(address aaveV2) {
-        if (aaveV2 == address(0)) revert AddressIsZero();
+    constructor(address balancerVault) {
+        require(balancerVault != address(0), Errors.ZERO_ADDRESS);
 
-        _BALANCER_VAULT = IBalancerFlashLender(aaveV2);
+        _BALANCER_VAULT = IBalancerFlashLender(balancerVault);
     }
 
     /* EXTERNAL */
@@ -36,13 +38,10 @@ contract BalancerBulker is BaseBulker, IBalancerFlashBorrower {
         }
     }
 
-    /* PRIVATE */
+    /* ACTIONS */
 
     /// @dev Triggers a flash loan on Balancer.
-    function _balancerFlashLoan(bytes memory data) private {
-        (address[] memory assets, uint256[] memory amounts, bytes memory callbackData) =
-            abi.decode(data, (address[], uint256[], bytes));
-
-        _BALANCER_VAULT.flashLoan(address(this), assets, amounts, callbackData);
+    function balancerFlashLoan(address[] calldata assets, uint256[] calldata amounts, bytes calldata data) external {
+        _BALANCER_VAULT.flashLoan(address(this), assets, amounts, data);
     }
 }

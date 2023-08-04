@@ -1,19 +1,11 @@
-import { ParamType, defaultAbiCoder } from "@ethersproject/abi";
-import { IBlueBulker } from "types";
+import { BigNumberish } from "ethers";
+import { BaseBulker__factory } from "types";
+import { BulkCall } from "./BulkAction";
 
 export class BulkBatch {
-  static encode(actions: IBlueBulker.ActionStruct[]): string {
-    return defaultAbiCoder.encode(
-      [
-        ParamType.from({
-          type: "tuple[]",
-          components: [
-            ParamType.from({ name: "actionType", type: "uint256" }),
-            ParamType.from({ name: "data", type: "bytes" }),
-          ],
-        }),
-      ],
-      [actions],
-    );
+  private static BASE_BULKER_IFC = BaseBulker__factory.createInterface();
+
+  static batch(deadline: BigNumberish, calls: BulkCall[]) {
+    return BulkBatch.BASE_BULKER_IFC.encodeFunctionData("multicall", [deadline, calls]);
   }
 }

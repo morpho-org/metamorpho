@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
 import {IERC3156FlashLender} from "./interfaces/IERC3156FlashLender.sol";
@@ -15,7 +15,7 @@ abstract contract ERC3156Bulker is BaseBulker, IERC3156FlashBorrower {
 
     bytes32 private constant FLASHLOAN_CALLBACK = keccak256("ERC3156FlashBorrower.onFlashLoan");
 
-    /* EXTERNAL */
+    /* CALLBACKS */
 
     function onFlashLoan(address, address asset, uint256 amount, uint256 fee, bytes calldata data)
         external
@@ -30,9 +30,9 @@ abstract contract ERC3156Bulker is BaseBulker, IERC3156FlashBorrower {
     /* INTERNAL */
 
     /// @dev Triggers a flash loan on Maker.
-    function _erc3156FlashLoan(IERC3156FlashLender lender, bytes memory data) internal {
-        (address asset, uint256 amount, bytes memory callbackData) = abi.decode(data, (address, uint256, bytes));
-
-        lender.flashLoan(address(this), asset, amount, callbackData);
+    function _erc3156FlashLoan(IERC3156FlashLender lender, address asset, uint256 amount, bytes calldata data)
+        internal
+    {
+        lender.flashLoan(address(this), asset, amount, data);
     }
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
 import {IAaveFlashLender} from "./interfaces/IAaveFlashLender.sol";
@@ -30,10 +30,12 @@ abstract contract AaveBulker is BaseBulker, IAaveFlashBorrower {
     /* INTERNAL */
 
     /// @dev Triggers a flash loan on Aave.
-    function _aaveFlashLoan(IAaveFlashLender aave, bytes memory data) internal {
-        (address[] memory assets, uint256[] memory amounts, bytes memory callbackData) =
-            abi.decode(data, (address[], uint256[], bytes));
-
-        aave.flashLoan(address(this), assets, amounts, new uint256[](assets.length), address(this), callbackData, 0);
+    function _aaveFlashLoan(
+        IAaveFlashLender aave,
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) internal {
+        aave.flashLoan(address(this), assets, amounts, new uint256[](assets.length), address(this), data, 0);
     }
 }

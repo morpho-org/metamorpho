@@ -4,6 +4,8 @@ pragma solidity 0.8.21;
 import {IBlueBulker} from "./interfaces/IBlueBulker.sol";
 import {Market, IBlue} from "@morpho-blue/interfaces/IBlue.sol";
 
+import {Errors} from "./libraries/Errors.sol";
+
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
@@ -23,12 +25,12 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     /* CONSTRUCTOR */
 
     constructor(address blue) {
-        if (blue == address(0)) revert AddressIsZero();
+        require(blue != address(0), Errors.ZERO_ADDRESS);
 
         _BLUE = IBlue(blue);
     }
 
-    /* EXTERNAL */
+    /* CALLBACKS */
 
     function onBlueSupply(uint256, bytes calldata data) external callback(data) {}
 
@@ -38,85 +40,77 @@ contract BlueBulker is BaseBulker, IBlueBulker {
 
     function onBlueFlashLoan(address, address, uint256, bytes calldata data) external callback(data) {}
 
-    /* PRIVATE */
+    /* ACTIONS */
 
     /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
-    function _setAuthorization(bytes memory data) private {
-        (address authorizer, bool isAuthorized, uint256 deadline, IBlue.Signature memory signature) =
-            abi.decode(data, (address, bool, uint256, IBlue.Signature));
-
+    function blueSetAuthorization(
+        address authorizer,
+        bool isAuthorized,
+        uint256 deadline,
+        IBlue.Signature calldata signature
+    ) external {
         _BLUE.setAuthorization(authorizer, address(this), isAuthorized, deadline, signature);
     }
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
     ///         The supplied amount cannot be used as collateral but is eligible for the peer-to-peer matching.
-    function _supply(bytes memory data) private {
-        (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
-            abi.decode(data, (Market, uint256, address, bytes));
-        if (onBehalf == address(this)) revert AddressIsBulker();
+    function blueSupply(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
+        require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
         amount = Math.min(amount, ERC20(address(market.borrowableAsset)).balanceOf(address(this)));
 
         _approveMaxBlue(address(market.borrowableAsset));
 
-        _BLUE.supply(market, amount, onBehalf, callbackData);
+        _BLUE.supply(market, amount, onBehalf, data);
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
-    function _supplyCollateral(bytes memory data) private {
-        (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
-            abi.decode(data, (Market, uint256, address, bytes));
-        if (onBehalf == address(this)) revert AddressIsBulker();
+    function blueSupplyCollateral(Market calldata market, uint256 amount, address onBehalf, bytes calldata data)
+        external
+    {
+        require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
         amount = Math.min(amount, ERC20(address(market.collateralAsset)).balanceOf(address(this)));
 
         _approveMaxBlue(address(market.collateralAsset));
 
-        _BLUE.supplyCollateral(market, amount, onBehalf, callbackData);
+        _BLUE.supplyCollateral(market, amount, onBehalf, data);
     }
 
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Morpho.
-    function _borrow(bytes memory data) private {
-        (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
-
+    function blueBorrow(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.borrow(market, amount, msg.sender, receiver);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
-    function _repay(bytes memory data) private {
-        (Market memory market, uint256 amount, address onBehalf, bytes memory callbackData) =
-            abi.decode(data, (Market, uint256, address, bytes));
-        if (onBehalf == address(this)) revert AddressIsBulker();
+    function blueRepay(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
+        require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
         amount = Math.min(amount, ERC20(address(market.borrowableAsset)).balanceOf(address(this)));
 
         _approveMaxBlue(address(market.borrowableAsset));
 
-        _BLUE.repay(market, amount, onBehalf, callbackData);
+        _BLUE.repay(market, amount, onBehalf, data);
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of `onBehalf`. Sender must have previously approved the bulker as their manager on Morpho.
-    function _withdraw(bytes memory data) private {
-        (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
-
+    function blueWithdraw(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdraw(market, amount, msg.sender, receiver);
     }
 
     /// @dev Withdraws `amount` of `asset` on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
-    function _withdrawCollateral(bytes memory data) private {
-        (Market memory market, uint256 amount, address receiver) = abi.decode(data, (Market, uint256, address));
-
+    function blueWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
     }
 
     /// @dev Triggers a flash loan on Blue.
-    function _blueFlashLoan(bytes memory data) private {
-        (address asset, uint256 amount, bytes memory callbackData) = abi.decode(data, (address, uint256, bytes));
-
+    function blueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
         _approveMaxBlue(asset);
 
-        _BLUE.flashLoan(this, asset, amount, callbackData);
+        _BLUE.flashLoan(this, asset, amount, data);
     }
+
+    /* PRIVATE */
 
     /// @dev Gives the max approval to the Morpho contract to spend the given `asset` if not already approved.
     function _approveMaxBlue(address asset) private {

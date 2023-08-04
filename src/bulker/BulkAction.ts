@@ -1,280 +1,196 @@
-import { ParamType, defaultAbiCoder } from "@ethersproject/abi";
 import { BigNumberish, Signature } from "ethers";
-import { IBlueBulker } from "types";
+import {
+  AaveV2Bulker__factory,
+  AaveV3Bulker__factory,
+  BalancerBulker__factory,
+  BlueBulker__factory,
+  ERC20Bulker__factory,
+  MakerBulker__factory,
+  StEthBulker__factory,
+  WNativeBulker__factory,
+} from "types";
 import { MarketStruct } from "types/contracts/interfaces/IBlue";
-import { BulkBatch } from "./BulkBatch";
 
-// These must be defined in the order they are defined in Solidity.
-enum BulkActionType {
-  APPROVE2,
-  TRANSFER_FROM2,
-  SET_APPROVAL,
-  SUPPLY,
-  SUPPLY_COLLATERAL,
-  BORROW,
-  REPAY,
-  WITHDRAW,
-  WITHDRAW_COLLATERAL,
-  WRAP_ETH,
-  UNWRAP_ETH,
-  WRAP_ST_ETH,
-  UNWRAP_ST_ETH,
-  SKIM,
-  AAVE_V2_FLASH_LOAN,
-  AAVE_V3_FLASH_LOAN,
-  MAKER_FLASH_LOAN,
-  BALANCER_FLASH_LOAN,
-}
-
-const marketParamtype = ParamType.from({
-  type: "tuple",
-  components: [
-    ParamType.from({ name: "collateralAsset", type: "address" }),
-    ParamType.from({ name: "borrowableAsset", type: "address" }),
-    ParamType.from({ name: "collateralOracle", type: "address" }),
-    ParamType.from({ name: "borrowableOracle", type: "address" }),
-    ParamType.from({ name: "irm", type: "address" }),
-    ParamType.from({ name: "lltv", type: "uint256" }),
-  ],
-});
+export type BulkCall = string;
 
 class BulkAction {
+  private static ERC20_BULKER_IFC = ERC20Bulker__factory.createInterface();
+  private static BLUE_BULKER_IFC = BlueBulker__factory.createInterface();
+  private static WNATIVE_BULKER_IFC = WNativeBulker__factory.createInterface();
+  private static ST_ETH_BULKER_IFC = StEthBulker__factory.createInterface();
+  private static AAVE_V2_BULKER_IFC = AaveV2Bulker__factory.createInterface();
+  private static AAVE_V3_BULKER_IFC = AaveV3Bulker__factory.createInterface();
+  private static MAKER_BULKER_IFC = MakerBulker__factory.createInterface();
+  private static BALANCER_BULKER_IFC = BalancerBulker__factory.createInterface();
+
+  static skim(asset: string, receiver: string): BulkCall {
+    return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("skim", [asset, receiver]);
+  }
+
   static approve2(
     asset: string,
     amount: BigNumberish,
     deadline: BigNumberish,
     signature: Signature,
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.APPROVE2,
-      data: defaultAbiCoder.encode(
-        [
-          "address",
-          "uint256",
-          "uint256",
-          ParamType.from({
-            type: "tuple",
-            components: [
-              ParamType.from({ name: "v", type: "uint8" }),
-              ParamType.from({ name: "s", type: "bytes32" }),
-              ParamType.from({ name: "r", type: "bytes32" }),
-            ],
-          }),
-        ],
-        [asset, amount, deadline, { v: signature.v, r: signature.r, s: signature.s }],
-      ),
-    };
+  ): BulkCall {
+    return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("approve2", [
+      asset,
+      amount,
+      deadline,
+      { v: signature.v, r: signature.r, s: signature.s },
+    ]);
   }
 
-  static transferFrom2(asset: string, amount: BigNumberish): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.TRANSFER_FROM2,
-      data: defaultAbiCoder.encode(["address", "uint256"], [asset, amount]),
-    };
+  static transferFrom2(asset: string, amount: BigNumberish): BulkCall {
+    return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("transferFrom2", [asset, amount]);
   }
 
-  static setApproval(
+  static blueSetAuthorization(
+    authorizer: string,
     isApproved: boolean,
-    nonce: BigNumberish,
     deadline: BigNumberish,
     signature: Signature,
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.SET_APPROVAL,
-      data: defaultAbiCoder.encode(
-        [
-          "bool",
-          "uint256",
-          "uint256",
-          ParamType.from({
-            type: "tuple",
-            components: [
-              ParamType.from({ name: "v", type: "uint8" }),
-              ParamType.from({ name: "s", type: "bytes32" }),
-              ParamType.from({ name: "r", type: "bytes32" }),
-            ],
-          }),
-        ],
-        [isApproved, nonce, deadline, { v: signature.v, r: signature.r, s: signature.s }],
-      ),
-    };
+  ): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueSetAuthorization", [
+      authorizer,
+      isApproved,
+      deadline,
+      { v: signature.v, r: signature.r, s: signature.s },
+    ]);
   }
 
-  static supply(
+  static blueSupply(
     market: MarketStruct,
     amount: BigNumberish,
     onBehalf: string,
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.SUPPLY,
-      data: defaultAbiCoder.encode(
-        [marketParamtype, "uint256", "address"],
-        [market, amount, onBehalf],
-      ),
-    };
+    callbackCalls: BulkCall[],
+  ): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueSupply", [
+      market,
+      amount,
+      onBehalf,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
-  static supplyCollateral(
+  static blueSupplyCollateral(
     market: MarketStruct,
     amount: BigNumberish,
     onBehalf: string,
-    callbackActions: IBlueBulker.ActionStruct[],
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.SUPPLY_COLLATERAL,
-      data: defaultAbiCoder.encode(
-        [marketParamtype, "uint256", "address", "bytes"],
-        [market, amount, onBehalf, BulkBatch.encode(callbackActions)],
-      ),
-    };
+    callbackCalls: BulkCall[],
+  ): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueSupplyCollateral", [
+      market,
+      amount,
+      onBehalf,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
-  static borrow(
-    market: MarketStruct,
-    amount: BigNumberish,
-    receiver: string,
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.BORROW,
-      data: defaultAbiCoder.encode(
-        [marketParamtype, "uint256", "address"],
-        [market, amount, receiver],
-      ),
-    };
+  static blueBorrow(market: MarketStruct, amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueBorrow", [market, amount, receiver]);
   }
 
-  static repay(
+  static blueRepay(
     market: MarketStruct,
     amount: BigNumberish,
     onBehalf: string,
-    callbackActions: IBlueBulker.ActionStruct[],
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.REPAY,
-      data: defaultAbiCoder.encode(
-        [marketParamtype, "uint256", "address", "bytes"],
-        [market, amount, onBehalf, BulkBatch.encode(callbackActions)],
-      ),
-    };
+    callbackCalls: BulkCall[],
+  ): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueRepay", [
+      market,
+      amount,
+      onBehalf,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
-  static withdraw(
+  static blueWithdraw(market: MarketStruct, amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueWithdraw", [
+      market,
+      amount,
+      receiver,
+    ]);
+  }
+
+  static blueWithdrawCollateral(
     market: MarketStruct,
     amount: BigNumberish,
     receiver: string,
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.WITHDRAW,
-      data: defaultAbiCoder.encode(
-        [marketParamtype, "uint256", "address"],
-        [market, amount, receiver],
-      ),
-    };
+  ): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueWithdrawCollateral", [
+      market,
+      amount,
+      receiver,
+    ]);
   }
 
-  static withdrawCollateral(
-    market: MarketStruct,
-    amount: BigNumberish,
-    receiver: string,
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.WITHDRAW_COLLATERAL,
-      data: defaultAbiCoder.encode(
-        [marketParamtype, "uint256", "address"],
-        [market, amount, receiver],
-      ),
-    };
+  static blueFlashLoan(asset: string, amount: BigNumberish, callbackCalls: BulkCall[]): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueFlashLoan", [
+      asset,
+      amount,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
-  static wrapEth(amount: BigNumberish): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.WRAP_ETH,
-      data: defaultAbiCoder.encode(["uint256"], [amount]),
-    };
+  static wrapNative(amount: BigNumberish): BulkCall {
+    return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("wrapNative", [amount]);
   }
 
-  static unwrapEth(amount: BigNumberish, receiver: string): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.UNWRAP_ETH,
-      data: defaultAbiCoder.encode(["uint256", "address"], [amount, receiver]),
-    };
+  static unwrapNative(amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("unwrapNative", [amount, receiver]);
   }
 
-  static wrapStEth(amount: BigNumberish): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.WRAP_ST_ETH,
-      data: defaultAbiCoder.encode(["uint256"], [amount]),
-    };
+  static wrapStEth(amount: BigNumberish): BulkCall {
+    return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("wrapStEth", [amount]);
   }
 
-  static unwrapStEth(amount: BigNumberish, receiver: string): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.UNWRAP_ST_ETH,
-      data: defaultAbiCoder.encode(["uint256", "address"], [amount, receiver]),
-    };
-  }
-
-  static skim(asset: string, receiver: string): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.SKIM,
-      data: defaultAbiCoder.encode(["address", "address"], [asset, receiver]),
-    };
+  static unwrapStEth(amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("unwrapStEth", [amount, receiver]);
   }
 
   static aaveV2FlashLoan(
     assets: string[],
     amounts: BigNumberish[],
-    callbackActions: IBlueBulker.ActionStruct[],
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.AAVE_V2_FLASH_LOAN,
-      data: defaultAbiCoder.encode(
-        ["address[]", "uint256[]", "bytes"],
-        [assets, amounts, BulkBatch.encode(callbackActions)],
-      ),
-    };
+    callbackCalls: BulkCall[],
+  ): BulkCall {
+    return BulkAction.AAVE_V2_BULKER_IFC.encodeFunctionData("aaveV2FlashLoan", [
+      assets,
+      amounts,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
   static aaveV3FlashLoan(
     assets: string[],
     amounts: BigNumberish[],
-    callbackActions: IBlueBulker.ActionStruct[],
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.AAVE_V3_FLASH_LOAN,
-      data: defaultAbiCoder.encode(
-        ["address[]", "uint256[]", "bytes"],
-        [assets, amounts, BulkBatch.encode(callbackActions)],
-      ),
-    };
+    callbackCalls: BulkCall[],
+  ): BulkCall {
+    return BulkAction.AAVE_V3_BULKER_IFC.encodeFunctionData("aaveV3FlashLoan", [
+      assets,
+      amounts,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
-  static makerFlashLoan(
-    asset: string,
-    amount: BigNumberish,
-    callbackActions: IBlueBulker.ActionStruct[],
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.MAKER_FLASH_LOAN,
-      data: defaultAbiCoder.encode(
-        ["address", "uint256", "bytes"],
-        [asset, amount, BulkBatch.encode(callbackActions)],
-      ),
-    };
+  static makerFlashLoan(asset: string, amount: BigNumberish, callbackCalls: BulkCall[]): BulkCall {
+    return BulkAction.MAKER_BULKER_IFC.encodeFunctionData("makerFlashLoan", [
+      asset,
+      amount,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 
   static balancerFlashLoan(
     assets: string[],
     amounts: BigNumberish[],
-    callbackActions: IBlueBulker.ActionStruct[],
-  ): IBlueBulker.ActionStruct {
-    return {
-      actionType: BulkActionType.BALANCER_FLASH_LOAN,
-      data: defaultAbiCoder.encode(
-        ["address[]", "uint256[]", "bytes"],
-        [assets, amounts, BulkBatch.encode(callbackActions)],
-      ),
-    };
+    callbackCalls: BulkCall[],
+  ): BulkCall {
+    return BulkAction.BALANCER_BULKER_IFC.encodeFunctionData("balancerFlashLoan", [
+      assets,
+      amounts,
+      BulkAction.BLUE_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+    ]);
   }
 }
 

@@ -10,18 +10,4 @@ interface IBaseBulker {
         bytes32 r;
         bytes32 s;
     }
-
-    /* ERRORS */
-
-    /// @notice Thrown when an address parameter is the bulker's address.
-    error AddressIsBulker();
-
-    /// @notice Thrown when an address used as parameter is the zero address.
-    error AddressIsZero();
-
-    /// @notice Thrown when an amount used as parameter is zero.
-    error AmountIsZero();
-
-    /// @notice Thrown when the bulker is not initiated.
-    error Uninitiated();
 }

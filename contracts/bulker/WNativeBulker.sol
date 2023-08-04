@@ -2,8 +2,8 @@
 pragma solidity 0.8.21;
 
 import {IWNative} from "../interfaces/IWNative.sol";
-import {IWNativeBulker} from "./interfaces/IWNativeBulker.sol";
 
+import {Errors} from "./libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
@@ -13,7 +13,7 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
 /// @notice Contract allowing to bundle multiple interactions with stETH together.
-contract WNativeBulker is BaseBulker, IWNativeBulker {
+contract WNativeBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
     /* CONSTANTS */
@@ -24,38 +24,35 @@ contract WNativeBulker is BaseBulker, IWNativeBulker {
     /* CONSTRUCTOR */
 
     constructor(address wNative) {
-        if (wNative == address(0)) revert AddressIsZero();
+        require(wNative != address(0), Errors.ZERO_ADDRESS);
 
         _WRAPPED_NATIVE = wNative;
     }
 
-    /* EXTERNAL */
+    /* CALLBACKS */
 
     /// @dev Only the WETH contract is allowed to transfer ETH to this contract, without any calldata.
     receive() external payable {
-        if (msg.sender != _WRAPPED_NATIVE) revert OnlyWNative();
+        require(msg.sender == _WRAPPED_NATIVE, Errors.ONLY_WNATIVE);
     }
 
-    /* PRIVATE */
+    /* ACTIONS */
 
     /// @dev Wraps the given input of ETH to WETH.
-    function _wrapNative(bytes memory data) private {
-        (uint256 amount) = abi.decode(data, (uint256));
-
+    function wrapNative(uint256 amount) external {
         amount = Math.min(amount, address(this).balance);
-        if (amount == 0) revert AmountIsZero();
+        require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWNative(_WRAPPED_NATIVE).deposit{value: amount}();
     }
 
     /// @dev Unwraps the given input of WETH to ETH.
-    function _unwrapNative(bytes memory data) private {
-        (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
-        if (receiver == address(this)) revert AddressIsBulker();
-        if (receiver == address(0)) revert AddressIsZero();
+    function unwrapNative(uint256 amount, address receiver) external {
+        require(receiver != address(this), Errors.BULKER_ADDRESS);
+        require(receiver != address(0), Errors.ZERO_ADDRESS);
 
         amount = Math.min(amount, ERC20(_WRAPPED_NATIVE).balanceOf(address(this)));
-        if (amount == 0) revert AmountIsZero();
+        require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWNative(_WRAPPED_NATIVE).withdraw(amount);
 

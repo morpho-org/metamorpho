@@ -3,6 +3,7 @@ pragma solidity 0.8.21;
 
 import {IWStEth} from "./interfaces/IWStEth.sol";
 
+import {Errors} from "../libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
@@ -29,26 +30,23 @@ contract StEthBulker is BaseBulker {
         ERC20(_ST_ETH).safeApprove(_WST_ETH, type(uint256).max);
     }
 
-    /* PRIVATE */
+    /* ACTIONS */
 
     /// @dev Wraps the given input of stETH to wstETH.
-    function _wrapStEth(bytes memory data) private {
-        (uint256 amount) = abi.decode(data, (uint256));
-
+    function wrapStEth(uint256 amount) external {
         amount = Math.min(amount, ERC20(_ST_ETH).balanceOf(address(this)));
-        if (amount == 0) revert AmountIsZero();
+        require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWStEth(_WST_ETH).wrap(amount);
     }
 
     /// @dev Unwraps the given input of wstETH to stETH.
-    function _unwrapStEth(bytes memory data) private {
-        (uint256 amount, address receiver) = abi.decode(data, (uint256, address));
-        if (receiver == address(this)) revert AddressIsBulker();
-        if (receiver == address(0)) revert AddressIsZero();
+    function unwrapStEth(uint256 amount, address receiver) external {
+        require(receiver != address(this), Errors.BULKER_ADDRESS);
+        require(receiver != address(0), Errors.ZERO_ADDRESS);
 
         amount = Math.min(amount, ERC20(_WST_ETH).balanceOf(address(this)));
-        if (amount == 0) revert AmountIsZero();
+        require(amount != 0, Errors.ZERO_AMOUNT);
 
         uint256 unwrapped = IWStEth(_WST_ETH).unwrap(amount);
 
