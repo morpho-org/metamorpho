@@ -111,7 +111,7 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     function blueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
         _approveMaxBlue(asset);
 
-        _BLUE.flashLoan(this, asset, amount, data);
+        _BLUE.flashLoan(asset, amount, data);
     }
 
     /* PRIVATE */

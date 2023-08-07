@@ -15,7 +15,7 @@ abstract contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
 
     /* TYPES */
 
-    struct FlashCallbackData {
+    struct UniV2FlashCallbackData {
         address token0;
         address token1;
         bytes data;
@@ -27,14 +27,14 @@ abstract contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
 
     /* IMMUTABLES */
 
-    IUniV2Factory internal immutable _FACTORY;
+    IUniV2Factory internal immutable _UNI_V2_FACTORY;
 
     /* CONSTRUCTOR */
 
     constructor(address factory) {
         require(factory != address(0), Errors.ZERO_ADDRESS);
 
-        _FACTORY = IUniV2Factory(factory);
+        _UNI_V2_FACTORY = IUniV2Factory(factory);
     }
 
     /* CALLBACKS */
@@ -42,7 +42,7 @@ abstract contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
     function uniswapV2Call(address, uint256 amount0, uint256 amount1, bytes calldata data) external {
         _checkInitiated();
 
-        FlashCallbackData memory flashData = abi.decode(data, (FlashCallbackData));
+        UniV2FlashCallbackData memory flashData = abi.decode(data, (UniV2FlashCallbackData));
 
         _multicall(abi.decode(flashData.data, (bytes[])));
 
@@ -56,8 +56,11 @@ abstract contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
     function uniV2FlashSwap(address token0, address token1, uint256 amount0, uint256 amount1, bytes calldata data)
         external
     {
-        IUniV2FlashLender(_FACTORY.getPair(token0, token1)).swap(
-            amount0, amount1, address(this), abi.encode(FlashCallbackData({token0: token0, token1: token1, data: data}))
+        IUniV2FlashLender(_UNI_V2_FACTORY.getPair(token0, token1)).swap(
+            amount0,
+            amount1,
+            address(this),
+            abi.encode(UniV2FlashCallbackData({token0: token0, token1: token1, data: data}))
         );
     }
 }

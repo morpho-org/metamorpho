@@ -1,13 +1,12 @@
 contracts/=contracts/
 test/=test/
 
-@forge-std/=lib/forge-std/src/
+solmate/=lib/morpho-blue/lib/solmate/
 
+@forge-std/=lib/forge-std/src/
 @morpho-blue/=lib/morpho-blue/src/
 @solmate/=lib/morpho-blue/lib/solmate/src/
 @morpho-utils/=lib/morpho-utils/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @permit2/=lib/permit2/src/
 @uniswap/v3-periphery=lib/v3-periphery/contracts/
-
-solmate/=lib/morpho-blue/lib/solmate/

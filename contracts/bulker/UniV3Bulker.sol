@@ -16,7 +16,7 @@ abstract contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
 
     /* TYPES */
 
-    struct FlashCallbackData {
+    struct UniV3FlashCallbackData {
         address token0;
         address token1;
         uint256 amount0;
@@ -26,14 +26,14 @@ abstract contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
 
     /* IMMUTABLES */
 
-    address internal immutable _FACTORY;
+    address internal immutable _UNI_V3_FACTORY;
 
     /* CONSTRUCTOR */
 
     constructor(address factory) {
         require(factory != address(0), Errors.ZERO_ADDRESS);
 
-        _FACTORY = factory;
+        _UNI_V3_FACTORY = factory;
     }
 
     /* CALLBACKS */
@@ -41,7 +41,7 @@ abstract contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
     function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external callback(data) {
         _checkInitiated();
 
-        FlashCallbackData memory flashData = abi.decode(data, (FlashCallbackData));
+        UniV3FlashCallbackData memory flashData = abi.decode(data, (UniV3FlashCallbackData));
 
         _multicall(abi.decode(flashData.data, (bytes[])));
 
@@ -55,12 +55,12 @@ abstract contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
     function uniV3FlashSwap(PoolAddress.PoolKey memory poolKey, uint256 amount0, uint256 amount1, bytes calldata data)
         external
     {
-        IUniV3FlashLender(_FACTORY.computeAddress(poolKey)).flash(
+        IUniV3FlashLender(_UNI_V3_FACTORY.computeAddress(poolKey)).flash(
             address(this),
             amount0,
             amount1,
             abi.encode(
-                FlashCallbackData({
+                UniV3FlashCallbackData({
                     token0: poolKey.token0,
                     token1: poolKey.token1,
                     amount0: amount0,

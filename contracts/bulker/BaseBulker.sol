@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
-import {IBaseBulker} from "./interfaces/IBaseBulker.sol";
-
 import {Errors} from "./libraries/Errors.sol";
 
 import {Multicall} from "./Multicall.sol";
@@ -11,7 +9,7 @@ import {Multicall} from "./Multicall.sol";
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
 /// @notice Base abstract contract allowing to dispatch a batch of actions down the inheritance tree.
-abstract contract BaseBulker is Multicall, IBaseBulker {
+abstract contract BaseBulker is Multicall {
     /* STORAGE */
 
     /// @dev Keeps track of the bulker's latest batch initiator. Also prevents interacting with the bulker outside of an initiated execution context.

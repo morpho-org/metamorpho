@@ -7,10 +7,8 @@ import {
     IBlueSupplyCollateralCallback,
     IBlueFlashLoanCallback
 } from "@morpho-blue/interfaces/IBlueCallbacks.sol";
-import {IBaseBulker} from "./IBaseBulker.sol";
 
 interface IBlueBulker is
-    IBaseBulker,
     IBlueSupplyCallback,
     IBlueRepayCallback,
     IBlueSupplyCollateralCallback,
