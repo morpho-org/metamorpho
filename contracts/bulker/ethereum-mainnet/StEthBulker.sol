@@ -35,6 +35,7 @@ contract StEthBulker is BaseBulker {
     /// @dev Wraps the given input of stETH to wstETH.
     function wrapStEth(uint256 amount) external {
         amount = Math.min(amount, ERC20(_ST_ETH).balanceOf(address(this)));
+
         require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWStEth(_WST_ETH).wrap(amount);
@@ -46,6 +47,7 @@ contract StEthBulker is BaseBulker {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
         amount = Math.min(amount, ERC20(_WST_ETH).balanceOf(address(this)));
+
         require(amount != 0, Errors.ZERO_AMOUNT);
 
         uint256 unwrapped = IWStEth(_WST_ETH).unwrap(amount);

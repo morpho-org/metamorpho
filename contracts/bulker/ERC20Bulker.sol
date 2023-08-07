@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import {Signature} from "@morpho-blue/interfaces/IBlue.sol";
 
 import {Errors} from "./libraries/Errors.sol";
+import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 
@@ -19,13 +20,16 @@ contract ERC20Bulker is BaseBulker {
 
     /* ACTIONS */
 
-    /// @dev Sends any ERC20 in this contract to the receiver.
-    function skim(address asset, address receiver) external {
-        require(receiver != address(this), Errors.BULKER_ADDRESS);
-        require(receiver != address(0), Errors.ZERO_ADDRESS);
+    /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.
+    function transfer(address asset, address recipient, uint256 amount) external {
+        require(recipient != address(0), Errors.ZERO_ADDRESS);
+        require(recipient != address(this), Errors.BULKER_ADDRESS);
 
-        uint256 balance = ERC20(asset).balanceOf(address(this));
-        ERC20(asset).safeTransfer(receiver, balance);
+        amount = Math.min(amount, ERC20(asset).balanceOf(address(this)));
+
+        require(amount != 0, Errors.ZERO_AMOUNT);
+
+        ERC20(asset).safeTransfer(recipient, amount);
     }
 
     /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.

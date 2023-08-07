@@ -9,6 +9,7 @@ import {ERC20Bulker} from "../ERC20Bulker.sol";
 import {WNativeBulker} from "../WNativeBulker.sol";
 import {UniV2Bulker} from "../UniV2Bulker.sol";
 import {UniV3Bulker} from "../UniV3Bulker.sol";
+import {OneInchBulker} from "../OneInchBulker.sol";
 import {StEthBulker} from "./StEthBulker.sol";
 import {MakerBulker} from "./MakerBulker.sol";
 
@@ -22,7 +23,8 @@ contract EthereumBulker is
     BalancerBulker,
     MakerBulker,
     UniV2Bulker,
-    UniV3Bulker
+    UniV3Bulker,
+    OneInchBulker
 {
     constructor(address blue)
         WNativeBulker(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)
@@ -33,5 +35,6 @@ contract EthereumBulker is
         MakerBulker(0x60744434d6339a6B27d73d9Eda62b6F66a0a04FA)
         UniV2Bulker(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f)
         UniV3Bulker(0x1F98431c8aD98523631AE4a59f267346ea31F984)
+        OneInchBulker(0x1111111254EEB25477B68fb85Ed929f73A960582)
     {}
 }

@@ -41,6 +41,7 @@ contract WNativeBulker is BaseBulker {
     /// @dev Wraps the given input of ETH to WETH.
     function wrapNative(uint256 amount) external {
         amount = Math.min(amount, address(this).balance);
+
         require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWNative(_WRAPPED_NATIVE).deposit{value: amount}();
@@ -52,6 +53,7 @@ contract WNativeBulker is BaseBulker {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
         amount = Math.min(amount, ERC20(_WRAPPED_NATIVE).balanceOf(address(this)));
+
         require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWNative(_WRAPPED_NATIVE).withdraw(amount);

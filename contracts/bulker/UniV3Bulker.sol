@@ -10,7 +10,7 @@ import {PoolAddress} from "@uniswap/v3-periphery/libraries/PoolAddress.sol";
 
 import {BaseBulker} from "./BaseBulker.sol";
 
-abstract contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
+contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
     using SafeTransferLib for ERC20;
     using PoolAddress for address;
 
@@ -49,7 +49,7 @@ abstract contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
         ERC20(flashData.token1).safeApprove(msg.sender, flashData.amount1 + fee1);
     }
 
-    /* INTERNAL */
+    /* EXTERNAL */
 
     /// @dev Triggers a flash swap on Uniswap V3.
     function uniV3FlashSwap(PoolAddress.PoolKey memory poolKey, uint256 amount0, uint256 amount1, bytes calldata data)

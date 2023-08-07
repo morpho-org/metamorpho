@@ -10,7 +10,7 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseBulker} from "./BaseBulker.sol";
 
-abstract contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
+contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
     using SafeTransferLib for ERC20;
 
     /* TYPES */
@@ -50,7 +50,7 @@ abstract contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
         ERC20(flashData.token1).safeApprove(msg.sender, amount1 * 100_00 / FEE_BPS);
     }
 
-    /* INTERNAL */
+    /* EXTERNAL */
 
     /// @dev Triggers a flash swap on Uniswap V2.
     function uniV2FlashSwap(address token0, address token1, uint256 amount0, uint256 amount1, bytes calldata data)
