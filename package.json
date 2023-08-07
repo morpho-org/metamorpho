@@ -10,7 +10,7 @@
     "build": "tsc --build ./tsconfig.build.json",
     "prepare": "husky install",
     "typecheck": "tsc --noEmit",
-    "compile": "npx hardhat compile --force",
+    "compile": "npx hardhdddddat compile --force",
     "test": "npx hardhat test"
   },
   "repository": {
