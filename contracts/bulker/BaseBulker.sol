@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
+import {IMulticall} from "./interfaces/IMulticall.sol";
+
 import {Errors} from "./libraries/Errors.sol";
 
 import {Multicall} from "./Multicall.sol";
@@ -31,6 +33,12 @@ abstract contract BaseBulker is Multicall {
         _multicall(abi.decode(data, (bytes[])));
 
         _;
+    }
+
+    /* EXTERNAL */
+
+    function callBulker(IMulticall bulker, bytes[] calldata data) external {
+        bulker.multicall(block.timestamp, data);
     }
 
     /* INTERNAL */

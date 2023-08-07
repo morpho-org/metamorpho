@@ -52,7 +52,7 @@ contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
     /* EXTERNAL */
 
     /// @dev Triggers a flash swap on Uniswap V3.
-    function uniV3FlashSwap(PoolAddress.PoolKey memory poolKey, uint256 amount0, uint256 amount1, bytes calldata data)
+    function uniV3FlashSwap(PoolAddress.PoolKey calldata poolKey, uint256 amount0, uint256 amount1, bytes calldata data)
         external
     {
         IUniV3FlashLender(_UNI_V3_FACTORY.computeAddress(poolKey)).flash(
