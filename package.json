@@ -44,7 +44,6 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.8",
     "chai": "^4.3.7",
-    "cz": "^1.8.2",
     "dotenv": "^16.3.1",
     "ethers": "^5.7.2",
     "ethers-maths": "^3.5.3",
@@ -71,5 +70,10 @@
     "*.ts": "yarn prettier",
     "*.json": "yarn prettier",
     "*.yml": "yarn prettier"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }
