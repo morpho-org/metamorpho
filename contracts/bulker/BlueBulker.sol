@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import {IBlueBulker} from "./interfaces/IBlueBulker.sol";
-import {Market, IBlue} from "@morpho-blue/interfaces/IBlue.sol";
+import {Market, Signature, IBlue} from "@morpho-blue/interfaces/IBlue.sol";
 
 import {Errors} from "./libraries/Errors.sol";
 
@@ -38,17 +38,14 @@ contract BlueBulker is BaseBulker, IBlueBulker {
 
     function onBlueRepay(uint256, bytes calldata data) external callback(data) {}
 
-    function onBlueFlashLoan(address, address, uint256, bytes calldata data) external callback(data) {}
+    function onBlueFlashLoan(address, uint256, bytes calldata data) external callback(data) {}
 
     /* ACTIONS */
 
     /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
-    function blueSetAuthorization(
-        address authorizer,
-        bool isAuthorized,
-        uint256 deadline,
-        IBlue.Signature calldata signature
-    ) external {
+    function blueSetAuthorization(address authorizer, bool isAuthorized, uint256 deadline, Signature calldata signature)
+        external
+    {
         _BLUE.setAuthorization(authorizer, address(this), isAuthorized, deadline, signature);
     }
 
@@ -57,9 +54,9 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     function blueSupply(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        amount = Math.min(amount, ERC20(address(market.borrowableAsset)).balanceOf(address(this)));
+        amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
 
-        _approveMaxBlue(address(market.borrowableAsset));
+        _approveMaxBlue(market.borrowableAsset);
 
         _BLUE.supply(market, amount, onBehalf, data);
     }
@@ -70,9 +67,9 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        amount = Math.min(amount, ERC20(address(market.collateralAsset)).balanceOf(address(this)));
+        amount = Math.min(amount, ERC20(market.collateralAsset).balanceOf(address(this)));
 
-        _approveMaxBlue(address(market.collateralAsset));
+        _approveMaxBlue(market.collateralAsset);
 
         _BLUE.supplyCollateral(market, amount, onBehalf, data);
     }
@@ -86,9 +83,9 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     function blueRepay(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        amount = Math.min(amount, ERC20(address(market.borrowableAsset)).balanceOf(address(this)));
+        amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
 
-        _approveMaxBlue(address(market.borrowableAsset));
+        _approveMaxBlue(market.borrowableAsset);
 
         _BLUE.repay(market, amount, onBehalf, data);
     }
@@ -101,6 +98,13 @@ contract BlueBulker is BaseBulker, IBlueBulker {
     /// @dev Withdraws `amount` of `asset` on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
     function blueWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
+    }
+
+    /// @dev Triggers a flash loan on Blue.
+    function blueLiquidate(Market calldata market, address borrower, uint256 seized, bytes memory data) external {
+        _approveMaxBlue(market.borrowableAsset);
+
+        _BLUE.liquidate(market, borrower, seized, data);
     }
 
     /// @dev Triggers a flash loan on Blue.
