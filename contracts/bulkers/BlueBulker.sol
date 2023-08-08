@@ -14,7 +14,6 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @title BlueBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-/// @notice Contract allowing to bundle multiple interactions with Blue together.
 contract BlueBulker is BaseBulker, IBlueBulker {
     using SafeTransferLib for ERC20;
 
@@ -32,13 +31,21 @@ contract BlueBulker is BaseBulker, IBlueBulker {
 
     /* CALLBACKS */
 
-    function onBlueSupply(uint256, bytes calldata data) external callback(data) {}
+    function onBlueSupply(uint256, bytes calldata data) external {
+        _multicall(abi.decode(data, (bytes[])));
+    }
 
-    function onBlueSupplyCollateral(uint256, bytes calldata data) external callback(data) {}
+    function onBlueSupplyCollateral(uint256, bytes calldata data) external {
+        _multicall(abi.decode(data, (bytes[])));
+    }
 
-    function onBlueRepay(uint256, bytes calldata data) external callback(data) {}
+    function onBlueRepay(uint256, bytes calldata data) external {
+        _multicall(abi.decode(data, (bytes[])));
+    }
 
-    function onBlueFlashLoan(address, uint256, bytes calldata data) external callback(data) {}
+    function onBlueFlashLoan(address, uint256, bytes calldata data) external {
+        _multicall(abi.decode(data, (bytes[])));
+    }
 
     /* ACTIONS */
 

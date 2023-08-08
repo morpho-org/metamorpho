@@ -5,10 +5,9 @@ import {IAaveFlashLender} from "./interfaces/IAaveFlashLender.sol";
 
 import {Errors} from "./libraries/Errors.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
-import {AaveBulker} from "./AaveBulker.sol";
+import {AaveFlashRouter} from "./AaveFlashRouter.sol";
 
-contract AaveV3Bulker is BaseBulker, AaveBulker {
+contract AaveV3FlashRouter is AaveFlashRouter {
     /* IMMUTABLES */
 
     IAaveFlashLender internal immutable _AAVE_V3;

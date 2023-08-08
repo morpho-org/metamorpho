@@ -8,9 +8,9 @@ import {Errors} from "./libraries/Errors.sol";
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-contract BalancerBulker is BaseBulker, IBalancerFlashBorrower {
+contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */
@@ -32,7 +32,9 @@ contract BalancerBulker is BaseBulker, IBalancerFlashBorrower {
         uint256[] calldata amounts,
         uint256[] calldata fees,
         bytes calldata data
-    ) external callback(data) {
+    ) external {
+        _onCallback(data);
+
         for (uint256 i; i < assets.length; ++i) {
             ERC20(assets[i]).safeTransfer(msg.sender, amounts[i] + fees[i]);
         }

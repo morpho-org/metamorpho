@@ -6,9 +6,9 @@ import {IERC3156FlashBorrower} from "./interfaces/IERC3156FlashBorrower.sol";
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-abstract contract ERC3156Bulker is BaseBulker, IERC3156FlashBorrower {
+abstract contract ERC3156FlashRouter is BaseFlashRouter, IERC3156FlashBorrower {
     using SafeTransferLib for ERC20;
 
     /* CONSTANTS */
@@ -19,9 +19,10 @@ abstract contract ERC3156Bulker is BaseBulker, IERC3156FlashBorrower {
 
     function onFlashLoan(address, address asset, uint256 amount, uint256 fee, bytes calldata data)
         external
-        callback(data)
         returns (bytes32)
     {
+        _onCallback(data);
+
         ERC20(asset).safeApprove(msg.sender, amount + fee);
 
         return FLASHLOAN_CALLBACK;

@@ -6,9 +6,9 @@ import {IAaveFlashBorrower} from "./interfaces/IAaveFlashBorrower.sol";
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-abstract contract AaveBulker is BaseBulker, IAaveFlashBorrower {
+abstract contract AaveFlashRouter is BaseFlashRouter, IAaveFlashBorrower {
     using SafeTransferLib for ERC20;
 
     /* EXTERNAL */
@@ -19,7 +19,9 @@ abstract contract AaveBulker is BaseBulker, IAaveFlashBorrower {
         uint256[] calldata fees,
         address,
         bytes calldata data
-    ) external callback(data) returns (bool) {
+    ) external returns (bool) {
+        _onCallback(data);
+
         for (uint256 i; i < assets.length; ++i) {
             ERC20(assets[i]).safeApprove(msg.sender, amounts[i] + fees[i]);
         }

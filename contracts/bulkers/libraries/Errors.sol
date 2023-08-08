@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 library Errors {
     string internal constant DEADLINE_EXPIRED = "deadline expired";
 
-    string internal constant ALREADY_INITIATED = "already initiated";
-
     string internal constant ZERO_ADDRESS = "zero address";
 
     string internal constant BULKER_ADDRESS = "bulker address";

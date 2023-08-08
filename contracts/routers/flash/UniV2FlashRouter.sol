@@ -8,9 +8,9 @@ import {IUniV2FlashBorrower} from "./interfaces/IUniV2FlashBorrower.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
+contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
     using SafeTransferLib for ERC20;
 
     /* TYPES */
@@ -40,11 +40,9 @@ contract UniV2Bulker is BaseBulker, IUniV2FlashBorrower {
     /* CALLBACKS */
 
     function uniswapV2Call(address, uint256 amount0, uint256 amount1, bytes calldata data) external {
-        _checkInitiated();
-
         UniV2FlashCallbackData memory flashData = abi.decode(data, (UniV2FlashCallbackData));
 
-        _multicall(abi.decode(flashData.data, (bytes[])));
+        _onCallback(data);
 
         ERC20(flashData.token0).safeApprove(msg.sender, amount0 * 100_00 / FEE_BPS);
         ERC20(flashData.token1).safeApprove(msg.sender, amount1 * 100_00 / FEE_BPS);

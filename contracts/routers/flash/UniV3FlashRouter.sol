@@ -8,9 +8,9 @@ import {Errors} from "./libraries/Errors.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {PoolAddress} from "@uniswap/v3-periphery/libraries/PoolAddress.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
+contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
     using SafeTransferLib for ERC20;
     using PoolAddress for address;
 
@@ -38,12 +38,10 @@ contract UniV3Bulker is BaseBulker, IUniV3FlashBorrower {
 
     /* CALLBACKS */
 
-    function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external callback(data) {
-        _checkInitiated();
-
+    function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external {
         UniV3FlashCallbackData memory flashData = abi.decode(data, (UniV3FlashCallbackData));
 
-        _multicall(abi.decode(flashData.data, (bytes[])));
+        _onCallback(data);
 
         ERC20(flashData.token0).safeApprove(msg.sender, flashData.amount0 + fee0);
         ERC20(flashData.token1).safeApprove(msg.sender, flashData.amount1 + fee1);

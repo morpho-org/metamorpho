@@ -13,7 +13,6 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @title ERC20Bulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-/// @notice Contract allowing to bundle multiple interactions with ERC20s together.
 contract ERC20Bulker is BaseBulker {
     using Permit2Lib for ERC20Permit2;
     using SafeTransferLib for ERC20;

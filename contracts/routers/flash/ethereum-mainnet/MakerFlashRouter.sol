@@ -5,10 +5,9 @@ import {IERC3156FlashLender} from "../interfaces/IERC3156FlashLender.sol";
 
 import {Errors} from "../libraries/Errors.sol";
 
-import {BaseBulker} from "../BaseBulker.sol";
-import {ERC3156Bulker} from "../ERC3156Bulker.sol";
+import {ERC3156FlashRouter} from "../ERC3156FlashRouter.sol";
 
-contract MakerBulker is BaseBulker, ERC3156Bulker {
+contract MakerFlashRouter is ERC3156FlashRouter {
     /* IMMUTABLES */
 
     IERC3156FlashLender internal immutable _MAKER_VAULT;

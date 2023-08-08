@@ -12,7 +12,6 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @title WNativeBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-/// @notice Contract allowing to bundle multiple interactions with stETH together.
 contract WNativeBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
