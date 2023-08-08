@@ -8,7 +8,7 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseBulker} from "./BaseBulker.sol";
 
-contract OneInchBulker is BaseBulker {
+abstract contract OneInchBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */

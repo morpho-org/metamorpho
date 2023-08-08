@@ -7,7 +7,7 @@ import {Errors} from "./libraries/Errors.sol";
 
 import {AaveFlashRouter} from "./AaveFlashRouter.sol";
 
-contract AaveV3FlashRouter is AaveFlashRouter {
+abstract contract AaveV3FlashRouter is AaveFlashRouter {
     /* IMMUTABLES */
 
     IAaveFlashLender internal immutable _AAVE_V3;

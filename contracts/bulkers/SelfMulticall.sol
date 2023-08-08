@@ -9,7 +9,7 @@ import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";
 
 /// @title Multicall
 /// @notice Enables calling multiple functions in a single call to the same contract.
-contract SelfMulticall is BaseSelfMulticall, IMulticall {
+abstract contract SelfMulticall is BaseSelfMulticall, IMulticall {
     /* EXTERNAL */
 
     function multicall(uint256 deadline, bytes[] calldata data) external payable returns (bytes[] memory) {

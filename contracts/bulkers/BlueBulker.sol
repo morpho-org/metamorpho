@@ -14,7 +14,7 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @title BlueBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-contract BlueBulker is BaseBulker, IBlueBulker {
+abstract contract BlueBulker is BaseBulker, IBlueBulker {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */

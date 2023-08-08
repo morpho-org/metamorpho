@@ -10,7 +10,7 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
+abstract contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
     using SafeTransferLib for ERC20;
 
     /* TYPES */
