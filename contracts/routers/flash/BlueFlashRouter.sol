@@ -13,7 +13,7 @@ import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 /// @title BlueFlashRouter.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
+abstract contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */

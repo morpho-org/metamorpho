@@ -8,7 +8,7 @@ import {SelfMulticall} from "./SelfMulticall.sol";
 /// @title BaseBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-contract BaseBulker is SelfMulticall {
+abstract contract BaseBulker is SelfMulticall {
     /* EXTERNAL */
 
     function callBulker(IMulticall bulker, bytes[] calldata data) external {

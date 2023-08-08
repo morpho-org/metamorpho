@@ -12,7 +12,7 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @title WNativeBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-contract WNativeBulker is BaseBulker {
+abstract contract WNativeBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
     /* CONSTANTS */

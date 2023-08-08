@@ -10,7 +10,7 @@ import {PoolAddress} from "@uniswap/v3-periphery/libraries/PoolAddress.sol";
 
 import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
-contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
+abstract contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
     using SafeTransferLib for ERC20;
     using PoolAddress for address;
 

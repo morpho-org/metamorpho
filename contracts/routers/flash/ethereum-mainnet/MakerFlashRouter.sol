@@ -7,7 +7,7 @@ import {Errors} from "../libraries/Errors.sol";
 
 import {ERC3156FlashRouter} from "../ERC3156FlashRouter.sol";
 
-contract MakerFlashRouter is ERC3156FlashRouter {
+abstract contract MakerFlashRouter is ERC3156FlashRouter {
     /* IMMUTABLES */
 
     IERC3156FlashLender internal immutable _MAKER_VAULT;

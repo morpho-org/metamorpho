@@ -13,7 +13,7 @@ import {BaseBulker} from "../BaseBulker.sol";
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
 /// @notice Contract allowing to bundle multiple interactions with stETH together.
-contract StEthBulker is BaseBulker {
+abstract contract StEthBulker is BaseBulker {
     using SafeTransferLib for ERC20;
 
     /* CONSTANTS */

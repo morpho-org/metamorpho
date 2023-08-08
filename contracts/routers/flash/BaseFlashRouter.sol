@@ -10,7 +10,7 @@ import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
 /// @title BaseFlashRouter.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-contract BaseFlashRouter is BaseSelfMulticall {
+abstract contract BaseFlashRouter is BaseSelfMulticall {
     /* STORAGE */
 
     /// @dev Keeps track of the bulker's latest batch initiator. Also prevents interacting with the bulker outside of an initiated execution context.
