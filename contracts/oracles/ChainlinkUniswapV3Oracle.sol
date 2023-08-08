@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {OracleFeed, IOracle} from "./interfaces/IOracle.sol";
+import {IOracle} from "./interfaces/IOracle.sol";
 
+import {OracleFeed} from "./libraries/OracleFeed.sol";
 import {FixedPointMathLib} from "@morpho-blue/libraries/FixedPointMathLib.sol";
 
 import {UniswapV3Adapter} from "./adapters/UniswapV3Adapter.sol";
@@ -16,11 +17,11 @@ contract ChainlinkUniswapV3Oracle is ChainlinkAggregatorAdapter, UniswapV3Adapte
         UniswapV3Adapter(uniV3Pool, uniV3Delay)
     {}
 
-    function FEED1() external view returns (OracleFeed, address) {
+    function FEED1() external view returns (string memory, address) {
         return (OracleFeed.CHAINLINK, address(_CHAINLINK_FEED));
     }
 
-    function FEED2() external view returns (OracleFeed, address) {
+    function FEED2() external view returns (string memory, address) {
         return (OracleFeed.UNISWAP_V3, address(_UNI_V3_POOL));
     }
 
