@@ -81,7 +81,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
         _BLUE.supplyCollateral(market, amount, onBehalf, data);
     }
 
-    /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Morpho.
+    /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Blue.
     function blueBorrow(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.borrow(market, amount, msg.sender, receiver);
     }
@@ -97,12 +97,12 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
         _BLUE.repay(market, amount, onBehalf, data);
     }
 
-    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously approved the bulker as their manager on Morpho.
+    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously approved the bulker as their manager on Blue.
     function blueWithdraw(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdraw(market, amount, msg.sender, receiver);
     }
 
-    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously approved the bulker as their manager on Morpho.
+    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously approved the bulker as their manager on Blue.
     function blueWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
     }
