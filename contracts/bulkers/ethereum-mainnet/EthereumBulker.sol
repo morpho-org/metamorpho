@@ -6,6 +6,9 @@ import {ERC20Bulker} from "../ERC20Bulker.sol";
 import {WNativeBulker} from "../WNativeBulker.sol";
 import {StEthBulker} from "./StEthBulker.sol";
 
+/// @title EthereumBulker.
+/// @author Morpho Labs.
+/// @custom:contact security@blue.xyz
 contract EthereumBulker is ERC20Bulker, WNativeBulker, StEthBulker, BlueBulker {
     address internal constant _WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
