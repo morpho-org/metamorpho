@@ -19,7 +19,7 @@ abstract contract ERC20Bulker is BaseBulker {
 
     /* ACTIONS */
 
-    /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.
+    /// @dev Transfers the given `amount` of `asset` from this contract to `recipient`.
     function transfer(address asset, address recipient, uint256 amount) external {
         require(recipient != address(0), Errors.ZERO_ADDRESS);
         require(recipient != address(this), Errors.BULKER_ADDRESS);
