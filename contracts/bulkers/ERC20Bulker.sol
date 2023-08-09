@@ -19,7 +19,7 @@ abstract contract ERC20Bulker is BaseBulker {
 
     /* ACTIONS */
 
-    /// @dev Transfers the given `amount` of `asset` from this contract to `recipient`.
+    /// @dev Transfers the minimum between the given `amount` and the bulker balance of `asset` from this contract to `recipient`.
     function transfer(address asset, address recipient, uint256 amount) external {
         require(recipient != address(0), Errors.ZERO_ADDRESS);
         require(recipient != address(this), Errors.BULKER_ADDRESS);
