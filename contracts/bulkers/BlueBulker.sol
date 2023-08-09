@@ -97,7 +97,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
         _BLUE.repay(market, amount, onBehalf, data);
     }
 
-    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously approved the bulker as their manager on Blue.
+    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bulker to act on their behalf on Blue.
     function blueWithdraw(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdraw(market, amount, msg.sender, receiver);
     }
