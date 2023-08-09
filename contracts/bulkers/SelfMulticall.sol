@@ -7,7 +7,7 @@ import {Errors} from "./libraries/Errors.sol";
 
 import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";
 
-/// @title Multicall
+/// @title SelfMulticall
 /// @notice Enables calling multiple functions in a single call to the same contract.
 abstract contract SelfMulticall is BaseSelfMulticall, IMulticall {
     /* EXTERNAL */

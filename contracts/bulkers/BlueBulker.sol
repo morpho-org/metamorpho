@@ -57,7 +57,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     }
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
-    ///         The supplied amount cannot be used as collateral but is eligible for the peer-to-peer matching.
+    ///         The supplied amount cannot be used as collateral but is eligible to earn interest.
     function blueSupply(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
@@ -123,7 +123,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /* PRIVATE */
 
-    /// @dev Gives the max approval to the Morpho contract to spend the given `asset` if not already approved.
+    /// @dev Gives the max approval to the Blue contract to spend the given `asset` if not already approved.
     function _approveMaxBlue(address asset) private {
         if (ERC20(asset).allowance(address(this), address(_BLUE)) == 0) {
             ERC20(asset).safeApprove(address(_BLUE), type(uint256).max);
