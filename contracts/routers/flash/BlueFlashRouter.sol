@@ -30,25 +30,18 @@ abstract contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
 
     /* CALLBACKS */
 
-    function onBlueFlashLoan(address, uint256, bytes calldata data) external {
+    function onBlueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
         _onCallback(data);
+
+        ERC20(asset).safeTransferFrom(_initiator, address(this), amount);
     }
 
     /* ACTIONS */
 
     /// @dev Triggers a flash loan on Blue.
     function blueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
-        _approveMaxBlue(asset);
+        _approveMax(asset, address(_BLUE));
 
         _BLUE.flashLoan(asset, amount, data);
-    }
-
-    /* PRIVATE */
-
-    /// @dev Gives the max approval to the Morpho contract to spend the given `asset` if not already approved.
-    function _approveMaxBlue(address asset) private {
-        if (ERC20(asset).allowance(address(this), address(_BLUE)) == 0) {
-            ERC20(asset).safeApprove(address(_BLUE), type(uint256).max);
-        }
     }
 }

@@ -36,7 +36,7 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
         _onCallback(data);
 
         for (uint256 i; i < assets.length; ++i) {
-            ERC20(assets[i]).safeTransfer(msg.sender, amounts[i] + fees[i]);
+            ERC20(assets[i]).safeTransferFrom(_initiator, msg.sender, amounts[i] + fees[i]);
         }
     }
 

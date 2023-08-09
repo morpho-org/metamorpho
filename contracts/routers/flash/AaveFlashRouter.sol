@@ -23,7 +23,7 @@ abstract contract AaveFlashRouter is BaseFlashRouter, IAaveFlashBorrower {
         _onCallback(data);
 
         for (uint256 i; i < assets.length; ++i) {
-            ERC20(assets[i]).safeApprove(msg.sender, amounts[i] + fees[i]);
+            ERC20(assets[i]).safeTransferFrom(_initiator, address(this), amounts[i] + fees[i]);
         }
 
         return true;
@@ -38,6 +38,10 @@ abstract contract AaveFlashRouter is BaseFlashRouter, IAaveFlashBorrower {
         uint256[] calldata amounts,
         bytes calldata data
     ) internal {
+        for (uint256 i; i < assets.length; ++i) {
+            _approveMax(assets[i], address(aave));
+        }
+
         aave.flashLoan(address(this), assets, amounts, new uint256[](assets.length), address(this), data, 0);
     }
 }

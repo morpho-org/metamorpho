@@ -43,8 +43,11 @@ abstract contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
 
         _onCallback(data);
 
-        ERC20(flashData.token0).safeApprove(msg.sender, flashData.amount0 + fee0);
-        ERC20(flashData.token1).safeApprove(msg.sender, flashData.amount1 + fee1);
+        uint256 repaid0 = flashData.amount0 + fee0;
+        uint256 repaid1 = flashData.amount1 + fee1;
+
+        ERC20(flashData.token0).safeTransferFrom(_initiator, msg.sender, repaid0);
+        ERC20(flashData.token1).safeTransferFrom(_initiator, msg.sender, repaid1);
     }
 
     /* EXTERNAL */

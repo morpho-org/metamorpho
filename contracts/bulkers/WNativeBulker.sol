@@ -17,7 +17,7 @@ abstract contract WNativeBulker is BaseBulker {
 
     /* CONSTANTS */
 
-    /// @dev The address of the WETH contract.
+    /// @dev The address of the wrapped native token contract.
     address internal immutable _WRAPPED_NATIVE;
 
     /* CONSTRUCTOR */
@@ -30,14 +30,14 @@ abstract contract WNativeBulker is BaseBulker {
 
     /* CALLBACKS */
 
-    /// @dev Only the WETH contract is allowed to transfer ETH to this contract, without any calldata.
+    /// @dev Only the wNative contract is allowed to transfer the native token to this contract, without any calldata.
     receive() external payable {
         require(msg.sender == _WRAPPED_NATIVE, Errors.ONLY_WNATIVE);
     }
 
     /* ACTIONS */
 
-    /// @dev Wraps the given input of ETH to WETH.
+    /// @dev Wraps the given input of the native token to wNative.
     function wrapNative(uint256 amount) external {
         amount = Math.min(amount, address(this).balance);
 
@@ -46,7 +46,7 @@ abstract contract WNativeBulker is BaseBulker {
         IWNative(_WRAPPED_NATIVE).deposit{value: amount}();
     }
 
-    /// @dev Unwraps the given input of WETH to ETH.
+    /// @dev Unwraps the given input of wNative to the native token.
     function unwrapNative(uint256 amount, address receiver) external {
         require(receiver != address(this), Errors.BULKER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);
