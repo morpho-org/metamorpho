@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import {IFlashBorrower} from "./interfaces/IFlashBorrower.sol";
 
 import {Errors} from "./libraries/Errors.sol";
+import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
 
@@ -11,10 +12,12 @@ import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
 abstract contract BaseFlashRouter is BaseSelfMulticall {
+    using SafeTransferLib for ERC20;
+
     /* STORAGE */
 
     /// @dev Keeps track of the bulker's latest batch initiator. Also prevents interacting with the bulker outside of an initiated execution context.
-    address private _initiator;
+    address internal _initiator;
 
     /* MODIFIERS */
 
@@ -46,5 +49,12 @@ abstract contract BaseFlashRouter is BaseSelfMulticall {
         if (calls.length == 0) return IFlashBorrower(_initiator).onFlashLoan();
 
         _multicall(calls);
+    }
+
+    /// @dev Gives the max approval to the spender contract to spend the given `asset` if not already approved.
+    function _approveMax(address asset, address spender) internal {
+        if (ERC20(asset).allowance(address(this), spender) == 0) {
+            ERC20(asset).safeApprove(spender, type(uint256).max);
+        }
     }
 }
