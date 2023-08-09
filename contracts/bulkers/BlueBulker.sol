@@ -102,7 +102,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
         _BLUE.withdraw(market, amount, msg.sender, receiver);
     }
 
-    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously approved the bulker as their manager on Blue.
+    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bulker to act on their behalf on Blue.
     function blueWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
         _BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
     }
