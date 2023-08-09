@@ -7,6 +7,6 @@ import {ERC20Bulker} from "../ERC20Bulker.sol";
 import {WNativeBulker} from "../WNativeBulker.sol";
 import {StEthBulker} from "./StEthBulker.sol";
 
-contract EthereumBulker is BaseBulker, ERC20Bulker, WNativeBulker, StEthBulker, BlueBulker {
+contract EthereumBulker is ERC20Bulker, WNativeBulker, StEthBulker, BlueBulker {
     constructor(address blue) WNativeBulker(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) BlueBulker(blue) {}
 }
