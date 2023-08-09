@@ -53,7 +53,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     function blueSetAuthorization(address authorizer, bool isAuthorized, uint256 deadline, Signature calldata signature)
         external
     {
-        _BLUE.setAuthorization(authorizer, address(this), isAuthorized, deadline, signature);
+        _BLUE.setAuthorizationWithSig(authorizer, address(this), isAuthorized, deadline, signature);
     }
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
