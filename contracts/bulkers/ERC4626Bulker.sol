@@ -21,10 +21,11 @@ abstract contract ERC4626Bulker is BaseBulker {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
         require(receiver != address(this), Errors.BULKER_ADDRESS);
 
-        shares = Math.min(shares, IERC4626(vault).maxMint(receiver));
-
         address asset = IERC4626(vault).asset();
-        uint256 amount = Math.min(IERC4626(vault).previewMint(shares), ERC20(asset).balanceOf(address(this)));
+        uint256 amount = Math.min(IERC4626(vault).maxDeposit(receiver), ERC20(asset).balanceOf(address(this)));
+
+        shares = Math.min(shares, IERC4626(vault).previewDeposit(amount));
+        amount = IERC4626(vault).previewMint(shares);
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
@@ -37,7 +38,9 @@ abstract contract ERC4626Bulker is BaseBulker {
         require(receiver != address(this), Errors.BULKER_ADDRESS);
 
         address asset = IERC4626(vault).asset();
-        amount = Math.min(Math.min(amount, IERC4626(vault).maxDeposit(receiver)), ERC20(asset).balanceOf(address(this)));
+
+        amount = Math.min(amount, IERC4626(vault).maxDeposit(receiver));
+        amount = Math.min(amount, ERC20(asset).balanceOf(address(this)));
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
@@ -60,9 +63,7 @@ abstract contract ERC4626Bulker is BaseBulker {
 
         shares = Math.min(shares, IERC4626(vault).maxRedeem(msg.sender));
 
-        uint256 amount = IERC4626(vault).previewRedeem(shares);
-
-        require(amount != 0, Errors.ZERO_AMOUNT);
+        require(shares != 0, Errors.ZERO_SHARES);
 
         IERC4626(vault).redeem(shares, receiver, msg.sender);
     }

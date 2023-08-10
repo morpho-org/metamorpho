@@ -10,5 +10,7 @@ library Errors {
 
     string internal constant ZERO_AMOUNT = "zero amount";
 
+    string internal constant ZERO_SHARES = "zero shares";
+
     string internal constant ONLY_WNATIVE = "only wrapped native";
 }
