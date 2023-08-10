@@ -57,7 +57,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     }
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
-    ///         The supplied amount cannot be used as collateral but is eligible to earn interest.
+    ///      The supplied amount cannot be used as collateral but is eligible to earn interest.
     function blueSupply(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
