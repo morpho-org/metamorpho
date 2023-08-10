@@ -11,9 +11,9 @@ import {SelfMulticall} from "./SelfMulticall.sol";
 abstract contract BaseBulker is SelfMulticall {
     /* EXTERNAL */
 
-    function callBulker(IMulticall bulker, bytes[] calldata data) external {
-        require(address(bulker) != address(0), Errors.ZERO_ADDRESS);
+    function callBulker(address bulker, bytes[] calldata data) external {
+        require(bulker != address(0), Errors.ZERO_ADDRESS);
 
-        bulker.multicall(block.timestamp, data);
+        IMulticall(bulker).multicall(block.timestamp, data);
     }
 }
