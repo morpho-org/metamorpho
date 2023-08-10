@@ -2,23 +2,25 @@
 pragma solidity ^0.8.0;
 
 import {IOracle} from "./interfaces/IOracle.sol";
+import {IChainlinkAggregator} from "./adapters/interfaces/IChainlinkAggregator.sol";
 
 import {OracleFeed} from "./libraries/OracleFeed.sol";
+import {ChainlinkAggregatorLib} from "./libraries/ChainlinkAggregatorLib.sol";
 
-import {ChainlinkAggregatorAdapter} from "./adapters/ChainlinkAggregatorAdapter.sol";
+import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
 
-contract ChainlinkOracle is ChainlinkAggregatorAdapter, IOracle {
-    constructor(address feed, uint256 scale) ChainlinkAggregatorAdapter(feed, scale) {}
+contract ChainlinkOracle is ChainlinkCollateralAdapter, IOracle {
+    using ChainlinkAggregatorLib for IChainlinkAggregator;
 
-    function FEED1() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK, address(_CHAINLINK_FEED));
+    constructor(address feed, uint256 scale) ChainlinkCollateralAdapter(feed, scale) {}
+
+    function FEED_COLLATERAL() external view returns (string memory, address) {
+        return (OracleFeed.CHAINLINK, address(CHAINLINK_FEED_COLLATERAL));
     }
 
-    function FEED2() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK, address(_CHAINLINK_FEED));
-    }
+    function FEED_BORROWABLE() external view returns (string memory, address) {}
 
     function price() external view returns (uint256, uint256) {
-        return (_chainlinkPrice(), _CHAINLINK_PRICE_SCALE);
+        return (CHAINLINK_FEED_COLLATERAL.price(), CHAINLINK_COLLATERAL_PRICE_SCALE);
     }
 }
