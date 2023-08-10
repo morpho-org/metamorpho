@@ -18,14 +18,14 @@ abstract contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
 
     /* IMMUTABLES */
 
-    IBlue private immutable _BLUE;
+    IBlue public immutable BLUE;
 
     /* CONSTRUCTOR */
 
     constructor(address blue) {
         require(blue != address(0), Errors.ZERO_ADDRESS);
 
-        _BLUE = IBlue(blue);
+        BLUE = IBlue(blue);
     }
 
     /* CALLBACKS */
@@ -40,8 +40,8 @@ abstract contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
 
     /// @dev Triggers a flash loan on Blue.
     function blueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
-        _approveMax(asset, address(_BLUE));
+        _approveMax(asset, address(BLUE));
 
-        _BLUE.flashLoan(asset, amount, data);
+        BLUE.flashLoan(asset, amount, data);
     }
 }

@@ -13,14 +13,14 @@ abstract contract OneInchBulker is BaseBulker {
 
     /* IMMUTABLES */
 
-    I1InchAggregationRouterV5 private immutable _1INCH_ROUTER;
+    I1InchAggregationRouterV5 public immutable ONE_INCH_ROUTER;
 
     /* CONSTRUCTOR */
 
     constructor(address router) {
         require(router != address(0), Errors.ZERO_ADDRESS);
 
-        _1INCH_ROUTER = I1InchAggregationRouterV5(router);
+        ONE_INCH_ROUTER = I1InchAggregationRouterV5(router);
     }
 
     /* EXTERNAL */
@@ -29,8 +29,8 @@ abstract contract OneInchBulker is BaseBulker {
     function oneInchSwap(address executor, I1InchAggregationRouterV5.SwapDescription calldata desc, bytes calldata data)
         external
     {
-        ERC20(desc.srcToken).safeApprove(address(_1INCH_ROUTER), desc.amount);
+        ERC20(desc.srcToken).safeApprove(address(ONE_INCH_ROUTER), desc.amount);
 
-        _1INCH_ROUTER.swap(executor, desc, hex"", data);
+        ONE_INCH_ROUTER.swap(executor, desc, hex"", data);
     }
 }
