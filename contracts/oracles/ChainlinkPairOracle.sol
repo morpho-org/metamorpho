@@ -17,32 +17,32 @@ contract ChainlinkOracle is ChainlinkCollateralAdapter, ChainlinkBorrowableAdapt
     uint256 public immutable PRICE_SCALE;
 
     constructor(
-        address feedCollateral,
-        address feedBorrowable,
+        address collateralFeed,
+        address borrowableFeed,
         uint256 collateralPriceScale,
         uint256 borrowablePriceScale,
         uint256 scale
     )
-        ChainlinkCollateralAdapter(feedCollateral, collateralPriceScale)
-        ChainlinkBorrowableAdapter(feedBorrowable, borrowablePriceScale)
+        ChainlinkCollateralAdapter(collateralFeed, collateralPriceScale)
+        ChainlinkBorrowableAdapter(borrowableFeed, borrowablePriceScale)
     {
         PRICE_SCALE = scale;
     }
 
     function FEED_COLLATERAL() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK, address(CHAINLINK_FEED_COLLATERAL));
+        return (OracleFeed.CHAINLINK, address(CHAINLINK_COLLATERAL_FEED));
     }
 
     function FEED_BORROWABLE() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK, address(CHAINLINK_FEED_BORROWABLE));
+        return (OracleFeed.CHAINLINK, address(CHAINLINK_BORROWABLE_FEED));
     }
 
     function price() external view returns (uint256, uint256) {
         return (
             FullMath.mulDiv(
-                CHAINLINK_FEED_COLLATERAL.price() * CHAINLINK_BORROWABLE_PRICE_SCALE,
+                CHAINLINK_COLLATERAL_FEED.price() * CHAINLINK_BORROWABLE_PRICE_SCALE,
                 PRICE_SCALE, // Using FullMath to avoid overflowing because of PRICE_SCALE.
-                CHAINLINK_FEED_BORROWABLE.price() * CHAINLINK_COLLATERAL_PRICE_SCALE
+                CHAINLINK_BORROWABLE_FEED.price() * CHAINLINK_COLLATERAL_PRICE_SCALE
                 ),
             PRICE_SCALE
         );

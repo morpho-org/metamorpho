@@ -5,14 +5,14 @@ import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
 import {TickMath} from "@uniswap/v3-core/libraries/TickMath.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
-/// @title Oracle library
-/// @notice Provides functions to integrate with V3 pool oracle
-library UniswapV3OracleLib {
+/// @title UniswapV3PoolLib
+/// @notice Provides functions to integrate with a V3 pool, as an oracle.
+library UniswapV3PoolLib {
     /// @notice Calculates time-weighted average price of a pool over a given duration.
     /// @param pool Address of the pool that we want to observe.
     /// @param secondsAgo Number of seconds in the past from which to calculate the time-weighted average.
     /// @return The time-weighted average price from (block.timestamp - secondsAgo) to block.timestamp.
-    function consult(IUniswapV3Pool pool, uint32 secondsAgo) internal view returns (uint256) {
+    function price(IUniswapV3Pool pool, uint32 secondsAgo) internal view returns (uint256) {
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;
