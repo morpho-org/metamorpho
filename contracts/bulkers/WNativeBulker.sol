@@ -39,6 +39,8 @@ abstract contract WNativeBulker is BaseBulker {
 
     /// @dev Wraps the given `amount` of the native token to wNative and sends it to `receiver`.
     function wrapNative(uint256 amount, address receiver) external {
+        require(receiver != address(0), Errors.ZERO_ADDRESS);
+
         amount = Math.min(amount, address(this).balance);
 
         require(amount != 0, Errors.ZERO_AMOUNT);
