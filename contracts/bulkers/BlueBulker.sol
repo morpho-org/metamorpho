@@ -19,14 +19,14 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /* IMMUTABLES */
 
-    IBlue private immutable _BLUE;
+    IBlue public immutable BLUE;
 
     /* CONSTRUCTOR */
 
     constructor(address blue) {
         require(blue != address(0), Errors.ZERO_ADDRESS);
 
-        _BLUE = IBlue(blue);
+        BLUE = IBlue(blue);
     }
 
     /* CALLBACKS */
@@ -53,7 +53,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     function blueSetAuthorization(address authorizer, bool isAuthorized, uint256 deadline, Signature calldata signature)
         external
     {
-        _BLUE.setAuthorizationWithSig(authorizer, address(this), isAuthorized, deadline, signature);
+        BLUE.setAuthorizationWithSig(authorizer, address(this), isAuthorized, deadline, signature);
     }
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
@@ -65,7 +65,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
         _approveMaxBlue(market.borrowableAsset);
 
-        _BLUE.supply(market, amount, onBehalf, data);
+        BLUE.supply(market, amount, onBehalf, data);
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
@@ -78,12 +78,12 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
         _approveMaxBlue(market.collateralAsset);
 
-        _BLUE.supplyCollateral(market, amount, onBehalf, data);
+        BLUE.supplyCollateral(market, amount, onBehalf, data);
     }
 
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Blue.
     function blueBorrow(Market calldata market, uint256 amount, address receiver) external {
-        _BLUE.borrow(market, amount, msg.sender, receiver);
+        BLUE.borrow(market, amount, msg.sender, receiver);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
@@ -94,39 +94,39 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
         _approveMaxBlue(market.borrowableAsset);
 
-        _BLUE.repay(market, amount, onBehalf, data);
+        BLUE.repay(market, amount, onBehalf, data);
     }
 
     /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bulker to act on their behalf on Blue.
     function blueWithdraw(Market calldata market, uint256 amount, address receiver) external {
-        _BLUE.withdraw(market, amount, msg.sender, receiver);
+        BLUE.withdraw(market, amount, msg.sender, receiver);
     }
 
     /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bulker to act on their behalf on Blue.
     function blueWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
-        _BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
+        BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
     }
 
     /// @dev Triggers a liquidation on Blue.
     function blueLiquidate(Market calldata market, address borrower, uint256 seized, bytes memory data) external {
         _approveMaxBlue(market.borrowableAsset);
 
-        _BLUE.liquidate(market, borrower, seized, data);
+        BLUE.liquidate(market, borrower, seized, data);
     }
 
     /// @dev Triggers a flash loan on Blue.
     function blueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
         _approveMaxBlue(asset);
 
-        _BLUE.flashLoan(asset, amount, data);
+        BLUE.flashLoan(asset, amount, data);
     }
 
     /* PRIVATE */
 
     /// @dev Gives the max approval to the Blue contract to spend the given `asset` if not already approved.
     function _approveMaxBlue(address asset) private {
-        if (ERC20(asset).allowance(address(this), address(_BLUE)) == 0) {
-            ERC20(asset).safeApprove(address(_BLUE), type(uint256).max);
+        if (ERC20(asset).allowance(address(this), address(BLUE)) == 0) {
+            ERC20(asset).safeApprove(address(BLUE), type(uint256).max);
         }
     }
 }
