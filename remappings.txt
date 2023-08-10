@@ -3,7 +3,7 @@ test/=test/
 
 solmate/=lib/morpho-blue/lib/solmate/
 
-@forge-std/=lib/forge-std/src/
+@forge-std/=lib/morpho-blue/lib/forge-std/src/
 @morpho-blue/=lib/morpho-blue/src/
 @solmate/=lib/morpho-blue/lib/solmate/src/
 @morpho-utils/=lib/morpho-utils/src/
