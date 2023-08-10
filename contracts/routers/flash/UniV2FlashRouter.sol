@@ -10,6 +10,8 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
+uint256 constant FEE_BPS = 30;
+
 abstract contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
     using SafeTransferLib for ERC20;
 
@@ -21,20 +23,16 @@ abstract contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
         bytes data;
     }
 
-    /* CONSTANTS */
-
-    uint256 private constant FEE_BPS = 30;
-
     /* IMMUTABLES */
 
-    IUniV2Factory private immutable _UNI_V2_FACTORY;
+    IUniV2Factory public immutable UNI_V2_FACTORY;
 
     /* CONSTRUCTOR */
 
     constructor(address factory) {
         require(factory != address(0), Errors.ZERO_ADDRESS);
 
-        _UNI_V2_FACTORY = IUniV2Factory(factory);
+        UNI_V2_FACTORY = IUniV2Factory(factory);
     }
 
     /* CALLBACKS */
@@ -57,7 +55,7 @@ abstract contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
     function uniV2FlashSwap(address token0, address token1, uint256 amount0, uint256 amount1, bytes calldata data)
         external
     {
-        IUniV2FlashLender(_UNI_V2_FACTORY.getPair(token0, token1)).swap(
+        IUniV2FlashLender(UNI_V2_FACTORY.getPair(token0, token1)).swap(
             amount0,
             amount1,
             address(this),

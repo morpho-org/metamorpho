@@ -18,21 +18,21 @@ abstract contract WNativeBulker is BaseBulker {
     /* CONSTANTS */
 
     /// @dev The address of the wrapped native token contract.
-    address private immutable _WRAPPED_NATIVE;
+    address public immutable WRAPPED_NATIVE;
 
     /* CONSTRUCTOR */
 
     constructor(address wNative) {
         require(wNative != address(0), Errors.ZERO_ADDRESS);
 
-        _WRAPPED_NATIVE = wNative;
+        WRAPPED_NATIVE = wNative;
     }
 
     /* CALLBACKS */
 
     /// @dev Only the wNative contract is allowed to transfer the native token to this contract, without any calldata.
     receive() external payable {
-        require(msg.sender == _WRAPPED_NATIVE, Errors.ONLY_WNATIVE);
+        require(msg.sender == WRAPPED_NATIVE, Errors.ONLY_WNATIVE);
     }
 
     /* ACTIONS */
@@ -43,9 +43,9 @@ abstract contract WNativeBulker is BaseBulker {
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
-        IWNative(_WRAPPED_NATIVE).deposit{value: amount}();
+        IWNative(WRAPPED_NATIVE).deposit{value: amount}();
 
-        if (receiver != address(this)) ERC20(_WRAPPED_NATIVE).safeTransfer(receiver, amount);
+        if (receiver != address(this)) ERC20(WRAPPED_NATIVE).safeTransfer(receiver, amount);
     }
 
     /// @dev Unwraps the given input of wNative to the native token.
@@ -53,11 +53,11 @@ abstract contract WNativeBulker is BaseBulker {
         require(receiver != address(this), Errors.BULKER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
-        amount = Math.min(amount, ERC20(_WRAPPED_NATIVE).balanceOf(address(this)));
+        amount = Math.min(amount, ERC20(WRAPPED_NATIVE).balanceOf(address(this)));
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
-        IWNative(_WRAPPED_NATIVE).withdraw(amount);
+        IWNative(WRAPPED_NATIVE).withdraw(amount);
 
         SafeTransferLib.safeTransferETH(receiver, amount);
     }

@@ -15,14 +15,14 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
 
     /* IMMUTABLES */
 
-    IBalancerFlashLender private immutable _BALANCER_VAULT;
+    IBalancerFlashLender public immutable BALANCER_VAULT;
 
     /* CONSTRUCTOR */
 
     constructor(address balancerVault) {
         require(balancerVault != address(0), Errors.ZERO_ADDRESS);
 
-        _BALANCER_VAULT = IBalancerFlashLender(balancerVault);
+        BALANCER_VAULT = IBalancerFlashLender(balancerVault);
     }
 
     /* EXTERNAL */
@@ -44,6 +44,6 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
 
     /// @dev Triggers a flash loan on Balancer.
     function balancerFlashLoan(address[] calldata assets, uint256[] calldata amounts, bytes calldata data) external {
-        _BALANCER_VAULT.flashLoan(address(this), assets, amounts, data);
+        BALANCER_VAULT.flashLoan(address(this), assets, amounts, data);
     }
 }

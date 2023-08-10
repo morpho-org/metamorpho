@@ -26,14 +26,14 @@ abstract contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
 
     /* IMMUTABLES */
 
-    address private immutable _UNI_V3_FACTORY;
+    address public immutable UNI_V3_FACTORY;
 
     /* CONSTRUCTOR */
 
     constructor(address factory) {
         require(factory != address(0), Errors.ZERO_ADDRESS);
 
-        _UNI_V3_FACTORY = factory;
+        UNI_V3_FACTORY = factory;
     }
 
     /* CALLBACKS */
@@ -56,7 +56,7 @@ abstract contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
     function uniV3FlashSwap(PoolAddress.PoolKey calldata poolKey, uint256 amount0, uint256 amount1, bytes calldata data)
         external
     {
-        IUniV3FlashLender(_UNI_V3_FACTORY.computeAddress(poolKey)).flash(
+        IUniV3FlashLender(UNI_V3_FACTORY.computeAddress(poolKey)).flash(
             address(this),
             amount0,
             amount1,
