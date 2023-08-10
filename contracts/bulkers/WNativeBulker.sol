@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
-import {IWNative} from "../interfaces/IWNative.sol";
+import {IWNative} from "./interfaces/IWNative.sol";
 
 import {Errors} from "./libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
@@ -18,7 +18,7 @@ abstract contract WNativeBulker is BaseBulker {
     /* CONSTANTS */
 
     /// @dev The address of the wrapped native token contract.
-    address internal immutable _WRAPPED_NATIVE;
+    address private immutable _WRAPPED_NATIVE;
 
     /* CONSTRUCTOR */
 
@@ -38,12 +38,14 @@ abstract contract WNativeBulker is BaseBulker {
     /* ACTIONS */
 
     /// @dev Wraps the given input of the native token to wNative.
-    function wrapNative(uint256 amount) external {
+    function wrapNative(uint256 amount, address receiver) external {
         amount = Math.min(amount, address(this).balance);
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
         IWNative(_WRAPPED_NATIVE).deposit{value: amount}();
+
+        if (receiver != address(this)) ERC20(_WRAPPED_NATIVE).safeTransfer(receiver, amount);
     }
 
     /// @dev Unwraps the given input of wNative to the native token.

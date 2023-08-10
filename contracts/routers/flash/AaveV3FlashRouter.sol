@@ -10,7 +10,7 @@ import {AaveFlashRouter} from "./AaveFlashRouter.sol";
 abstract contract AaveV3FlashRouter is AaveFlashRouter {
     /* IMMUTABLES */
 
-    IAaveFlashLender internal immutable _AAVE_V3;
+    IAaveFlashLender private immutable _AAVE_V3;
 
     /* CONSTRUCTOR */
 

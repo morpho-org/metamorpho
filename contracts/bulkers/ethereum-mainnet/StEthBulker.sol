@@ -19,10 +19,10 @@ abstract contract StEthBulker is BaseBulker {
     /* CONSTANTS */
 
     /// @dev The address of the stETH contract.
-    address internal constant _ST_ETH = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+    address private constant _ST_ETH = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
 
     /// @dev The address of the wstETH contract.
-    address internal constant _WST_ETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+    address private constant _WST_ETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
 
     /* CONSTRUCTOR */
 
@@ -33,12 +33,14 @@ abstract contract StEthBulker is BaseBulker {
     /* ACTIONS */
 
     /// @dev Wraps the given input of stETH to wstETH.
-    function wrapStEth(uint256 amount) external {
+    function wrapStEth(uint256 amount, address receiver) external {
         amount = Math.min(amount, ERC20(_ST_ETH).balanceOf(address(this)));
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
-        IWStEth(_WST_ETH).wrap(amount);
+        amount = IWStEth(_WST_ETH).wrap(amount);
+
+        if (receiver != address(this)) ERC20(_ST_ETH).safeTransfer(receiver, amount);
     }
 
     /// @dev Unwraps the given input of wstETH to stETH.

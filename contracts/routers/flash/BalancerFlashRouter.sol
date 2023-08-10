@@ -15,7 +15,7 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
 
     /* IMMUTABLES */
 
-    IBalancerFlashLender internal immutable _BALANCER_VAULT;
+    IBalancerFlashLender private immutable _BALANCER_VAULT;
 
     /* CONSTRUCTOR */
 

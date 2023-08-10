@@ -23,7 +23,7 @@ abstract contract ERC3156FlashRouter is BaseFlashRouter, IERC3156FlashBorrower {
     {
         _onCallback(data);
 
-        ERC20(asset).safeTransferFrom(_initiator, address(this), amount);
+        ERC20(asset).safeTransferFrom(_initiator, address(this), amount + fee);
 
         return FLASHLOAN_CALLBACK;
     }

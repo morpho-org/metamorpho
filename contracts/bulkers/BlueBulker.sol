@@ -19,7 +19,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /* IMMUTABLES */
 
-    IBlue internal immutable _BLUE;
+    IBlue private immutable _BLUE;
 
     /* CONSTRUCTOR */
 
