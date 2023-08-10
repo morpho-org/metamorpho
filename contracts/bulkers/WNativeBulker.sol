@@ -37,7 +37,7 @@ abstract contract WNativeBulker is BaseBulker {
 
     /* ACTIONS */
 
-    /// @dev Wraps the given input of the native token to wNative.
+    /// @dev Wraps the given `amount` of the native token to wNative and sends it to `receiver`.
     function wrapNative(uint256 amount, address receiver) external {
         amount = Math.min(amount, address(this).balance);
 
@@ -48,7 +48,7 @@ abstract contract WNativeBulker is BaseBulker {
         if (receiver != address(this)) ERC20(WRAPPED_NATIVE).safeTransfer(receiver, amount);
     }
 
-    /// @dev Unwraps the given input of wNative to the native token.
+    /// @dev Unwraps the given `amount` of wNative to the native token and sends it to `receiver`.
     function unwrapNative(uint256 amount, address receiver) external {
         require(receiver != address(this), Errors.BULKER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);
