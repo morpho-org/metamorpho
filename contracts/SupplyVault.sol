@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
-import {Market} from "@morpho-blue/interfaces/IBlue.sol";
-import {ISupplyVault} from "contracts/interfaces/ISupplyVault.sol";
-import {IVaultAllocationManager} from "contracts/interfaces/IVaultAllocationManager.sol";
+import {ISupplyVault} from "./interfaces/ISupplyVault.sol";
+import {IVaultAllocationManager} from "./interfaces/IVaultAllocationManager.sol";
 
-import {Events} from "contracts/libraries/Events.sol";
-import {MarketAllocation} from "contracts/libraries/Types.sol";
-import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "contracts/libraries/Errors.sol";
-import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "contracts/libraries/ConfigSetLib.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Events} from "./libraries/Events.sol";
+import {MarketAllocation} from "./libraries/Types.sol";
+import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "./libraries/Errors.sol";
+import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
+import {Id, Market, MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
+import {SharesMath} from "@morpho-blue/libraries/SharesMath.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {InternalSupplyRouter, ERC2771Context} from "contracts/InternalSupplyRouter.sol";
+import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
 import {IERC20, ERC20, ERC4626, Context} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
+    using SharesMath for uint256;
     using ConfigSetLib for ConfigSet;
+    using MarketLib for Market;
 
     address private _riskManager;
     address private _allocationManager;
@@ -57,11 +59,11 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
         address _asset = address(market.borrowableAsset);
         if (_asset != asset()) revert InconsistentAsset(_asset);
 
-        _config.add(market, marketConfig);
+        _config.update(market.id(), marketConfig);
     }
 
-    function disableMarket(Market memory market) external virtual onlyRiskManager {
-        _config.remove(market);
+    function disableMarket(Id id) external virtual onlyRiskManager {
+        _config.remove(id);
     }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
@@ -82,8 +84,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
         return _allocationManager;
     }
 
-    function config(Market memory market) public view virtual returns (MarketConfigData memory) {
-        return _market(market).config;
+    function config(Id id) public view virtual returns (MarketConfigData memory) {
+        return _market(id).config;
     }
 
     /* ERC4626 */
@@ -92,9 +94,9 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
-            Market storage market = _config.at(i);
+            Id id = _config.at(i);
 
-            // assets += _supplyBalance(allocation.market);
+            assets += _supplyBalance(id);
         }
     }
 
@@ -143,8 +145,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
         if (_msgSender() != allocationManager()) revert OnlyAllocationManager();
     }
 
-    function _market(Market memory market) internal view returns (MarketConfig storage) {
-        return _config.getMarket(market);
+    function _market(Id id) internal view returns (MarketConfig storage) {
+        return _config.getMarket(id);
     }
 
     function _setRiskManager(address newRiskManager) internal {
@@ -159,18 +161,22 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
         emit Events.AllocationManagerSet(newAllocationManager);
     }
 
-    function _supplyBalance(Market memory market) internal returns (uint256) {
-        // TODO: use accrued interests
+    function _supplyBalance(Id marketId) internal view returns (uint256) {
+        // TODO: calculate accrued interests
+        return _BLUE.supplyShares(marketId, address(this)).toAssetsDown(
+            _BLUE.totalSupply(marketId), _BLUE.totalSupplyShares(marketId)
+        );
     }
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
-        if (!_config.contains(allocation.market)) revert UnauthorizedMarket(allocation.market);
+        Id id = allocation.market.id();
+        if (!_config.contains(id)) revert UnauthorizedMarket(allocation.market);
 
-        MarketConfig storage market = _market(allocation.market);
+        MarketConfig storage market = _market(id);
 
         uint256 cap = market.config.cap;
         if (cap > 0) {
-            uint256 newSupply = allocation.assets + _supplyBalance(allocation.market);
+            uint256 newSupply = allocation.assets + _supplyBalance(id);
 
             if (newSupply > cap) revert SupplyCapExceeded(newSupply);
         }
