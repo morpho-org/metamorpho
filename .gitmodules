@@ -3,8 +3,7 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/morpho-blue"]
 	path = lib/morpho-blue
-	url = https://github.com/morpho-labs/blue
-	branch = poc/rubilmax
+	url = https://github.com/morpho-labs/morpho-blue
 [submodule "lib/permit2"]
 	path = lib/permit2
 	url = https://github.com/Uniswap/permit2
