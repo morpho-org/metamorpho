@@ -19,7 +19,6 @@ abstract contract ERC4626Bulker is BaseBulker {
 
     function mint(address vault, uint256 shares, address receiver) external {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
-        require(receiver != address(this), Errors.BULKER_ADDRESS);
 
         address asset = IERC4626(vault).asset();
         uint256 amount = Math.min(IERC4626(vault).maxDeposit(receiver), ERC20(asset).balanceOf(address(this)));
@@ -35,7 +34,6 @@ abstract contract ERC4626Bulker is BaseBulker {
 
     function deposit(address vault, uint256 amount, address receiver) external {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
-        require(receiver != address(this), Errors.BULKER_ADDRESS);
 
         address asset = IERC4626(vault).asset();
 
