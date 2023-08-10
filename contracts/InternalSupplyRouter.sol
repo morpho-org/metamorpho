@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {IBlue} from "@morpho-blue/interfaces/IBlue.sol";
 
-import {MarketAllocation} from "contracts/libraries/Types.sol";
+import {MarketAllocation} from "./libraries/Types.sol";
 import {Permit2Lib, ERC20 as ERC20Permit2} from "@permit2/libraries/Permit2Lib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
