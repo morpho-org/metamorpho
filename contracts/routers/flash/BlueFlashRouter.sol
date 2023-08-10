@@ -18,7 +18,7 @@ abstract contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
 
     /* IMMUTABLES */
 
-    IBlue internal immutable _BLUE;
+    IBlue private immutable _BLUE;
 
     /* CONSTRUCTOR */
 

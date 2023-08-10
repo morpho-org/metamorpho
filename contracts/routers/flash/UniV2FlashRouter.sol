@@ -27,7 +27,7 @@ abstract contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
 
     /* IMMUTABLES */
 
-    IUniV2Factory internal immutable _UNI_V2_FACTORY;
+    IUniV2Factory private immutable _UNI_V2_FACTORY;
 
     /* CONSTRUCTOR */
 

@@ -10,7 +10,7 @@ import {ERC3156FlashRouter} from "../ERC3156FlashRouter.sol";
 abstract contract MakerFlashRouter is ERC3156FlashRouter {
     /* IMMUTABLES */
 
-    IERC3156FlashLender internal immutable _MAKER_VAULT;
+    IERC3156FlashLender private immutable _MAKER_VAULT;
 
     /* CONSTRUCTOR */
 

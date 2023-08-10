@@ -26,7 +26,7 @@ abstract contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
 
     /* IMMUTABLES */
 
-    address internal immutable _UNI_V3_FACTORY;
+    address private immutable _UNI_V3_FACTORY;
 
     /* CONSTRUCTOR */
 

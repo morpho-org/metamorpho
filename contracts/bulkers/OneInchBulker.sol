@@ -13,7 +13,7 @@ abstract contract OneInchBulker is BaseBulker {
 
     /* IMMUTABLES */
 
-    I1InchAggregationRouterV5 internal immutable _1INCH_ROUTER;
+    I1InchAggregationRouterV5 private immutable _1INCH_ROUTER;
 
     /* CONSTRUCTOR */
 

@@ -158,16 +158,16 @@ class BulkAction {
     ]);
   }
 
-  static wrapNative(amount: BigNumberish): BulkCall {
-    return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("wrapNative", [amount]);
+  static wrapNative(amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("wrapNative", [amount, receiver]);
   }
 
   static unwrapNative(amount: BigNumberish, receiver: string): BulkCall {
     return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("unwrapNative", [amount, receiver]);
   }
 
-  static wrapStEth(amount: BigNumberish): BulkCall {
-    return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("wrapStEth", [amount]);
+  static wrapStEth(amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("wrapStEth", [amount, receiver]);
   }
 
   static unwrapStEth(amount: BigNumberish, receiver: string): BulkCall {
