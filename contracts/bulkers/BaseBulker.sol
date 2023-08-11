@@ -3,6 +3,8 @@ pragma solidity 0.8.21;
 
 import {IMulticall} from "./interfaces/IMulticall.sol";
 
+import {Errors} from "./libraries/Errors.sol";
+
 import {SelfMulticall} from "./SelfMulticall.sol";
 
 /// @title BaseBulker.
