@@ -6,12 +6,12 @@ import {IFlashBorrower} from "./interfaces/IFlashBorrower.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
-import {BaseCallbackDispatcher} from "../../BaseCallbackDispatcher.sol";
+import {BaseCallbackReceiver} from "../../BaseCallbackReceiver.sol";
 
 /// @title BaseFlashRouter.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-abstract contract BaseFlashRouter is BaseSelfMulticall, BaseCallbackDispatcher {
+abstract contract BaseFlashRouter is BaseSelfMulticall, BaseCallbackReceiver {
     using SafeTransferLib for ERC20;
 
     /* EXTERNAL */
