@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "contracts/bulkers/EVMBulker.sol";
 
-import "./BaseBulkerTest.sol";
+import "./helpers/LocalTest.sol";
 
-contract EVMBulkerTest is BaseBulkerTest {
+contract EVMBulkerLocalTest is LocalTest {
     using FixedPointMathLib for uint256;
 
     EVMBulker private bulker;

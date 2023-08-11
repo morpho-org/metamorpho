@@ -2,6 +2,11 @@
 src = "contracts"
 out = "out"
 libs = ["lib"]
+fs_permissions = [{ access = "read", path = "./config/"}]
 via-ir = true
+
+[rpc_endpoints]
+mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
+tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

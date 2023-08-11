@@ -13,6 +13,12 @@ contracts:
 	FOUNDRY_TEST=/dev/null FOUNDRY_SCRIPT=/dev/null forge build --via-ir --extra-output-files irOptimized --sizes --force
 
 
+test-mainnet:
+	@FOUNDRY_MATCH_CONTRACT=EthereumTest make test
+
+test-local:
+	@FOUNDRY_MATCH_CONTRACT=LocalTest make test
+
 test:
 	forge test -vvv
 

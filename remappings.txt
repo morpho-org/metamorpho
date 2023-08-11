@@ -1,3 +1,4 @@
+config/=config/
 contracts/=contracts/
 test/=test/
 
