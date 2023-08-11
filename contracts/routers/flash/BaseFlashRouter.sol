@@ -3,31 +3,16 @@ pragma solidity 0.8.21;
 
 import {IFlashBorrower} from "./interfaces/IFlashBorrower.sol";
 
-import {Errors} from "./libraries/Errors.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
+import {BaseCallbackDispatcher} from "../../BaseCallbackDispatcher.sol";
 
 /// @title BaseFlashRouter.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-abstract contract BaseFlashRouter is BaseSelfMulticall {
+abstract contract BaseFlashRouter is BaseSelfMulticall, BaseCallbackDispatcher {
     using SafeTransferLib for ERC20;
-
-    /* STORAGE */
-
-    /// @dev Keeps track of the bulker's latest batch initiator. Also prevents interacting with the bulker outside of an initiated execution context.
-    address internal _initiator;
-
-    /* MODIFIERS */
-
-    modifier lockInitiator() {
-        _initiator = msg.sender;
-
-        _;
-
-        delete _initiator;
-    }
 
     /* EXTERNAL */
 
@@ -36,10 +21,6 @@ abstract contract BaseFlashRouter is BaseSelfMulticall {
     }
 
     /* INTERNAL */
-
-    function _checkInitiated() internal view {
-        require(_initiator != address(0), Errors.ALREADY_INITIATED);
-    }
 
     function _onCallback(bytes[] memory calls) internal {
         _checkInitiated();

@@ -49,20 +49,22 @@ abstract contract ERC4626Bulker is BaseBulker {
     function withdraw(address vault, uint256 amount, address receiver) external {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
-        amount = Math.min(amount, IERC4626(vault).maxWithdraw(msg.sender));
+        address initiator = _initiator;
+        amount = Math.min(amount, IERC4626(vault).maxWithdraw(initiator));
 
         require(amount != 0, Errors.ZERO_AMOUNT);
 
-        IERC4626(vault).withdraw(amount, receiver, msg.sender);
+        IERC4626(vault).withdraw(amount, receiver, initiator);
     }
 
     function redeem(address vault, uint256 shares, address receiver) external {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
-        shares = Math.min(shares, IERC4626(vault).maxRedeem(msg.sender));
+        address initiator = _initiator;
+        shares = Math.min(shares, IERC4626(vault).maxRedeem(initiator));
 
         require(shares != 0, Errors.ZERO_SHARES);
 
-        IERC4626(vault).redeem(shares, receiver, msg.sender);
+        IERC4626(vault).redeem(shares, receiver, initiator);
     }
 }

@@ -8,3 +8,7 @@ error UnauthorizedMarket(Market market);
 error InconsistentAsset(address asset);
 
 error SupplyCapExceeded(uint256 supply);
+
+library Errors {
+    string internal constant ALREADY_INITIATED = "already initiated";
+}

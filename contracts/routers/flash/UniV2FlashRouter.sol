@@ -43,11 +43,12 @@ abstract contract UniV2FlashRouter is BaseFlashRouter, IUniV2FlashBorrower {
 
         _onCallback(calls);
 
+        address initiator = _initiator;
         uint256 repaid0 = amount0 * 100_00 / FEE_BPS;
         uint256 repaid1 = amount1 * 100_00 / FEE_BPS;
 
-        ERC20(flashData.token0).safeTransferFrom(_initiator, msg.sender, repaid0);
-        ERC20(flashData.token1).safeTransferFrom(_initiator, msg.sender, repaid1);
+        ERC20(flashData.token0).safeTransferFrom(initiator, msg.sender, repaid0);
+        ERC20(flashData.token1).safeTransferFrom(initiator, msg.sender, repaid1);
     }
 
     /* EXTERNAL */
