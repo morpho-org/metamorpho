@@ -9,14 +9,14 @@ import {MarketAllocation} from "./libraries/Types.sol";
 import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "./libraries/Errors.sol";
 import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
 import {Id, Market, MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
-import {SharesMath} from "@morpho-blue/libraries/SharesMath.sol";
+import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
 import {IERC20, ERC20, ERC4626, Context} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
-    using SharesMath for uint256;
+    using SharesMathLib for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketLib for Market;
 

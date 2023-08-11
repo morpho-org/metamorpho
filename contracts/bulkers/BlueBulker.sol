@@ -58,14 +58,16 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
     ///         The supplied amount cannot be used as collateral but is eligible to earn interest.
-    function blueSupply(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
+    function blueSupply(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
+        external
+    {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
+        if (amount != 0) amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
 
         _approveMaxBlue(market.borrowableAsset);
 
-        BLUE.supply(market, amount, onBehalf, data);
+        BLUE.supply(market, amount, shares, onBehalf, data);
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
@@ -82,24 +84,26 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     }
 
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Blue.
-    function blueBorrow(Market calldata market, uint256 amount, address receiver) external {
-        BLUE.borrow(market, amount, msg.sender, receiver);
+    function blueBorrow(Market calldata market, uint256 amount, uint256 shares, address receiver) external {
+        BLUE.borrow(market, amount, shares, msg.sender, receiver);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
-    function blueRepay(Market calldata market, uint256 amount, address onBehalf, bytes calldata data) external {
+    function blueRepay(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
+        external
+    {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
+        if (amount != 0) amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
 
         _approveMaxBlue(market.borrowableAsset);
 
-        BLUE.repay(market, amount, onBehalf, data);
+        BLUE.repay(market, amount, shares, onBehalf, data);
     }
 
     /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bulker to act on their behalf on Blue.
-    function blueWithdraw(Market calldata market, uint256 amount, address receiver) external {
-        BLUE.withdraw(market, amount, msg.sender, receiver);
+    function blueWithdraw(Market calldata market, uint256 amount, uint256 shares, address receiver) external {
+        BLUE.withdraw(market, amount, shares, msg.sender, receiver);
     }
 
     /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bulker to act on their behalf on Blue.
