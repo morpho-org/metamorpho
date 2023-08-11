@@ -24,6 +24,6 @@ abstract contract BaseCallbackReceiver {
     /* INTERNAL */
 
     function _checkInitiated() internal view {
-        require(_initiator != address(0), Errors.INITIATED);
+        require(_initiator != address(0), Errors.UNINITIATED);
     }
 }
