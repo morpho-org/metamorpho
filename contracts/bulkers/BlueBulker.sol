@@ -58,12 +58,14 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
     ///      The supplied amount cannot be used as collateral but is eligible to earn interest.
+    ///      Note: pass `amount = type(uint256).max` to supply the bulker's borrowable asset balance.
     function blueSupply(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
         external
     {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        if (amount != 0) amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
+        // Don't always cap the amount to the bulker's balance because the liquidity can be transferred inside the supply callback.
+        if (amount == type(uint256).max) amount = ERC20(market.borrowableAsset).balanceOf(address(this));
 
         _approveMaxBlue(market.borrowableAsset);
 
@@ -71,12 +73,14 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
+    ///      Note: pass `amount = type(uint256).max` to supply the bulker's collateral asset balance.
     function blueSupplyCollateral(Market calldata market, uint256 amount, address onBehalf, bytes calldata data)
         external
     {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        amount = Math.min(amount, ERC20(market.collateralAsset).balanceOf(address(this)));
+        // Don't always cap the amount to the bulker's balance because the liquidity can be transferred inside the supply collateral callback.
+        if (amount == type(uint256).max) amount = ERC20(market.collateralAsset).balanceOf(address(this));
 
         _approveMaxBlue(market.collateralAsset);
 
@@ -89,12 +93,14 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
+    ///      Note: pass `amount = type(uint256).max` to repay the bulker's borrowable asset balance.
     function blueRepay(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
         external
     {
         require(onBehalf != address(this), Errors.BULKER_ADDRESS);
 
-        if (amount != 0) amount = Math.min(amount, ERC20(market.borrowableAsset).balanceOf(address(this)));
+        // Don't always cap the amount to the bulker's balance because the liquidity can be transferred inside the repay callback.
+        if (amount == type(uint256).max) amount = ERC20(market.borrowableAsset).balanceOf(address(this));
 
         _approveMaxBlue(market.borrowableAsset);
 
