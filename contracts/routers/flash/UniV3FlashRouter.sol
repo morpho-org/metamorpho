@@ -40,8 +40,9 @@ abstract contract UniV3FlashRouter is BaseFlashRouter, IUniV3FlashBorrower {
 
     function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external {
         UniV3FlashCallbackData memory flashData = abi.decode(data, (UniV3FlashCallbackData));
+        bytes[] memory calls = abi.decode(flashData.data, (bytes[]));
 
-        _onCallback(data);
+        _onCallback(calls);
 
         uint256 repaid0 = flashData.amount0 + fee0;
         uint256 repaid1 = flashData.amount1 + fee1;

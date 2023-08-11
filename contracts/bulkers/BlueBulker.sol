@@ -43,7 +43,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
         _multicall(abi.decode(data, (bytes[])));
     }
 
-    function onBlueFlashLoan(address, uint256, bytes calldata data) external {
+    function onBlueFlashLoan(uint256, bytes calldata data) external {
         _multicall(abi.decode(data, (bytes[])));
     }
 
