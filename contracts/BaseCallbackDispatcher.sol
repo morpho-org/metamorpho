@@ -24,6 +24,6 @@ abstract contract BaseCallbackDispatcher {
     /* INTERNAL */
 
     function _checkInitiated() internal view {
-        require(_initiator != address(0), Errors.ALREADY_INITIATED);
+        require(_initiator == address(0), Errors.ALREADY_INITIATED);
     }
 }
