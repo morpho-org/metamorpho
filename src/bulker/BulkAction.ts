@@ -38,12 +38,7 @@ class BulkAction {
     return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("transfer", [asset, recipient, amount]);
   }
 
-  static approve2(
-    asset: string,
-    amount: BigNumberish,
-    deadline: BigNumberish,
-    signature: Signature,
-  ): BulkCall {
+  static approve2(asset: string, amount: BigNumberish, deadline: BigNumberish, signature: Signature): BulkCall {
     return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("approve2", [
       asset,
       amount,
@@ -70,12 +65,7 @@ class BulkAction {
     ]);
   }
 
-  static blueSupply(
-    market: MarketStruct,
-    amount: BigNumberish,
-    onBehalf: string,
-    callbackCalls: BulkCall[],
-  ): BulkCall {
+  static blueSupply(market: MarketStruct, amount: BigNumberish, onBehalf: string, callbackCalls: BulkCall[]): BulkCall {
     return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueSupply", [
       market,
       amount,
@@ -102,12 +92,7 @@ class BulkAction {
     return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueBorrow", [market, amount, receiver]);
   }
 
-  static blueRepay(
-    market: MarketStruct,
-    amount: BigNumberish,
-    onBehalf: string,
-    callbackCalls: BulkCall[],
-  ): BulkCall {
+  static blueRepay(market: MarketStruct, amount: BigNumberish, onBehalf: string, callbackCalls: BulkCall[]): BulkCall {
     return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueRepay", [
       market,
       amount,
@@ -117,23 +102,11 @@ class BulkAction {
   }
 
   static blueWithdraw(market: MarketStruct, amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueWithdraw", [
-      market,
-      amount,
-      receiver,
-    ]);
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueWithdraw", [market, amount, receiver]);
   }
 
-  static blueWithdrawCollateral(
-    market: MarketStruct,
-    amount: BigNumberish,
-    receiver: string,
-  ): BulkCall {
-    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueWithdrawCollateral", [
-      market,
-      amount,
-      receiver,
-    ]);
+  static blueWithdrawCollateral(market: MarketStruct, amount: BigNumberish, receiver: string): BulkCall {
+    return BulkAction.BLUE_BULKER_IFC.encodeFunctionData("blueWithdrawCollateral", [market, amount, receiver]);
   }
 
   static blueLiquidate(
@@ -174,11 +147,7 @@ class BulkAction {
     return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("unwrapStEth", [amount, receiver]);
   }
 
-  static aaveV2FlashLoan(
-    assets: string[],
-    amounts: BigNumberish[],
-    callbackCalls: BulkCall[],
-  ): BulkCall {
+  static aaveV2FlashLoan(assets: string[], amounts: BigNumberish[], callbackCalls: BulkCall[]): BulkCall {
     return BulkAction.AAVE_V2_BULKER_IFC.encodeFunctionData("aaveV2FlashLoan", [
       assets,
       amounts,
@@ -186,11 +155,7 @@ class BulkAction {
     ]);
   }
 
-  static aaveV3FlashLoan(
-    assets: string[],
-    amounts: BigNumberish[],
-    callbackCalls: BulkCall[],
-  ): BulkCall {
+  static aaveV3FlashLoan(assets: string[], amounts: BigNumberish[], callbackCalls: BulkCall[]): BulkCall {
     return BulkAction.AAVE_V3_BULKER_IFC.encodeFunctionData("aaveV3FlashLoan", [
       assets,
       amounts,
@@ -206,11 +171,7 @@ class BulkAction {
     ]);
   }
 
-  static balancerFlashLoan(
-    assets: string[],
-    amounts: BigNumberish[],
-    callbackCalls: BulkCall[],
-  ): BulkCall {
+  static balancerFlashLoan(assets: string[], amounts: BigNumberish[], callbackCalls: BulkCall[]): BulkCall {
     return BulkAction.BALANCER_BULKER_IFC.encodeFunctionData("balancerFlashLoan", [
       assets,
       amounts,

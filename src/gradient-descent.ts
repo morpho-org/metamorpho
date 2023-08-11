@@ -2,7 +2,7 @@ export const maximize = function (
   fnc: (args: number[]) => number,
   grd: (args: number[]) => number[],
   x0: number[],
-  improvement = 1e-8
+  improvement = 1e-8,
 ) {
   const dim = x0.length;
 

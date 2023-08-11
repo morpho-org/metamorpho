@@ -1,5 +1,6 @@
 import { BigNumberish } from "ethers";
 import { BaseBulker__factory } from "types";
+
 import { BulkCall } from "./BulkAction";
 
 export class BulkBatch {
