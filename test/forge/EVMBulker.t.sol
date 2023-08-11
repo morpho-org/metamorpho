@@ -38,6 +38,62 @@ contract EVMBulkerTest is BaseBulkerTest {
 
     /* TESTS */
 
+    function testSetAuthorization(uint256 privateKey, uint32 deadline) public {
+        privateKey = bound(privateKey, 1, type(uint32).max);
+        deadline = uint32(bound(deadline, block.timestamp + 1, type(uint32).max));
+
+        address user = vm.addr(privateKey);
+        vm.assume(user != USER);
+
+        bytes32 digest = ECDSA.toTypedDataHash(
+            blue.DOMAIN_SEPARATOR(),
+            keccak256(abi.encode(AUTHORIZATION_TYPEHASH, user, address(bulker), true, blue.nonce(user), deadline))
+        );
+
+        Signature memory sig;
+        (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(BlueBulker.blueSetAuthorization, (user, true, deadline, sig));
+
+        bulker.multicall(block.timestamp, data);
+
+        assertTrue(blue.isAuthorized(user, address(bulker)), "isAuthorized(bulker)");
+    }
+
+    function testSupply(uint256 amount, address onBehalf) public {
+        vm.assume(onBehalf != address(0));
+        vm.assume(onBehalf != address(blue));
+        vm.assume(onBehalf != address(bulker));
+
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+
+        bytes[] memory data = new bytes[](2);
+        data[0] = abi.encodeCall(ERC20Bulker.transferFrom2, (address(borrowableAsset), amount));
+        data[1] = abi.encodeCall(BlueBulker.blueSupply, (market, amount, 0, onBehalf, hex""));
+
+        borrowableAsset.setBalance(USER, amount);
+
+        vm.prank(USER);
+        bulker.multicall(block.timestamp, data);
+
+        assertEq(collateralAsset.balanceOf(USER), 0, "collateral.balanceOf(USER)");
+        assertEq(borrowableAsset.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
+
+        assertEq(collateralAsset.balanceOf(onBehalf), 0, "collateral.balanceOf(onBehalf)");
+        assertEq(borrowableAsset.balanceOf(onBehalf), 0, "borrowable.balanceOf(onBehalf)");
+
+        assertEq(blue.collateral(id, onBehalf), 0, "collateral(onBehalf)");
+        assertEq(blue.supplyShares(id, onBehalf), amount * SharesMathLib.VIRTUAL_SHARES, "supplyShares(onBehalf)");
+        assertEq(blue.borrowShares(id, onBehalf), 0, "borrowShares(onBehalf)");
+
+        if (onBehalf != USER) {
+            assertEq(blue.collateral(id, USER), 0, "collateral(USER)");
+            assertEq(blue.supplyShares(id, USER), 0, "supplyShares(USER)");
+            assertEq(blue.borrowShares(id, USER), 0, "borrowShares(USER)");
+        }
+    }
+
     function _testSupplyCollateralBorrow(uint256 amount, uint256 collateralAmount, address receiver) internal {
         assertEq(collateralAsset.balanceOf(USER), 0, "collateral.balanceOf(USER)");
         assertEq(borrowableAsset.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
