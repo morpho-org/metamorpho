@@ -3,7 +3,6 @@ pragma solidity 0.8.21;
 
 import {IFlashBorrower} from "./interfaces/IFlashBorrower.sol";
 
-import {Errors} from "./libraries/Errors.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
@@ -36,11 +35,5 @@ abstract contract BaseFlashRouter is BaseSelfMulticall, BaseCallbackDispatcher {
         if (ERC20(asset).allowance(address(this), spender) == 0) {
             ERC20(asset).safeApprove(spender, type(uint256).max);
         }
-    }
-
-    /* PRIVATE */
-
-    function _checkInitiated() private view {
-        require(_initiator != address(0), Errors.ALREADY_INITIATED);
     }
 }

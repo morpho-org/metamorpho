@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
+import {Errors} from "./libraries/Errors.sol";
+
 /// @title BaseCallbackDispatcher
 /// @notice Provides utility functions to identify the initiator of callbacks (which cannot be identified using `msg.sender` or `tx.origin`)
 abstract contract BaseCallbackDispatcher {
@@ -17,5 +19,11 @@ abstract contract BaseCallbackDispatcher {
         _;
 
         delete _initiator;
+    }
+
+    /* INTERNAL */
+
+    function _checkInitiated() internal view {
+        require(_initiator != address(0), Errors.ALREADY_INITIATED);
     }
 }

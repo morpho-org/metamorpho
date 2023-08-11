@@ -29,22 +29,32 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
         BLUE = IBlue(blue);
     }
 
+    /* MODIFIERS */
+
+    modifier callback(bytes calldata data) {
+        _checkInitiated();
+
+        _multicall(abi.decode(data, (bytes[])));
+
+        _;
+    }
+
     /* CALLBACKS */
 
-    function onBlueSupply(uint256, bytes calldata data) external {
-        _multicall(abi.decode(data, (bytes[])));
+    function onBlueSupply(uint256, bytes calldata data) external callback(data) {
+        // Don't need to approve Blue to pull tokens because it should already be approved max.
     }
 
-    function onBlueSupplyCollateral(uint256, bytes calldata data) external {
-        _multicall(abi.decode(data, (bytes[])));
+    function onBlueSupplyCollateral(uint256, bytes calldata data) external callback(data) {
+        // Don't need to approve Blue to pull tokens because it should already be approved max.
     }
 
-    function onBlueRepay(uint256, bytes calldata data) external {
-        _multicall(abi.decode(data, (bytes[])));
+    function onBlueRepay(uint256, bytes calldata data) external callback(data) {
+        // Don't need to approve Blue to pull tokens because it should already be approved max.
     }
 
-    function onBlueFlashLoan(uint256, bytes calldata data) external {
-        _multicall(abi.decode(data, (bytes[])));
+    function onBlueFlashLoan(uint256, bytes calldata data) external callback(data) {
+        // Don't need to approve Blue to pull tokens because it should already be approved max.
     }
 
     /* ACTIONS */
