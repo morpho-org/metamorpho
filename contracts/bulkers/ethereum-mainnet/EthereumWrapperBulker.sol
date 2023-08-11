@@ -5,10 +5,10 @@ import {ERC4626Bulker} from "../ERC4626Bulker.sol";
 import {WNativeBulker} from "../WNativeBulker.sol";
 import {StEthBulker} from "./StEthBulker.sol";
 
-/// @title EthereumWrapBulker.
+/// @title EthereumWrapperBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-contract EthereumWrapBulker is ERC4626Bulker, WNativeBulker, StEthBulker {
+contract EthereumWrapperBulker is ERC4626Bulker, WNativeBulker, StEthBulker {
     address private constant _WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     constructor() WNativeBulker(_WETH) {}

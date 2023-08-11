@@ -9,7 +9,5 @@ import {ERC20Bulker} from "./ERC20Bulker.sol";
 /// @custom:contact security@blue.xyz
 /// @notice Common bulker layer guaranteeing it can be deployed to the same address on all EVM-compatible chains.
 contract EVMBulker is ERC20Bulker, BlueBulker {
-    address private constant _BLUE = address(1);
-
-    constructor() BlueBulker(_BLUE) {}
+    constructor(address blue) BlueBulker(blue) {}
 }
