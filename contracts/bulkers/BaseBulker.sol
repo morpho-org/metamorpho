@@ -14,7 +14,12 @@ import {BaseCallbackDispatcher} from "../BaseCallbackDispatcher.sol";
 abstract contract BaseBulker is BaseSelfMulticall, BaseCallbackDispatcher {
     /* EXTERNAL */
 
-    function multicall(uint256 deadline, bytes[] calldata data) external payable returns (bytes[] memory) {
+    function multicall(uint256 deadline, bytes[] calldata data)
+        external
+        payable
+        lockInitiator
+        returns (bytes[] memory)
+    {
         require(block.timestamp <= deadline, Errors.DEADLINE_EXPIRED);
 
         return _multicall(data);
