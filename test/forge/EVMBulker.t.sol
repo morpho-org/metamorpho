@@ -38,6 +38,24 @@ contract EVMBulkerTest is BaseBulkerTest {
 
     /* TESTS */
 
+    function _testSupplyCollateralBorrow(uint256 amount, uint256 collateralAmount, address receiver) internal {
+        assertEq(collateralAsset.balanceOf(USER), 0, "collateral.balanceOf(USER)");
+        assertEq(borrowableAsset.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
+
+        assertEq(collateralAsset.balanceOf(receiver), 0, "collateral.balanceOf(receiver)");
+        assertEq(borrowableAsset.balanceOf(receiver), amount, "borrowable.balanceOf(receiver)");
+
+        assertEq(blue.collateral(id, USER), collateralAmount, "collateral(USER)");
+        assertEq(blue.supplyShares(id, USER), 0, "supplyShares(USER)");
+        assertEq(blue.borrowShares(id, USER), amount * SharesMathLib.VIRTUAL_SHARES, "borrowShares(USER)");
+
+        if (receiver != USER) {
+            assertEq(blue.collateral(id, receiver), 0, "collateral(receiver)");
+            assertEq(blue.supplyShares(id, receiver), 0, "supplyShares(receiver)");
+            assertEq(blue.borrowShares(id, receiver), 0, "borrowShares(receiver)");
+        }
+    }
+
     function testSupplyCollateralBorrow(uint256 amount, address receiver) public {
         vm.assume(receiver != address(0));
         vm.assume(receiver != address(blue));
@@ -59,21 +77,34 @@ contract EVMBulkerTest is BaseBulkerTest {
         vm.prank(USER);
         bulker.multicall(block.timestamp, data);
 
-        assertEq(collateralAsset.balanceOf(USER), 0, "collateral.balanceOf(USER)");
-        assertEq(borrowableAsset.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
+        _testSupplyCollateralBorrow(amount, collateralAmount, receiver);
+    }
 
-        assertEq(collateralAsset.balanceOf(receiver), 0, "collateral.balanceOf(receiver)");
-        assertEq(borrowableAsset.balanceOf(receiver), amount, "borrowable.balanceOf(receiver)");
+    function testSupplyCollateralBorrowViaCallback(uint256 amount, address receiver) public {
+        vm.assume(receiver != address(0));
+        vm.assume(receiver != address(blue));
 
-        assertEq(blue.collateral(id, USER), collateralAmount, "collateral(USER)");
-        assertEq(blue.supplyShares(id, USER), 0, "supplyShares(USER)");
-        assertEq(blue.borrowShares(id, USER), amount * SharesMathLib.VIRTUAL_SHARES, "borrowShares(USER)");
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
 
-        if (receiver != USER) {
-            assertEq(blue.collateral(id, receiver), 0, "collateral(receiver)");
-            assertEq(blue.supplyShares(id, receiver), 0, "supplyShares(receiver)");
-            assertEq(blue.borrowShares(id, receiver), 0, "borrowShares(receiver)");
-        }
+        borrowableAsset.setBalance(address(this), amount);
+        blue.supply(market, amount, 0, SUPPLIER, hex"");
+
+        uint256 collateralAmount = amount.wDivUp(LLTV);
+
+        bytes[] memory callbackData = new bytes[](2);
+        callbackData[0] = abi.encodeCall(BlueBulker.blueBorrow, (market, amount, 0, receiver));
+        callbackData[1] = abi.encodeCall(ERC20Bulker.transferFrom2, (address(collateralAsset), collateralAmount));
+
+        bytes[] memory data = new bytes[](1);
+        data[0] =
+            abi.encodeCall(BlueBulker.blueSupplyCollateral, (market, collateralAmount, USER, abi.encode(callbackData)));
+
+        collateralAsset.setBalance(USER, collateralAmount);
+
+        vm.prank(USER);
+        bulker.multicall(block.timestamp, data);
+
+        _testSupplyCollateralBorrow(amount, collateralAmount, receiver);
     }
 
     function testRepayWithdrawCollateral(uint256 amount, address receiver) public {
