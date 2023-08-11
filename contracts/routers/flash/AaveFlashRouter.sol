@@ -20,7 +20,9 @@ abstract contract AaveFlashRouter is BaseFlashRouter, IAaveFlashBorrower {
         address,
         bytes calldata data
     ) external returns (bool) {
-        _onCallback(data);
+        bytes[] memory calls = abi.decode(data, (bytes[]));
+
+        _onCallback(calls);
 
         for (uint256 i; i < assets.length; ++i) {
             ERC20(assets[i]).safeTransferFrom(_initiator, address(this), amounts[i] + fees[i]);

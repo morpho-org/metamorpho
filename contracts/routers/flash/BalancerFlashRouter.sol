@@ -33,7 +33,9 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
         uint256[] calldata fees,
         bytes calldata data
     ) external {
-        _onCallback(data);
+        bytes[] memory calls = abi.decode(data, (bytes[]));
+
+        _onCallback(calls);
 
         for (uint256 i; i < assets.length; ++i) {
             ERC20(assets[i]).safeTransferFrom(_initiator, msg.sender, amounts[i] + fees[i]);

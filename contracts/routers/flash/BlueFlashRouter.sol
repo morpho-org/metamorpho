@@ -30,8 +30,10 @@ abstract contract BlueFlashRouter is BaseFlashRouter, IBlueFlashLoanCallback {
 
     /* CALLBACKS */
 
-    function onBlueFlashLoan(address asset, uint256 amount, bytes calldata data) external {
-        _onCallback(data);
+    function onBlueFlashLoan(uint256 amount, bytes calldata data) external {
+        (address asset, bytes[] memory calls) = abi.decode(data, (address, bytes[]));
+
+        _onCallback(calls);
 
         ERC20(asset).safeTransferFrom(_initiator, address(this), amount);
     }
