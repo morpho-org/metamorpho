@@ -49,7 +49,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /* ACTIONS */
 
-    /// @dev Approves this contract to manage the position of `msg.sender` via EIP712 `signature`.
+    /// @dev Approves this contract to manage the initiator's position via EIP712 `signature`.
     function blueSetAuthorization(address authorizer, bool isAuthorized, uint256 deadline, Signature calldata signature)
         external
     {
@@ -89,7 +89,7 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Blue.
     function blueBorrow(Market calldata market, uint256 amount, uint256 shares, address receiver) external {
-        BLUE.borrow(market, amount, shares, msg.sender, receiver);
+        BLUE.borrow(market, amount, shares, _initiator, receiver);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
@@ -109,12 +109,12 @@ abstract contract BlueBulker is BaseBulker, IBlueBulker {
 
     /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bulker to act on their behalf on Blue.
     function blueWithdraw(Market calldata market, uint256 amount, uint256 shares, address receiver) external {
-        BLUE.withdraw(market, amount, shares, msg.sender, receiver);
+        BLUE.withdraw(market, amount, shares, _initiator, receiver);
     }
 
     /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bulker to act on their behalf on Blue.
     function blueWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
-        BLUE.withdrawCollateral(market, amount, msg.sender, receiver);
+        BLUE.withdrawCollateral(market, amount, _initiator, receiver);
     }
 
     /// @dev Triggers a liquidation on Blue.

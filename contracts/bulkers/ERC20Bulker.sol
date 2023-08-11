@@ -36,7 +36,7 @@ abstract contract ERC20Bulker is BaseBulker {
         require(amount != 0, Errors.ZERO_AMOUNT);
 
         ERC20Permit2(asset).simplePermit2(
-            msg.sender, address(this), amount, deadline, signature.v, signature.r, signature.s
+            _initiator, address(this), amount, deadline, signature.v, signature.r, signature.s
         );
     }
 
@@ -44,6 +44,6 @@ abstract contract ERC20Bulker is BaseBulker {
     function transferFrom2(address asset, uint256 amount) external {
         require(amount != 0, Errors.ZERO_AMOUNT);
 
-        ERC20Permit2(asset).transferFrom2(msg.sender, address(this), amount);
+        ERC20Permit2(asset).transferFrom2(_initiator, address(this), amount);
     }
 }
