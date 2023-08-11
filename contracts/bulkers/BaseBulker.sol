@@ -6,12 +6,12 @@ import {IMulticall} from "./interfaces/IMulticall.sol";
 import {Errors} from "./libraries/Errors.sol";
 
 import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";
-import {BaseCallbackDispatcher} from "../BaseCallbackDispatcher.sol";
+import {BaseCallbackReceiver} from "../BaseCallbackReceiver.sol";
 
 /// @title BaseBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-abstract contract BaseBulker is BaseSelfMulticall, BaseCallbackDispatcher {
+abstract contract BaseBulker is BaseSelfMulticall, BaseCallbackReceiver {
     /* EXTERNAL */
 
     function multicall(uint256 deadline, bytes[] calldata data)
