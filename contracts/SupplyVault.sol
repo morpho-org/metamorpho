@@ -56,7 +56,7 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
         virtual
         onlyRiskManager
     {
-        address _asset = address(market.borrowableAsset);
+        address _asset = address(market.borrowableToken);
         if (_asset != asset()) revert InconsistentAsset(_asset);
 
         _config.update(market.id(), marketConfig);
@@ -163,8 +163,8 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
 
     function _supplyBalance(Id marketId) internal view returns (uint256) {
         // TODO: calculate accrued interests
-        return _BLUE.supplyShares(marketId, address(this)).toAssetsDown(
-            _BLUE.totalSupply(marketId), _BLUE.totalSupplyShares(marketId)
+        return _MORPHO.supplyShares(marketId, address(this)).toAssetsDown(
+            _MORPHO.totalSupply(marketId), _MORPHO.totalSupplyShares(marketId)
         );
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {Id} from "@morpho-blue/interfaces/IBlue.sol";
+import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
 
 struct MarketConfigData {
     uint256 cap;

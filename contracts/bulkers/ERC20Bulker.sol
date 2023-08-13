@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
-import {Signature} from "@morpho-blue/interfaces/IBlue.sol";
+import {Signature} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {Errors} from "./libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 // import {SigUtils} from "@morpho-blue/../test/helpers/SigUtils.sol";
 
-import "@morpho-blue/Blue.sol";
+import "@morpho-blue/Morpho.sol";
 import {ERC20Mock} from "./mocks/ERC20Mock.sol";
 import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
 import {IrmMock} from "@morpho-blue/mocks/IrmMock.sol";
@@ -25,7 +25,7 @@ contract BaseBulkerTest is Test {
     uint256 internal constant LLTV = 0.8 ether;
     address internal constant OWNER = address(0xdead);
 
-    Blue internal blue;
+    Morpho internal morpho;
     ERC20Mock internal borrowableAsset;
     ERC20Mock internal collateralAsset;
     OracleMock internal oracle;
@@ -35,30 +35,30 @@ contract BaseBulkerTest is Test {
 
     function setUp() public virtual {
         // Create Blue.
-        blue = new Blue(OWNER);
+        morpho = new Morpho(OWNER);
 
         // List a market.
         borrowableAsset = new ERC20Mock("borrowable", "B", 18);
         collateralAsset = new ERC20Mock("collateral", "C", 18);
         oracle = new OracleMock();
 
-        irm = new IrmMock(blue);
+        irm = new IrmMock(morpho);
 
         market = Market(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
         id = market.id();
 
         vm.startPrank(OWNER);
-        blue.enableIrm(address(irm));
-        blue.enableLltv(LLTV);
-        blue.createMarket(market);
+        morpho.enableIrm(address(irm));
+        morpho.enableLltv(LLTV);
+        morpho.createMarket(market);
         vm.stopPrank();
 
         oracle.setPrice(WAD);
 
-        borrowableAsset.approve(address(blue), type(uint256).max);
-        collateralAsset.approve(address(blue), type(uint256).max);
+        borrowableAsset.approve(address(morpho), type(uint256).max);
+        collateralAsset.approve(address(morpho), type(uint256).max);
 
         vm.prank(SUPPLIER);
-        borrowableAsset.approve(address(blue), type(uint256).max);
+        borrowableAsset.approve(address(morpho), type(uint256).max);
     }
 }
