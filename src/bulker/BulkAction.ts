@@ -51,17 +51,17 @@ class BulkAction {
     return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("transferFrom2", [asset, amount]);
   }
 
-  static morphoSetAuthorization(
-    authorization: AuthorizationStruct,
-    signature: SignatureStruct,
-  ): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoSetAuthorization", [
-      authorization,
-      signature,
-    ]);
+  static morphoSetAuthorization(authorization: AuthorizationStruct, signature: SignatureStruct): BulkCall {
+    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoSetAuthorization", [authorization, signature]);
   }
 
-  static morphoSupply(market: MarketStruct, amount: BigNumberish, shares: BigNumberish, onBehalf: string, callbackCalls: BulkCall[]): BulkCall {
+  static morphoSupply(
+    market: MarketStruct,
+    amount: BigNumberish,
+    shares: BigNumberish,
+    onBehalf: string,
+    callbackCalls: BulkCall[],
+  ): BulkCall {
     return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoSupply", [
       market,
       amount,
@@ -89,7 +89,13 @@ class BulkAction {
     return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoBorrow", [market, amount, shares, receiver]);
   }
 
-  static morphoRepay(market: MarketStruct, amount: BigNumberish, shares: BigNumberish, onBehalf: string, callbackCalls: BulkCall[]): BulkCall {
+  static morphoRepay(
+    market: MarketStruct,
+    amount: BigNumberish,
+    shares: BigNumberish,
+    onBehalf: string,
+    callbackCalls: BulkCall[],
+  ): BulkCall {
     return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoRepay", [
       market,
       amount,
