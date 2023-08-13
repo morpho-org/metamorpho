@@ -19,6 +19,7 @@ contract BaseBulkerTest is Test {
 
     uint256 internal constant MIN_AMOUNT = 1000;
     uint256 internal constant MAX_AMOUNT = 2 ** 64;
+    uint256 internal constant ORACLE_SCALE = 1e36;
 
     address internal constant USER = address(0x1234);
     address internal constant SUPPLIER = address(0x5678);
@@ -53,7 +54,7 @@ contract BaseBulkerTest is Test {
         morpho.createMarket(market);
         vm.stopPrank();
 
-        oracle.setPrice(WAD);
+        oracle.setPrice(ORACLE_SCALE);
 
         borrowableAsset.approve(address(morpho), type(uint256).max);
         collateralAsset.approve(address(morpho), type(uint256).max);
