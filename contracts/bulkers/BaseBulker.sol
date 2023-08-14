@@ -3,13 +3,27 @@ pragma solidity 0.8.21;
 
 import {IMulticall} from "./interfaces/IMulticall.sol";
 
-import {SelfMulticall} from "./SelfMulticall.sol";
+import {Errors} from "./libraries/Errors.sol";
+
+import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";
+import {BaseCallbackReceiver} from "../BaseCallbackReceiver.sol";
 
 /// @title BaseBulker.
 /// @author Morpho Labs.
 /// @custom:contact security@blue.xyz
-abstract contract BaseBulker is SelfMulticall {
+abstract contract BaseBulker is BaseSelfMulticall, BaseCallbackReceiver {
     /* EXTERNAL */
+
+    function multicall(uint256 deadline, bytes[] calldata data)
+        external
+        payable
+        lockInitiator
+        returns (bytes[] memory)
+    {
+        require(block.timestamp <= deadline, Errors.DEADLINE_EXPIRED);
+
+        return _multicall(data);
+    }
 
     function callBulker(address bulker, bytes[] calldata data) external {
         require(bulker != address(0), Errors.ZERO_ADDRESS);

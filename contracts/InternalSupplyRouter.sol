@@ -46,10 +46,10 @@ contract InternalSupplyRouter is ERC2771Context {
             _msgSender(), address(this), allocation.assets
         );
 
-        _BLUE.supply(allocation.market, allocation.assets, onBehalf, hex"");
+        _BLUE.supply(allocation.market, allocation.assets, 0, onBehalf, hex"");
     }
 
     function _withdraw(MarketAllocation memory allocation, address onBehalf, address receiver) internal virtual {
-        _BLUE.withdraw(allocation.market, allocation.assets, onBehalf, receiver);
+        _BLUE.withdraw(allocation.market, allocation.assets, 0, onBehalf, receiver);
     }
 }

@@ -21,7 +21,9 @@ abstract contract ERC3156FlashRouter is BaseFlashRouter, IERC3156FlashBorrower {
         external
         returns (bytes32)
     {
-        _onCallback(data);
+        bytes[] memory calls = abi.decode(data, (bytes[]));
+
+        _onCallback(calls);
 
         ERC20(asset).safeTransferFrom(_initiator, address(this), amount + fee);
 
