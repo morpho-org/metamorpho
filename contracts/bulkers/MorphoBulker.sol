@@ -11,9 +11,9 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseBulker} from "./BaseBulker.sol";
 
-/// @title MorphoBulker.
-/// @author Morpho Labs.
-/// @custom:contact security@blue.xyz
+/// @title MorphoBulker
+/// @author Morpho Labs
+/// @custom:contact security@morpho.xyz
 abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
     using SafeTransferLib for ERC20;
 

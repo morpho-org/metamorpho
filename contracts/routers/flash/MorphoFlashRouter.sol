@@ -11,8 +11,8 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {BaseFlashRouter} from "./BaseFlashRouter.sol";
 
 /// @title MorphoFlashRouter.
-/// @author Morpho Labs.
-/// @custom:contact security@blue.xyz
+/// @author Morpho Labs
+/// @custom:contact security@morpho.xyz
 abstract contract MorphoFlashRouter is BaseFlashRouter, IMorphoFlashLoanCallback {
     using SafeTransferLib for ERC20;
 

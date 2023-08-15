@@ -10,8 +10,8 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {BaseBulker} from "../BaseBulker.sol";
 
 /// @title StEthBulker
-/// @author Morpho Labs.
-/// @custom:contact security@blue.xyz
+/// @author Morpho Labs
+/// @custom:contact security@morpho.xyz
 /// @notice Contract allowing to bundle multiple interactions with stETH together.
 abstract contract StEthBulker is BaseBulker {
     using SafeTransferLib for ERC20;
