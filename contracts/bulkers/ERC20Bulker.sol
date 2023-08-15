@@ -14,8 +14,8 @@ import {BaseBulker} from "./BaseBulker.sol";
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
 abstract contract ERC20Bulker is BaseBulker {
-    using Permit2Lib for ERC20Permit2;
     using SafeTransferLib for ERC20;
+    using Permit2Lib for ERC20Permit2;
 
     /* ACTIONS */
 

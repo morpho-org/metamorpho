@@ -9,7 +9,11 @@ import {StEthBulker} from "./StEthBulker.sol";
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
 contract EthereumWrapperBulker is ERC4626Bulker, WNativeBulker, StEthBulker {
+    /* CONSTANTS */
+
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
+    /* CONSTRUCTOR */
 
     constructor() WNativeBulker(WETH) {}
 }
