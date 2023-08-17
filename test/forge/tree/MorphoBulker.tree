@@ -33,20 +33,20 @@
     ├── if onBehalf == address(this)
     │   └── revert BULKER_ADDRESS
     ├── internal call _approveMaxBlue(borrowableToken)
+    ├── if amount == type(uint256).max
+    │   ├── amount = borrowableToken balance of bulker
+    │   └── else amount = amount
     └── call supply(market, amount, shares, onBehalf, data) on MORPHO
-        ├── if amount == type(uint256).max
-        │   └── amount = balance of borrowableToken
-        └── else amount = amount
 
 .
 └── morphoSupplyCollateral(Market calldata market, uint256 amount, address onBehalf, bytes calldata data)
     ├── if onBehalf == address(this)
     │   └── revert BULKER_ADDRESS
     ├── internal call _approveMaxBlue(collateralToken)
+    ├── if amount == type(uint256).max
+    │   ├── amount = collateralToken balance of bulker
+    │   └── else amount = amount
     └── call supplyCollateral(market, amount, onBehalf, data) on MORPHO
-        ├── if amount == type(uint256).max
-        │   └── amount = balance of collateralToken
-        └── else amount = amount
 
 .
 └── morphoBorrow(Market calldata market, uint256 amount, uint256 shares, address receiver)
@@ -57,10 +57,10 @@
     ├── if onBehalf == address(this)
     │   └── revert BULKER_ADDRESS
     ├── internal call _approveMaxBlue(borrowableToken)
+    ├── if amount == type(uint256).max
+    │   ├── amount = borrowableToken balance of bulker
+    │   └── else amount = amount
     └── call repay(market, amount, shares, onBehalf, data) on MORPHO
-        ├── if amount == type(uint256).max
-        │   └── amount = balance of borrowableToken
-        └── else amount = amount
 
 .
 └── morphoWithdraw(Market calldata market, uint256 amount, uint256 shares, address receiver)
