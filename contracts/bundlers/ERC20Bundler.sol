@@ -8,21 +8,21 @@ import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseBundler} from "./BaseBundler.sol";
 
-/// @title ERC20Bulker
+/// @title ERC20Bundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-abstract contract ERC20Bulker is BaseBulker {
+abstract contract ERC20Bundler is BaseBundler {
     using SafeTransferLib for ERC20;
     using Permit2Lib for ERC20Permit2;
 
     /* ACTIONS */
 
-    /// @dev Transfers the minimum between the given `amount` and the bulker balance of `asset` from this contract to `recipient`.
+    /// @dev Transfers the minimum between the given `amount` and the bundler balance of `asset` from this contract to `recipient`.
     function transfer(address asset, address recipient, uint256 amount) external {
         require(recipient != address(0), Errors.ZERO_ADDRESS);
-        require(recipient != address(this), Errors.BULKER_ADDRESS);
+        require(recipient != address(this), Errors.BUNDLER_ADDRESS);
 
         amount = Math.min(amount, ERC20(asset).balanceOf(address(this)));
 

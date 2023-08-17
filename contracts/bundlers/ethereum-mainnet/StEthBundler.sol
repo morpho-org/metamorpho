@@ -7,13 +7,13 @@ import {Errors} from "../libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "../BaseBulker.sol";
+import {BaseBundler} from "../BaseBundler.sol";
 
-/// @title StEthBulker
+/// @title StEthBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
 /// @notice Contract allowing to bundle multiple interactions with stETH together.
-abstract contract StEthBulker is BaseBulker {
+abstract contract StEthBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
     /* CONSTANTS */
@@ -45,7 +45,7 @@ abstract contract StEthBulker is BaseBulker {
 
     /// @dev Unwraps the given `amount` of wstETH to stETH.
     function unwrapStEth(uint256 amount, address receiver) external {
-        require(receiver != address(this), Errors.BULKER_ADDRESS);
+        require(receiver != address(this), Errors.BUNDLER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
         amount = Math.min(amount, ERC20(WST_ETH).balanceOf(address(this)));

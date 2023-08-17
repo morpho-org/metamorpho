@@ -1,45 +1,45 @@
 import { BigNumberish, Signature } from "ethers";
 import {
-  AaveV2Bulker__factory,
-  AaveV3Bulker__factory,
-  BalancerBulker__factory,
-  BaseBulker__factory,
-  MorphoBulker__factory,
-  ERC20Bulker__factory,
-  MakerBulker__factory,
-  StEthBulker__factory,
-  UniV2Bulker__factory,
-  UniV3Bulker__factory,
-  WNativeBulker__factory,
+  AaveV2Bundler__factory,
+  AaveV3Bundler__factory,
+  BalancerBundler__factory,
+  BaseBundler__factory,
+  MorphoBundler__factory,
+  ERC20Bundler__factory,
+  MakerBundler__factory,
+  StEthBundler__factory,
+  UniV2Bundler__factory,
+  UniV3Bundler__factory,
+  WNativeBundler__factory,
 } from "types";
-import { PoolAddress } from "types/contracts/bulker/UniV3Bulker";
+import { PoolAddress } from "types/contracts/bundler/UniV3Bundler";
 import { MarketStruct, SignatureStruct, AuthorizationStruct } from "types/contracts/interfaces/IMorpho";
 
 export type BulkCall = string;
 
 class BulkAction {
-  private static BASE_BULKER_IFC = BaseBulker__factory.createInterface();
-  private static ERC20_BULKER_IFC = ERC20Bulker__factory.createInterface();
-  private static MORPHO_BULKER_IFC = MorphoBulker__factory.createInterface();
-  private static WNATIVE_BULKER_IFC = WNativeBulker__factory.createInterface();
-  private static ST_ETH_BULKER_IFC = StEthBulker__factory.createInterface();
-  private static AAVE_V2_BULKER_IFC = AaveV2Bulker__factory.createInterface();
-  private static AAVE_V3_BULKER_IFC = AaveV3Bulker__factory.createInterface();
-  private static MAKER_BULKER_IFC = MakerBulker__factory.createInterface();
-  private static BALANCER_BULKER_IFC = BalancerBulker__factory.createInterface();
-  private static UNI_V2_BULKER_IFC = UniV2Bulker__factory.createInterface();
-  private static UNI_V3_BULKER_IFC = UniV3Bulker__factory.createInterface();
+  private static BASE_BUNDLER_IFC = BaseBundler__factory.createInterface();
+  private static ERC20_BUNDLER_IFC = ERC20Bundler__factory.createInterface();
+  private static MORPHO_BUNDLER_IFC = MorphoBundler__factory.createInterface();
+  private static WNATIVE_BUNDLER_IFC = WNativeBundler__factory.createInterface();
+  private static ST_ETH_BUNDLER_IFC = StEthBundler__factory.createInterface();
+  private static AAVE_V2_BUNDLER_IFC = AaveV2Bundler__factory.createInterface();
+  private static AAVE_V3_BUNDLER_IFC = AaveV3Bundler__factory.createInterface();
+  private static MAKER_BUNDLER_IFC = MakerBundler__factory.createInterface();
+  private static BALANCER_BUNDLER_IFC = BalancerBundler__factory.createInterface();
+  private static UNI_V2_BUNDLER_IFC = UniV2Bundler__factory.createInterface();
+  private static UNI_V3_BUNDLER_IFC = UniV3Bundler__factory.createInterface();
 
-  static callBulker(bulker: string, calls: BulkCall[]): BulkCall {
-    return BulkAction.BASE_BULKER_IFC.encodeFunctionData("callBulker", [bulker, calls]);
+  static callBundler(bundler: string, calls: BulkCall[]): BulkCall {
+    return BulkAction.BASE_BUNDLER_IFC.encodeFunctionData("callBundler", [bundler, calls]);
   }
 
   static transfer(asset: string, recipient: string, amount: BigNumberish): BulkCall {
-    return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("transfer", [asset, recipient, amount]);
+    return BulkAction.ERC20_BUNDLER_IFC.encodeFunctionData("transfer", [asset, recipient, amount]);
   }
 
   static approve2(asset: string, amount: BigNumberish, deadline: BigNumberish, signature: Signature): BulkCall {
-    return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("approve2", [
+    return BulkAction.ERC20_BUNDLER_IFC.encodeFunctionData("approve2", [
       asset,
       amount,
       deadline,
@@ -48,11 +48,11 @@ class BulkAction {
   }
 
   static transferFrom2(asset: string, amount: BigNumberish): BulkCall {
-    return BulkAction.ERC20_BULKER_IFC.encodeFunctionData("transferFrom2", [asset, amount]);
+    return BulkAction.ERC20_BUNDLER_IFC.encodeFunctionData("transferFrom2", [asset, amount]);
   }
 
   static morphoSetAuthorization(authorization: AuthorizationStruct, signature: SignatureStruct): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoSetAuthorization", [authorization, signature]);
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoSetAuthorization", [authorization, signature]);
   }
 
   static morphoSupply(
@@ -62,12 +62,12 @@ class BulkAction {
     onBehalf: string,
     callbackCalls: BulkCall[],
   ): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoSupply", [
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoSupply", [
       market,
       amount,
       shares,
       onBehalf,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -77,16 +77,16 @@ class BulkAction {
     onBehalf: string,
     callbackCalls: BulkCall[],
   ): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoSupplyCollateral", [
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoSupplyCollateral", [
       market,
       amount,
       onBehalf,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static morphoBorrow(market: MarketStruct, amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoBorrow", [market, amount, shares, receiver]);
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoBorrow", [market, amount, shares, receiver]);
   }
 
   static morphoRepay(
@@ -96,21 +96,21 @@ class BulkAction {
     onBehalf: string,
     callbackCalls: BulkCall[],
   ): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoRepay", [
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoRepay", [
       market,
       amount,
       shares,
       onBehalf,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static morphoWithdraw(market: MarketStruct, amount: BigNumberish, shares: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoWithdraw", [market, amount, shares, receiver]);
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoWithdraw", [market, amount, shares, receiver]);
   }
 
   static morphoWithdrawCollateral(market: MarketStruct, amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoWithdrawCollateral", [market, amount, receiver]);
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoWithdrawCollateral", [market, amount, receiver]);
   }
 
   static morphoLiquidate(
@@ -119,67 +119,67 @@ class BulkAction {
     amount: BigNumberish,
     callbackCalls: BulkCall[],
   ): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoLiquidate", [
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoLiquidate", [
       market,
       borrower,
       amount,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static morphoFlashLoan(asset: string, amount: BigNumberish, callbackCalls: BulkCall[]): BulkCall {
-    return BulkAction.MORPHO_BULKER_IFC.encodeFunctionData("morphoFlashLoan", [
+    return BulkAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoFlashLoan", [
       asset,
       amount,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static wrapNative(amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("wrapNative", [amount, receiver]);
+    return BulkAction.WNATIVE_BUNDLER_IFC.encodeFunctionData("wrapNative", [amount, receiver]);
   }
 
   static unwrapNative(amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.WNATIVE_BULKER_IFC.encodeFunctionData("unwrapNative", [amount, receiver]);
+    return BulkAction.WNATIVE_BUNDLER_IFC.encodeFunctionData("unwrapNative", [amount, receiver]);
   }
 
   static wrapStEth(amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("wrapStEth", [amount, receiver]);
+    return BulkAction.ST_ETH_BUNDLER_IFC.encodeFunctionData("wrapStEth", [amount, receiver]);
   }
 
   static unwrapStEth(amount: BigNumberish, receiver: string): BulkCall {
-    return BulkAction.ST_ETH_BULKER_IFC.encodeFunctionData("unwrapStEth", [amount, receiver]);
+    return BulkAction.ST_ETH_BUNDLER_IFC.encodeFunctionData("unwrapStEth", [amount, receiver]);
   }
 
   static aaveV2FlashLoan(assets: string[], amounts: BigNumberish[], callbackCalls: BulkCall[]): BulkCall {
-    return BulkAction.AAVE_V2_BULKER_IFC.encodeFunctionData("aaveV2FlashLoan", [
+    return BulkAction.AAVE_V2_BUNDLER_IFC.encodeFunctionData("aaveV2FlashLoan", [
       assets,
       amounts,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static aaveV3FlashLoan(assets: string[], amounts: BigNumberish[], callbackCalls: BulkCall[]): BulkCall {
-    return BulkAction.AAVE_V3_BULKER_IFC.encodeFunctionData("aaveV3FlashLoan", [
+    return BulkAction.AAVE_V3_BUNDLER_IFC.encodeFunctionData("aaveV3FlashLoan", [
       assets,
       amounts,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static makerFlashLoan(asset: string, amount: BigNumberish, callbackCalls: BulkCall[]): BulkCall {
-    return BulkAction.MAKER_BULKER_IFC.encodeFunctionData("makerFlashLoan", [
+    return BulkAction.MAKER_BUNDLER_IFC.encodeFunctionData("makerFlashLoan", [
       asset,
       amount,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
   static balancerFlashLoan(assets: string[], amounts: BigNumberish[], callbackCalls: BulkCall[]): BulkCall {
-    return BulkAction.BALANCER_BULKER_IFC.encodeFunctionData("balancerFlashLoan", [
+    return BulkAction.BALANCER_BUNDLER_IFC.encodeFunctionData("balancerFlashLoan", [
       assets,
       amounts,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -190,12 +190,12 @@ class BulkAction {
     amount1: BigNumberish,
     callbackCalls: BulkCall[],
   ): BulkCall {
-    return BulkAction.UNI_V2_BULKER_IFC.encodeFunctionData("uniV2FlashSwap", [
+    return BulkAction.UNI_V2_BUNDLER_IFC.encodeFunctionData("uniV2FlashSwap", [
       token0,
       token1,
       amount0,
       amount1,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -205,11 +205,11 @@ class BulkAction {
     amount1: BigNumberish,
     callbackCalls: BulkCall[],
   ): BulkCall {
-    return BulkAction.UNI_V3_BULKER_IFC.encodeFunctionData("uniV3FlashSwap", [
+    return BulkAction.UNI_V3_BUNDLER_IFC.encodeFunctionData("uniV3FlashSwap", [
       poolKey,
       amount0,
       amount1,
-      BulkAction.MORPHO_BULKER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BulkAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 }

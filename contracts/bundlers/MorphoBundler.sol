@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.21;
 
-import {IMorphoBulker} from "./interfaces/IMorphoBulker.sol";
+import {IMorphoBundler} from "./interfaces/IMorphoBundler.sol";
 import {Market, Signature, Authorization, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {Errors} from "./libraries/Errors.sol";
@@ -9,12 +9,12 @@ import {Errors} from "./libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseBundler} from "./BaseBundler.sol";
 
-/// @title MorphoBulker
+/// @title MorphoBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
+abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */
@@ -62,13 +62,13 @@ abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
 
     /// @dev Supplies `amount` of `asset` of `onBehalf` using permit2 in a single tx.
     ///      The supplied amount cannot be used as collateral but is eligible to earn interest.
-    ///      Note: pass `amount = type(uint256).max` to supply the bulker's borrowable asset balance.
+    ///      Note: pass `amount = type(uint256).max` to supply the bundler's borrowable asset balance.
     function morphoSupply(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
         external
     {
-        require(onBehalf != address(this), Errors.BULKER_ADDRESS);
+        require(onBehalf != address(this), Errors.BUNDLER_ADDRESS);
 
-        // Don't always cap the amount to the bulker's balance because the liquidity can be transferred inside the supply callback.
+        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the supply callback.
         if (amount == type(uint256).max) amount = ERC20(market.borrowableToken).balanceOf(address(this));
 
         _approveMaxBlue(market.borrowableToken);
@@ -77,13 +77,13 @@ abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
     }
 
     /// @dev Supplies `amount` of `asset` collateral to the pool on behalf of `onBehalf`.
-    ///      Note: pass `amount = type(uint256).max` to supply the bulker's collateral asset balance.
+    ///      Note: pass `amount = type(uint256).max` to supply the bundler's collateral asset balance.
     function morphoSupplyCollateral(Market calldata market, uint256 amount, address onBehalf, bytes calldata data)
         external
     {
-        require(onBehalf != address(this), Errors.BULKER_ADDRESS);
+        require(onBehalf != address(this), Errors.BUNDLER_ADDRESS);
 
-        // Don't always cap the amount to the bulker's balance because the liquidity can be transferred inside the supply collateral callback.
+        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the supply collateral callback.
         if (amount == type(uint256).max) amount = ERC20(market.collateralToken).balanceOf(address(this));
 
         _approveMaxBlue(market.collateralToken);
@@ -91,19 +91,19 @@ abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
         MORPHO.supplyCollateral(market, amount, onBehalf, data);
     }
 
-    /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bulker as their manager on Blue.
+    /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bundler as their manager on Blue.
     function morphoBorrow(Market calldata market, uint256 amount, uint256 shares, address receiver) external {
         MORPHO.borrow(market, amount, shares, _initiator, receiver);
     }
 
     /// @dev Repays `amount` of `asset` on behalf of `onBehalf`.
-    ///      Note: pass `amount = type(uint256).max` to repay the bulker's borrowable asset balance.
+    ///      Note: pass `amount = type(uint256).max` to repay the bundler's borrowable asset balance.
     function morphoRepay(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
         external
     {
-        require(onBehalf != address(this), Errors.BULKER_ADDRESS);
+        require(onBehalf != address(this), Errors.BUNDLER_ADDRESS);
 
-        // Don't always cap the amount to the bulker's balance because the liquidity can be transferred inside the repay callback.
+        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the repay callback.
         if (amount == type(uint256).max) amount = ERC20(market.borrowableToken).balanceOf(address(this));
 
         _approveMaxBlue(market.borrowableToken);
@@ -111,12 +111,12 @@ abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
         MORPHO.repay(market, amount, shares, onBehalf, data);
     }
 
-    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bulker to act on their behalf on Blue.
+    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bundler to act on their behalf on Blue.
     function morphoWithdraw(Market calldata market, uint256 amount, uint256 shares, address receiver) external {
         MORPHO.withdraw(market, amount, shares, _initiator, receiver);
     }
 
-    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bulker to act on their behalf on Blue.
+    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bundler to act on their behalf on Blue.
     function morphoWithdrawCollateral(Market calldata market, uint256 amount, address receiver) external {
         MORPHO.withdrawCollateral(market, amount, _initiator, receiver);
     }

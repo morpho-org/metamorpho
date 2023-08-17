@@ -6,9 +6,9 @@ import {I1InchAggregationRouterV5} from "./interfaces/I1InchAggregationRouterV5.
 import {Errors} from "./libraries/Errors.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseBundler} from "./BaseBundler.sol";
 
-abstract contract OneInchBulker is BaseBulker {
+abstract contract OneInchBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */

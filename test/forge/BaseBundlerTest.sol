@@ -11,7 +11,7 @@ import {IrmMock} from "@morpho-blue/mocks/IrmMock.sol";
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
-contract BaseBulkerTest is Test {
+contract BaseBundlerTest is Test {
     using MarketLib for Market;
     using SharesMathLib for uint256;
     using stdStorage for StdStorage;

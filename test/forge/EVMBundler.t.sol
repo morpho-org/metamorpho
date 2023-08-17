@@ -1,39 +1,39 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "contracts/bulkers/EVMBulker.sol";
+import "contracts/bundlers/EVMBundler.sol";
 
-import "./BaseBulkerTest.sol";
+import "./BaseBundlerTest.sol";
 
-contract EVMBulkerTest is BaseBulkerTest {
+contract EVMBundlerTest is BaseBundlerTest {
     using FixedPointMathLib for uint256;
 
-    EVMBulker private bulker;
+    EVMBundler private bundler;
 
     function setUp() public override {
         super.setUp();
 
-        bulker = new EVMBulker(address(morpho));
+        bundler = new EVMBundler(address(morpho));
 
         vm.startPrank(USER);
-        borrowableAsset.approve(address(bulker), type(uint256).max);
-        collateralAsset.approve(address(bulker), type(uint256).max);
-        morpho.setAuthorization(address(bulker), true);
+        borrowableAsset.approve(address(bundler), type(uint256).max);
+        collateralAsset.approve(address(bundler), type(uint256).max);
+        morpho.setAuthorization(address(bundler), true);
         morpho.setAuthorization(address(this), true); // So tests can borrow/withdraw on behalf of USER without pranking it.
         vm.stopPrank();
     }
 
     /* INVARIANTS */
 
-    function invariantBulkerBalanceOfZero() public {
-        assertEq(collateralAsset.balanceOf(address(bulker)), 0, "collateral.balanceOf(bulker)");
-        assertEq(borrowableAsset.balanceOf(address(bulker)), 0, "borrowable.balanceOf(bulker)");
+    function invariantBundlerBalanceOfZero() public {
+        assertEq(collateralAsset.balanceOf(address(bundler)), 0, "collateral.balanceOf(bundler)");
+        assertEq(borrowableAsset.balanceOf(address(bundler)), 0, "borrowable.balanceOf(bundler)");
     }
 
-    function invariantBulkerPositionZero() public {
-        assertEq(morpho.collateral(id, address(bulker)), 0, "collateral(bulker)");
-        assertEq(morpho.supplyShares(id, address(bulker)), 0, "supplyShares(bulker)");
-        assertEq(morpho.borrowShares(id, address(bulker)), 0, "borrowShares(bulker)");
+    function invariantBundlerPositionZero() public {
+        assertEq(morpho.collateral(id, address(bundler)), 0, "collateral(bundler)");
+        assertEq(morpho.supplyShares(id, address(bundler)), 0, "supplyShares(bundler)");
+        assertEq(morpho.borrowShares(id, address(bundler)), 0, "borrowShares(bundler)");
     }
 
     /* TESTS */
@@ -68,14 +68,14 @@ contract EVMBulkerTest is BaseBulkerTest {
         uint256 collateralAmount = amount.wDivUp(LLTV);
 
         bytes[] memory data = new bytes[](3);
-        data[0] = abi.encodeCall(ERC20Bulker.transferFrom2, (address(collateralAsset), collateralAmount));
-        data[1] = abi.encodeCall(MorphoBulker.morphoSupplyCollateral, (market, collateralAmount, USER, hex""));
-        data[2] = abi.encodeCall(MorphoBulker.morphoBorrow, (market, amount, 0, receiver));
+        data[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(collateralAsset), collateralAmount));
+        data[1] = abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (market, collateralAmount, USER, hex""));
+        data[2] = abi.encodeCall(MorphoBundler.morphoBorrow, (market, amount, 0, receiver));
 
         collateralAsset.setBalance(USER, collateralAmount);
 
         vm.prank(USER);
-        bulker.multicall(block.timestamp, data);
+        bundler.multicall(block.timestamp, data);
 
         _testSupplyCollateralBorrow(amount, collateralAmount, receiver);
     }
@@ -92,18 +92,18 @@ contract EVMBulkerTest is BaseBulkerTest {
         uint256 collateralAmount = amount.wDivUp(LLTV);
 
         bytes[] memory callbackData = new bytes[](2);
-        callbackData[0] = abi.encodeCall(MorphoBulker.morphoBorrow, (market, amount, 0, receiver));
-        callbackData[1] = abi.encodeCall(ERC20Bulker.transferFrom2, (address(collateralAsset), collateralAmount));
+        callbackData[0] = abi.encodeCall(MorphoBundler.morphoBorrow, (market, amount, 0, receiver));
+        callbackData[1] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(collateralAsset), collateralAmount));
 
         bytes[] memory data = new bytes[](1);
         data[0] = abi.encodeCall(
-            MorphoBulker.morphoSupplyCollateral, (market, collateralAmount, USER, abi.encode(callbackData))
+            MorphoBundler.morphoSupplyCollateral, (market, collateralAmount, USER, abi.encode(callbackData))
         );
 
         collateralAsset.setBalance(USER, collateralAmount);
 
         vm.prank(USER);
-        bulker.multicall(block.timestamp, data);
+        bundler.multicall(block.timestamp, data);
 
         _testSupplyCollateralBorrow(amount, collateralAmount, receiver);
     }
@@ -142,12 +142,12 @@ contract EVMBulkerTest is BaseBulkerTest {
         morpho.borrow(market, amount, 0, USER, USER);
 
         bytes[] memory data = new bytes[](3);
-        data[0] = abi.encodeCall(ERC20Bulker.transferFrom2, (address(borrowableAsset), amount));
-        data[1] = abi.encodeCall(MorphoBulker.morphoRepay, (market, amount, 0, USER, hex""));
-        data[2] = abi.encodeCall(MorphoBulker.morphoWithdrawCollateral, (market, collateralAmount, receiver));
+        data[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(borrowableAsset), amount));
+        data[1] = abi.encodeCall(MorphoBundler.morphoRepay, (market, amount, 0, USER, hex""));
+        data[2] = abi.encodeCall(MorphoBundler.morphoWithdrawCollateral, (market, collateralAmount, receiver));
 
         vm.prank(USER);
-        bulker.multicall(block.timestamp, data);
+        bundler.multicall(block.timestamp, data);
 
         _testRepayWithdrawCollateral(collateralAmount, receiver);
     }
@@ -168,14 +168,14 @@ contract EVMBulkerTest is BaseBulkerTest {
         morpho.borrow(market, amount, 0, USER, USER);
 
         bytes[] memory callbackData = new bytes[](2);
-        callbackData[0] = abi.encodeCall(MorphoBulker.morphoWithdrawCollateral, (market, collateralAmount, receiver));
-        callbackData[1] = abi.encodeCall(ERC20Bulker.transferFrom2, (address(borrowableAsset), amount));
+        callbackData[0] = abi.encodeCall(MorphoBundler.morphoWithdrawCollateral, (market, collateralAmount, receiver));
+        callbackData[1] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(borrowableAsset), amount));
 
         bytes[] memory data = new bytes[](1);
-        data[0] = abi.encodeCall(MorphoBulker.morphoRepay, (market, amount, 0, USER, abi.encode(callbackData)));
+        data[0] = abi.encodeCall(MorphoBundler.morphoRepay, (market, amount, 0, USER, abi.encode(callbackData)));
 
         vm.prank(USER);
-        bulker.multicall(block.timestamp, data);
+        bundler.multicall(block.timestamp, data);
 
         _testRepayWithdrawCollateral(collateralAmount, receiver);
     }
