@@ -29,32 +29,26 @@ abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
         MORPHO = IMorpho(morpho);
     }
 
-    /* MODIFIERS */
-
-    modifier callback(bytes calldata data) {
-        _checkInitiated();
-
-        _multicall(abi.decode(data, (bytes[])));
-
-        _;
-    }
-
     /* CALLBACKS */
 
-    function onMorphoSupply(uint256, bytes calldata data) external callback(data) {
+    function onMorphoSupply(uint256, bytes calldata data) external {
         // Don't need to approve Blue to pull tokens because it should already be approved max.
+        _callback(data);
     }
 
-    function onMorphoSupplyCollateral(uint256, bytes calldata data) external callback(data) {
+    function onMorphoSupplyCollateral(uint256, bytes calldata data) external {
         // Don't need to approve Blue to pull tokens because it should already be approved max.
+        _callback(data);
     }
 
-    function onMorphoRepay(uint256, bytes calldata data) external callback(data) {
+    function onMorphoRepay(uint256, bytes calldata data) external {
         // Don't need to approve Blue to pull tokens because it should already be approved max.
+        _callback(data);
     }
 
-    function onMorphoFlashLoan(uint256, bytes calldata data) external callback(data) {
+    function onMorphoFlashLoan(uint256, bytes calldata data) external {
         // Don't need to approve Blue to pull tokens because it should already be approved max.
+        _callback(data);
     }
 
     /* ACTIONS */
@@ -141,10 +135,15 @@ abstract contract MorphoBulker is BaseBulker, IMorphoBulker {
         MORPHO.flashLoan(asset, amount, data);
     }
 
-    /* PRIVATE */
+    /* INTERNAL */
+
+    function _callback(bytes calldata data) internal {
+        _checkInitiated();
+        _multicall(abi.decode(data, (bytes[])));
+    }
 
     /// @dev Gives the max approval to the Blue contract to spend the given `asset` if not already approved.
-    function _approveMaxBlue(address asset) private {
+    function _approveMaxBlue(address asset) internal {
         if (ERC20(asset).allowance(address(this), address(MORPHO)) == 0) {
             ERC20(asset).safeApprove(address(MORPHO), type(uint256).max);
         }
