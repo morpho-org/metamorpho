@@ -10,12 +10,12 @@ import {ERC20 as ERC20Permit2, Permit2Lib} from "@permit2/libraries/Permit2Lib.s
 
 import {BaseBulker} from "./BaseBulker.sol";
 
-/// @title ERC20Bulker.
-/// @author Morpho Labs.
-/// @custom:contact security@blue.xyz
+/// @title ERC20Bulker
+/// @author Morpho Labs
+/// @custom:contact security@morpho.xyz
 abstract contract ERC20Bulker is BaseBulker {
-    using Permit2Lib for ERC20Permit2;
     using SafeTransferLib for ERC20;
+    using Permit2Lib for ERC20Permit2;
 
     /* ACTIONS */
 

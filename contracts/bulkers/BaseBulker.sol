@@ -8,9 +8,9 @@ import {Errors} from "./libraries/Errors.sol";
 import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";
 import {BaseCallbackReceiver} from "../BaseCallbackReceiver.sol";
 
-/// @title BaseBulker.
-/// @author Morpho Labs.
-/// @custom:contact security@blue.xyz
+/// @title BaseBulker
+/// @author Morpho Labs
+/// @custom:contact security@morpho.xyz
 abstract contract BaseBulker is BaseSelfMulticall, BaseCallbackReceiver {
     /* EXTERNAL */
 

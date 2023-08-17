@@ -4,7 +4,7 @@ pragma solidity 0.8.21;
 import {Errors} from "./libraries/Errors.sol";
 
 /// @title BaseCallbackReceiver
-/// @notice Provides utility functions to identify the initiator of callbacks (which cannot be identified using `msg.sender` or `tx.origin`)
+/// @notice Provides utility functions to identify the initiator of callbacks (which cannot be identified using `msg.sender` or `tx.origin`).
 abstract contract BaseCallbackReceiver {
     /* STORAGE */
 
