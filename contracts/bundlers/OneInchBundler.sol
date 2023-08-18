@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {I1InchAggregationRouterV5} from "./interfaces/I1InchAggregationRouterV5.sol";
 
-import {Errors} from "./libraries/Errors.sol";
+import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 import {BaseBundler} from "./BaseBundler.sol";
@@ -18,7 +18,7 @@ abstract contract OneInchBundler is BaseBundler {
     /* CONSTRUCTOR */
 
     constructor(address router) {
-        require(router != address(0), Errors.ZERO_ADDRESS);
+        require(router != address(0), ErrorsLib.ZERO_ADDRESS);
 
         ONE_INCH_ROUTER = I1InchAggregationRouterV5(router);
     }

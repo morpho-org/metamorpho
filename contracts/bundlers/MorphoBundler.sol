@@ -4,7 +4,7 @@ pragma solidity 0.8.21;
 import {IMorphoBundler} from "./interfaces/IMorphoBundler.sol";
 import {Market, Signature, Authorization, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
-import {Errors} from "./libraries/Errors.sol";
+import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
@@ -14,17 +14,19 @@ import {BaseBundler} from "./BaseBundler.sol";
 /// @title MorphoBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
+/// @notice Bundler contract managing interactions with Morpho.
 abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */
 
+    /// @notice The Morpho contract address.
     IMorpho public immutable MORPHO;
 
     /* CONSTRUCTOR */
 
     constructor(address morpho) {
-        require(morpho != address(0), Errors.ZERO_ADDRESS);
+        require(morpho != address(0), ErrorsLib.ZERO_ADDRESS);
 
         MORPHO = IMorpho(morpho);
     }
@@ -53,7 +55,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
 
     /* ACTIONS */
 
-    /// @dev Approves this contract to manage the initiator's position via EIP712 `signature`.
+    /// @dev Approves this contract to manage the `authorization.authorizer`'s position via EIP712 `signature`.
     function morphoSetAuthorizationWithSig(Authorization calldata authorization, Signature calldata signature)
         external
     {
@@ -66,7 +68,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     function morphoSupply(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
         external
     {
-        require(onBehalf != address(this), Errors.BUNDLER_ADDRESS);
+        require(onBehalf != address(this), ErrorsLib.BUNDLER_ADDRESS);
 
         // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the supply callback.
         if (amount == type(uint256).max) amount = ERC20(market.borrowableToken).balanceOf(address(this));
@@ -81,7 +83,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     function morphoSupplyCollateral(Market calldata market, uint256 amount, address onBehalf, bytes calldata data)
         external
     {
-        require(onBehalf != address(this), Errors.BUNDLER_ADDRESS);
+        require(onBehalf != address(this), ErrorsLib.BUNDLER_ADDRESS);
 
         // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the supply collateral callback.
         if (amount == type(uint256).max) amount = ERC20(market.collateralToken).balanceOf(address(this));
@@ -101,7 +103,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     function morphoRepay(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
         external
     {
-        require(onBehalf != address(this), Errors.BUNDLER_ADDRESS);
+        require(onBehalf != address(this), ErrorsLib.BUNDLER_ADDRESS);
 
         // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the repay callback.
         if (amount == type(uint256).max) amount = ERC20(market.borrowableToken).balanceOf(address(this));
@@ -137,6 +139,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
 
     /* INTERNAL */
 
+    /// @dev Triggers `_multicall` logic during a callback.
     function _callback(bytes calldata data) internal {
         _checkInitiated();
         _multicall(abi.decode(data, (bytes[])));
