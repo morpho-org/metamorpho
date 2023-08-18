@@ -9,8 +9,8 @@ import {BaseSelfMulticall} from "../../BaseSelfMulticall.sol";
 import {BaseCallbackReceiver} from "../../BaseCallbackReceiver.sol";
 
 /// @title BaseFlashRouter.
-/// @author Morpho Labs.
-/// @custom:contact security@blue.xyz
+/// @author Morpho Labs
+/// @custom:contact security@morpho.xyz
 abstract contract BaseFlashRouter is BaseSelfMulticall, BaseCallbackReceiver {
     using SafeTransferLib for ERC20;
 

@@ -1,0 +1,12 @@
+.
+└── _multicall(bytes[] memory data) returns (bytes[] memory results)
+    ├── for i in range [0, data.length - 1]
+    │   ├── address(this) is delegate called with data[i]
+    │   ├── if returned bool is failure
+    │   │   ├── if return data length < 68
+    │   │   │   └── revert without message
+    │   │   └── if return data length >= 68
+    │   │       └── revert with abi decoded string message
+    │   └── if returned bool is success
+    │       └── add result to results array (Not testable)
+    └── return results from each delegatecall

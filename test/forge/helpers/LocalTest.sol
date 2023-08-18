@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {Id, Market, Signature, IBlue} from "@morpho-blue/interfaces/IBlue.sol";
-
 import {MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {FixedPointMathLib, WAD} from "@morpho-blue/libraries/FixedPointMathLib.sol";
@@ -39,17 +37,17 @@ abstract contract LocalTest is BaseTest {
         market = Market(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
         id = market.id();
 
-        oracle.setPrice(WAD);
+        oracle.setPrice(ORACLE_PRICE_SCALE);
 
         vm.startPrank(OWNER);
-        blue.enableLltv(LLTV);
-        blue.createMarket(market);
+        morpho.enableLltv(LLTV);
+        morpho.createMarket(market);
         vm.stopPrank();
 
-        borrowableAsset.approve(address(blue), type(uint256).max);
-        collateralAsset.approve(address(blue), type(uint256).max);
+        borrowableAsset.approve(address(morpho), type(uint256).max);
+        collateralAsset.approve(address(morpho), type(uint256).max);
 
         vm.prank(SUPPLIER);
-        borrowableAsset.approve(address(blue), type(uint256).max);
+        borrowableAsset.approve(address(morpho), type(uint256).max);
     }
 }

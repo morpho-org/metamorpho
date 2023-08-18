@@ -1,0 +1,87 @@
+.
+└── constructor(address morpho)
+    ├── if morpho == address(0)
+    │   └── revert ZERO_ADDRESS
+    └── set MORPHO to IMorpho(morpho)
+
+.
+└── onMorphoSupply(uint256, bytes calldata data)
+    ├── internal call checkInitiator (BaseCallbackReceiver)
+    └── internal call multicall
+
+.
+└── onMorphoSupplyCollateral(uint256, bytes calldata data)
+    ├── internal call checkInitiator (BaseCallbackReceiver)
+    └── internal call multicall
+
+.
+└── onMorphoRepay(uint256, bytes calldata data)
+    ├── internal call checkInitiator (BaseCallbackReceiver)
+    └── internal call multicall
+
+.
+└── onMorphoFlashLoan(uint256, bytes calldata data)
+    ├── internal call checkInitiator (BaseCallbackReceiver)
+    └── internal call multicall
+
+.
+└── morphoSetAuthorizationWithSig(Authorization calldata authorization, Signature calldata signature)
+    └── call setAuthorizationWithSig(authorization, signature) on MORPHO
+
+.
+└── morphoSupply(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
+    ├── if onBehalf == address(this)
+    │   └── revert BUNDLER_ADDRESS
+    ├── internal call _approveMaxBlue(borrowableToken)
+    ├── if amount == type(uint256).max
+    │   ├── amount = borrowableToken balance of bundler
+    │   └── else amount = amount
+    └── call supply(market, amount, shares, onBehalf, data) on MORPHO
+
+.
+└── morphoSupplyCollateral(Market calldata market, uint256 amount, address onBehalf, bytes calldata data)
+    ├── if onBehalf == address(this)
+    │   └── revert BUNDLER_ADDRESS
+    ├── internal call _approveMaxBlue(collateralToken)
+    ├── if amount == type(uint256).max
+    │   ├── amount = collateralToken balance of bundler
+    │   └── else amount = amount
+    └── call supplyCollateral(market, amount, onBehalf, data) on MORPHO
+
+.
+└── morphoBorrow(Market calldata market, uint256 amount, uint256 shares, address receiver)
+    └── call on MORPHO borrow(market, amount, shares, _initiator, receiver)
+
+.
+└── morphoRepay(Market calldata market, uint256 amount, uint256 shares, address onBehalf, bytes calldata data)
+    ├── if onBehalf == address(this)
+    │   └── revert BUNDLER_ADDRESS
+    ├── internal call _approveMaxBlue(borrowableToken)
+    ├── if amount == type(uint256).max
+    │   ├── amount = borrowableToken balance of bundler
+    │   └── else amount = amount
+    └── call repay(market, amount, shares, onBehalf, data) on MORPHO
+
+.
+└── morphoWithdraw(Market calldata market, uint256 amount, uint256 shares, address receiver)
+    └── call on MORPHO withdraw(market, amount, shares, _initiator, receiver)
+
+.
+└── morphoWithdrawCollateral(Market calldata market, uint256 amount, address receiver)
+    └── call on MORPHO withdrawCollateral(market, amount, _initiator, receiver)
+
+.
+└── morphoLiquidate(Market calldata market, address borrower, uint256 seized, bytes memory data)
+    ├── internal call approveMaxBlue(borrowableToken)
+    └── call liquidate(market, borrower, seized, data) on MORPHO
+
+.
+└── morphoFlashLoan(address asset, uint256 amount, bytes calldata data)
+    ├── internal call approveMaxBlue(asset)
+    └── call flashLoan(asset, amount, data) on MORPHO
+
+.
+└── _approveMaxBlue(address asset)
+    ├── if allowance(address(this), address(MORPHO)) == 0
+    │   └── call ERC20(asset).safeApprove(address(MORPHO), type(uint256).max)
+    └── otherwise do nothing

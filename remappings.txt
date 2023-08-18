@@ -3,9 +3,9 @@ contracts/=contracts/
 test/=test/
 
 @morpho-blue/=lib/morpho-blue/src/
-@solmate/=lib/morpho-blue/lib/solmate/src/
+@solmate/=lib/solmate/src/
 @forge-std/=lib/morpho-blue/lib/forge-std/src/
-solmate/=lib/morpho-blue/lib/solmate/
+solmate/=lib/solmate/
 
 @permit2/=lib/permit2/src/
 @morpho-utils/=lib/morpho-utils/src/

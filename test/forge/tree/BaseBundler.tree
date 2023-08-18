@@ -1,0 +1,14 @@
+.
+└── multicall(uint256 deadline, bytes[] calldata data) returns (bytes[] memory)
+    ├── locks initiator
+    ├── if deadline <= block.timestamp
+    │   └── revert DEADLINE_EXPIRED
+    ├── if deadline > block.timestamp
+    │   └── do _multicall(data)
+    └── return results from _multicall
+
+.
+└── callBundler(address bundler, bytes[] calldata data)
+    ├── if bundler == address(0)
+    │   └── revert ZERO_ADDRESS
+    └── call multicall(block.timestamp, data) on bundler
