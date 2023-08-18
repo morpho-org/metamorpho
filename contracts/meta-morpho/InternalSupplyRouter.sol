@@ -4,8 +4,8 @@ pragma solidity 0.8.21;
 import {IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {MarketAllocation} from "./libraries/Types.sol";
-import {Permit2Lib, ERC20 as ERC20Permit2} from "@permit2/libraries/Permit2Lib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+import {Permit2Lib, ERC20 as ERC20Permit2} from "@permit2/libraries/Permit2Lib.sol";
 
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
