@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "contracts/bundlers/EVMBundler.sol";
 
+import {ErrorsLib as BulkerErrorsLib} from "contracts/bundlers/libraries/ErrorsLib.sol";
+
 import "./BaseBundlerTest.sol";
 
 contract EVMBundlerTest is BaseBundlerTest {
@@ -37,6 +39,59 @@ contract EVMBundlerTest is BaseBundlerTest {
     }
 
     /* TESTS */
+
+    function testTranferInvalidAddresses(uint256 amount) public {
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+
+        bytes[] memory zeroAddressData = new bytes[](1);
+        bytes[] memory bundlerAddressData = new bytes[](1);
+
+        zeroAddressData[0] = abi.encodeCall(ERC20Bundler.transfer, (address(borrowableAsset), address(0), amount));
+        bundlerAddressData[0] = abi.encodeCall(ERC20Bundler.transfer, (address(bundler), address(0), amount));
+
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_ADDRESS));
+        bundler.multicall(block.timestamp, zeroAddressData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_ADDRESS));
+        bundler.multicall(block.timestamp, bundlerAddressData);
+    }
+
+    function testTranferZeroAmount(address receiver, Signature calldata signature) public {
+        vm.assume(receiver != address(0) && receiver != address(bundler));
+
+        bytes[] memory transferData = new bytes[](1);
+        bytes[] memory transferFromData = new bytes[](1);
+        bytes[] memory approve2Data = new bytes[](1);
+
+        transferData[0] = abi.encodeCall(ERC20Bundler.transfer, (address(borrowableAsset), receiver, 0));
+        transferFromData[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (receiver, 0));
+        approve2Data[0] = abi.encodeCall(ERC20Bundler.approve2, (receiver, 0, block.timestamp, signature));
+
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
+        bundler.multicall(block.timestamp, transferData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
+        bundler.multicall(block.timestamp, transferFromData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
+        bundler.multicall(block.timestamp, approve2Data);
+    }
+
+    function testBundlerAddress(uint256 amount) public {
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+
+        bytes[] memory supplyData = new bytes[](1);
+        bytes[] memory supplyCollateralData = new bytes[](1);
+        bytes[] memory repayData = new bytes[](1);
+
+        supplyData[0] = abi.encodeCall(MorphoBundler.morphoSupply, (market, amount, 0, address(bundler), hex""));
+        supplyCollateralData[0] = abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (market, amount, address(bundler), hex""));
+        repayData[0] = abi.encodeCall(MorphoBundler.morphoRepay, (market, amount, 0, address(bundler), hex""));
+
+        vm.expectRevert(bytes(BulkerErrorsLib.BUNDLER_ADDRESS));
+        bundler.multicall(block.timestamp, supplyData);
+        vm.expectRevert(bytes(BulkerErrorsLib.BUNDLER_ADDRESS));
+        bundler.multicall(block.timestamp, supplyCollateralData);
+        vm.expectRevert(bytes(BulkerErrorsLib.BUNDLER_ADDRESS));
+        bundler.multicall(block.timestamp, repayData);
+    }
 
     function _testSupplyCollateralBorrow(uint256 amount, uint256 collateralAmount, address receiver) internal {
         assertEq(collateralAsset.balanceOf(USER), 0, "collateral.balanceOf(USER)");
