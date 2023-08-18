@@ -8,7 +8,7 @@ import {Errors} from "./libraries/Errors.sol";
 abstract contract BaseCallbackReceiver {
     /* STORAGE */
 
-    /// @dev Keeps track of the bulker's latest batch initiator. Also prevents interacting with the bulker outside of an initiated execution context.
+    /// @dev Keeps track of the bundler's latest batch initiator. Also prevents interacting with the bundler outside of an initiated execution context.
     address internal _initiator;
 
     /* MODIFIERS */

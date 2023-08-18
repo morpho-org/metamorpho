@@ -8,7 +8,7 @@ import {
     IMorphoFlashLoanCallback
 } from "@morpho-blue/interfaces/IMorphoCallbacks.sol";
 
-interface IMorphoBulker is
+interface IMorphoBundler is
     IMorphoSupplyCallback,
     IMorphoRepayCallback,
     IMorphoSupplyCollateralCallback,

@@ -7,12 +7,12 @@ import {Errors} from "./libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseBundler} from "./BaseBundler.sol";
 
-/// @title WNativeBulker.
+/// @title WNativeBundler.
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-abstract contract WNativeBulker is BaseBulker {
+abstract contract WNativeBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
     /* CONSTANTS */
@@ -52,7 +52,7 @@ abstract contract WNativeBulker is BaseBulker {
 
     /// @dev Unwraps the given `amount` of wNative to the native token and sends it to `receiver`.
     function unwrapNative(uint256 amount, address receiver) external {
-        require(receiver != address(this), Errors.BULKER_ADDRESS);
+        require(receiver != address(this), Errors.BUNDLER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
         amount = Math.min(amount, ERC20(WRAPPED_NATIVE).balanceOf(address(this)));

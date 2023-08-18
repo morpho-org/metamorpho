@@ -6,7 +6,7 @@ library Errors {
 
     string internal constant ZERO_ADDRESS = "zero address";
 
-    string internal constant BULKER_ADDRESS = "bulker address";
+    string internal constant BUNDLER_ADDRESS = "bundler address";
 
     string internal constant ZERO_AMOUNT = "zero amount";
 

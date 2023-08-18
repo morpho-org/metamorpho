@@ -7,12 +7,12 @@ import {Errors} from "./libraries/Errors.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-import {BaseBulker} from "./BaseBulker.sol";
+import {BaseBundler} from "./BaseBundler.sol";
 
-/// @title ERC4626Bulker.
+/// @title ERC4626Bundler.
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-abstract contract ERC4626Bulker is BaseBulker {
+abstract contract ERC4626Bundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
     /* ACTIONS */
