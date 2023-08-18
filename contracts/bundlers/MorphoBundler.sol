@@ -14,11 +14,13 @@ import {BaseBundler} from "./BaseBundler.sol";
 /// @title MorphoBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
+/// @notice Bundler contract managing interactions with Morpho.
 abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     using SafeTransferLib for ERC20;
 
     /* IMMUTABLES */
 
+    /// @notice The Morpho contract address.
     IMorpho public immutable MORPHO;
 
     /* CONSTRUCTOR */
@@ -53,7 +55,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
 
     /* ACTIONS */
 
-    /// @dev Approves this contract to manage the initiator's position via EIP712 `signature`.
+    /// @dev Approves this contract to manage the `authorization.authorizer`'s position via EIP712 `signature`.
     function morphoSetAuthorizationWithSig(Authorization calldata authorization, Signature calldata signature)
         external
     {
@@ -137,6 +139,7 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
 
     /* INTERNAL */
 
+    /// @dev Triggers `_multicall` logic during a callback.
     function _callback(bytes calldata data) internal {
         _checkInitiated();
         _multicall(abi.decode(data, (bytes[])));

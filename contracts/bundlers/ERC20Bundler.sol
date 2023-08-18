@@ -13,6 +13,8 @@ import {BaseBundler} from "./BaseBundler.sol";
 /// @title ERC20Bundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
+/// @notice Bundler contract managing interactions with ERC20 compliant tokens.
+/// @dev It leverages Uniswap's Permit2 contract.
 abstract contract ERC20Bundler is BaseBundler {
     using SafeTransferLib for ERC20;
     using Permit2Lib for ERC20Permit2;

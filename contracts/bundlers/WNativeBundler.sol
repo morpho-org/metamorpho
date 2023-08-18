@@ -12,6 +12,7 @@ import {BaseBundler} from "./BaseBundler.sol";
 /// @title WNativeBundler.
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
+/// @notice Bundler contract managing interactions with network's wrapped native token.
 abstract contract WNativeBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
@@ -37,7 +38,7 @@ abstract contract WNativeBundler is BaseBundler {
 
     /* ACTIONS */
 
-    /// @dev Wraps the given `amount` of the native token to wNative and sends it to `receiver`.
+    /// @dev Wraps the given `amount` of the native token to wNative and transfers it to `receiver`.
     function wrapNative(uint256 amount, address receiver) external {
         require(receiver != address(0), Errors.ZERO_ADDRESS);
 
@@ -50,7 +51,7 @@ abstract contract WNativeBundler is BaseBundler {
         if (receiver != address(this)) ERC20(WRAPPED_NATIVE).safeTransfer(receiver, amount);
     }
 
-    /// @dev Unwraps the given `amount` of wNative to the native token and sends it to `receiver`.
+    /// @dev Unwraps the given `amount` of wNative to the native token and transfers it to `receiver`.
     function unwrapNative(uint256 amount, address receiver) external {
         require(receiver != address(this), Errors.BUNDLER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);

@@ -18,10 +18,10 @@ abstract contract StEthBundler is BaseBundler {
 
     /* CONSTANTS */
 
-    /// @dev The address of the stETH contract.
+    /// @dev The address of the stETH contract on Ethereum mainnet.
     address public constant ST_ETH = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
 
-    /// @dev The address of the wstETH contract.
+    /// @dev The address of the wstETH contract on Ethereum mainnet.
     address public constant WST_ETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
 
     /* CONSTRUCTOR */
@@ -32,7 +32,7 @@ abstract contract StEthBundler is BaseBundler {
 
     /* ACTIONS */
 
-    /// @dev Wraps the given `amount` of stETH to wstETH.
+    /// @dev Wraps the given `amount` of stETH to wstETH and transfers it to `receiver`.
     function wrapStEth(uint256 amount, address receiver) external {
         amount = Math.min(amount, ERC20(ST_ETH).balanceOf(address(this)));
 
@@ -43,7 +43,7 @@ abstract contract StEthBundler is BaseBundler {
         if (receiver != address(this)) ERC20(ST_ETH).safeTransfer(receiver, amount);
     }
 
-    /// @dev Unwraps the given `amount` of wstETH to stETH.
+    /// @dev Unwraps the given `amount` of wstETH to stETH and transfers it to `receiver`.
     function unwrapStEth(uint256 amount, address receiver) external {
         require(receiver != address(this), Errors.BUNDLER_ADDRESS);
         require(receiver != address(0), Errors.ZERO_ADDRESS);
