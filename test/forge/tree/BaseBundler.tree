@@ -8,7 +8,7 @@
     └── return results from _multicall
 
 .
-└── callBulker(address bulker, bytes[] calldata data)
-    ├── if bulker == address(0)
+└── callBundler(address bundler, bytes[] calldata data)
+    ├── if bundler == address(0)
     │   └── revert ZERO_ADDRESS
-    └── call multicall(block.timestamp, data) on bulker
+    └── call multicall(block.timestamp, data) on bundler
