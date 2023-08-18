@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {IMulticall} from "./interfaces/IMulticall.sol";
 
-import {Errors} from "./libraries/Errors.sol";
+import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
 import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";
 import {BaseCallbackReceiver} from "../BaseCallbackReceiver.sol";
@@ -23,14 +23,14 @@ abstract contract BaseBundler is BaseSelfMulticall, BaseCallbackReceiver {
         lockInitiator
         returns (bytes[] memory)
     {
-        require(block.timestamp <= deadline, Errors.DEADLINE_EXPIRED);
+        require(block.timestamp <= deadline, ErrorsLib.DEADLINE_EXPIRED);
 
         return _multicall(data);
     }
 
     /// @notice Executes multiple actions on another `bundler` contract passing along the required `data`.
     function callBundler(address bundler, bytes[] calldata data) external {
-        require(bundler != address(0), Errors.ZERO_ADDRESS);
+        require(bundler != address(0), ErrorsLib.ZERO_ADDRESS);
 
         IMulticall(bundler).multicall(block.timestamp, data);
     }
