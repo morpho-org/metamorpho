@@ -20,7 +20,7 @@ contract ChainlinkOracle is ChainlinkCollateralAdapter, IOracle {
 
     function FEED_BORROWABLE() external view returns (string memory, address) {}
 
-    function price() external view returns (uint256, uint256) {
-        return (CHAINLINK_COLLATERAL_FEED.price(), CHAINLINK_COLLATERAL_PRICE_SCALE);
+    function price() external view returns (uint256) {
+        return CHAINLINK_COLLATERAL_FEED.price();
     }
 }

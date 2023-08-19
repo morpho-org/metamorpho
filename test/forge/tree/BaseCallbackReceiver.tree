@@ -1,0 +1,12 @@
+.
+└── modifier lockInitiator()
+    ├── initiator is set to msg.sender
+    ├── code attached to modifier runs
+    └── initiator is deleted
+
+.
+└── _checkInitiated()
+    ├── when initiator == address(0)
+    │   └── revert with UNINITIATED
+    └── when initiator != address(0)
+        └── continue

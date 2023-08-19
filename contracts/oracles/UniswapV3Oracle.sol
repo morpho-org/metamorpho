@@ -6,7 +6,6 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
 import {OracleFeed} from "./libraries/OracleFeed.sol";
 import {UniswapV3PoolLib} from "./libraries/UniswapV3PoolLib.sol";
-import {FixedPointMathLib} from "@morpho-blue/libraries/FixedPointMathLib.sol";
 
 import {UniswapV3CollateralAdapter} from "./adapters/UniswapV3CollateralAdapter.sol";
 
@@ -21,7 +20,7 @@ contract UniswapV3Oracle is UniswapV3CollateralAdapter, IOracle {
 
     function FEED_BORROWABLE() external view returns (string memory, address) {}
 
-    function price() external view returns (uint256, uint256) {
-        return (UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY), FixedPointMathLib.WAD);
+    function price() external view returns (uint256) {
+        return UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY);
     }
 }

@@ -11,7 +11,9 @@
     "prepare": "husky install",
     "typecheck": "tsc --noEmit",
     "compile": "npx hardhat compile --force",
-    "test": "npx hardhat test"
+    "test": "npx hardhat test",
+    "lint": "prettier --check src/ && forge fmt --check",
+    "lint:fix": "prettier --write src/ && forge fmt"
   },
   "repository": {
     "type": "git",
@@ -66,10 +68,10 @@
   },
   "lint-staged": {
     "*.sol": "forge fmt",
-    "*.js": "yarn prettier",
-    "*.ts": "yarn prettier",
-    "*.json": "yarn prettier",
-    "*.yml": "yarn prettier"
+    "*.js": "prettier",
+    "*.ts": "prettier",
+    "*.json": "prettier",
+    "*.yml": "prettier"
   },
   "commitlint": {
     "extends": [

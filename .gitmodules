@@ -1,9 +1,6 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/morpho-blue"]
-	path = lib/morpho-blue
-	url = https://github.com/morpho-labs/morpho-blue
 [submodule "lib/permit2"]
 	path = lib/permit2
 	url = https://github.com/Uniswap/permit2
@@ -19,3 +16,9 @@
 [submodule "lib/v3-core"]
 	path = lib/v3-core
 	url = https://github.com/Uniswap/v3-core
+[submodule "lib/morpho-blue"]
+	path = lib/morpho-blue
+	url = https://github.com/morpho-labs/morpho-blue
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/transmissions11/solmate

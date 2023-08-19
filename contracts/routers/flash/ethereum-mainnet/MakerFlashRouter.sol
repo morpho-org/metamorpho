@@ -10,20 +10,20 @@ import {ERC3156FlashRouter} from "../ERC3156FlashRouter.sol";
 abstract contract MakerFlashRouter is ERC3156FlashRouter {
     /* IMMUTABLES */
 
-    IERC3156FlashLender internal immutable _MAKER_VAULT;
+    IERC3156FlashLender public immutable MAKER_VAULT;
 
     /* CONSTRUCTOR */
 
     constructor(address makerVault) {
         require(makerVault != address(0), Errors.ZERO_ADDRESS);
 
-        _MAKER_VAULT = IERC3156FlashLender(makerVault);
+        MAKER_VAULT = IERC3156FlashLender(makerVault);
     }
 
     /* ACTIONS */
 
     /// @dev Triggers a flash loan on Maker.
     function makerFlashLoan(address asset, uint256 amount, bytes calldata data) external {
-        _erc3156FlashLoan(_MAKER_VAULT, asset, amount, data);
+        _erc3156FlashLoan(MAKER_VAULT, asset, amount, data);
     }
 }

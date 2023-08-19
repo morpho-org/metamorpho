@@ -6,17 +6,17 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 import {IChainlinkAggregator} from "./adapters/interfaces/IChainlinkAggregator.sol";
 
 import {OracleFeed} from "./libraries/OracleFeed.sol";
+import {MathLib} from "@morpho-blue/libraries/MathLib.sol";
 import {UniswapV3PoolLib} from "./libraries/UniswapV3PoolLib.sol";
 import {ChainlinkAggregatorLib} from "./libraries/ChainlinkAggregatorLib.sol";
-import {FixedPointMathLib} from "@morpho-blue/libraries/FixedPointMathLib.sol";
 
 import {UniswapV3CollateralAdapter} from "./adapters/UniswapV3CollateralAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 
 contract UniswapV3ChainlinkOracle is UniswapV3CollateralAdapter, ChainlinkBorrowableAdapter, IOracle {
+    using MathLib for uint256;
     using UniswapV3PoolLib for IUniswapV3Pool;
     using ChainlinkAggregatorLib for IChainlinkAggregator;
-    using FixedPointMathLib for uint256;
 
     constructor(address pool, address feed, uint32 collateralPriceDelay, uint256 borrowablePriceScale)
         UniswapV3CollateralAdapter(pool, collateralPriceDelay)
@@ -31,10 +31,7 @@ contract UniswapV3ChainlinkOracle is UniswapV3CollateralAdapter, ChainlinkBorrow
         return (OracleFeed.CHAINLINK, address(CHAINLINK_BORROWABLE_FEED));
     }
 
-    function price() external view returns (uint256, uint256) {
-        return (
-            UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY).divWadDown(CHAINLINK_BORROWABLE_FEED.price()), // TODO: incorrect formula
-            CHAINLINK_BORROWABLE_PRICE_SCALE
-        );
+    function price() external view returns (uint256) {
+        return UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY).wDivDown(CHAINLINK_BORROWABLE_FEED.price()); // TODO: incorrect formula
     }
 }

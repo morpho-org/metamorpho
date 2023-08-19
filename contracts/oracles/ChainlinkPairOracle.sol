@@ -37,14 +37,11 @@ contract ChainlinkOracle is ChainlinkCollateralAdapter, ChainlinkBorrowableAdapt
         return (OracleFeed.CHAINLINK, address(CHAINLINK_BORROWABLE_FEED));
     }
 
-    function price() external view returns (uint256, uint256) {
-        return (
-            FullMath.mulDiv(
-                CHAINLINK_COLLATERAL_FEED.price() * CHAINLINK_BORROWABLE_PRICE_SCALE,
-                PRICE_SCALE, // Using FullMath to avoid overflowing because of PRICE_SCALE.
-                CHAINLINK_BORROWABLE_FEED.price() * CHAINLINK_COLLATERAL_PRICE_SCALE
-                ),
-            PRICE_SCALE
+    function price() external view returns (uint256) {
+        return FullMath.mulDiv(
+            CHAINLINK_COLLATERAL_FEED.price() * CHAINLINK_BORROWABLE_PRICE_SCALE,
+            PRICE_SCALE, // Using FullMath to avoid overflowing because of PRICE_SCALE.
+            CHAINLINK_BORROWABLE_FEED.price() * CHAINLINK_COLLATERAL_PRICE_SCALE
         );
     }
 }

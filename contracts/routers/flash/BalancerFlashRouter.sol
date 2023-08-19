@@ -15,14 +15,14 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
 
     /* IMMUTABLES */
 
-    IBalancerFlashLender internal immutable _BALANCER_VAULT;
+    IBalancerFlashLender public immutable BALANCER_VAULT;
 
     /* CONSTRUCTOR */
 
     constructor(address balancerVault) {
         require(balancerVault != address(0), Errors.ZERO_ADDRESS);
 
-        _BALANCER_VAULT = IBalancerFlashLender(balancerVault);
+        BALANCER_VAULT = IBalancerFlashLender(balancerVault);
     }
 
     /* EXTERNAL */
@@ -33,7 +33,9 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
         uint256[] calldata fees,
         bytes calldata data
     ) external {
-        _onCallback(data);
+        bytes[] memory calls = abi.decode(data, (bytes[]));
+
+        _onCallback(calls);
 
         for (uint256 i; i < assets.length; ++i) {
             ERC20(assets[i]).safeTransferFrom(_initiator, msg.sender, amounts[i] + fees[i]);
@@ -44,6 +46,6 @@ abstract contract BalancerFlashRouter is BaseFlashRouter, IBalancerFlashBorrower
 
     /// @dev Triggers a flash loan on Balancer.
     function balancerFlashLoan(address[] calldata assets, uint256[] calldata amounts, bytes calldata data) external {
-        _BALANCER_VAULT.flashLoan(address(this), assets, amounts, data);
+        BALANCER_VAULT.flashLoan(address(this), assets, amounts, data);
     }
 }

@@ -10,20 +10,20 @@ import {AaveFlashRouter} from "./AaveFlashRouter.sol";
 abstract contract AaveV3FlashRouter is AaveFlashRouter {
     /* IMMUTABLES */
 
-    IAaveFlashLender internal immutable _AAVE_V3;
+    IAaveFlashLender public immutable AAVE_V3;
 
     /* CONSTRUCTOR */
 
     constructor(address aaveV3) {
         require(aaveV3 != address(0), Errors.ZERO_ADDRESS);
 
-        _AAVE_V3 = IAaveFlashLender(aaveV3);
+        AAVE_V3 = IAaveFlashLender(aaveV3);
     }
 
     /* ACTIONS */
 
     /// @dev Triggers a flash loan on AaveV3.
     function aaveV3FlashLoan(address[] calldata assets, uint256[] calldata amounts, bytes calldata data) external {
-        _aaveFlashLoan(_AAVE_V3, assets, amounts, data);
+        _aaveFlashLoan(AAVE_V3, assets, amounts, data);
     }
 }

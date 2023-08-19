@@ -1,0 +1,24 @@
+.
+└── transfer(address asset, address recipient, uint256 amount)
+    ├── if recipient == address(0)
+    │   └── revert ZERO_ADDRESS
+    ├── if recipient == address(this)
+    │   └── revert BUNDLER_ADDRESS
+    ├── amount is set to min of balance(bundler) and amount
+    │   ├── if amount == 0
+    │   │   └── revert ZERO_AMOUNT
+    │   └── if balance(bundler) == 0
+    │       └── revert ZERO_AMOUNT
+    └── recipient is transferred `amount` of `asset`
+
+.
+└── approve2(address asset, uint256 amount, uint256 deadline, Signature calldata signature)
+    ├── if amount == 0
+    │   └── revert ZERO_AMOUNT
+    └── use simplePermit2 from uniswap lib on asset to approve bundler
+
+.
+└── transferFrom2(address asset, uint256 amount)
+    ├── if amount == 0
+    │   └── revert ZERO_AMOUNT
+    └── use transferFrom2 from uniswap lib on asset to transfer tokens from initiator to bundler
