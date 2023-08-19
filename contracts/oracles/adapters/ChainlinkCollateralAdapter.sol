@@ -9,6 +9,6 @@ abstract contract ChainlinkCollateralAdapter {
 
     constructor(address feed) {
         CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
-        CHAINLINK_COLLATERAL_PRICE_SCALE = CHAINLINK_COLLATERAL_FEED.decimals();
+        CHAINLINK_COLLATERAL_PRICE_SCALE = 10 ** CHAINLINK_COLLATERAL_FEED.decimals();
     }
 }

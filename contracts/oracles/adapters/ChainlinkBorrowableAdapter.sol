@@ -9,6 +9,6 @@ abstract contract ChainlinkBorrowableAdapter {
 
     constructor(address feed) {
         CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
-        CHAINLINK_BORROWABLE_PRICE_SCALE = CHAINLINK_BORROWABLE_FEED.decimals();
+        CHAINLINK_BORROWABLE_PRICE_SCALE = 10 ** CHAINLINK_BORROWABLE_FEED.decimals();
     }
 }

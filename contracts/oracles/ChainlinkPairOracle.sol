@@ -11,7 +11,7 @@ import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol
 import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 
-contract ChainlinkOracle is ChainlinkCollateralAdapter, ChainlinkBorrowableAdapter, IOracle {
+contract ChainlinkPairOracle is ChainlinkCollateralAdapter, ChainlinkBorrowableAdapter, IOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     /// @dev The scale must be 1e36 * 10^(decimals of borrowable token - decimals of collateral token).
