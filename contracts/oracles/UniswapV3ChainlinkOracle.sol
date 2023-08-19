@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IOracle} from "./interfaces/IOracle.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
-import {IChainlinkAggregator} from "./adapters/interfaces/IChainlinkAggregator.sol";
+import {IChainlinkAggregatorV3} from "./adapters/interfaces/IChainlinkAggregatorV3.sol";
 
 import {OracleFeed} from "./libraries/OracleFeed.sol";
 import {MathLib} from "@morpho-blue/libraries/MathLib.sol";
@@ -16,7 +16,7 @@ import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.
 contract UniswapV3ChainlinkOracle is UniswapV3CollateralAdapter, ChainlinkBorrowableAdapter, IOracle {
     using MathLib for uint256;
     using UniswapV3PoolLib for IUniswapV3Pool;
-    using ChainlinkAggregatorLib for IChainlinkAggregator;
+    using ChainlinkAggregatorLib for IChainlinkAggregatorV3;
 
     constructor(address pool, address feed, uint32 collateralPriceDelay, uint256 borrowablePriceScale)
         UniswapV3CollateralAdapter(pool, collateralPriceDelay)

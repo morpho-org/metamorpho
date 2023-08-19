@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.5.0;
 
-import {IChainlinkAggregator} from "./IChainlinkAggregator.sol";
-
-interface IChainlinkAggregatorV3 is IChainlinkAggregator {
+interface IChainlinkAggregatorV3 {
     function decimals() external view returns (uint8);
 
     function description() external view returns (string memory);

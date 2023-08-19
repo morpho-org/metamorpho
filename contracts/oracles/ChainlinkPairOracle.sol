@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IOracle} from "./interfaces/IOracle.sol";
-import {IChainlinkAggregator} from "./adapters/interfaces/IChainlinkAggregator.sol";
+import {IChainlinkAggregatorV3} from "./adapters/interfaces/IChainlinkAggregatorV3.sol";
 
 import {OracleFeed} from "./libraries/OracleFeed.sol";
 import {ChainlinkAggregatorLib} from "./libraries/ChainlinkAggregatorLib.sol";
@@ -12,7 +12,7 @@ import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 
 contract ChainlinkOracle is ChainlinkCollateralAdapter, ChainlinkBorrowableAdapter, IOracle {
-    using ChainlinkAggregatorLib for IChainlinkAggregator;
+    using ChainlinkAggregatorLib for IChainlinkAggregatorV3;
 
     uint256 public immutable PRICE_SCALE;
 
