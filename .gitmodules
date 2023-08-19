@@ -15,7 +15,7 @@
 	url = https://github.com/Uniswap/v3-periphery
 [submodule "lib/morpho-blue"]
 	path = lib/morpho-blue
-	url = https://github.com/morpho-labs/morpho-blue
+	url = git@github.com:morpho-labs/morpho-blue.git
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate
