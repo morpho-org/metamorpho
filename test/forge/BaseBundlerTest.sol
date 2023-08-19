@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import {SigUtils} from "@morpho-blue/../test/helpers/SigUtils.sol";
+import {IMorpho, MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 
 import "@morpho-blue/Morpho.sol";
 import {ERC20Mock} from "./mocks/ERC20Mock.sol";
@@ -12,10 +13,11 @@ import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
 contract BaseBundlerTest is Test {
-    using MarketLib for Market;
+    using MathLib for uint256;
+    using MorphoLib for IMorpho;
+    using MarketLib for MarketParams;
     using SharesMathLib for uint256;
     using stdStorage for StdStorage;
-    using FixedPointMathLib for uint256;
 
     uint256 internal constant MIN_AMOUNT = 1000;
     uint256 internal constant MAX_AMOUNT = 2 ** 64;
@@ -26,32 +28,33 @@ contract BaseBundlerTest is Test {
     uint256 internal constant LLTV = 0.8 ether;
     address internal constant OWNER = address(0xdead);
 
-    Morpho internal morpho;
+    IMorpho internal morpho;
     ERC20Mock internal borrowableAsset;
     ERC20Mock internal collateralAsset;
     OracleMock internal oracle;
     IrmMock internal irm;
-    Market internal market;
+    MarketParams internal marketParams;
     Id internal id;
 
     function setUp() public virtual {
         // Create Blue.
-        morpho = new Morpho(OWNER);
+        morpho = IMorpho(address(new Morpho(OWNER)));
 
-        // List a market.
+        // List a marketParams.
         borrowableAsset = new ERC20Mock("borrowable", "B", 18);
         collateralAsset = new ERC20Mock("collateral", "C", 18);
         oracle = new OracleMock();
 
         irm = new IrmMock(morpho);
 
-        market = Market(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
-        id = market.id();
+        marketParams =
+            MarketParams(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
+        id = marketParams.id();
 
         vm.startPrank(OWNER);
         morpho.enableIrm(address(irm));
         morpho.enableLltv(LLTV);
-        morpho.createMarket(market);
+        morpho.createMarket(marketParams);
         vm.stopPrank();
 
         oracle.setPrice(ORACLE_SCALE);

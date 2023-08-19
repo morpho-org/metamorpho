@@ -42,14 +42,14 @@ contract InternalSupplyRouter is ERC2771Context {
     }
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal virtual {
-        ERC20Permit2(address(allocation.market.borrowableToken)).transferFrom2(
+        ERC20Permit2(address(allocation.marketParams.borrowableToken)).transferFrom2(
             _msgSender(), address(this), allocation.assets
         );
 
-        _MORPHO.supply(allocation.market, allocation.assets, 0, onBehalf, hex"");
+        _MORPHO.supply(allocation.marketParams, allocation.assets, 0, onBehalf, hex"");
     }
 
     function _withdraw(MarketAllocation memory allocation, address onBehalf, address receiver) internal virtual {
-        _MORPHO.withdraw(allocation.market, allocation.assets, 0, onBehalf, receiver);
+        _MORPHO.withdraw(allocation.marketParams, allocation.assets, 0, onBehalf, receiver);
     }
 }
