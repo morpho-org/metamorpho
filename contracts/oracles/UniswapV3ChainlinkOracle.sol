@@ -8,7 +8,7 @@ import {IChainlinkAggregatorV3} from "./adapters/interfaces/IChainlinkAggregator
 import {OracleFeed} from "./libraries/OracleFeed.sol";
 import {MathLib} from "@morpho-blue/libraries/MathLib.sol";
 import {UniswapV3PoolLib} from "./libraries/UniswapV3PoolLib.sol";
-import {ChainlinkAggregatorLib} from "./libraries/ChainlinkAggregatorLib.sol";
+import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {UniswapV3CollateralAdapter} from "./adapters/UniswapV3CollateralAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
@@ -16,11 +16,11 @@ import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.
 contract UniswapV3ChainlinkOracle is UniswapV3CollateralAdapter, ChainlinkBorrowableAdapter, IOracle {
     using MathLib for uint256;
     using UniswapV3PoolLib for IUniswapV3Pool;
-    using ChainlinkAggregatorLib for IChainlinkAggregatorV3;
+    using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     constructor(address pool, address feed, uint32 collateralPriceDelay, uint256 borrowablePriceScale)
         UniswapV3CollateralAdapter(pool, collateralPriceDelay)
-        ChainlinkBorrowableAdapter(feed, borrowablePriceScale)
+        ChainlinkBorrowableAdapter(feed)
     {}
 
     function FEED_COLLATERAL() external view returns (string memory, address) {
@@ -28,7 +28,7 @@ contract UniswapV3ChainlinkOracle is UniswapV3CollateralAdapter, ChainlinkBorrow
     }
 
     function FEED_BORROWABLE() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK, address(CHAINLINK_BORROWABLE_FEED));
+        return (OracleFeed.CHAINLINK_V3, address(CHAINLINK_BORROWABLE_FEED));
     }
 
     function price() external view returns (uint256) {

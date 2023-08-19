@@ -7,8 +7,8 @@ abstract contract ChainlinkCollateralAdapter {
     IChainlinkAggregatorV3 public immutable CHAINLINK_COLLATERAL_FEED;
     uint256 public immutable CHAINLINK_COLLATERAL_PRICE_SCALE;
 
-    constructor(address feed, uint256 scale) {
+    constructor(address feed) {
         CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
-        CHAINLINK_COLLATERAL_PRICE_SCALE = scale;
+        CHAINLINK_COLLATERAL_PRICE_SCALE = CHAINLINK_COLLATERAL_FEED.decimals();
     }
 }

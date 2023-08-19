@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 library OracleFeed {
     string internal constant UNISWAP_V3 = "uniswapV3";
 
-    string internal constant CHAINLINK = "chainlink";
+    string internal constant CHAINLINK_V3 = "chainlinkV3";
 
     string internal constant REDSTONE = "redstone";
 

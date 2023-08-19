@@ -7,8 +7,8 @@ abstract contract ChainlinkBorrowableAdapter {
     IChainlinkAggregatorV3 public immutable CHAINLINK_BORROWABLE_FEED;
     uint256 public immutable CHAINLINK_BORROWABLE_PRICE_SCALE;
 
-    constructor(address feed, uint256 scale) {
+    constructor(address feed) {
         CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
-        CHAINLINK_BORROWABLE_PRICE_SCALE = scale;
+        CHAINLINK_BORROWABLE_PRICE_SCALE = CHAINLINK_BORROWABLE_FEED.decimals();
     }
 }
