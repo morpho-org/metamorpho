@@ -4,13 +4,13 @@ pragma solidity ^0.8.0;
 import {IChainlinkAggregatorV3} from "../adapters/interfaces/IChainlinkAggregatorV3.sol";
 
 library ChainlinkAggregatorV3Lib {
-    function price(IChainlinkAggregatorV3 dataFeed) internal view returns (uint256) {
-        (, int256 data,,,) = dataFeed.latestRoundData();
+    function price(IChainlinkAggregatorV3 priceFeed) internal view returns (uint256) {
+        (, int256 data,,,) = priceFeed.latestRoundData();
         require(data > 0, "ChainlinkAggregatorV3Lib: price is negative");
         return uint256(data);
     }
 
-    function price(IChainlinkAggregatorV3 dataFeed, IChainlinkAggregatorV3 sequencerUptimeFeed, uint256 gracePeriod)
+    function price(IChainlinkAggregatorV3 priceFeed, IChainlinkAggregatorV3 sequencerUptimeFeed, uint256 gracePeriod)
         internal
         view
         returns (uint256)
@@ -24,7 +24,7 @@ library ChainlinkAggregatorV3Lib {
         // Make sure the grace period has passed after the sequencer is back up.
         require(block.timestamp - startedAt > gracePeriod, "ChainlinkAggregatorV3Lib: grace period not over");
 
-        (, int256 data,,,) = dataFeed.latestRoundData();
+        (, int256 data,,,) = priceFeed.latestRoundData();
         require(data > 0, "ChainlinkAggregatorV3Lib: price is negative");
         return uint256(data);
     }
