@@ -1,0 +1,10 @@
+.
+└── constructor(address pool, uint32 delay)
+    ├── BORROWABLE_FEED = (UNISWAP_V3, pool)
+    ├── BORROWABLE_SCALE = 1e18
+    ├── COLLATERAL_SCALE is uninitialized
+    └── PRICE_SCALE is uninitialized
+
+.
+└── borrowablePrice()
+    └── return pool.price(delay) from lib

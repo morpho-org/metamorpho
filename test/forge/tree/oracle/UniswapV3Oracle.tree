@@ -1,0 +1,19 @@
+.
+└── constructor(uint256 priceScale, address pool, uint32 delay)
+    ├── PRICE_SCALE = priceScale
+    ├── COLLATERAL_FEED = (UNISWAP_V3, delay)
+    ├── COLLATERAL_SCALE = 1e18
+    ├── BORROWABLE_FEED = (STATIC, address(0))
+    └── BORROWABLE_SCALE = 1
+
+.
+└── borrowablePrice()
+    └── return 1
+
+.
+└── collateralPrice()
+    └── return pool.price(delay)
+
+.
+└── price()
+    └── return priceScale * pool.price(delay) / 1e18
