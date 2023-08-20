@@ -2,6 +2,6 @@
 src = "contracts"
 out = "out"
 libs = ["lib"]
-via-ir = true
+via-ir = false
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
