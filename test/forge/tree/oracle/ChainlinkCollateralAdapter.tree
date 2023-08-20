@@ -1,0 +1,14 @@
+.
+└── constructor(address feed)
+    ├── COLLATERAL_FEED = (CHAINLINK_V3, feed)
+    ├── COLLATERAL_SCALE = 10 ** feed.decimals()
+    ├── BORROWABLE_SCALE is uninitialized
+    └── PRICE_SCALE is uninitialized
+
+.
+└── BORROWABLE_SCALE()
+    └── return 0
+
+.
+└── collateralPrice()
+    └── return feed.price() from lib

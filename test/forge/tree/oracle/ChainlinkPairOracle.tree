@@ -1,0 +1,19 @@
+.
+└── constructor(uint256 priceScale, address collateralFeed, address borrowableFeed)
+    ├── PRICE_SCALE = priceScale
+    ├── COLLATERAL_FEED = (CHAINLINK_V3, collateralFeed)
+    ├── COLLATERAL_SCALE = 10 ** collateralFeed.decimals()
+    ├── BORROWABLE_FEED = (CHAINLINK_V3, borrowableFeed)
+    └── BORROWABLE_SCALE = 10 ** borrowableFeed.decimals()
+
+.
+└── collateralPrice()
+    └── return collateralFeed.price()
+
+.
+└── borrowablePrice()
+    └── return borrowableFeed.price()
+
+.
+└── price()
+    └── return priceScale * collateralFeed.price() * (10 ** borrowableFeed.decimals) / (borrowableFeed.price() * (10 ** collateralFeed.decimals()))
