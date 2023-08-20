@@ -13,9 +13,12 @@
 [submodule "lib/v3-periphery"]
 	path = lib/v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
+[submodule "lib/v3-core"]
+	path = lib/v3-core
+	url = https://github.com/Uniswap/v3-core
 [submodule "lib/morpho-blue"]
 	path = lib/morpho-blue
-	url = git@github.com:morpho-labs/morpho-blue.git
+	url = https://github.com/morpho-labs/morpho-blue
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate

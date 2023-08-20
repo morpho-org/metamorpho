@@ -9,4 +9,6 @@ solmate/=lib/solmate/
 @morpho-utils/=lib/morpho-utils/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @permit2/=lib/permit2/src/
+
+@uniswap/v3-core=lib/v3-core/contracts/
 @uniswap/v3-periphery=lib/v3-periphery/contracts/
