@@ -8,6 +8,7 @@ import "contracts/oracles/ChainlinkPairOracle.sol";
 
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
 
+import "@forge-std/console2.sol";
 import "@forge-std/Test.sol";
 
 contract ChainlinkOracleTest is Test {
@@ -41,6 +42,15 @@ contract ChainlinkOracleTest is Test {
         assertEq(chainlinkOracle.CHAINLINK_COLLATERAL_PRICE_SCALE(), 10 ** COLLATERAL_DECIMALS);
         assertEq(chainlinkOracle.CHAINLINK_BORROWABLE_PRICE_SCALE(), 10 ** BORROWABLE_DECIMALS);
         assertEq(chainlinkOracle.PRICE_SCALE(), SCALE);
+    }
+
+    function testNegativePrice(int256 price) public {
+        vm.assume(price < 0);
+
+        collateralFeed.setLatestAnswer(int256(price));
+
+        vm.expectRevert();
+        chainlinkOracle.price();
     }
 
     function testPrice(
