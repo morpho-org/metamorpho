@@ -22,7 +22,11 @@ abstract contract ChainlinkBorrowableAdapter is IBorrowableAdapter {
         return (OracleFeed.CHAINLINK_V3, address(CHAINLINK_BORROWABLE_FEED));
     }
 
-    function borrowableToBasePrice() public view returns (uint256) {
+    function borrowableScale() public view virtual returns (uint256) {
+        return BORROWABLE_SCALE;
+    }
+
+    function borrowableToBasePrice() public view virtual returns (uint256) {
         return CHAINLINK_BORROWABLE_FEED.price();
     }
 }

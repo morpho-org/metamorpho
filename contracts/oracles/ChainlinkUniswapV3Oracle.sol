@@ -11,4 +11,20 @@ contract ChainlinkUniswapV3Oracle is BaseOracle, ChainlinkCollateralAdapter, Uni
         ChainlinkCollateralAdapter(feed)
         UniswapV3BorrowableAdapter(pool, borrowablePriceDelay)
     {}
+
+    function collateralScale() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
+        return super.collateralScale();
+    }
+
+    function borrowableScale() public view override(BaseOracle, UniswapV3BorrowableAdapter) returns (uint256) {
+        return super.borrowableScale();
+    }
+
+    function collateralToBasePrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
+        return super.collateralToBasePrice();
+    }
+
+    function borrowableToBasePrice() public view override(BaseOracle, UniswapV3BorrowableAdapter) returns (uint256) {
+        return super.borrowableToBasePrice();
+    }
 }

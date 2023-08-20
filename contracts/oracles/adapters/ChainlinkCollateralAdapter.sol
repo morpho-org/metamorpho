@@ -22,7 +22,11 @@ abstract contract ChainlinkCollateralAdapter is ICollateralAdapter {
         return (OracleFeed.CHAINLINK_V3, address(CHAINLINK_COLLATERAL_FEED));
     }
 
-    function collateralToBasePrice() public view returns (uint256) {
+    function collateralScale() public view virtual returns (uint256) {
+        return COLLATERAL_SCALE;
+    }
+
+    function collateralToBasePrice() public view virtual returns (uint256) {
         return CHAINLINK_COLLATERAL_FEED.price();
     }
 }

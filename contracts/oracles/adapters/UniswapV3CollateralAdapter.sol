@@ -22,11 +22,11 @@ abstract contract UniswapV3CollateralAdapter is ICollateralAdapter {
         return (OracleFeed.UNISWAP_V3, address(UNI_V3_COLLATERAL_POOL));
     }
 
-    function COLLATERAL_SCALE() public view virtual override returns (uint256) {
+    function collateralScale() public view virtual returns (uint256) {
         return 1e18;
     }
 
-    function collateralToBasePrice() public view returns (uint256) {
+    function collateralToBasePrice() public view virtual returns (uint256) {
         return UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY);
     }
 }

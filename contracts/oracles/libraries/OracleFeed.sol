@@ -15,4 +15,6 @@ library OracleFeed {
     string internal constant RATED = "rated";
 
     string internal constant API3 = "api3";
+
+    string internal constant NEUTRAL = "neutral";
 }

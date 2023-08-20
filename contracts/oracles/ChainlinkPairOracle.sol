@@ -11,4 +11,20 @@ contract ChainlinkPairOracle is BaseOracle, ChainlinkCollateralAdapter, Chainlin
         ChainlinkCollateralAdapter(collateralFeed)
         ChainlinkBorrowableAdapter(borrowableFeed)
     {}
+
+    function collateralScale() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
+        return super.collateralScale();
+    }
+
+    function borrowableScale() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
+        return super.borrowableScale();
+    }
+
+    function collateralToBasePrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
+        return super.collateralToBasePrice();
+    }
+
+    function borrowableToBasePrice() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
+        return super.borrowableToBasePrice();
+    }
 }

@@ -18,15 +18,15 @@ abstract contract UniswapV3BorrowableAdapter is IBorrowableAdapter {
         UNI_V3_BORROWABLE_DELAY = delay;
     }
 
-    function borrowableToBasePrice() public view returns (uint256) {
-        return UNI_V3_BORROWABLE_POOL.price(UNI_V3_BORROWABLE_DELAY);
-    }
-
     function BORROWABLE_FEED() external view returns (string memory, address) {
         return (OracleFeed.UNISWAP_V3, address(UNI_V3_BORROWABLE_POOL));
     }
 
-    function BORROWABLE_SCALE() public view virtual override returns (uint256) {
+    function borrowableScale() public view virtual returns (uint256) {
         return 1e18;
+    }
+
+    function borrowableToBasePrice() public view virtual returns (uint256) {
+        return UNI_V3_BORROWABLE_POOL.price(UNI_V3_BORROWABLE_DELAY);
     }
 }

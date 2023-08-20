@@ -10,21 +10,19 @@ abstract contract BaseOracle is IOracle {
     uint256 public immutable PRICE_SCALE;
 
     constructor(uint256 priceScale) {
-        require(priceScale > 0, "BaseOracle: invalid price scale");
-
         PRICE_SCALE = priceScale;
     }
 
     function price() external view returns (uint256) {
         return FullMath.mulDiv(
-            collateralPriceToBase() * borrowableScale(),
+            collateralToBasePrice() * borrowableScale(),
             PRICE_SCALE, // Using FullMath to avoid overflowing because of PRICE_SCALE.
-            borrowablePriceToBase() * collateralScale()
+            borrowableToBasePrice() * collateralScale()
         );
     }
 
-    function collateralPriceToBase() public view virtual returns (uint256) {}
-    function borrowablePriceToBase() public view virtual returns (uint256) {}
     function collateralScale() public view virtual returns (uint256) {}
     function borrowableScale() public view virtual returns (uint256) {}
+    function collateralToBasePrice() public view virtual returns (uint256) {}
+    function borrowableToBasePrice() public view virtual returns (uint256) {}
 }
