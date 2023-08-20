@@ -39,8 +39,8 @@ contract ChainlinkOracleTest is Test {
     function testConfig() public {
         assertEq(address(chainlinkOracle.CHAINLINK_COLLATERAL_FEED()), address(collateralFeed));
         assertEq(address(chainlinkOracle.CHAINLINK_BORROWABLE_FEED()), address(borrowableFeed));
-        assertEq(chainlinkOracle.CHAINLINK_COLLATERAL_PRICE_SCALE(), 10 ** COLLATERAL_DECIMALS);
-        assertEq(chainlinkOracle.CHAINLINK_BORROWABLE_PRICE_SCALE(), 10 ** BORROWABLE_DECIMALS);
+        assertEq(chainlinkOracle.COLLATERAL_SCALE(), 10 ** COLLATERAL_DECIMALS);
+        assertEq(chainlinkOracle.BORROWABLE_SCALE(), 10 ** BORROWABLE_DECIMALS);
         assertEq(chainlinkOracle.PRICE_SCALE(), SCALE);
     }
 

@@ -1,26 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {IOracle} from "./interfaces/IOracle.sol";
-import {IChainlinkAggregatorV3} from "./adapters/interfaces/IChainlinkAggregatorV3.sol";
-
-import {OracleFeed} from "./libraries/OracleFeed.sol";
-import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
-
+import {BaseOracle} from "./BaseOracle.sol";
 import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
 
-contract ChainlinkOracle is ChainlinkCollateralAdapter, IOracle {
-    using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
+contract ChainlinkOracle is BaseOracle, ChainlinkCollateralAdapter {
+    constructor(address feed, uint256 priceScale) BaseOracle(priceScale) ChainlinkCollateralAdapter(feed) {}
 
-    constructor(address feed) ChainlinkCollateralAdapter(feed) {}
+    function BORROWABLE_FEED() external view returns (string memory, address) {}
 
-    function FEED_COLLATERAL() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK_V3, address(CHAINLINK_COLLATERAL_FEED));
+    function BORROWABLE_SCALE() external pure returns (uint256) {
+        return 1e18;
     }
 
-    function FEED_BORROWABLE() external view returns (string memory, address) {}
-
-    function price() external view returns (uint256) {
-        return CHAINLINK_COLLATERAL_FEED.price();
+    function borrowableToBasePrice() external pure returns (uint256) {
+        return 1e18;
     }
 }
