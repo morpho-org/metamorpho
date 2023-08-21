@@ -18,7 +18,7 @@ contract ChainlinkPairOracleL2 is ChainlinkCollateralAdapter, ChainlinkBorrowabl
     uint256 public immutable PRICE_SCALE;
 
     /// @dev The feed that provides the uptime of the sequencer.
-    address public immutable SEQUENCER_UPTIME_FEED;
+    IChainlinkAggregatorV3 public immutable SEQUENCER_UPTIME_FEED;
 
     /// @dev Grace period during which the oracle reverts after a sequencer downtime.
     uint256 public immutable GRACE_PERIOD;
@@ -27,13 +27,13 @@ contract ChainlinkPairOracleL2 is ChainlinkCollateralAdapter, ChainlinkBorrowabl
         address collateralFeed,
         address borrowableFeed,
         uint256 scale,
-        address sequencerUptimeFeed,
+        IChainlinkAggregatorV3 sequencerUptimeFeed,
         uint256 gracePeriod
     ) ChainlinkCollateralAdapter(collateralFeed) ChainlinkBorrowableAdapter(borrowableFeed) {
         require(collateralFeed != address(0), "ChainlinkPairOracleL2: invalid collateral feed");
         require(borrowableFeed != address(0), "ChainlinkPairOracleL2: invalid borrowable feed");
         require(scale > 0, "ChainlinkPairOracleL2: invalid scale");
-        require(sequencerUptimeFeed != address(0), "ChainlinkPairOracleL2: invalid sequencer uptime feed");
+        require(address(sequencerUptimeFeed) != address(0), "ChainlinkPairOracleL2: invalid sequencer uptime feed");
         require(gracePeriod > 0, "ChainlinkPairOracleL2: invalid grace period");
 
         PRICE_SCALE = scale;
