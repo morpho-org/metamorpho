@@ -3,7 +3,12 @@ pragma solidity >=0.5.0;
 
 import {IOracle as IBlueOracle} from "@morpho-blue/interfaces/IOracle.sol";
 
-import {ICollateralAdapter} from "../adapters/interfaces/ICollateralAdapter.sol";
-import {IBorrowableAdapter} from "../adapters/interfaces/IBorrowableAdapter.sol";
+interface IOracle is IBlueOracle {
+    function COLLATERAL_FEED() external view returns (string memory, address);
+    function BORROWABLE_FEED() external view returns (string memory, address);
 
-interface IOracle is IBlueOracle, ICollateralAdapter, IBorrowableAdapter {}
+    function collateralScale() external view returns (uint256);
+    function borrowableScale() external view returns (uint256);
+    function collateralToBasePrice() external view returns (uint256);
+    function borrowableToBasePrice() external view returns (uint256);
+}

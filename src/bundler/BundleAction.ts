@@ -105,7 +105,12 @@ class BundleAction {
     ]);
   }
 
-  static morphoWithdraw(market: MarketStruct, amount: BigNumberish, shares: BigNumberish, receiver: string): BundleCall {
+  static morphoWithdraw(
+    market: MarketStruct,
+    amount: BigNumberish,
+    shares: BigNumberish,
+    receiver: string,
+  ): BundleCall {
     return BundleAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoWithdraw", [market, amount, shares, receiver]);
   }
 

@@ -6,6 +6,7 @@ import "./mocks/ERC20Mock.sol";
 
 import "contracts/oracles/ChainlinkPairOracle.sol";
 
+import {OracleFeed} from "contracts/oracles/libraries/OracleFeed.sol";
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
 
 import "@forge-std/console2.sol";
@@ -33,12 +34,17 @@ contract ChainlinkOracleTest is Test {
 
         SCALE = 1e26; // 1e36 * 10 ** (8 - 18);
 
-        chainlinkOracle = new ChainlinkPairOracle(address(collateralFeed), address(borrowableFeed), SCALE);
+        chainlinkOracle = new ChainlinkPairOracle(SCALE, address(collateralFeed), address(borrowableFeed));
     }
 
     function testConfig() public {
-        assertEq(address(chainlinkOracle.CHAINLINK_COLLATERAL_FEED()), address(collateralFeed));
-        assertEq(address(chainlinkOracle.CHAINLINK_BORROWABLE_FEED()), address(borrowableFeed));
+        (string memory collateralOracleFeed, address collateralChainlinkFeed) = chainlinkOracle.COLLATERAL_FEED();
+        (string memory borrowableOracleFeed, address borrowableChainlinkFeed) = chainlinkOracle.BORROWABLE_FEED();
+
+        assertEq(collateralOracleFeed, OracleFeed.CHAINLINK_V3, "collateralOracleFeed");
+        assertEq(borrowableOracleFeed, OracleFeed.CHAINLINK_V3, "borrowableOracleFeed");
+        assertEq(collateralChainlinkFeed, address(collateralFeed), "collateralChainlinkFeed");
+        assertEq(borrowableChainlinkFeed, address(borrowableFeed), "borrowableChainlinkFeed");
         assertEq(chainlinkOracle.collateralScale(), 10 ** COLLATERAL_DECIMALS);
         assertEq(chainlinkOracle.borrowableScale(), 10 ** BORROWABLE_DECIMALS);
         assertEq(chainlinkOracle.PRICE_SCALE(), SCALE);
@@ -89,7 +95,7 @@ contract ChainlinkOracleTest is Test {
             ? 1e36 / 10 ** (collateralDecimals - borrowableDecimals)
             : 1e36 * (borrowableDecimals - collateralDecimals); // 1e36 * 10 ** (borrow decimals - collateral decimals);
 
-        chainlinkOracle = new ChainlinkPairOracle(address(collateralFeed), address(borrowableFeed), scale);
+        chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
 
         // console2.log("COLLATERAL_FEED", chainlinkOracle.COLLATERAL_FEED());
         console2.log("collateralScale", chainlinkOracle.collateralScale());

@@ -21,8 +21,8 @@ abstract contract BaseOracle is IOracle {
             PRICE_SCALE.mulDiv(collateralToBasePrice() * borrowableScale(), borrowableToBasePrice() * collateralScale());
     }
 
-    function collateralScale() public view virtual returns (uint256) {}
-    function borrowableScale() public view virtual returns (uint256) {}
-    function collateralToBasePrice() public view virtual returns (uint256) {}
-    function borrowableToBasePrice() public view virtual returns (uint256) {}
+    function collateralScale() public view virtual returns (uint256);
+    function borrowableScale() public view virtual returns (uint256);
+    function collateralToBasePrice() public view virtual returns (uint256);
+    function borrowableToBasePrice() public view virtual returns (uint256);
 }

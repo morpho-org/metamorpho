@@ -7,30 +7,14 @@ import {UniswapV3BorrowableAdapter} from "./adapters/UniswapV3BorrowableAdapter.
 
 contract UniswapV3Oracle is BaseOracle, UniswapV3CollateralAdapter, UniswapV3BorrowableAdapter {
     constructor(
+        uint256 priceScale,
         address collateralPool,
         address borrowablePool,
         uint32 collateralPriceDelay,
-        uint32 borrowablePriceDelay,
-        uint256 priceScale
+        uint32 borrowablePriceDelay
     )
         BaseOracle(priceScale)
         UniswapV3CollateralAdapter(collateralPool, collateralPriceDelay)
         UniswapV3BorrowableAdapter(borrowablePool, borrowablePriceDelay)
     {}
-
-    function collateralScale() public view override(BaseOracle, UniswapV3CollateralAdapter) returns (uint256) {
-        return UniswapV3CollateralAdapter.collateralScale();
-    }
-
-    function borrowableScale() public view override(BaseOracle, UniswapV3BorrowableAdapter) returns (uint256) {
-        return UniswapV3BorrowableAdapter.borrowableScale();
-    }
-
-    function collateralToBasePrice() public view override(BaseOracle, UniswapV3CollateralAdapter) returns (uint256) {
-        return UniswapV3CollateralAdapter.collateralToBasePrice();
-    }
-
-    function borrowableToBasePrice() public view override(BaseOracle, UniswapV3BorrowableAdapter) returns (uint256) {
-        return UniswapV3BorrowableAdapter.borrowableToBasePrice();
-    }
 }
