@@ -11,8 +11,8 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract UniswapV3CollateralAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
-    IUniswapV3Pool public immutable UNI_V3_COLLATERAL_POOL;
-    uint32 public immutable UNI_V3_COLLATERAL_DELAY;
+    IUniswapV3Pool private immutable UNI_V3_COLLATERAL_POOL;
+    uint32 private immutable UNI_V3_COLLATERAL_DELAY;
 
     constructor(address pool, uint32 delay) {
         UNI_V3_COLLATERAL_POOL = IUniswapV3Pool(pool);

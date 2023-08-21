@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {IBorrowableAdapter} from "./interfaces/IBorrowableAdapter.sol";
-
 import {OracleFeed} from "../libraries/OracleFeed.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
