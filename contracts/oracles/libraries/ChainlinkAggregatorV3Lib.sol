@@ -24,8 +24,6 @@ library ChainlinkAggregatorV3Lib {
         // Make sure the grace period has passed after the sequencer is back up.
         require(block.timestamp - startedAt > gracePeriod, "ChainlinkAggregatorV3Lib: grace period not over");
 
-        (, int256 data,,,) = priceFeed.latestRoundData();
-        require(data > 0, "ChainlinkAggregatorV3Lib: price is negative");
-        return uint256(data);
+        return price(priceFeed);
     }
 }
