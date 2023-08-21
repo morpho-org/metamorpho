@@ -11,23 +11,23 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract UniswapV3CollateralAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
-    IUniswapV3Pool private immutable UNI_V3_COLLATERAL_POOL;
-    uint32 private immutable UNI_V3_COLLATERAL_DELAY;
+    IUniswapV3Pool private immutable _UNI_V3_COLLATERAL_POOL;
+    uint32 private immutable _UNI_V3_COLLATERAL_DELAY;
 
     constructor(address pool, uint32 delay) {
-        UNI_V3_COLLATERAL_POOL = IUniswapV3Pool(pool);
-        UNI_V3_COLLATERAL_DELAY = delay;
+        _UNI_V3_COLLATERAL_POOL = IUniswapV3Pool(pool);
+        _UNI_V3_COLLATERAL_DELAY = delay;
     }
 
     function COLLATERAL_FEED() external view returns (string memory, address) {
-        return (OracleFeed.UNISWAP_V3, address(UNI_V3_COLLATERAL_POOL));
+        return (OracleFeed.UNISWAP_V3, address(_UNI_V3_COLLATERAL_POOL));
     }
 
-    function collateralScale() public view virtual override returns (uint256) {
+    function COLLATERAL_SCALE() public pure override returns (uint256) {
         return 1e18;
     }
 
     function collateralToBasePrice() public view virtual override returns (uint256) {
-        return UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY);
+        return _UNI_V3_COLLATERAL_POOL.price(_UNI_V3_COLLATERAL_DELAY);
     }
 }

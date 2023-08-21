@@ -45,8 +45,8 @@ contract ChainlinkOracleTest is Test {
         assertEq(borrowableOracleFeed, OracleFeed.CHAINLINK_V3, "borrowableOracleFeed");
         assertEq(collateralChainlinkFeed, address(collateralFeed), "collateralChainlinkFeed");
         assertEq(borrowableChainlinkFeed, address(borrowableFeed), "borrowableChainlinkFeed");
-        assertEq(chainlinkOracle.collateralScale(), 10 ** COLLATERAL_DECIMALS);
-        assertEq(chainlinkOracle.borrowableScale(), 10 ** BORROWABLE_DECIMALS);
+        assertEq(chainlinkOracle.COLLATERAL_SCALE(), 10 ** COLLATERAL_DECIMALS);
+        assertEq(chainlinkOracle.BORROWABLE_SCALE(), 10 ** BORROWABLE_DECIMALS);
         assertEq(chainlinkOracle.PRICE_SCALE(), SCALE);
     }
 

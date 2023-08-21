@@ -17,12 +17,13 @@ abstract contract BaseOracle is IOracle {
 
     function price() external view returns (uint256) {
         // Using FullMath to avoid overflowing because of PRICE_SCALE.
-        return
-            PRICE_SCALE.mulDiv(collateralToBasePrice() * borrowableScale(), borrowableToBasePrice() * collateralScale());
+        return PRICE_SCALE.mulDiv(
+            collateralToBasePrice() * BORROWABLE_SCALE(), borrowableToBasePrice() * COLLATERAL_SCALE()
+        );
     }
 
-    function collateralScale() public view virtual returns (uint256);
-    function borrowableScale() public view virtual returns (uint256);
+    function COLLATERAL_SCALE() public view virtual returns (uint256);
+    function BORROWABLE_SCALE() public view virtual returns (uint256);
     function collateralToBasePrice() public view virtual returns (uint256);
     function borrowableToBasePrice() public view virtual returns (uint256);
 }

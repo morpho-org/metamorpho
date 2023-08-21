@@ -11,23 +11,23 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract ChainlinkBorrowableAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
-    IChainlinkAggregatorV3 private immutable CHAINLINK_BORROWABLE_FEED;
-    uint256 private immutable BORROWABLE_SCALE;
+    IChainlinkAggregatorV3 private immutable _CHAINLINK_BORROWABLE_FEED;
+    uint256 private immutable _BORROWABLE_SCALE;
 
     constructor(address feed) {
-        CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
-        BORROWABLE_SCALE = 10 ** CHAINLINK_BORROWABLE_FEED.decimals();
+        _CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
+        _BORROWABLE_SCALE = 10 ** _CHAINLINK_BORROWABLE_FEED.decimals();
     }
 
     function BORROWABLE_FEED() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK_V3, address(CHAINLINK_BORROWABLE_FEED));
+        return (OracleFeed.CHAINLINK_V3, address(_CHAINLINK_BORROWABLE_FEED));
     }
 
-    function borrowableScale() public view virtual override returns (uint256) {
-        return BORROWABLE_SCALE;
+    function BORROWABLE_SCALE() public view virtual override returns (uint256) {
+        return _BORROWABLE_SCALE;
     }
 
     function borrowableToBasePrice() public view virtual override returns (uint256) {
-        return CHAINLINK_BORROWABLE_FEED.price();
+        return _CHAINLINK_BORROWABLE_FEED.price();
     }
 }

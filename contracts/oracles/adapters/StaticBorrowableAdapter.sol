@@ -10,7 +10,7 @@ abstract contract StaticBorrowableAdapter is BaseOracle {
         return (OracleFeed.STATIC, address(0));
     }
 
-    function borrowableScale() public view virtual override returns (uint256) {
+    function BORROWABLE_SCALE() public view virtual override returns (uint256) {
         return 1;
     }
 
