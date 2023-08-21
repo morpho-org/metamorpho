@@ -10,11 +10,11 @@ abstract contract NeutralBorrowableAdapter is IBorrowableAdapter {
         return (OracleFeed.NEUTRAL, address(0));
     }
 
-    function borrowableScale() external view virtual returns (uint256) {
+    function borrowableScale() public view virtual returns (uint256) {
         return 1e18;
     }
 
-    function borrowableToBasePrice() external view virtual returns (uint256) {
+    function borrowableToBasePrice() public view virtual returns (uint256) {
         return 1e18;
     }
 }
