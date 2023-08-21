@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.21;
+pragma solidity 0.8.19;
 
 import {IERC3156FlashLender} from "./interfaces/IERC3156FlashLender.sol";
 import {IERC3156FlashBorrower} from "./interfaces/IERC3156FlashBorrower.sol";

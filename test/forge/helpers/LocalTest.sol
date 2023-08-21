@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
-import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
-import {FixedPointMathLib, WAD} from "@morpho-blue/libraries/FixedPointMathLib.sol";
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+// import {SigUtils} from "@morpho-blue/../test/helpers/SigUtils.sol";
 
 import {ERC20Mock} from "test/forge/mocks/ERC20Mock.sol";
 
 import "./BaseTest.sol";
 
 abstract contract LocalTest is BaseTest {
-    using MarketLib for Market;
+    using MathLib for uint256;
     using SharesMathLib for uint256;
+    using MarketLib for MarketParams;
     using stdStorage for StdStorage;
-    using FixedPointMathLib for uint256;
-    using SafeTransferLib for ERC20;
 
     uint256 internal constant LLTV = 0.8 ether;
 
@@ -23,25 +19,28 @@ abstract contract LocalTest is BaseTest {
     ERC20Mock internal collateralAsset;
     OracleMock internal oracle;
 
-    Market internal market;
+    MarketParams internal marketParams;
     Id internal id;
 
     function setUp() public virtual override {
         super.setUp();
 
-        // List a market.
+        // List a marketParams.
         borrowableAsset = new ERC20Mock("borrowable", "B", 18);
         collateralAsset = new ERC20Mock("collateral", "C", 18);
         oracle = new OracleMock();
 
-        market = Market(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
-        id = market.id();
+        irm = new IrmMock(morpho);
+
+        marketParams =
+            MarketParams(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
+        id = marketParams.id();
 
         oracle.setPrice(ORACLE_PRICE_SCALE);
 
         vm.startPrank(OWNER);
         morpho.enableLltv(LLTV);
-        morpho.createMarket(market);
+        morpho.createMarket(marketParams);
         vm.stopPrank();
 
         borrowableAsset.approve(address(morpho), type(uint256).max);

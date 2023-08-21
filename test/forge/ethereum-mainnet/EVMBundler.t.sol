@@ -6,7 +6,8 @@ import "contracts/bundlers/EVMBundler.sol";
 import "../helpers/ForkTest.sol";
 
 contract EVMBundlerEthereumTest is ForkTest {
-    using FixedPointMathLib for uint256;
+    using MathLib for uint256;
+    using MorphoBalancesLib for IMorpho;
 
     EVMBundler private bundler;
 
