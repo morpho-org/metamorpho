@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {IBorrowableAdapter} from "./interfaces/IBorrowableAdapter.sol";
 import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
 import {OracleFeed} from "../libraries/OracleFeed.sol";
 import {ChainlinkAggregatorV3Lib} from "../libraries/ChainlinkAggregatorV3Lib.sol";
 
-abstract contract ChainlinkBorrowableAdapter is IBorrowableAdapter {
+import {BaseOracle} from "../BaseOracle.sol";
+
+abstract contract ChainlinkBorrowableAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     IChainlinkAggregatorV3 public immutable CHAINLINK_BORROWABLE_FEED;
@@ -22,11 +23,11 @@ abstract contract ChainlinkBorrowableAdapter is IBorrowableAdapter {
         return (OracleFeed.CHAINLINK_V3, address(CHAINLINK_BORROWABLE_FEED));
     }
 
-    function borrowableScale() public view virtual returns (uint256) {
+    function borrowableScale() public view virtual override returns (uint256) {
         return BORROWABLE_SCALE;
     }
 
-    function borrowableToBasePrice() public view virtual returns (uint256) {
+    function borrowableToBasePrice() public view virtual override returns (uint256) {
         return CHAINLINK_BORROWABLE_FEED.price();
     }
 }

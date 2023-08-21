@@ -6,25 +6,9 @@ import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 
 contract ChainlinkPairOracle is BaseOracle, ChainlinkCollateralAdapter, ChainlinkBorrowableAdapter {
-    constructor(address collateralFeed, address borrowableFeed, uint256 priceScale)
+    constructor(uint256 priceScale, address collateralFeed, address borrowableFeed)
         BaseOracle(priceScale)
         ChainlinkCollateralAdapter(collateralFeed)
         ChainlinkBorrowableAdapter(borrowableFeed)
     {}
-
-    function collateralScale() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
-        return ChainlinkCollateralAdapter.collateralScale();
-    }
-
-    function borrowableScale() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
-        return ChainlinkBorrowableAdapter.borrowableScale();
-    }
-
-    function collateralToBasePrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
-        return ChainlinkCollateralAdapter.collateralToBasePrice();
-    }
-
-    function borrowableToBasePrice() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
-        return ChainlinkBorrowableAdapter.borrowableToBasePrice();
-    }
 }

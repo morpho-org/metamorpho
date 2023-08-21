@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {ICollateralAdapter} from "./interfaces/ICollateralAdapter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
 import {OracleFeed} from "../libraries/OracleFeed.sol";
 import {UniswapV3PoolLib} from "../libraries/UniswapV3PoolLib.sol";
 
-abstract contract UniswapV3CollateralAdapter is ICollateralAdapter {
+import {BaseOracle} from "../BaseOracle.sol";
+
+abstract contract UniswapV3CollateralAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
     IUniswapV3Pool public immutable UNI_V3_COLLATERAL_POOL;
@@ -22,11 +23,11 @@ abstract contract UniswapV3CollateralAdapter is ICollateralAdapter {
         return (OracleFeed.UNISWAP_V3, address(UNI_V3_COLLATERAL_POOL));
     }
 
-    function collateralScale() public view virtual returns (uint256) {
+    function collateralScale() public view virtual override returns (uint256) {
         return 1e18;
     }
 
-    function collateralToBasePrice() public view virtual returns (uint256) {
+    function collateralToBasePrice() public view virtual override returns (uint256) {
         return UNI_V3_COLLATERAL_POOL.price(UNI_V3_COLLATERAL_DELAY);
     }
 }

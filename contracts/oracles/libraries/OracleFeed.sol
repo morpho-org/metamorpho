@@ -16,5 +16,5 @@ library OracleFeed {
 
     string internal constant API3 = "api3";
 
-    string internal constant NEUTRAL = "neutral";
+    string internal constant STATIC = "neutral";
 }
