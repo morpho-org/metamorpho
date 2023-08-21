@@ -9,6 +9,6 @@ interface IOracle is IBlueOracle {
 
     function COLLATERAL_SCALE() external view returns (uint256);
     function BORROWABLE_SCALE() external view returns (uint256);
-    function collateralToBasePrice() external view returns (uint256);
-    function borrowableToBasePrice() external view returns (uint256);
+    function collateralPrice() external view returns (uint256);
+    function borrowablePrice() external view returns (uint256);
 }

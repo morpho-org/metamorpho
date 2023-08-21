@@ -27,7 +27,7 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
         return _COLLATERAL_SCALE;
     }
 
-    function collateralToBasePrice() public view virtual override returns (uint256) {
+    function collateralPrice() public view virtual override returns (uint256) {
         return _CHAINLINK_COLLATERAL_FEED.price();
     }
 }

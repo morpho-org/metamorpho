@@ -14,7 +14,7 @@ abstract contract StaticBorrowableAdapter is BaseOracle {
         return 1;
     }
 
-    function borrowableToBasePrice() public view virtual override returns (uint256) {
+    function borrowablePrice() public view virtual override returns (uint256) {
         return 1;
     }
 }

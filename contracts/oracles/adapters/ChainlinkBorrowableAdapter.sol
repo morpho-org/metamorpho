@@ -27,7 +27,7 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
         return _BORROWABLE_SCALE;
     }
 
-    function borrowableToBasePrice() public view virtual override returns (uint256) {
+    function borrowablePrice() public view virtual override returns (uint256) {
         return _CHAINLINK_BORROWABLE_FEED.price();
     }
 }

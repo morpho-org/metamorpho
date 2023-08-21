@@ -27,7 +27,7 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
         return 1e18;
     }
 
-    function borrowableToBasePrice() public view virtual override returns (uint256) {
+    function borrowablePrice() public view virtual override returns (uint256) {
         return _UNI_V3_BORROWABLE_POOL.price(_UNI_V3_BORROWABLE_DELAY);
     }
 }

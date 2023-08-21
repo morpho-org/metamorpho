@@ -27,7 +27,7 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
         return 1e18;
     }
 
-    function collateralToBasePrice() public view virtual override returns (uint256) {
+    function collateralPrice() public view virtual override returns (uint256) {
         return _UNI_V3_COLLATERAL_POOL.price(_UNI_V3_COLLATERAL_DELAY);
     }
 }
