@@ -19,18 +19,18 @@ contract UniswapV3Oracle is BaseOracle, UniswapV3CollateralAdapter, UniswapV3Bor
     {}
 
     function collateralScale() public view override(BaseOracle, UniswapV3CollateralAdapter) returns (uint256) {
-        return super.collateralScale();
+        return UniswapV3CollateralAdapter.collateralScale();
     }
 
     function borrowableScale() public view override(BaseOracle, UniswapV3BorrowableAdapter) returns (uint256) {
-        return super.borrowableScale();
+        return UniswapV3BorrowableAdapter.borrowableScale();
     }
 
     function collateralToBasePrice() public view override(BaseOracle, UniswapV3CollateralAdapter) returns (uint256) {
-        return super.collateralToBasePrice();
+        return UniswapV3CollateralAdapter.collateralToBasePrice();
     }
 
     function borrowableToBasePrice() public view override(BaseOracle, UniswapV3BorrowableAdapter) returns (uint256) {
-        return super.borrowableToBasePrice();
+        return UniswapV3BorrowableAdapter.borrowableToBasePrice();
     }
 }

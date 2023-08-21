@@ -9,18 +9,18 @@ contract ChainlinkOracle is BaseOracle, ChainlinkCollateralAdapter, NeutralBorro
     constructor(address feed, uint256 priceScale) BaseOracle(priceScale) ChainlinkCollateralAdapter(feed) {}
 
     function collateralScale() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
-        return super.collateralScale();
+        return ChainlinkCollateralAdapter.collateralScale();
     }
 
     function borrowableScale() public view override(BaseOracle, NeutralBorrowableAdapter) returns (uint256) {
-        return super.borrowableScale();
+        return NeutralBorrowableAdapter.borrowableScale();
     }
 
     function collateralToBasePrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
-        return super.collateralToBasePrice();
+        return ChainlinkCollateralAdapter.collateralToBasePrice();
     }
 
     function borrowableToBasePrice() public view override(BaseOracle, NeutralBorrowableAdapter) returns (uint256) {
-        return super.borrowableToBasePrice();
+        return NeutralBorrowableAdapter.borrowableToBasePrice();
     }
 }
