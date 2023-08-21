@@ -6,6 +6,8 @@ import {IOracle} from "./interfaces/IOracle.sol";
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
 
 abstract contract BaseOracle is IOracle {
+    using FullMath for uint256;
+
     /// @dev The scale must be 1e36 * 10^(decimals of borrowable token - decimals of collateral token).
     uint256 public immutable PRICE_SCALE;
 
@@ -15,9 +17,8 @@ abstract contract BaseOracle is IOracle {
 
     function price() external view returns (uint256) {
         // Using FullMath to avoid overflowing because of PRICE_SCALE.
-        return FullMath.mulDiv(
-            collateralToBasePrice() * borrowableScale(), PRICE_SCALE, borrowableToBasePrice() * collateralScale()
-        );
+        return
+            PRICE_SCALE.mulDiv(collateralToBasePrice() * borrowableScale(), borrowableToBasePrice() * collateralScale());
     }
 
     function collateralScale() public view virtual returns (uint256);
