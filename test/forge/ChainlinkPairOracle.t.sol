@@ -97,10 +97,6 @@ contract ChainlinkOracleTest is Test {
 
         chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
 
-        // console2.log("COLLATERAL_FEED", chainlinkOracle.COLLATERAL_FEED());
-        console2.log("collateralScale", chainlinkOracle.collateralScale());
-        console2.log("collateralToBasePrice", chainlinkOracle.collateralToBasePrice());
-
         assertEq(
             chainlinkOracle.price(),
             FullMath.mulDiv(
