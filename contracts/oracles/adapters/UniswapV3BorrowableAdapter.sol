@@ -11,23 +11,20 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract UniswapV3BorrowableAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
-    IUniswapV3Pool internal immutable UNI_V3_BORROWABLE_POOL;
-    uint32 internal immutable UNI_V3_BORROWABLE_DELAY;
+    IUniswapV3Pool internal immutable _UNI_V3_BORROWABLE_POOL;
+    uint32 internal immutable _UNI_V3_BORROWABLE_DELAY;
 
     constructor(address pool, uint32 delay) {
-        UNI_V3_BORROWABLE_POOL = IUniswapV3Pool(pool);
-        UNI_V3_BORROWABLE_DELAY = delay;
+        _UNI_V3_BORROWABLE_POOL = IUniswapV3Pool(pool);
+        _UNI_V3_BORROWABLE_DELAY = delay;
+        BORROWABLE_SCALE = 1e18;
     }
 
     function BORROWABLE_FEED() external view returns (string memory, address) {
-        return (OracleFeed.UNISWAP_V3, address(UNI_V3_BORROWABLE_POOL));
+        return (OracleFeed.UNISWAP_V3, address(_UNI_V3_BORROWABLE_POOL));
     }
 
-    function borrowableScale() public view virtual override returns (uint256) {
-        return 1e18;
-    }
-
-    function borrowableToBasePrice() public view virtual override returns (uint256) {
-        return UNI_V3_BORROWABLE_POOL.price(UNI_V3_BORROWABLE_DELAY);
+    function borrowablePrice() public view virtual override returns (uint256) {
+        return _UNI_V3_BORROWABLE_POOL.price(_UNI_V3_BORROWABLE_DELAY);
     }
 }

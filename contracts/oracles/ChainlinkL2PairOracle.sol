@@ -29,11 +29,11 @@ contract ChainlinkL2PairOracle is
         ChainlinkL2Adapter(sequencerUptimeFeed, gracePeriod)
     {}
 
-    function collateralToBasePrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
-        return CHAINLINK_COLLATERAL_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
+    function collateralPrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
+        return _CHAINLINK_COLLATERAL_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
     }
 
-    function borrowableToBasePrice() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
-        return CHAINLINK_BORROWABLE_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
+    function borrowablePrice() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
+        return _CHAINLINK_BORROWABLE_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
     }
 }
