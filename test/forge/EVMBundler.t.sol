@@ -82,10 +82,10 @@ contract EVMBundlerTest is BaseBundlerTest {
         bytes[] memory supplyCollateralData = new bytes[](1);
         bytes[] memory repayData = new bytes[](1);
 
-        supplyData[0] = abi.encodeCall(MorphoBundler.morphoSupply, (market, amount, 0, address(bundler), hex""));
+        supplyData[0] = abi.encodeCall(MorphoBundler.morphoSupply, (marketParams, amount, 0, address(bundler), hex""));
         supplyCollateralData[0] =
-            abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (market, amount, address(bundler), hex""));
-        repayData[0] = abi.encodeCall(MorphoBundler.morphoRepay, (market, amount, 0, address(bundler), hex""));
+            abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (marketParams, amount, address(bundler), hex""));
+        repayData[0] = abi.encodeCall(MorphoBundler.morphoRepay, (marketParams, amount, 0, address(bundler), hex""));
 
         vm.expectRevert(bytes(BulkerErrorsLib.BUNDLER_ADDRESS));
         bundler.multicall(block.timestamp, supplyData);
