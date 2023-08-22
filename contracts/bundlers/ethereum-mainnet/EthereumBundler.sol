@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {ERC4626Bundler} from "../ERC4626Bundler.sol";
+import {ERC20Bundler} from "../ERC20Bundler.sol";
+import {MorphoBundler} from "../MorphoBundler.sol";
 import {WNativeBundler} from "../WNativeBundler.sol";
 import {StEthBundler} from "./StEthBundler.sol";
 
-/// @title EthereumWrapperBundler
+/// @title EthereumBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-contract EthereumWrapperBundler is ERC4626Bundler, WNativeBundler, StEthBundler {
+contract EthereumBundler is ERC20Bundler, WNativeBundler, StEthBundler, MorphoBundler {
     /* CONSTANTS */
 
     /// @dev The address of the WETH contract on Ethreum mainnet.
@@ -16,5 +17,5 @@ contract EthereumWrapperBundler is ERC4626Bundler, WNativeBundler, StEthBundler 
 
     /* CONSTRUCTOR */
 
-    constructor() WNativeBundler(WETH) {}
+    constructor(address morpho) WNativeBundler(WETH) MorphoBundler(morpho) {}
 }

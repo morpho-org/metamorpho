@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
 import {Signature} from "@morpho-blue/interfaces/IMorpho.sol";
@@ -21,7 +21,8 @@ abstract contract ERC20Bundler is BaseBundler {
 
     /* ACTIONS */
 
-    /// @dev Transfers the minimum between the given `amount` and the bundler balance of `asset` from this contract to `recipient`.
+    /// @dev Transfers the minimum between the given `amount` and the bundler balance of `asset` from this contract to
+    /// `recipient`.
     function transfer(address asset, address recipient, uint256 amount) external {
         require(recipient != address(0), ErrorsLib.ZERO_ADDRESS);
         require(recipient != address(this), ErrorsLib.BUNDLER_ADDRESS);
@@ -33,7 +34,8 @@ abstract contract ERC20Bundler is BaseBundler {
         ERC20(asset).safeTransfer(recipient, amount);
     }
 
-    /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given `deadline` & EIP712 `signature`.
+    /// @dev Approves the given `amount` of `asset` from sender to be spent by this contract via Permit2 with the given
+    /// `deadline` & EIP712 `signature`.
     function approve2(address asset, uint256 amount, uint256 deadline, Signature calldata signature) external {
         require(amount != 0, ErrorsLib.ZERO_AMOUNT);
 
@@ -42,7 +44,8 @@ abstract contract ERC20Bundler is BaseBundler {
         );
     }
 
-    /// @dev Transfers the given `amount` of `asset` from sender to this contract via ERC20 transfer with Permit2 fallback.
+    /// @dev Transfers the given `amount` of `asset` from sender to this contract via ERC20 transfer with Permit2
+    /// fallback.
     function transferFrom2(address asset, uint256 amount) external {
         require(amount != 0, ErrorsLib.ZERO_AMOUNT);
 

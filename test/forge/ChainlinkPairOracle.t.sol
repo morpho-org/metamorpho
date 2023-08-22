@@ -13,12 +13,14 @@ import "@forge-std/console2.sol";
 import "@forge-std/Test.sol";
 
 contract ChainlinkOracleTest is Test {
+    using FullMath for uint256;
+
     ChainlinkAggregatorV3Mock collateralFeed;
     ChainlinkAggregatorV3Mock borrowableFeed;
     ChainlinkPairOracle chainlinkOracle;
     ERC20Mock collateral;
     ERC20Mock borrowable;
-    uint256 SCALE;
+    uint256 SCALE_FACTOR;
     uint8 COLLATERAL_DECIMALS = 8;
     uint8 BORROWABLE_DECIMALS = 10;
 
@@ -32,9 +34,9 @@ contract ChainlinkOracleTest is Test {
         collateralFeed.setDecimals(COLLATERAL_DECIMALS);
         borrowableFeed.setDecimals(BORROWABLE_DECIMALS);
 
-        SCALE = 1e26; // 1e36 * 10 ** (8 - 18);
+        SCALE_FACTOR = 10 ** (36 + COLLATERAL_DECIMALS - BORROWABLE_DECIMALS);
 
-        chainlinkOracle = new ChainlinkPairOracle(SCALE, address(collateralFeed), address(borrowableFeed));
+        chainlinkOracle = new ChainlinkPairOracle(SCALE_FACTOR, address(collateralFeed), address(borrowableFeed));
     }
 
     function testConfig() public {
@@ -47,7 +49,7 @@ contract ChainlinkOracleTest is Test {
         assertEq(borrowableChainlinkFeed, address(borrowableFeed), "borrowableChainlinkFeed");
         assertEq(chainlinkOracle.COLLATERAL_SCALE(), 10 ** COLLATERAL_DECIMALS);
         assertEq(chainlinkOracle.BORROWABLE_SCALE(), 10 ** BORROWABLE_DECIMALS);
-        assertEq(chainlinkOracle.PRICE_SCALE(), SCALE);
+        assertEq(chainlinkOracle.SCALE_FACTOR(), SCALE_FACTOR);
     }
 
     function testNegativePrice(int256 price) public {
@@ -67,10 +69,10 @@ contract ChainlinkOracleTest is Test {
         uint256 collateralFeedDecimals,
         uint256 borrowableFeedDecimals
     ) public {
-        collateralDecimals = bound(collateralDecimals, 6, 18);
-        borrowableDecimals = bound(borrowableDecimals, 6, 18);
-        collateralFeedDecimals = bound(collateralFeedDecimals, 6, 18);
-        borrowableFeedDecimals = bound(borrowableFeedDecimals, 6, 18);
+        borrowableDecimals = bound(borrowableDecimals, 0, 27);
+        collateralDecimals = bound(collateralDecimals, 0, 36 + borrowableDecimals);
+        collateralFeedDecimals = bound(collateralFeedDecimals, 0, 27);
+        borrowableFeedDecimals = bound(borrowableFeedDecimals, 0, 27);
         // Cap prices at $10M.
         collateralPrice = bound(collateralPrice, 1, 10_000_000);
         borrowablePrice = bound(borrowablePrice, 1, 10_000_000);
@@ -79,8 +81,8 @@ contract ChainlinkOracleTest is Test {
         collateral = new ERC20Mock("Collateral", "COL", uint8(collateralDecimals));
         borrowable = new ERC20Mock("Borrowable", "BOR", uint8(borrowableDecimals));
 
-        collateralPrice = collateralPrice * 10 ** collateralFeedDecimals;
-        borrowablePrice = borrowablePrice * 10 ** borrowableFeedDecimals;
+        collateralPrice *= 10 ** collateralFeedDecimals;
+        borrowablePrice *= 10 ** borrowableFeedDecimals;
 
         collateralFeed = new ChainlinkAggregatorV3Mock();
         borrowableFeed = new ChainlinkAggregatorV3Mock();
@@ -91,17 +93,12 @@ contract ChainlinkOracleTest is Test {
         collateralFeed.setLatestAnswer(int256(collateralPrice));
         borrowableFeed.setLatestAnswer(int256(borrowablePrice));
 
-        uint256 scale = collateralDecimals > borrowableDecimals
-            ? 1e36 / 10 ** (collateralDecimals - borrowableDecimals)
-            : 1e36 * (borrowableDecimals - collateralDecimals); // 1e36 * 10 ** (borrow decimals - collateral decimals);
+        uint256 scale = 10 ** (36 + borrowableDecimals - collateralDecimals);
 
         chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
 
-        assertEq(
-            chainlinkOracle.price(),
-            FullMath.mulDiv(
-                collateralPrice * 10 ** borrowableFeedDecimals, scale, borrowablePrice * 10 ** collateralFeedDecimals
-            )
-        );
+        uint256 collateralPriceInBorrowable = collateralPrice.mulDiv(10 ** borrowableFeedDecimals, borrowablePrice);
+
+        assertEq(chainlinkOracle.price(), scale.mulDiv(collateralPriceInBorrowable, 10 ** collateralFeedDecimals));
     }
 }

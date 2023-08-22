@@ -6,9 +6,3 @@
     ├── if deadline > block.timestamp
     │   └── do _multicall(data)
     └── return results from _multicall
-
-.
-└── callBundler(address bundler, bytes[] calldata data)
-    ├── if bundler == address(0)
-    │   └── revert ZERO_ADDRESS
-    └── call multicall(block.timestamp, data) on bundler

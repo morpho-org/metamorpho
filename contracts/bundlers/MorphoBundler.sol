@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
 import {IMorphoBundler} from "./interfaces/IMorphoBundler.sol";
@@ -74,7 +74,8 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     ) external {
         require(onBehalf != address(this), ErrorsLib.BUNDLER_ADDRESS);
 
-        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the supply callback.
+        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred later
+        // (via the `onMorphoSupply` callback).
         if (amount == type(uint256).max) amount = ERC20(marketparams.borrowableToken).balanceOf(address(this));
 
         _approveMaxBlue(marketparams.borrowableToken);
@@ -92,7 +93,8 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     ) external {
         require(onBehalf != address(this), ErrorsLib.BUNDLER_ADDRESS);
 
-        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the supply collateral callback.
+        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred later
+        // (via the `onMorphoSupplyCollateral` callback).
         if (amount == type(uint256).max) amount = ERC20(marketparams.collateralToken).balanceOf(address(this));
 
         _approveMaxBlue(marketparams.collateralToken);
@@ -100,7 +102,8 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
         MORPHO.supplyCollateral(marketparams, amount, onBehalf, data);
     }
 
-    /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bundler as their manager on Blue.
+    /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bundler as
+    /// their manager on Blue.
     function morphoBorrow(MarketParams calldata marketparams, uint256 amount, uint256 shares, address receiver)
         external
     {
@@ -118,7 +121,8 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     ) external {
         require(onBehalf != address(this), ErrorsLib.BUNDLER_ADDRESS);
 
-        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred inside the repay callback.
+        // Don't always cap the amount to the bundler's balance because the liquidity can be transferred later
+        // (via the `onMorphoRepay` callback).
         if (amount == type(uint256).max) amount = ERC20(marketparams.borrowableToken).balanceOf(address(this));
 
         _approveMaxBlue(marketparams.borrowableToken);
@@ -126,14 +130,16 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
         MORPHO.repay(marketparams, amount, shares, onBehalf, data);
     }
 
-    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized the bundler to act on their behalf on Blue.
+    /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized
+    /// the bundler to act on their behalf on Blue.
     function morphoWithdraw(MarketParams calldata marketparams, uint256 amount, uint256 shares, address receiver)
         external
     {
         MORPHO.withdraw(marketparams, amount, shares, _initiator, receiver);
     }
 
-    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the bundler to act on their behalf on Blue.
+    /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the
+    /// bundler to act on their behalf on Blue.
     function morphoWithdrawCollateral(MarketParams calldata marketparams, uint256 amount, address receiver) external {
         MORPHO.withdrawCollateral(marketparams, amount, _initiator, receiver);
     }
