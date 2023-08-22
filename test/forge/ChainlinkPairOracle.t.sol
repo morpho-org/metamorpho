@@ -93,7 +93,7 @@ contract ChainlinkOracleTest is Test {
 
         uint256 scale = collateralDecimals > borrowableDecimals
             ? 1e36 / 10 ** (collateralDecimals - borrowableDecimals)
-            : 1e36 * (borrowableDecimals - collateralDecimals); // 1e36 * 10 ** (borrow decimals - collateral decimals);
+            : 1e36 * 10 ** (borrowableDecimals - collateralDecimals); // 1e36 * 10 ** (borrow decimals - collateral decimals);
 
         chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
 
