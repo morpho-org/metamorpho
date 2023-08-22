@@ -10,13 +10,13 @@ contract UniswapV3Oracle is BaseOracle, UniswapV3CollateralAdapter, UniswapV3Bor
         uint256 priceScale,
         address collateralPool,
         address borrowablePool,
-        uint32 collateralPriceDelay,
-        uint32 borrowablePriceDelay,
-        bool collateralPriceInversed,
-        bool borrowablePriceInversed
+        uint32 collateralPriceWindow,
+        uint32 borrowablePriceWindow,
+        address collateralPriceQuotetoken,
+        address borrowablePriceQuoteToken
     )
         BaseOracle(priceScale)
-        UniswapV3CollateralAdapter(collateralPool, collateralPriceDelay, collateralPriceInversed)
-        UniswapV3BorrowableAdapter(borrowablePool, borrowablePriceDelay, borrowablePriceInversed)
+        UniswapV3CollateralAdapter(collateralPool, collateralPriceWindow, collateralPriceQuotetoken)
+        UniswapV3BorrowableAdapter(borrowablePool, borrowablePriceWindow, borrowablePriceQuoteToken)
     {}
 }

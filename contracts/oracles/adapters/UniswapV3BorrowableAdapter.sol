@@ -12,13 +12,14 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
     IUniswapV3Pool private immutable _UNI_V3_BORROWABLE_POOL;
-    uint32 private immutable _UNI_V3_BORROWABLE_DELAY;
+    uint32 private immutable _UNI_V3_BORROWABLE_WINDOW;
     bool private immutable _PRICE_INVERSED;
 
-    constructor(address pool, uint32 delay, bool inversed) {
+    /// @dev Warning: assumes `quoteToken` is either the pool's token0 or token1.
+    constructor(address pool, uint32 window, address quoteToken) {
         _UNI_V3_BORROWABLE_POOL = IUniswapV3Pool(pool);
-        _UNI_V3_BORROWABLE_DELAY = delay;
-        _PRICE_INVERSED = inversed;
+        _UNI_V3_BORROWABLE_WINDOW = window;
+        _PRICE_INVERSED = quoteToken == _UNI_V3_BORROWABLE_POOL.token0();
 
         BORROWABLE_SCALE = 1 << 128;
     }
@@ -28,6 +29,6 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
     }
 
     function borrowablePrice() public view virtual override returns (uint256) {
-        return _UNI_V3_BORROWABLE_POOL.priceX128(_UNI_V3_BORROWABLE_DELAY, _PRICE_INVERSED);
+        return _UNI_V3_BORROWABLE_POOL.priceX128(_UNI_V3_BORROWABLE_WINDOW, _PRICE_INVERSED);
     }
 }

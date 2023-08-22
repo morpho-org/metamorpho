@@ -10,8 +10,8 @@ import {UniswapV3CollateralAdapter} from "./adapters/UniswapV3CollateralAdapter.
 contract UniswapV3Oracle is BaseOracle, UniswapV3CollateralAdapter, StaticBorrowableAdapter {
     using FullMath for uint256;
 
-    constructor(uint256 priceScale, address pool, uint32 delay, bool inversed)
+    constructor(uint256 priceScale, address pool, uint32 window, address quoteToken)
         BaseOracle(priceScale)
-        UniswapV3CollateralAdapter(pool, delay, inversed)
+        UniswapV3CollateralAdapter(pool, window, quoteToken)
     {}
 }
