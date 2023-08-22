@@ -5,7 +5,7 @@ import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 
-contract ChainlinkL2Adapter {
+abstract contract ChainlinkL2BaseAdapter {
     /// @dev The feed that provides the uptime of the sequencer.
     IChainlinkAggregatorV3 public immutable SEQUENCER_UPTIME_FEED;
 
