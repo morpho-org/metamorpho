@@ -18,7 +18,6 @@ import { MarketStruct, SignatureStruct, AuthorizationStruct } from "types/contra
 export type BundleCall = string;
 
 class BundleAction {
-  private static BASE_BUNDLER_IFC = BaseBundler__factory.createInterface();
   private static ERC20_BUNDLER_IFC = ERC20Bundler__factory.createInterface();
   private static MORPHO_BUNDLER_IFC = MorphoBundler__factory.createInterface();
   private static WNATIVE_BUNDLER_IFC = WNativeBundler__factory.createInterface();
@@ -29,10 +28,6 @@ class BundleAction {
   private static BALANCER_BUNDLER_IFC = BalancerBundler__factory.createInterface();
   private static UNI_V2_BUNDLER_IFC = UniV2Bundler__factory.createInterface();
   private static UNI_V3_BUNDLER_IFC = UniV3Bundler__factory.createInterface();
-
-  static callBundler(bundler: string, calls: BundleCall[]): BundleCall {
-    return BundleAction.BASE_BUNDLER_IFC.encodeFunctionData("callBundler", [bundler, calls]);
-  }
 
   static transfer(asset: string, recipient: string, amount: BigNumberish): BundleCall {
     return BundleAction.ERC20_BUNDLER_IFC.encodeFunctionData("transfer", [asset, recipient, amount]);

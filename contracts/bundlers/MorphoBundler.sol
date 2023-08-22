@@ -18,12 +18,8 @@ import {BaseBundler} from "./BaseBundler.sol";
 abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     using SafeTransferLib for ERC20;
 
-    /* IMMUTABLES */
-
     /// @notice The Morpho contract address.
     IMorpho public immutable MORPHO;
-
-    /* CONSTRUCTOR */
 
     constructor(address morpho) {
         require(morpho != address(0), ErrorsLib.ZERO_ADDRESS);

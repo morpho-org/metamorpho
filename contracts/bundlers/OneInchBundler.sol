@@ -11,11 +11,7 @@ import {BaseBundler} from "./BaseBundler.sol";
 abstract contract OneInchBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
-    /* IMMUTABLES */
-
     I1InchAggregationRouterV5 public immutable ONE_INCH_ROUTER;
-
-    /* CONSTRUCTOR */
 
     constructor(address router) {
         require(router != address(0), ErrorsLib.ZERO_ADDRESS);
@@ -23,7 +19,7 @@ abstract contract OneInchBundler is BaseBundler {
         ONE_INCH_ROUTER = I1InchAggregationRouterV5(router);
     }
 
-    /* EXTERNAL */
+    /* ACTIONS */
 
     /// @dev Triggers a swap on 1inch with parameters calculated by the 1inch API using compatibility mode.
     function oneInchSwap(address executor, I1InchAggregationRouterV5.SwapDescription calldata desc, bytes calldata data)
