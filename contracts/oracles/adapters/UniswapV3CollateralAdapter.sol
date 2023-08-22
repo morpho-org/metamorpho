@@ -28,6 +28,10 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
         return (OracleFeed.UNISWAP_V3, address(_UNI_V3_COLLATERAL_POOL));
     }
 
+    function COLLATERAL_DELAY() external view returns (uint32) {
+        return _UNI_V3_COLLATERAL_DELAY;
+    }
+
     function collateralPrice() public view virtual override returns (uint256) {
         return _UNI_V3_COLLATERAL_POOL.priceX128(_UNI_V3_COLLATERAL_WINDOW, _PRICE_INVERSED);
     }
