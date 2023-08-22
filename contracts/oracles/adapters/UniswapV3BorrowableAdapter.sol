@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
+import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 import {OracleFeed} from "../libraries/OracleFeed.sol";
 import {UniswapV3PoolLib} from "../libraries/UniswapV3PoolLib.sol";
 
@@ -17,11 +18,14 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
 
     /// @dev Warning: assumes `quoteToken` is either the pool's token0 or token1.
     constructor(address pool, uint32 window, address quoteToken) {
+        require(pool != address(0), ErrorsLib.ZERO_ADDRESS);
+        require(window > 0, ErrorsLib.ZERO_INPUT);
+
         _UNI_V3_BORROWABLE_POOL = IUniswapV3Pool(pool);
         _UNI_V3_BORROWABLE_WINDOW = window;
         _PRICE_INVERSED = quoteToken == _UNI_V3_BORROWABLE_POOL.token0();
 
-        require(_PRICE_INVERSED || quoteToken == _UNI_V3_BORROWABLE_POOL.token1(), "incorrect quote token");
+        require(_PRICE_INVERSED || quoteToken == _UNI_V3_BORROWABLE_POOL.token1(), ErrorsLib.INVALID_QUOTE_TOKEN);
 
         BORROWABLE_SCALE = 1 << 128;
     }
