@@ -11,7 +11,7 @@
     ├── BORROWABLE_SCALE = 2^128
     ├── PRICE_INVERSED = quoteToken == pool.token0()
     ├── COLLATERAL_SCALE is uninitialized
-    └── PRICE_SCALE is uninitialized
+    └── SCALE_FACTOR is uninitialized
 
 .
 └── borrowablePrice()

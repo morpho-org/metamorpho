@@ -1,10 +1,6 @@
 .
-└── constructor(address priceScale, address collateralFeed, address sequencerUptimeFeed, uint256 gracePeriod)
-    ├── Do constructor steps of
-    │   ├── BaseOracle(priceScale)
-    │   ├── ChainlinkCollateralAdapter(collateralFeed)
-    │   └── ChainlinkL2BaseAdapter(sequencerUptimeFeed, gracePeriod)
-    ├── PRICE_SCALE = priceScale
+└── constructor(address scaleFactor, address collateralFeed, address sequencerUptimeFeed, uint256 gracePeriod)
+    ├── SCALE_FACTOR = scaleFactor
     ├── COLLATERAL_FEED = (CHAINLINK_V3, collateralFeed)
     ├── COLLATERAL_SCALE = 10 ** collateralFeed.decimals()
     ├── BORROWABLE_FEED = (STATIC, address(0))
@@ -20,4 +16,7 @@
 
 .
 └── price()
-    └── return SCALE_FACTOR * collateralPrice() / 10 ** collateralFeed.decimals()
+    ├── if sequencerUptimeFeed.answer != 0 || block.timestamp - sequncerUptimeFeed <= gracePeriod
+    │   └── revert
+    └── else
+        └── return scaleFactor * collateralPrice() / 10 ** collateralFeed.decimals()

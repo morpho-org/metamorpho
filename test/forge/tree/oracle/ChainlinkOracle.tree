@@ -1,6 +1,6 @@
 .
-└── constructor(uint256 priceScale, address feed)
-    ├── PRICE_SCALE = priceScale
+└── constructor(uint256 scaleFactor, address feed)
+    ├── SCALE_FACTOR = scaleFactor
     ├── COLLATERAL_FEED = (CHAINLINK_V3, feed)
     ├── COLLATERAL_SCALE = 10 ** feed.decimals()
     ├── BORROWABLE_FEED = (STATIC, address(0))
@@ -16,4 +16,4 @@
 
 .
 └── price()
-    └── return priceScale * feed.price() / (10 ** feed.decimals())
+    └── return scaleFactor * feed.price() / (10 ** feed.decimals())

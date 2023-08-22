@@ -3,7 +3,7 @@
     ├── BORROWABLE_FEED = (CHAINLINK_V3, feed)
     ├── BORROWABLE_SCALE = 10 ** feed.decimals()
     ├── COLLATERAL_SCALE is uninitialized
-    └── PRICE_SCALE is uninitialized
+    └── SCALE_FACTOR is uninitialized
 
 .
 └── borrowablePrice()

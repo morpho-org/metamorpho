@@ -1,6 +1,6 @@
 .
 └── constructor
-    └── Do constructor steps of ChainlinkL2BaseAdapter, ChainlinkBorrowableAdapter
+    └── Do constructor steps of ChainlinkL2BaseAdapter, ChainlinkCollateralAdapter
 
 .
 └── collateralPrice()
