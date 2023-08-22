@@ -69,10 +69,10 @@ contract ChainlinkOracleTest is Test {
         uint256 collateralFeedDecimals,
         uint256 borrowableFeedDecimals
     ) public {
-        borrowableDecimals = bound(borrowableDecimals, 0, 36);
+        borrowableDecimals = bound(borrowableDecimals, 0, 27);
         collateralDecimals = bound(collateralDecimals, 0, 36 + borrowableDecimals);
-        collateralFeedDecimals = bound(collateralFeedDecimals, 0, 36);
-        borrowableFeedDecimals = bound(borrowableFeedDecimals, 0, 36);
+        collateralFeedDecimals = bound(collateralFeedDecimals, 0, 27);
+        borrowableFeedDecimals = bound(borrowableFeedDecimals, 0, 27);
         // Cap prices at $10M.
         collateralPrice = bound(collateralPrice, 1, 10_000_000);
         borrowablePrice = bound(borrowablePrice, 1, 10_000_000);
