@@ -11,7 +11,7 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract ChainlinkCollateralAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
-    IChainlinkAggregatorV3 private immutable _CHAINLINK_COLLATERAL_FEED;
+    IChainlinkAggregatorV3 internal immutable _CHAINLINK_COLLATERAL_FEED;
 
     constructor(address feed) {
         _CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);

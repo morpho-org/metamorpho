@@ -11,7 +11,7 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract ChainlinkBorrowableAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
-    IChainlinkAggregatorV3 private immutable _CHAINLINK_BORROWABLE_FEED;
+    IChainlinkAggregatorV3 internal immutable _CHAINLINK_BORROWABLE_FEED;
 
     constructor(address feed) {
         _CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
