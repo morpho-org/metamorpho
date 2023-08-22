@@ -16,8 +16,12 @@ import {BaseBundler} from "./BaseBundler.sol";
 abstract contract WNativeBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
+    /* IMMUTABLES */
+
     /// @dev The address of the wrapped native token contract.
     address public immutable WRAPPED_NATIVE;
+
+    /* CONSTRUCTOR */
 
     constructor(address wNative) {
         require(wNative != address(0), ErrorsLib.ZERO_ADDRESS);

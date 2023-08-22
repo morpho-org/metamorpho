@@ -11,7 +11,11 @@ import {BaseBundler} from "./BaseBundler.sol";
 abstract contract OneInchBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
+    /* IMMUTABLES */
+
     I1InchAggregationRouterV5 public immutable ONE_INCH_ROUTER;
+
+    /* CONSTRUCTOR */
 
     constructor(address router) {
         require(router != address(0), ErrorsLib.ZERO_ADDRESS);

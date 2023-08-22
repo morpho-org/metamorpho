@@ -16,11 +16,15 @@ import {BaseBundler} from "../BaseBundler.sol";
 abstract contract StEthBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
+    /* CONSTANTS */
+
     /// @dev The address of the stETH contract on Ethereum mainnet.
     address public constant ST_ETH = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
 
     /// @dev The address of the wstETH contract on Ethereum mainnet.
     address public constant WST_ETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+
+    /* CONSTRUCTOR */
 
     constructor() {
         ERC20(ST_ETH).safeApprove(WST_ETH, type(uint256).max);

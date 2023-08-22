@@ -19,6 +19,8 @@ contract InternalSupplyRouter is ERC2771Context {
         _MORPHO = IMorpho(morpho);
     }
 
+    /* INTERNAL */
+
     function _supplyAll(MarketAllocation[] memory allocations, address onBehalf) internal virtual {
         uint256 nbMarkets = allocations.length;
 
