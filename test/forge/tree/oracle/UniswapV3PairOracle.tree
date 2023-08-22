@@ -1,5 +1,5 @@
 .
-└── constructor(uint256 priceScale, address collateralPool, address borrowablePool, uint32 collateralPriceDelay, uint32 borrowablePriceDelay)
+└── constructor(uint256 scaleFactor, address collateralPool, address borrowablePool, uint32 collateralPriceDelay, uint32 borrowablePriceDelay)
     ├── PRICE_SCALE = priceScale
     ├── COLLATERAL_FEED = (UNISWAP_V3, collateralPool)
     ├── COLLATERAL_SCALE = 1e18
@@ -16,4 +16,4 @@
 
 .
 └── price()
-    └── return priceScale * collateralPool.price(collateralPriceDelay) / borrowablePool.price(borrowablePriceDelay)
+    └── return scaleFactor * collateralPool.price(collateralPriceDelay) / borrowablePool.price(borrowablePriceDelay)

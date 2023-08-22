@@ -1,8 +1,0 @@
-.
-└── price(IUniswapV3Pool pool, uint32 secondsAgo)
-    ├── Calculate meanTick = (observe(0) - observe(secondsAgo)) / secondsAgo. If delta is negative and there is a remainder, then subtract 1.
-    └── Calculate sqrtRatio = getSqrtAtTick(meanTick)
-        ├── If sqrtRatio < 2^128
-        │   └── return sqrtRatio * sqrtRatio * 1e18 / 2^192
-        └── Else
-            └── return sqrtRatio * sqrtRatio / 2^64 * 1e18 / 2^128

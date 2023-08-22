@@ -1,8 +1,11 @@
 .
 └── constructor(uint256 priceScale)
     ├── PRICE_SCALE initialized to priceScale
+    │   └── revert if priceScale is zero
     ├── COLLATERAL_SCALE is zero
     └── BORROWABLE_SCALE is zero
 
 .
-└── price() relies on abstract virtual functions (no tests)
+└── price() test while overriding COLLATERAL_SCALE, BORROWABLE_SCALE, collateralPrice(), borrowablePrice()
+    ├── Should overflow if result > type(uint256).max
+    └── Else return priceScale * collateralPrice() * BORROWABLE_SCALE / (borrowablePrice() * COLLATERAL_SCALE)

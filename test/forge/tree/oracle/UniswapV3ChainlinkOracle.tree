@@ -1,14 +1,12 @@
 .
-└── constructor(uint256 priceScale, address pool, address feed, uint32 collateralPriceDelay)
-    ├── PRICE_SCALE = priceScale
-    ├── COLLATERAL_FEED = (UNISWAP_V3, pool)
-    ├── COLLATERAL_SCALE = 1e18
-    ├── BORROWABLE_FEED = (CHAINLINK_V3, feed)
-    └── BORROWABLE_SCALE = feed.decimals()
+└── constructor(uint256 scaleFactor, address feed, address pool, uint32 collateralPriceWindow, address collateralPriceQuoteToken)
+    ├── BaseOracle(scaleFactor)
+    ├── UniswapV3CollateralAdapter(pool, collateralPriceWindow, collateralPriceQuoteToken)
+    └── ChainlinkBorrowableAdapter(feed)
 
 .
 └── collateralPrice()
-    └── return pool.price(collateralPriceDelay)
+    └── return pool.priceX128(collateralPriceWindow, pool.token0() == collateralPriceQuoteToken)
 
 .
 └── borrowablePrice()
@@ -16,4 +14,4 @@
 
 .
 └── price()
-    └── return priceScale * pool.price(collateralPriceDelay) * (10 ** feed.decimals()) / (feed.price() * 1e18)
+    └── return scaleFactor * pool.priceX128(collateralPriceWindow, pool.token0() == collateralPriceQuoteToken) * 10 ** feed.decimals() / feed.price() / 2^128
