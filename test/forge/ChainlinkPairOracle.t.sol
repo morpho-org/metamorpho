@@ -5,6 +5,7 @@ import "./mocks/ChainlinkAggregatorV3Mock.sol";
 import "./mocks/ERC20Mock.sol";
 
 import "contracts/oracles/ChainlinkPairOracle.sol";
+import {PRICE_SCALE} from "contracts/oracles/BaseOracle.sol";
 
 import {OracleFeed} from "contracts/oracles/libraries/OracleFeed.sol";
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
@@ -13,12 +14,13 @@ import "@forge-std/console2.sol";
 import "@forge-std/Test.sol";
 
 contract ChainlinkOracleTest is Test {
+    using FullMath for uint256;
+
     ChainlinkAggregatorV3Mock collateralFeed;
     ChainlinkAggregatorV3Mock borrowableFeed;
     ChainlinkPairOracle chainlinkOracle;
     ERC20Mock collateral;
     ERC20Mock borrowable;
-    uint256 SCALE;
     uint8 COLLATERAL_DECIMALS = 8;
     uint8 BORROWABLE_DECIMALS = 10;
 
@@ -32,9 +34,7 @@ contract ChainlinkOracleTest is Test {
         collateralFeed.setDecimals(COLLATERAL_DECIMALS);
         borrowableFeed.setDecimals(BORROWABLE_DECIMALS);
 
-        SCALE = 1e26; // 1e36 * 10 ** (8 - 18);
-
-        chainlinkOracle = new ChainlinkPairOracle(SCALE, address(collateralFeed), address(borrowableFeed));
+        chainlinkOracle = new ChainlinkPairOracle( address(collateralFeed), address(borrowableFeed));
     }
 
     function testConfig() public {
@@ -47,7 +47,6 @@ contract ChainlinkOracleTest is Test {
         assertEq(borrowableChainlinkFeed, address(borrowableFeed), "borrowableChainlinkFeed");
         assertEq(chainlinkOracle.COLLATERAL_SCALE(), 10 ** COLLATERAL_DECIMALS);
         assertEq(chainlinkOracle.BORROWABLE_SCALE(), 10 ** BORROWABLE_DECIMALS);
-        assertEq(chainlinkOracle.PRICE_SCALE(), SCALE);
     }
 
     function testNegativePrice(int256 price) public {
@@ -91,16 +90,12 @@ contract ChainlinkOracleTest is Test {
         collateralFeed.setLatestAnswer(int256(collateralPrice));
         borrowableFeed.setLatestAnswer(int256(borrowablePrice));
 
-        uint256 scale = collateralDecimals > borrowableDecimals
-            ? 1e36 / 10 ** (collateralDecimals - borrowableDecimals)
-            : 1e36 * (borrowableDecimals - collateralDecimals); // 1e36 * 10 ** (borrow decimals - collateral decimals);
-
-        chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
+        chainlinkOracle = new ChainlinkPairOracle( address(collateralFeed), address(borrowableFeed));
 
         assertEq(
             chainlinkOracle.price(),
-            FullMath.mulDiv(
-                collateralPrice * 10 ** borrowableFeedDecimals, scale, borrowablePrice * 10 ** collateralFeedDecimals
+            PRICE_SCALE.mulDiv(
+                collateralPrice * 10 ** borrowableFeedDecimals, borrowablePrice * 10 ** collateralFeedDecimals
             )
         );
     }

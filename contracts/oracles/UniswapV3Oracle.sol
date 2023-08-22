@@ -6,8 +6,5 @@ import {StaticBorrowableAdapter} from "./adapters/StaticBorrowableAdapter.sol";
 import {UniswapV3CollateralAdapter} from "./adapters/UniswapV3CollateralAdapter.sol";
 
 contract UniswapV3Oracle is BaseOracle, UniswapV3CollateralAdapter, StaticBorrowableAdapter {
-    constructor(uint256 priceScale, address pool, uint32 delay)
-        BaseOracle(priceScale)
-        UniswapV3CollateralAdapter(pool, delay)
-    {}
+    constructor(address pool, uint32 delay) UniswapV3CollateralAdapter(pool, delay) {}
 }
