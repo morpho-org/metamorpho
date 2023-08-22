@@ -22,9 +22,12 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
 
         _UNI_V3_COLLATERAL_POOL = IUniswapV3Pool(pool);
         _UNI_V3_COLLATERAL_WINDOW = window;
-        _PRICE_INVERSED = quoteToken == _UNI_V3_COLLATERAL_POOL.token0();
 
-        require(_PRICE_INVERSED || quoteToken == _UNI_V3_COLLATERAL_POOL.token1(), ErrorsLib.INVALID_QUOTE_TOKEN);
+        address token0 = _UNI_V3_COLLATERAL_POOL.token0();
+        address token1 = _UNI_V3_COLLATERAL_POOL.token1();
+        require(quoteToken == token0 || quoteToken == token1, ErrorsLib.INVALID_QUOTE_TOKEN);
+
+        _PRICE_INVERSED = quoteToken == token0;
 
         COLLATERAL_SCALE = 1 << 128;
     }
