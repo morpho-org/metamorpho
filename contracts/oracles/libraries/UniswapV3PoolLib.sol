@@ -34,7 +34,8 @@ library UniswapV3PoolLib {
     /// @notice Calculates the time-weighted average price of a pool over a given duration, optionally inversed.
     /// @param pool Address of the pool that we want to observe.
     /// @param secondsAgo Number of seconds in the past from which to calculate the time-weighted average.
-    /// @param inversed True to query the price of token1 quoted in token0. False to query the price of token0 quoted in token1.
+    /// @param inversed True to query the price of token1 quoted in token0. False to query the price of token0 quoted in
+    /// token1.
     /// @return The time-weighted average price from (block.timestamp - secondsAgo) to block.timestamp.
     function priceX128(IUniswapV3Pool pool, uint32 secondsAgo, bool inversed) internal view returns (uint256) {
         int24 weightedArithmeticMeanTick = getWeightedArithmeticMeanTick(pool, secondsAgo);

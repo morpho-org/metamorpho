@@ -11,7 +11,8 @@ import {BaseCallbackReceiver} from "../BaseCallbackReceiver.sol";
 /// @title BaseBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-/// @notice Enables calling multiple functions in a single call to the same contract (self) as well as calling other Bundler contracts.
+/// @notice Enables calling multiple functions in a single call to the same contract (self) as well as calling other
+/// Bundler contracts.
 /// @dev Every Bundler must inherit from this contract.
 abstract contract BaseBundler is BaseSelfMulticall, BaseCallbackReceiver {
     /* EXTERNAL */
