@@ -23,32 +23,41 @@ contract BaseBundlerTest is Test {
     uint256 internal constant MAX_AMOUNT = 2 ** 64;
     uint256 internal constant ORACLE_SCALE = 1e36;
 
-    address internal constant USER = address(0x1234);
-    address internal constant SUPPLIER = address(0x5678);
+    address internal OWNER = _addrFromHashedString("Morpho Liquidator");
+    address internal USER = _addrFromHashedString("Morpho User");
+    address internal SUPPLIER = _addrFromHashedString("Morpho Supplier");
+    address internal RECEIVER = _addrFromHashedString("Morpho Receiver");
+    address internal LIQUIDATOR = _addrFromHashedString("Morpho Liquidator");
+
     uint256 internal constant LLTV = 0.8 ether;
-    address internal constant OWNER = address(0xdead);
 
     IMorpho internal morpho;
-    ERC20Mock internal borrowableAsset;
-    ERC20Mock internal collateralAsset;
+    ERC20Mock internal borrowableToken;
+    ERC20Mock internal collateralToken;
     OracleMock internal oracle;
     IrmMock internal irm;
     MarketParams internal marketParams;
     Id internal id;
 
     function setUp() public virtual {
-        // Create Blue.
+        vm.label(OWNER, "Owner");
+        vm.label(USER, "User");
+        vm.label(SUPPLIER, "Supplier");
+        vm.label(RECEIVER, "Receiver");
+        vm.label(LIQUIDATOR, "Liquidator");
+
+        // Create Morpho.
         morpho = IMorpho(address(new Morpho(OWNER)));
 
         // List a marketParams.
-        borrowableAsset = new ERC20Mock("borrowable", "B", 18);
-        collateralAsset = new ERC20Mock("collateral", "C", 18);
+        borrowableToken = new ERC20Mock("borrowable", "B", 18);
+        collateralToken = new ERC20Mock("collateral", "C", 18);
         oracle = new OracleMock();
 
         irm = new IrmMock(morpho);
 
         marketParams =
-            MarketParams(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
+            MarketParams(address(borrowableToken), address(collateralToken), address(oracle), address(irm), LLTV);
         id = marketParams.id();
 
         vm.startPrank(OWNER);
@@ -59,10 +68,11 @@ contract BaseBundlerTest is Test {
 
         oracle.setPrice(ORACLE_SCALE);
 
-        borrowableAsset.approve(address(morpho), type(uint256).max);
-        collateralAsset.approve(address(morpho), type(uint256).max);
+        borrowableToken.approve(address(morpho), type(uint256).max);
+        collateralToken.approve(address(morpho), type(uint256).max);
+    }
 
-        vm.prank(SUPPLIER);
-        borrowableAsset.approve(address(morpho), type(uint256).max);
+    function _addrFromHashedString(string memory str) internal pure returns (address) {
+        return address(uint160(uint256(keccak256(bytes(str)))));
     }
 }
