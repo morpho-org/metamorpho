@@ -11,8 +11,8 @@ import {BaseOracle} from "../BaseOracle.sol";
 abstract contract UniswapV3BorrowableAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
-    IUniswapV3Pool internal immutable _UNI_V3_BORROWABLE_POOL;
-    uint32 internal immutable _UNI_V3_BORROWABLE_DELAY;
+    IUniswapV3Pool private immutable _UNI_V3_BORROWABLE_POOL;
+    uint32 private immutable _UNI_V3_BORROWABLE_DELAY;
 
     constructor(address pool, uint32 delay) {
         _UNI_V3_BORROWABLE_POOL = IUniswapV3Pool(pool);
