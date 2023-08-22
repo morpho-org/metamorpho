@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
-contract ChainlinkL2Adapter {
+abstract contract ChainlinkL2BaseAdapter {
     /// @dev The feed that provides the uptime of the sequencer.
     IChainlinkAggregatorV3 public immutable SEQUENCER_UPTIME_FEED;
 

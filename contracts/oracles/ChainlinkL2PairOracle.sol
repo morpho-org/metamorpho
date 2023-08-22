@@ -4,16 +4,13 @@ pragma solidity ^0.8.0;
 import {IChainlinkAggregatorV3, ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {BaseOracle} from "./BaseOracle.sol";
-import {ChainlinkL2Adapter} from "./adapters/ChainlinkL2Adapter.sol";
 import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
+import {ChainlinkL2BaseAdapter} from "./adapters/ChainlinkL2BaseAdapter.sol";
+import {ChainlinkL2CollateralAdapter} from "./adapters/ChainlinkL2CollateralAdapter.sol";
+import {ChainlinkL2BorrowableAdapter} from "./adapters/ChainlinkL2BorrowableAdapter.sol";
 
-contract ChainlinkL2PairOracle is
-    BaseOracle,
-    ChainlinkCollateralAdapter,
-    ChainlinkBorrowableAdapter,
-    ChainlinkL2Adapter
-{
+contract ChainlinkL2PairOracle is BaseOracle, ChainlinkL2CollateralAdapter, ChainlinkL2BorrowableAdapter {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     constructor(
@@ -26,14 +23,6 @@ contract ChainlinkL2PairOracle is
         BaseOracle(priceScale)
         ChainlinkCollateralAdapter(collateralFeed)
         ChainlinkBorrowableAdapter(borrowableFeed)
-        ChainlinkL2Adapter(sequencerUptimeFeed, gracePeriod)
+        ChainlinkL2BaseAdapter(sequencerUptimeFeed, gracePeriod)
     {}
-
-    function collateralPrice() public view override(BaseOracle, ChainlinkCollateralAdapter) returns (uint256) {
-        return _CHAINLINK_COLLATERAL_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
-    }
-
-    function borrowablePrice() public view override(BaseOracle, ChainlinkBorrowableAdapter) returns (uint256) {
-        return _CHAINLINK_BORROWABLE_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
-    }
 }
