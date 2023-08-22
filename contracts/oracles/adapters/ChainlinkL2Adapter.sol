@@ -10,11 +10,11 @@ contract ChainlinkL2Adapter {
     /// @dev Grace period during which the oracle reverts after a sequencer downtime.
     uint256 public immutable GRACE_PERIOD;
 
-    constructor(IChainlinkAggregatorV3 sequencerUptimeFeed, uint256 gracePeriod) {
+    constructor(address sequencerUptimeFeed, uint256 gracePeriod) {
         require(address(sequencerUptimeFeed) != address(0), "ChainlinkL2Adapter: invalid sequencer uptime feed");
         require(gracePeriod > 0, "ChainlinkL2Adapter: invalid grace period");
 
-        SEQUENCER_UPTIME_FEED = sequencerUptimeFeed;
+        SEQUENCER_UPTIME_FEED = IChainlinkAggregatorV3(sequencerUptimeFeed);
         GRACE_PERIOD = gracePeriod;
     }
 }

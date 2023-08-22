@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
+import {IChainlinkAggregatorV3, ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {BaseOracle} from "./BaseOracle.sol";
+import {ChainlinkL2Adapter} from "./adapters/ChainlinkL2Adapter.sol";
 import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
-import {IChainlinkAggregatorV3, ChainlinkL2Adapter} from "./adapters/ChainlinkL2Adapter.sol";
 
 contract ChainlinkL2PairOracle is
     BaseOracle,
@@ -20,7 +20,7 @@ contract ChainlinkL2PairOracle is
         uint256 priceScale,
         address collateralFeed,
         address borrowableFeed,
-        IChainlinkAggregatorV3 sequencerUptimeFeed,
+        address sequencerUptimeFeed,
         uint256 gracePeriod
     )
         BaseOracle(priceScale)
