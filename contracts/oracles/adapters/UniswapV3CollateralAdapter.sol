@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
+import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 import {OracleFeed} from "../libraries/OracleFeed.sol";
 import {UniswapV3PoolLib} from "../libraries/UniswapV3PoolLib.sol";
 
@@ -15,6 +16,9 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
     uint32 private immutable _UNI_V3_COLLATERAL_DELAY;
 
     constructor(address pool, uint32 delay) {
+        require(pool != address(0), ErrorsLib.ZERO_ADDRESS);
+        require(delay > 0, ErrorsLib.ZERO_INPUT);
+
         _UNI_V3_COLLATERAL_POOL = IUniswapV3Pool(pool);
         _UNI_V3_COLLATERAL_DELAY = delay;
         COLLATERAL_SCALE = 1e18;

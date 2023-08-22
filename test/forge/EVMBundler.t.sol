@@ -25,7 +25,8 @@ contract EVMBundlerTest is BaseBundlerTest {
         borrowableToken.approve(address(bundler), type(uint256).max);
         collateralToken.approve(address(bundler), type(uint256).max);
         morpho.setAuthorization(address(bundler), true);
-        morpho.setAuthorization(address(this), true); // So tests can borrow/withdraw on behalf of USER without pranking it.
+        // So tests can borrow/withdraw on behalf of USER without pranking it.
+        morpho.setAuthorization(address(this), true);
         vm.stopPrank();
     }
 

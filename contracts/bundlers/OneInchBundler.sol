@@ -23,7 +23,7 @@ abstract contract OneInchBundler is BaseBundler {
         ONE_INCH_ROUTER = I1InchAggregationRouterV5(router);
     }
 
-    /* EXTERNAL */
+    /* ACTIONS */
 
     /// @dev Triggers a swap on 1inch with parameters calculated by the 1inch API using compatibility mode.
     function oneInchSwap(address executor, I1InchAggregationRouterV5.SwapDescription calldata desc, bytes calldata data)

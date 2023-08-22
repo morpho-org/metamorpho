@@ -11,7 +11,8 @@ import {BaseCallbackReceiver} from "../BaseCallbackReceiver.sol";
 /// @title BaseBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-/// @notice Enables calling multiple functions in a single call to the same contract (self) as well as calling other Bundler contracts.
+/// @notice Enables calling multiple functions in a single call to the same contract (self) as well as calling other
+/// Bundler contracts.
 /// @dev Every Bundler must inherit from this contract.
 abstract contract BaseBundler is BaseSelfMulticall, BaseCallbackReceiver {
     /* EXTERNAL */
@@ -26,12 +27,5 @@ abstract contract BaseBundler is BaseSelfMulticall, BaseCallbackReceiver {
         require(block.timestamp <= deadline, ErrorsLib.DEADLINE_EXPIRED);
 
         return _multicall(data);
-    }
-
-    /// @notice Executes multiple actions on another `bundler` contract passing along the required `data`.
-    function callBundler(address bundler, bytes[] calldata data) external {
-        require(bundler != address(0), ErrorsLib.ZERO_ADDRESS);
-
-        IMulticall(bundler).multicall(block.timestamp, data);
     }
 }
