@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-// import {SigUtils} from "@morpho-blue/../test/helpers/SigUtils.sol";
-
 import {ERC20Mock} from "test/forge/mocks/ERC20Mock.sol";
 
 import "./BaseTest.sol";
@@ -40,6 +38,7 @@ abstract contract LocalTest is BaseTest {
 
         vm.startPrank(OWNER);
         morpho.enableLltv(LLTV);
+        morpho.enableIrm(address(irm));
         morpho.createMarket(marketParams);
         vm.stopPrank();
 

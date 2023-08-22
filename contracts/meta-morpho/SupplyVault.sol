@@ -16,7 +16,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
 import {IERC20, ERC20, ERC4626, Context} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
+contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using ConfigSetLib for ConfigSet;
@@ -28,9 +28,9 @@ contract SupplyVault is ISupplyVault, ERC4626, Ownable, InternalSupplyRouter {
     ConfigSet private _config;
 
     constructor(address morpho, address forwarder, string memory name_, string memory symbol_, IERC20 asset_)
+        InternalSupplyRouter(morpho, forwarder)
         ERC20(name_, symbol_)
         ERC4626(asset_)
-        InternalSupplyRouter(morpho, forwarder)
     {}
 
     modifier onlyRiskManager() {

@@ -29,8 +29,11 @@ contract EVMBundlerEthereumTest is ForkTest {
     /* INVARIANTS */
 
     function invariantBundlerBalanceOfZero() public {
-        // assertEq(collateralAsset.balanceOf(address(bundler)), 0, "collateral.balanceOf(bundler)");
-        // assertEq(borrowableAsset.balanceOf(address(bundler)), 0, "borrowable.balanceOf(bundler)");
+        for (uint256 i; i < allAssets.length; ++i) {
+            ERC20 asset = ERC20(allAssets[i]);
+
+            assertEq(asset.balanceOf(address(bundler)), 0, "asset.balanceOf(bundler)");
+        }
     }
 
     function invariantBundlerPositionZero() public {
@@ -41,7 +44,7 @@ contract EVMBundlerEthereumTest is ForkTest {
 
     /* TESTS */
 
-    function testSupply(uint256 amount, address onBehalf) public {
+    function testSupplyWithPermit2(uint256 amount, address onBehalf) public {
         vm.assume(onBehalf != address(0));
         vm.assume(onBehalf != address(morpho));
         vm.assume(onBehalf != address(bundler));

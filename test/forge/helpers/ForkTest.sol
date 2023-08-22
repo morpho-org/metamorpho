@@ -11,12 +11,12 @@ abstract contract ForkTest is BaseTest, Configured {
     using ConfigLib for Config;
     using SafeTransferLib for ERC20;
 
-    /* STORAGE */
-
     string internal network;
     uint256 internal forkId;
 
     uint256 internal snapshotId = type(uint256).max;
+
+    MarketParams[] markets;
 
     constructor() {
         _initConfig();
@@ -29,6 +29,20 @@ abstract contract ForkTest is BaseTest, Configured {
         _label();
 
         super.setUp();
+
+        // for (uint256 i; i < allAssets.length; ++i) {
+        //     vm.startPrank(OWNER);
+        //     morpho.createMarket(
+        //         Market({
+        //             collateralAsset: allAssets[i],
+        //             borrowableAsset: usdc,
+        //             oracle: address(oracle),
+        //             irm: address(irm),
+        //             lltv: LLTV
+        //         })
+        //     );
+        //     vm.stopPrank();
+        // }
     }
 
     function _fork() internal virtual {
