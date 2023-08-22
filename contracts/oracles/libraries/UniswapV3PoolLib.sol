@@ -40,8 +40,18 @@ library UniswapV3PoolLib {
         int24 weightedArithmeticMeanTick = getWeightedArithmeticMeanTick(pool, secondsAgo);
 
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(weightedArithmeticMeanTick);
-        uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
 
-        return inversed ? FullMath.mulDiv(1 << 128, 1 << 128, ratioX128) : ratioX128;
+        // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by itself
+        if (sqrtRatioX96 <= type(uint128).max) {
+            uint256 ratioX192 = uint256(sqrtRatioX96) * sqrtRatioX96;
+
+            return inversed
+                ? FullMath.mulDiv(1 << 192, 1 << 128, ratioX192)
+                : FullMath.mulDiv(ratioX192, 1 << 128, 1 << 192);
+        } else {
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+
+            return inversed ? FullMath.mulDiv(1 << 128, 1 << 128, ratioX128) : ratioX128;
+        }
     }
 }

@@ -21,6 +21,8 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
         _UNI_V3_BORROWABLE_WINDOW = window;
         _PRICE_INVERSED = quoteToken == _UNI_V3_BORROWABLE_POOL.token0();
 
+        require(_PRICE_INVERSED || quoteToken == _UNI_V3_BORROWABLE_POOL.token1(), "incorrect quote token");
+
         BORROWABLE_SCALE = 1 << 128;
     }
 

@@ -15,11 +15,12 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
     uint32 private immutable _UNI_V3_COLLATERAL_WINDOW;
     bool private immutable _PRICE_INVERSED;
 
-    /// @dev Warning: assumes `quoteToken` is either the pool's token0 or token1.
     constructor(address pool, uint32 window, address quoteToken) {
         _UNI_V3_COLLATERAL_POOL = IUniswapV3Pool(pool);
         _UNI_V3_COLLATERAL_WINDOW = window;
         _PRICE_INVERSED = quoteToken == _UNI_V3_COLLATERAL_POOL.token0();
+
+        require(_PRICE_INVERSED || quoteToken == _UNI_V3_COLLATERAL_POOL.token1(), "incorrect quote token");
 
         COLLATERAL_SCALE = 1 << 128;
     }
