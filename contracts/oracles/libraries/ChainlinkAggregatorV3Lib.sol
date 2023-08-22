@@ -5,9 +5,9 @@ import {IChainlinkAggregatorV3} from "../adapters/interfaces/IChainlinkAggregato
 
 library ChainlinkAggregatorV3Lib {
     function price(IChainlinkAggregatorV3 priceFeed) internal view returns (uint256) {
-        (, int256 data,,,) = priceFeed.latestRoundData();
-        require(data > 0, "ChainlinkAggregatorV3Lib: price is negative");
-        return uint256(data);
+        (, int256 answer,,,) = priceFeed.latestRoundData();
+        require(answer > 0, "ChainlinkAggregatorV3Lib: price is negative");
+        return uint256(answer);
     }
 
     function price(IChainlinkAggregatorV3 priceFeed, IChainlinkAggregatorV3 sequencerUptimeFeed, uint256 gracePeriod)
