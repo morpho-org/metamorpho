@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {Config, ConfigLib} from "config/ConfigLib.sol";
+import {Config, ConfigMarket, ConfigLib} from "./ConfigLib.sol";
 
 import {StdChains, VmSafe} from "@forge-std/StdChains.sol";
 
@@ -21,6 +21,8 @@ abstract contract Configured is StdChains {
     address internal wNative;
     address[] internal lsdNatives;
     address[] internal allAssets;
+
+    ConfigMarket[] internal configMarkets;
 
     function _network() internal view virtual returns (string memory);
 
@@ -50,6 +52,8 @@ abstract contract Configured is StdChains {
         lsdNatives = config.getLsdNatives();
 
         allAssets = [dai, usdc, usdt, link, wbtc, weth];
+
+        configMarkets = config.getMarkets();
 
         for (uint256 i; i < lsdNatives.length; ++i) {
             allAssets.push(lsdNatives[i]);

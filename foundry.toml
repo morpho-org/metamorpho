@@ -4,6 +4,7 @@ out = "out"
 libs = ["lib"]
 fs_permissions = [{ access = "read", path = "./config/"}]
 via-ir = true
+evm_version = "paris"
 
 [invariant]
 runs = 16

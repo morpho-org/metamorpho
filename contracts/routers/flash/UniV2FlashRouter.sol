@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import {IUniV2Factory} from "./interfaces/IUniV2Factory.sol";
 import {IUniV2FlashLender} from "./interfaces/IUniV2FlashLender.sol";

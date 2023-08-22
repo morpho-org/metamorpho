@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import {MorphoBundler} from "./MorphoBundler.sol";
 import {ERC20Bundler} from "./ERC20Bundler.sol";

@@ -4,9 +4,10 @@
     "forkBlockNumber": 17891982,
     "markets": [
         {
-            "collateralAsset": "DAI",
-            "borrowableAsset": "WETH",
-            "chainlinkOracle": "0x773616E4d11A78F511299002da57A0a94577F1f4"
+            "borrowableToken": "WETH",
+            "collateralToken": "DAI",
+            "chainlinkFeed": "0x773616E4d11A78F511299002da57A0a94577F1f4",
+            "lltv": "800000000000000000"
         }
     ],
     "DAI": "0x6B175474E89094C44Da98b954EedeAC495271d0F",

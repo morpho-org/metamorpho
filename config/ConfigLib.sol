@@ -7,12 +7,27 @@ struct Config {
     string json;
 }
 
+/// @dev Warning: keys must be ordered alphabetically.
+struct RawConfigMarket {
+    string borrowableToken;
+    address chainlinkFeed;
+    string collateralToken;
+    uint256 lltv;
+}
+
+struct ConfigMarket {
+    address collateralToken;
+    address borrowableToken;
+    address chainlinkFeed;
+}
+
 library ConfigLib {
     using stdJson for string;
 
     string internal constant CHAIN_ID_PATH = "$.chainId";
     string internal constant RPC_ALIAS_PATH = "$.rpcAlias";
     string internal constant FORK_BLOCK_NUMBER_PATH = "$.forkBlockNumber";
+    string internal constant MARKETS_PATH = "$.markets";
     string internal constant WRAPPED_NATIVE_PATH = "$.wrappedNative";
     string internal constant LSD_NATIVES_PATH = "$.lsdNatives";
 
@@ -49,5 +64,22 @@ library ConfigLib {
 
     function getLsdNatives(Config storage config) internal returns (address[] memory) {
         return getAddressArray(config, config.json.readStringArray(LSD_NATIVES_PATH));
+    }
+
+    function getMarkets(Config storage config) internal returns (ConfigMarket[] memory markets) {
+        bytes memory encodedMarkets = config.json.parseRaw(MARKETS_PATH);
+        RawConfigMarket[] memory rawMarkets = abi.decode(encodedMarkets, (RawConfigMarket[]));
+
+        markets = new ConfigMarket[](rawMarkets.length);
+
+        for (uint256 i; i < rawMarkets.length; ++i) {
+            RawConfigMarket memory rawMarket = rawMarkets[i];
+
+            markets[i] = ConfigMarket({
+                collateralToken: getAddress(config, rawMarket.collateralToken),
+                borrowableToken: getAddress(config, rawMarket.borrowableToken),
+                chainlinkFeed: rawMarket.chainlinkFeed
+            });
+        }
     }
 }

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {Config, ConfigLib} from "config/ConfigLib.sol";
-
-import {Configured} from "config/Configured.sol";
+import "config/Configured.sol";
 
 import "./BaseTest.sol";
 
@@ -30,19 +28,23 @@ abstract contract ForkTest is BaseTest, Configured {
 
         super.setUp();
 
-        // for (uint256 i; i < allAssets.length; ++i) {
-        //     vm.startPrank(OWNER);
-        //     morpho.createMarket(
-        //         Market({
-        //             collateralAsset: allAssets[i],
-        //             borrowableAsset: usdc,
-        //             oracle: address(oracle),
-        //             irm: address(irm),
-        //             lltv: LLTV
-        //         })
-        //     );
-        //     vm.stopPrank();
-        // }
+        for (uint256 i; i < configMarkets.length; ++i) {
+            ConfigMarket memory configMarket = configMarkets[i];
+
+            ChainlinkOracle oracle = new ChainlinkOracle();
+
+            vm.startPrank(OWNER);
+            morpho.createMarket(
+                MarketParams({
+                    collateralToken: configMarket.collateralToken,
+                    borrowableToken: configMarket.borrowableToken,
+                    oracle: address(oracle),
+                    irm: address(irm),
+                    lltv: configMarket.lltv
+                })
+            );
+            vm.stopPrank();
+        }
     }
 
     function _fork() internal virtual {
