@@ -19,6 +19,7 @@ struct ConfigMarket {
     address collateralToken;
     address borrowableToken;
     address chainlinkFeed;
+    uint256 lltv;
 }
 
 library ConfigLib {
@@ -78,7 +79,8 @@ library ConfigLib {
             markets[i] = ConfigMarket({
                 collateralToken: getAddress(config, rawMarket.collateralToken),
                 borrowableToken: getAddress(config, rawMarket.borrowableToken),
-                chainlinkFeed: rawMarket.chainlinkFeed
+                chainlinkFeed: rawMarket.chainlinkFeed,
+                lltv: rawMarket.lltv
             });
         }
     }

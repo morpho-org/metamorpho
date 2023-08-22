@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "config/Configured.sol";
 
+import {ChainlinkOracle} from "contracts/oracles/ChainlinkOracle.sol";
+
 import "./BaseTest.sol";
 
 abstract contract ForkTest is BaseTest, Configured {
@@ -31,9 +33,10 @@ abstract contract ForkTest is BaseTest, Configured {
         for (uint256 i; i < configMarkets.length; ++i) {
             ConfigMarket memory configMarket = configMarkets[i];
 
-            ChainlinkOracle oracle = new ChainlinkOracle();
+            ChainlinkOracle oracle = new ChainlinkOracle(configMarket.chainlinkFeed);
 
             vm.startPrank(OWNER);
+            if (!morpho.isLltvEnabled(configMarket.lltv)) morpho.enableLltv(configMarket.lltv);
             morpho.createMarket(
                 MarketParams({
                     collateralToken: configMarket.collateralToken,
