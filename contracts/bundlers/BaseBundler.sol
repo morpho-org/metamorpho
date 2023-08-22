@@ -28,11 +28,4 @@ abstract contract BaseBundler is BaseSelfMulticall, BaseCallbackReceiver {
 
         return _multicall(data);
     }
-
-    /// @notice Executes multiple actions on another `bundler` contract passing along the required `data`.
-    function callBundler(address bundler, bytes[] calldata data) external {
-        require(bundler != address(0), ErrorsLib.ZERO_ADDRESS);
-
-        IMulticall(bundler).multicall(block.timestamp, data);
-    }
 }

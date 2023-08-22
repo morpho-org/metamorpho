@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IOracle} from "./interfaces/IOracle.sol";
 
+import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
 
 abstract contract BaseOracle is IOracle {
@@ -19,6 +20,8 @@ abstract contract BaseOracle is IOracle {
     uint256 public immutable BORROWABLE_SCALE;
 
     constructor(uint256 scaleFactor) {
+        require(scaleFactor != 0, ErrorsLib.ZERO_INPUT);
+
         SCALE_FACTOR = scaleFactor;
     }
 
