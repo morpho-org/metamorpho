@@ -6,8 +6,7 @@ import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 
 contract ChainlinkPairOracle is BaseOracle, ChainlinkCollateralAdapter, ChainlinkBorrowableAdapter {
-    constructor(uint256 priceScale, address collateralFeed, address borrowableFeed)
-        BaseOracle(priceScale)
+    constructor(address collateralFeed, address borrowableFeed)
         ChainlinkCollateralAdapter(collateralFeed)
         ChainlinkBorrowableAdapter(borrowableFeed)
     {}

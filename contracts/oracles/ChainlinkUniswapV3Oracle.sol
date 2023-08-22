@@ -6,8 +6,7 @@ import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.
 import {UniswapV3BorrowableAdapter} from "./adapters/UniswapV3BorrowableAdapter.sol";
 
 contract ChainlinkUniswapV3Oracle is BaseOracle, ChainlinkCollateralAdapter, UniswapV3BorrowableAdapter {
-    constructor(uint256 priceScale, address feed, address pool, uint32 borrowablePriceDelay)
-        BaseOracle(priceScale)
+    constructor(address feed, address pool, uint32 borrowablePriceDelay)
         ChainlinkCollateralAdapter(feed)
         UniswapV3BorrowableAdapter(pool, borrowablePriceDelay)
     {}
