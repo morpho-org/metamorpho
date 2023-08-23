@@ -70,6 +70,9 @@ contract EthereumBundlerEthereumTest is ForkTest {
         data[1] = abi.encodeCall(ERC20Bundler.transferFrom2, (marketParams.borrowableToken, amount));
         data[2] = abi.encodeCall(MorphoBundler.morphoSupply, (marketParams, amount, 0, onBehalf, hex""));
 
+        uint256 collateralBalanceBefore = ERC20(marketParams.collateralToken).balanceOf(onBehalf);
+        uint256 borrowableBalanceBefore = ERC20(marketParams.borrowableToken).balanceOf(onBehalf);
+
         _deal(marketParams.borrowableToken, user, amount);
 
         vm.startPrank(user);
@@ -82,8 +85,16 @@ contract EthereumBundlerEthereumTest is ForkTest {
         assertEq(ERC20(marketParams.collateralToken).balanceOf(user), 0, "collateral.balanceOf(user)");
         assertEq(ERC20(marketParams.borrowableToken).balanceOf(user), 0, "borrowable.balanceOf(user)");
 
-        assertEq(ERC20(marketParams.collateralToken).balanceOf(onBehalf), 0, "collateral.balanceOf(onBehalf)");
-        assertEq(ERC20(marketParams.borrowableToken).balanceOf(onBehalf), 0, "borrowable.balanceOf(onBehalf)");
+        assertEq(
+            ERC20(marketParams.collateralToken).balanceOf(onBehalf),
+            collateralBalanceBefore,
+            "collateral.balanceOf(onBehalf)"
+        );
+        assertEq(
+            ERC20(marketParams.borrowableToken).balanceOf(onBehalf),
+            borrowableBalanceBefore,
+            "borrowable.balanceOf(onBehalf)"
+        );
 
         Id id = marketParams.id();
 
