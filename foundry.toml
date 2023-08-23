@@ -6,6 +6,9 @@ fs_permissions = [{ access = "read", path = "./config/"}, { access = "read", pat
 via-ir = true
 evm_version = "paris"
 
+[fuzz]
+runs = 32
+
 [invariant]
 runs = 16
 depth = 4

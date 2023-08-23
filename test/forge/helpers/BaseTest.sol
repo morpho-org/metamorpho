@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {Id, MarketParams, Signature, Authorization, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
+import "@morpho-blue/interfaces/IMorpho.sol";
 
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
@@ -23,7 +23,7 @@ abstract contract BaseTest is Test {
     using stdJson for string;
 
     uint256 internal constant MIN_AMOUNT = 1000;
-    uint256 internal constant MAX_AMOUNT = 2 ** 64;
+    uint256 internal constant MAX_AMOUNT = 2 ** 64; // Must be less than or equal to type(uint160).max.
     uint256 internal constant ORACLE_PRICE_SCALE = 1e36;
 
     address internal constant USER = address(0x1234);

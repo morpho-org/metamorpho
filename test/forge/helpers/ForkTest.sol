@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import "config/Configured.sol";
+import {Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
+import {PermitHash} from "@permit2/libraries/PermitHash.sol";
 
 import {ChainlinkOracle} from "contracts/oracles/ChainlinkOracle.sol";
 
+import "config/Configured.sol";
 import "./BaseTest.sol";
 
 abstract contract ForkTest is BaseTest, Configured {
@@ -16,7 +18,7 @@ abstract contract ForkTest is BaseTest, Configured {
 
     uint256 internal snapshotId = type(uint256).max;
 
-    MarketParams[] markets;
+    MarketParams[] allMarketParams;
 
     constructor() {
         _initConfig();
@@ -36,18 +38,20 @@ abstract contract ForkTest is BaseTest, Configured {
             ChainlinkOracle oracle =
             new ChainlinkOracle(10 ** (36 + ERC20(configMarket.collateralToken).decimals() - ERC20(configMarket.borrowableToken).decimals()), configMarket.chainlinkFeed);
 
+            MarketParams memory marketParams = MarketParams({
+                collateralToken: configMarket.collateralToken,
+                borrowableToken: configMarket.borrowableToken,
+                oracle: address(oracle),
+                irm: address(irm),
+                lltv: configMarket.lltv
+            });
+
             vm.startPrank(OWNER);
             if (!morpho.isLltvEnabled(configMarket.lltv)) morpho.enableLltv(configMarket.lltv);
-            morpho.createMarket(
-                MarketParams({
-                    collateralToken: configMarket.collateralToken,
-                    borrowableToken: configMarket.borrowableToken,
-                    oracle: address(oracle),
-                    irm: address(irm),
-                    lltv: configMarket.lltv
-                })
-            );
+            morpho.createMarket(marketParams);
             vm.stopPrank();
+
+            allMarketParams.push(marketParams);
         }
     }
 
@@ -116,5 +120,9 @@ abstract contract ForkTest is BaseTest, Configured {
 
     function _randomLsdNative(uint256 seed) internal view returns (address) {
         return lsdNatives[seed % lsdNatives.length];
+    }
+
+    function _randomMarketParams(uint256 seed) internal view returns (MarketParams memory) {
+        return allMarketParams[seed % allMarketParams.length];
     }
 }

@@ -16,8 +16,8 @@ abstract contract LocalTest is BaseTest {
 
     uint256 internal constant LLTV = 0.8 ether;
 
-    ERC20Mock internal borrowableAsset;
-    ERC20Mock internal collateralAsset;
+    ERC20Mock internal borrowableToken;
+    ERC20Mock internal collateralToken;
     IOracle internal oracle;
 
     MarketParams internal marketParams;
@@ -27,14 +27,14 @@ abstract contract LocalTest is BaseTest {
         super.setUp();
 
         // List a marketParams.
-        borrowableAsset = new ERC20Mock("borrowable", "B");
-        collateralAsset = new ERC20Mock("collateral", "C");
+        borrowableToken = new ERC20Mock("borrowable", "B");
+        collateralToken = new ERC20Mock("collateral", "C");
         oracle = new OracleMock();
 
         irm = new IrmMock(morpho);
 
         marketParams =
-            MarketParams(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
+            MarketParams(address(borrowableToken), address(collateralToken), address(oracle), address(irm), LLTV);
         id = marketParams.id();
 
         OracleMock(address(oracle)).setPrice(ORACLE_PRICE_SCALE);
@@ -45,10 +45,10 @@ abstract contract LocalTest is BaseTest {
         morpho.createMarket(marketParams);
         vm.stopPrank();
 
-        borrowableAsset.approve(address(morpho), type(uint256).max);
-        collateralAsset.approve(address(morpho), type(uint256).max);
+        borrowableToken.approve(address(morpho), type(uint256).max);
+        collateralToken.approve(address(morpho), type(uint256).max);
 
         vm.prank(SUPPLIER);
-        borrowableAsset.approve(address(morpho), type(uint256).max);
+        borrowableToken.approve(address(morpho), type(uint256).max);
     }
 }
