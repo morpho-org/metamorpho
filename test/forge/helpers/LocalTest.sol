@@ -26,18 +26,17 @@ abstract contract LocalTest is BaseTest {
     function setUp() public virtual override {
         super.setUp();
 
-        // List a marketParams.
         borrowableToken = new ERC20Mock("borrowable", "B");
         collateralToken = new ERC20Mock("collateral", "C");
-        oracle = new OracleMock();
 
-        irm = new IrmMock(morpho);
+        OracleMock oracleMock = new OracleMock();
+        oracle = oracleMock;
+
+        oracleMock.setPrice(ORACLE_PRICE_SCALE);
 
         marketParams =
             MarketParams(address(borrowableToken), address(collateralToken), address(oracle), address(irm), LLTV);
         id = marketParams.id();
-
-        OracleMock(address(oracle)).setPrice(ORACLE_PRICE_SCALE);
 
         vm.startPrank(OWNER);
         morpho.enableLltv(LLTV);

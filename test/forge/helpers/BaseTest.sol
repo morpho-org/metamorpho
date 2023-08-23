@@ -36,13 +36,13 @@ abstract contract BaseTest is Test {
     function setUp() public virtual {
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(OWNER)));
 
-        irm = new IrmMock(morpho);
+        irm = new IrmMock();
 
         vm.prank(OWNER);
         morpho.enableIrm(address(irm));
 
-        // So tests can borrow/withdraw on behalf of USER without pranking it.
         vm.prank(USER);
+        // So tests can borrow/withdraw on behalf of USER without pranking it.
         morpho.setAuthorization(address(this), true);
     }
 
