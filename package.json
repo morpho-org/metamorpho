@@ -1,5 +1,7 @@
 {
   "name": "morpho-blue-periphery",
+  "description": "Morpho Blue Periphery Contracts",
+  "license": "GPL-2.0-or-later",
   "version": "1.0.0",
   "main": "lib/index.js",
   "bin": "lib/cli.js",
