@@ -23,7 +23,7 @@ test-local:
 	@FOUNDRY_MATCH_CONTRACT=LocalTest make test
 
 test: blue
-	forge test -vvv
+	forge test -vvvvv
 
 
 test-%:
