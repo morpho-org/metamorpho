@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Authorization} from "@morpho-blue/interfaces/IMorpho.sol";
 
-bytes32 constant AUTHORIZATION_TYPEHASH =
-    keccak256("Authorization(address authorizer,address authorized,bool isAuthorized,uint256 nonce,uint256 deadline)");
+import {AUTHORIZATION_TYPEHASH} from "@morpho-blue/libraries/ConstantsLib.sol";
 
 library SigUtils {
     /// @dev Computes the hash of the EIP-712 encoded data.
