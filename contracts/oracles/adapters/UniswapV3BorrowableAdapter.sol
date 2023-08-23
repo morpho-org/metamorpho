@@ -13,26 +13,35 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
     using UniswapV3PoolLib for IUniswapV3Pool;
 
     IUniswapV3Pool private immutable _UNI_V3_BORROWABLE_POOL;
-    uint32 private immutable _UNI_V3_BORROWABLE_DELAY;
+    uint32 private immutable _UNI_V3_BORROWABLE_WINDOW;
+    bool private immutable _PRICE_INVERSED;
 
-    constructor(address pool, uint32 delay) {
+    /// @dev Warning: assumes `quoteToken` is either the pool's token0 or token1.
+    constructor(address pool, uint32 window, address quoteToken) {
         require(pool != address(0), ErrorsLib.ZERO_ADDRESS);
-        require(delay > 0, ErrorsLib.ZERO_INPUT);
+        require(window > 0, ErrorsLib.ZERO_INPUT);
 
         _UNI_V3_BORROWABLE_POOL = IUniswapV3Pool(pool);
-        _UNI_V3_BORROWABLE_DELAY = delay;
-        BORROWABLE_SCALE = 1e18;
+        _UNI_V3_BORROWABLE_WINDOW = window;
+
+        address token0 = _UNI_V3_BORROWABLE_POOL.token0();
+        address token1 = _UNI_V3_BORROWABLE_POOL.token1();
+        require(quoteToken == token0 || quoteToken == token1, ErrorsLib.INVALID_QUOTE_TOKEN);
+
+        _PRICE_INVERSED = quoteToken == token0;
+
+        BORROWABLE_SCALE = 1 << 128;
     }
 
     function BORROWABLE_FEED() external view returns (string memory, address) {
         return (OracleFeed.UNISWAP_V3, address(_UNI_V3_BORROWABLE_POOL));
     }
 
-    function BORROWABLE_DELAY() external view returns (uint32) {
-        return _UNI_V3_BORROWABLE_DELAY;
+    function BORROWABLE_WINDOW() external view returns (uint32) {
+        return _UNI_V3_BORROWABLE_WINDOW;
     }
 
     function borrowablePrice() public view virtual override returns (uint256) {
-        return _UNI_V3_BORROWABLE_POOL.price(_UNI_V3_BORROWABLE_DELAY);
+        return _UNI_V3_BORROWABLE_POOL.priceX128(_UNI_V3_BORROWABLE_WINDOW, _PRICE_INVERSED);
     }
 }
