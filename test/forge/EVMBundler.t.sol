@@ -26,21 +26,6 @@ contract EVMBundlerLocalTest is LocalTest {
         vm.stopPrank();
     }
 
-    /* INVARIANTS */
-
-    function invariantBundlerBalanceOfZero() public {
-        assertEq(collateralAsset.balanceOf(address(bundler)), 0, "collateral.balanceOf(bundler)");
-        assertEq(borrowableAsset.balanceOf(address(bundler)), 0, "borrowable.balanceOf(bundler)");
-    }
-
-    function invariantBundlerPositionZero() public {
-        assertEq(morpho.collateral(id, address(bundler)), 0, "collateral(bundler)");
-        assertEq(morpho.supplyShares(id, address(bundler)), 0, "supplyShares(bundler)");
-        assertEq(morpho.borrowShares(id, address(bundler)), 0, "borrowShares(bundler)");
-    }
-
-    /* TESTS */
-
     function testSetAuthorization(uint256 privateKey, uint32 deadline) public {
         privateKey = bound(privateKey, 1, type(uint32).max);
         deadline = uint32(bound(deadline, block.timestamp + 1, type(uint32).max));

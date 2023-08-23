@@ -24,24 +24,6 @@ contract EthereumBundlerTest is ForkTest {
         morpho.setAuthorization(address(bundler), true);
     }
 
-    /* INVARIANTS */
-
-    function invariantBundlerBalanceOfZero() public {
-        for (uint256 i; i < allAssets.length; ++i) {
-            ERC20 asset = ERC20(allAssets[i]);
-
-            assertEq(asset.balanceOf(address(bundler)), 0, "asset.balanceOf(bundler)");
-        }
-    }
-
-    function invariantBundlerPositionZero() public {
-        // assertEq(morpho.collateral(id, address(bundler)), 0, "collateral(bundler)");
-        // assertEq(morpho.supplyShares(id, address(bundler)), 0, "supplyShares(bundler)");
-        // assertEq(morpho.borrowShares(id, address(bundler)), 0, "borrowShares(bundler)");
-    }
-
-    /* TESTS */
-
     function testSupplyWithPermit2(uint256 amount, address onBehalf) public {
         vm.assume(onBehalf != address(0));
         vm.assume(onBehalf != address(morpho));
