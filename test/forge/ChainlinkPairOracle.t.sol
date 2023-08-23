@@ -5,7 +5,6 @@ import "./mocks/ChainlinkAggregatorV3Mock.sol";
 import "./mocks/ERC20Mock.sol";
 
 import "contracts/oracles/ChainlinkPairOracle.sol";
-import {PRICE_SCALE} from "contracts/oracles/BaseOracle.sol";
 
 import {OracleFeed} from "contracts/oracles/libraries/OracleFeed.sol";
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
@@ -21,6 +20,8 @@ contract ChainlinkOracleTest is Test {
     ChainlinkPairOracle chainlinkOracle;
     ERC20Mock collateral;
     ERC20Mock borrowable;
+
+    uint256 SCALE_FACTOR;
     uint8 COLLATERAL_DECIMALS = 8;
     uint8 BORROWABLE_DECIMALS = 10;
 
@@ -34,7 +35,9 @@ contract ChainlinkOracleTest is Test {
         collateralFeed.setDecimals(COLLATERAL_DECIMALS);
         borrowableFeed.setDecimals(BORROWABLE_DECIMALS);
 
-        chainlinkOracle = new ChainlinkPairOracle( address(collateralFeed), address(borrowableFeed));
+        SCALE_FACTOR = 10 ** (36 + COLLATERAL_DECIMALS - BORROWABLE_DECIMALS);
+
+        chainlinkOracle = new ChainlinkPairOracle(SCALE_FACTOR, address(collateralFeed), address(borrowableFeed));
     }
 
     function testConfig() public {
@@ -47,6 +50,7 @@ contract ChainlinkOracleTest is Test {
         assertEq(borrowableChainlinkFeed, address(borrowableFeed), "borrowableChainlinkFeed");
         assertEq(chainlinkOracle.COLLATERAL_SCALE(), 10 ** COLLATERAL_DECIMALS);
         assertEq(chainlinkOracle.BORROWABLE_SCALE(), 10 ** BORROWABLE_DECIMALS);
+        assertEq(chainlinkOracle.SCALE_FACTOR(), SCALE_FACTOR);
     }
 
     function testNegativePrice(int256 price) public {
@@ -66,10 +70,10 @@ contract ChainlinkOracleTest is Test {
         uint256 collateralFeedDecimals,
         uint256 borrowableFeedDecimals
     ) public {
-        collateralDecimals = bound(collateralDecimals, 6, 18);
-        borrowableDecimals = bound(borrowableDecimals, 6, 18);
-        collateralFeedDecimals = bound(collateralFeedDecimals, 6, 18);
-        borrowableFeedDecimals = bound(borrowableFeedDecimals, 6, 18);
+        borrowableDecimals = bound(borrowableDecimals, 0, 27);
+        collateralDecimals = bound(collateralDecimals, 0, 36 + borrowableDecimals);
+        collateralFeedDecimals = bound(collateralFeedDecimals, 0, 27);
+        borrowableFeedDecimals = bound(borrowableFeedDecimals, 0, 27);
         // Cap prices at $10M.
         collateralPrice = bound(collateralPrice, 1, 10_000_000);
         borrowablePrice = bound(borrowablePrice, 1, 10_000_000);
@@ -78,8 +82,8 @@ contract ChainlinkOracleTest is Test {
         collateral = new ERC20Mock("Collateral", "COL", uint8(collateralDecimals));
         borrowable = new ERC20Mock("Borrowable", "BOR", uint8(borrowableDecimals));
 
-        collateralPrice = collateralPrice * 10 ** collateralFeedDecimals;
-        borrowablePrice = borrowablePrice * 10 ** borrowableFeedDecimals;
+        collateralPrice *= 10 ** collateralFeedDecimals;
+        borrowablePrice *= 10 ** borrowableFeedDecimals;
 
         collateralFeed = new ChainlinkAggregatorV3Mock();
         borrowableFeed = new ChainlinkAggregatorV3Mock();
@@ -90,13 +94,12 @@ contract ChainlinkOracleTest is Test {
         collateralFeed.setLatestAnswer(int256(collateralPrice));
         borrowableFeed.setLatestAnswer(int256(borrowablePrice));
 
-        chainlinkOracle = new ChainlinkPairOracle( address(collateralFeed), address(borrowableFeed));
+        uint256 scale = 10 ** (36 + borrowableDecimals - collateralDecimals);
 
-        assertEq(
-            chainlinkOracle.price(),
-            PRICE_SCALE.mulDiv(
-                collateralPrice * 10 ** borrowableFeedDecimals, borrowablePrice * 10 ** collateralFeedDecimals
-            )
-        );
+        chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
+
+        uint256 collateralPriceInBorrowable = collateralPrice.mulDiv(10 ** borrowableFeedDecimals, borrowablePrice);
+
+        assertEq(chainlinkOracle.price(), scale.mulDiv(collateralPriceInBorrowable, 10 ** collateralFeedDecimals));
     }
 }

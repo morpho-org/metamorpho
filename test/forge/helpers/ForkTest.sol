@@ -33,7 +33,8 @@ abstract contract ForkTest is BaseTest, Configured {
         for (uint256 i; i < configMarkets.length; ++i) {
             ConfigMarket memory configMarket = configMarkets[i];
 
-            ChainlinkOracle oracle = new ChainlinkOracle(configMarket.chainlinkFeed);
+            ChainlinkOracle oracle =
+            new ChainlinkOracle(10 ** (36 + ERC20(configMarket.collateralToken).decimals() - ERC20(configMarket.borrowableToken).decimals()), configMarket.chainlinkFeed);
 
             vm.startPrank(OWNER);
             if (!morpho.isLltvEnabled(configMarket.lltv)) morpho.enableLltv(configMarket.lltv);
@@ -81,7 +82,8 @@ abstract contract ForkTest is BaseTest, Configured {
         }
     }
 
-    /// @dev Avoids to revert because of AAVE token snapshots: https://github.com/aave/aave-token-v2/blob/master/contracts/token/base/GovernancePowerDelegationERC20.sol#L174
+    /// @dev Avoids to revert because of AAVE token snapshots:
+    /// https://github.com/aave/aave-token-v2/blob/master/contracts/token/base/GovernancePowerDelegationERC20.sol#L174
     function _deal(address asset, address user, uint256 amount) internal {
         if (amount == 0) return;
 

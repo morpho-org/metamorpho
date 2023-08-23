@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
 import {IWNative} from "./interfaces/IWNative.sol";
@@ -16,7 +16,7 @@ import {BaseBundler} from "./BaseBundler.sol";
 abstract contract WNativeBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
-    /* CONSTANTS */
+    /* IMMUTABLES */
 
     /// @dev The address of the wrapped native token contract.
     address public immutable WRAPPED_NATIVE;
