@@ -2,7 +2,7 @@
 src = "contracts"
 out = "out"
 libs = ["lib"]
-fs_permissions = [{ access = "read", path = "./config/"}]
+fs_permissions = [{ access = "read", path = "./config/"}, { access = "read", path = "./lib/morpho-blue/out/"}]
 via-ir = true
 evm_version = "paris"
 

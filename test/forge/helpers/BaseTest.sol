@@ -10,7 +10,6 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
-import {Morpho} from "@morpho-blue/Morpho.sol";
 import {IrmMock} from "@morpho-blue/mocks/IrmMock.sol";
 
 import "@forge-std/Test.sol";
@@ -21,7 +20,7 @@ abstract contract BaseTest is Test {
     using SharesMathLib for uint256;
     using MarketParamsLib for MarketParams;
     using SafeTransferLib for ERC20;
-    using stdStorage for StdStorage;
+    using stdJson for string;
 
     uint256 internal constant MIN_AMOUNT = 1000;
     uint256 internal constant MAX_AMOUNT = 2 ** 64;
@@ -35,11 +34,22 @@ abstract contract BaseTest is Test {
     IrmMock internal irm;
 
     function setUp() public virtual {
-        morpho = IMorpho(address(new Morpho(OWNER)));
+        morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(OWNER)));
 
         irm = new IrmMock(morpho);
 
         vm.prank(OWNER);
         morpho.enableIrm(address(irm));
+    }
+
+    function _deploy(string memory artifactPath, bytes memory constructorArgs) internal returns (address deployed) {
+        string memory artifact = vm.readFile(artifactPath);
+        bytes memory bytecode = bytes.concat(artifact.readBytes("$.bytecode.object"), constructorArgs);
+
+        assembly {
+            deployed := create(0, add(bytecode, 0x20), mload(bytecode))
+        }
+
+        require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 }
