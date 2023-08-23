@@ -40,7 +40,6 @@ abstract contract LocalTest is BaseTest {
 
         vm.startPrank(OWNER);
         morpho.enableLltv(LLTV);
-        morpho.enableIrm(address(irm));
         morpho.createMarket(marketParams);
         vm.stopPrank();
 

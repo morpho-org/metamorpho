@@ -35,6 +35,7 @@ abstract contract BaseTest is Test {
 
     function setUp() public virtual {
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(OWNER)));
+        vm.label(address(morpho), "Morpho");
 
         irm = new IrmMock();
 
