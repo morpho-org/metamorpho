@@ -5,7 +5,7 @@ import "contracts/bundlers/EVMBundler.sol";
 
 import "../helpers/ForkTest.sol";
 
-contract EVMBundlerEthereumTest is ForkTest {
+contract EthereumBundlerTest is ForkTest {
     using MathLib for uint256;
     using MorphoBalancesLib for IMorpho;
 
@@ -20,10 +20,8 @@ contract EVMBundlerEthereumTest is ForkTest {
 
         bundler = new EVMBundler(address(morpho));
 
-        vm.startPrank(USER);
+        vm.prank(USER);
         morpho.setAuthorization(address(bundler), true);
-        morpho.setAuthorization(address(this), true); // So tests can borrow/withdraw on behalf of USER without pranking it.
-        vm.stopPrank();
     }
 
     /* INVARIANTS */

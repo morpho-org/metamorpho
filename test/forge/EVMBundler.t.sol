@@ -23,8 +23,6 @@ contract EVMBundlerLocalTest is LocalTest {
         borrowableAsset.approve(address(bundler), type(uint256).max);
         collateralAsset.approve(address(bundler), type(uint256).max);
         morpho.setAuthorization(address(bundler), true);
-        // So tests can borrow/withdraw on behalf of USER without pranking it.
-        morpho.setAuthorization(address(this), true);
         vm.stopPrank();
     }
 

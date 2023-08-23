@@ -40,6 +40,10 @@ abstract contract BaseTest is Test {
 
         vm.prank(OWNER);
         morpho.enableIrm(address(irm));
+
+        // So tests can borrow/withdraw on behalf of USER without pranking it.
+        vm.prank(USER);
+        morpho.setAuthorization(address(this), true);
     }
 
     function _deploy(string memory artifactPath, bytes memory constructorArgs) internal returns (address deployed) {
