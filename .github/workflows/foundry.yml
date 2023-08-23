@@ -21,10 +21,10 @@ jobs:
           - type: "slow"
             fuzz-runs: 100000
             max-test-rejects: 500000
-            invariant-runs: 1000
-            invariant-depth: 100
+            invariant-runs: 64
+            invariant-depth: 1024
           - type: "fast"
-            fuzz-runs: 256
+            fuzz-runs: 512
             max-test-rejects: 65536
             invariant-runs: 16
             invariant-depth: 256
@@ -50,6 +50,7 @@ jobs:
       - name: Run Forge tests in ${{ matrix.type }} mode
         run: make test
         env:
+          ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
           FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
           FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
