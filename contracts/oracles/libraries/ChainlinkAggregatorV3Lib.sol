@@ -2,11 +2,18 @@
 pragma solidity ^0.8.0;
 
 import {IChainlinkAggregatorV3} from "../adapters/interfaces/IChainlinkAggregatorV3.sol";
+import {IChainlinkOffchainAggregator} from "../adapters/interfaces/IChainlinkOffchainAggregator.sol";
 
 library ChainlinkAggregatorV3Lib {
     function price(IChainlinkAggregatorV3 priceFeed) internal view returns (uint256) {
         (, int256 answer,,,) = priceFeed.latestRoundData();
-        require(answer > 0, "ChainlinkAggregatorV3Lib: price is negative");
+        address offchainFeed = priceFeed.aggregator();
+
+        int192 minAnswer = IChainlinkOffchainAggregator(offchainFeed).minAnswer();
+        int192 maxAnswer = IChainlinkOffchainAggregator(offchainFeed).maxAnswer();
+
+        require(answer >= minAnswer && answer <= maxAnswer, "ChainlinkAggregatorV3Lib: invalid answer");
+
         return uint256(answer);
     }
 

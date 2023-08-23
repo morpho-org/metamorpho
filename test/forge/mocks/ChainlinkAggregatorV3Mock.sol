@@ -2,12 +2,25 @@
 pragma solidity ^0.8.0;
 
 import {IChainlinkAggregatorV3} from "contracts/oracles/adapters/interfaces/IChainlinkAggregatorV3.sol";
+import {IChainlinkOffchainAggregator} from "contracts/oracles/adapters/interfaces/IChainlinkOffchainAggregator.sol";
+
+contract ChainlinkOffchainAggregatorMock is IChainlinkOffchainAggregator {
+    int192 public minAnswer;
+    int192 public maxAnswer = 2 ** 128 - 1;
+}
 
 contract ChainlinkAggregatorV3Mock is IChainlinkAggregatorV3 {
     string public description = "desciption";
     uint256 public version = 1;
     uint8 public decimals;
-    int256 latestAnswer;
+    int256 public latestAnswer;
+    address public aggregator;
+
+    constructor() {
+        decimals = 8;
+        latestAnswer = 1e8;
+        aggregator = address(new ChainlinkOffchainAggregatorMock());
+    }
 
     function setDecimals(uint8 newDecimals) external {
         decimals = newDecimals;
