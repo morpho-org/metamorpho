@@ -3,17 +3,14 @@ pragma solidity ^0.8.0;
 
 import {Id, MarketParams, Signature, Authorization, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
-import {MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
+import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MathLib, WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
-import {Morpho, AUTHORIZATION_TYPEHASH} from "@morpho-blue/Morpho.sol";
-import {ERC20Mock} from "test/forge/mocks/ERC20Mock.sol";
-import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
+import {Morpho} from "@morpho-blue/Morpho.sol";
 import {IrmMock} from "@morpho-blue/mocks/IrmMock.sol";
 
 import "@forge-std/Test.sol";
@@ -22,7 +19,7 @@ import "@forge-std/console2.sol";
 abstract contract BaseTest is Test {
     using MathLib for uint256;
     using SharesMathLib for uint256;
-    using MarketLib for MarketParams;
+    using MarketParamsLib for MarketParams;
     using SafeTransferLib for ERC20;
     using stdStorage for StdStorage;
 

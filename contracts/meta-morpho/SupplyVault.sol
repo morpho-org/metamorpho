@@ -9,7 +9,7 @@ import {MarketAllocation} from "./libraries/Types.sol";
 import {IMorpho, MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "./libraries/Errors.sol";
 import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
-import {Id, MarketParams, MarketLib} from "@morpho-blue/libraries/MarketLib.sol";
+import {Id, MarketParams, MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -20,7 +20,7 @@ contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using ConfigSetLib for ConfigSet;
-    using MarketLib for MarketParams;
+    using MarketParamsLib for MarketParams;
 
     address private _riskManager;
     address private _allocationManager;

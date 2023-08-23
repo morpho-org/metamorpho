@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {ERC20Mock} from "test/forge/mocks/ERC20Mock.sol";
+import {IOracle} from "@morpho-blue/interfaces/IOracle.sol";
+
+import {ERC20Mock} from "@morpho-blue/mocks/ERC20Mock.sol";
+import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
 
 import "./BaseTest.sol";
 
 abstract contract LocalTest is BaseTest {
     using MathLib for uint256;
     using SharesMathLib for uint256;
-    using MarketLib for MarketParams;
+    using MarketParamsLib for MarketParams;
     using stdStorage for StdStorage;
 
     uint256 internal constant LLTV = 0.8 ether;
 
     ERC20Mock internal borrowableAsset;
     ERC20Mock internal collateralAsset;
-    OracleMock internal oracle;
+    IOracle internal oracle;
 
     MarketParams internal marketParams;
     Id internal id;
@@ -24,8 +27,8 @@ abstract contract LocalTest is BaseTest {
         super.setUp();
 
         // List a marketParams.
-        borrowableAsset = new ERC20Mock("borrowable", "B", 18);
-        collateralAsset = new ERC20Mock("collateral", "C", 18);
+        borrowableAsset = new ERC20Mock("borrowable", "B");
+        collateralAsset = new ERC20Mock("collateral", "C");
         oracle = new OracleMock();
 
         irm = new IrmMock(morpho);
@@ -34,7 +37,7 @@ abstract contract LocalTest is BaseTest {
             MarketParams(address(borrowableAsset), address(collateralAsset), address(oracle), address(irm), LLTV);
         id = marketParams.id();
 
-        oracle.setPrice(ORACLE_PRICE_SCALE);
+        OracleMock(address(oracle)).setPrice(ORACLE_PRICE_SCALE);
 
         vm.startPrank(OWNER);
         morpho.enableLltv(LLTV);
