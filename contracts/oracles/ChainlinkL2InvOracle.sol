@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {BaseOracle} from "./BaseOracle.sol";
-import {StaticBorrowableAdapter} from "./adapters/StaticBorrowableAdapter.sol";
-import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
+import {StaticCollateralAdapter} from "./adapters/StaticCollateralAdapter.sol";
+import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 import {ChainlinkL2BaseAdapter} from "./adapters/ChainlinkL2BaseAdapter.sol";
-import {ChainlinkL2CollateralAdapter} from "./adapters/ChainlinkL2CollateralAdapter.sol";
+import {ChainlinkL2BorrowableAdapter} from "./adapters/ChainlinkL2BorrowableAdapter.sol";
 
-contract ChainlinkL2Oracle is BaseOracle, ChainlinkL2CollateralAdapter, StaticBorrowableAdapter {
+contract ChainlinkL2Oracle is BaseOracle, StaticCollateralAdapter, ChainlinkL2BorrowableAdapter {
     constructor(
         uint256 priceScale,
         address collateralFeed,
@@ -16,7 +16,7 @@ contract ChainlinkL2Oracle is BaseOracle, ChainlinkL2CollateralAdapter, StaticBo
         uint256 gracePeriod
     )
         BaseOracle(priceScale)
-        ChainlinkCollateralAdapter(collateralFeed, collateralStaleTimeout)
+        ChainlinkBorrowableAdapter(collateralFeed, collateralStaleTimeout)
         ChainlinkL2BaseAdapter(sequencerUptimeFeed, gracePeriod)
     {}
 }
