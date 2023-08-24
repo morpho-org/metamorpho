@@ -12,33 +12,38 @@ library ChainlinkAggregatorV3Lib {
     using SafeCast for uint192;
     using PercentageMath for uint256;
 
-    function price(IChainlinkAggregatorV3 priceFeed, uint256 rangeFactor) internal view returns (uint256 answer) {
+    function price(IChainlinkAggregatorV3 priceFeed, uint256 boundOffsetFactor)
+        internal
+        view
+        returns (uint256 answer)
+    {
         (, int256 answerIn,,,) = priceFeed.latestRoundData();
 
-        require(answerIn >= 0, ErrorsLib.NEGATIVE_VALUE);
+        require(answerIn >= 0, ErrorsLib.NEGATIVE_ANSWER_VALUE);
 
         answer = uint256(answerIn);
 
-        if (rangeFactor > 0) {
+        if (boundOffsetFactor > 0) {
             address offchainFeed = priceFeed.aggregator();
             int192 minAnswerInt = IChainlinkOffchainAggregator(offchainFeed).minAnswer();
             int192 maxAnswerInt = IChainlinkOffchainAggregator(offchainFeed).maxAnswer();
 
-            require(minAnswerInt >= 0 && maxAnswerInt >= 0, ErrorsLib.NEGATIVE_VALUE);
+            // No need to check for maxAnswerInt since maxAnswerInt >= minAnswerInt.
+            require(minAnswerInt >= 0, ErrorsLib.NEGATIVE_MIN_ANSWER_VALUE);
 
             uint256 minAnswer = uint192(minAnswerInt).toUint192();
             uint256 maxAnswer = uint192(maxAnswerInt).toUint192();
-            uint256 rangeAdjustor = (maxAnswer - minAnswer).percentMul(rangeFactor);
+            uint256 boundOffset = (maxAnswer - minAnswer).percentMul(boundOffsetFactor);
 
             require(
-                answer >= minAnswer + rangeAdjustor && answer <= maxAnswer - rangeAdjustor, ErrorsLib.INVALID_ANSWER
+                answer >= minAnswer + boundOffset && answer <= maxAnswer - boundOffset, ErrorsLib.ANSWER_OUT_OF_BOUNDS
             );
         }
     }
 
     function price(
         IChainlinkAggregatorV3 priceFeed,
-        uint256 rangeFactor,
+        uint256 boundOffsetFactor,
         IChainlinkAggregatorV3 sequencerUptimeFeed,
         uint256 gracePeriod
     ) internal view returns (uint256) {
@@ -51,6 +56,6 @@ library ChainlinkAggregatorV3Lib {
         // Make sure the grace period has passed after the sequencer is back up.
         require(block.timestamp - startedAt > gracePeriod, ErrorsLib.GRACE_PERIOD_NOT_OVER);
 
-        return price(priceFeed, rangeFactor);
+        return price(priceFeed, boundOffsetFactor);
     }
 }

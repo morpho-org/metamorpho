@@ -5,6 +5,7 @@ import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 import {OracleFeed} from "../libraries/OracleFeed.sol";
+import {PercentageMath} from "@morpho-utils/math/PercentageMath.sol";
 import {ChainlinkAggregatorV3Lib} from "../libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
@@ -13,14 +14,16 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     IChainlinkAggregatorV3 internal immutable _CHAINLINK_COLLATERAL_FEED;
-    uint256 internal immutable _CHAINLINK_COLLATERAL_RANGE_FACTOR;
 
-    constructor(address feed, uint256 rangeFactor) {
+    uint256 public immutable COLLATERAL_BOUND_OFFSET_FACTOR;
+
+    constructor(address feed, uint256 boundOffsetFactor) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
-        require(rangeFactor <= HALF_PERCENTAGE_FACTOR, ErrorsLib.INCORRECT_RANGE_FACTOR) _CHAINLINK_COLLATERAL_FEED =
-            IChainlinkAggregatorV3(feed);
+        require(boundOffsetFactor <= PercentageMath.HALF_PERCENTAGE_FACTOR, ErrorsLib.INCORRECT_BOUND_OFFSET_FACTOR);
+
+        _CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
         COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
-        _CHAINLINK_COLLATERAL_RANGE_FACTOR = rangeFactor;
+        COLLATERAL_BOUND_OFFSET_FACTOR = boundOffsetFactor;
     }
 
     function COLLATERAL_FEED() external view returns (string memory, address) {
@@ -28,6 +31,6 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
     }
 
     function collateralPrice() public view virtual override returns (uint256) {
-        return _CHAINLINK_COLLATERAL_FEED.price(_CHAINLINK_COLLATERAL_RANGE_FACTOR);
+        return _CHAINLINK_COLLATERAL_FEED.price(COLLATERAL_BOUND_OFFSET_FACTOR);
     }
 }

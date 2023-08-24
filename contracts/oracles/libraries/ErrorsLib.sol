@@ -6,13 +6,15 @@ library ErrorsLib {
 
     string internal constant ZERO_INPUT = "zero input";
 
-    string internal constant NEGATIVE_VALUE = "negative value";
+    string internal constant NEGATIVE_ANSWER_VALUE = "negative answer value";
 
-    string internal constant INCORRECT_RANGE_FACTOR = "range factor must be between 0 and 50%";
+    string internal constant NEGATIVE_MIN_ANSWER_VALUE = "negative min answer value";
+
+    string internal constant INCORRECT_BOUND_OFFSET_FACTOR = "bound offset factor must be between 0 and 50%";
 
     string internal constant INVALID_QUOTE_TOKEN = "invalid quote token";
 
-    string internal constant INVALID_ANSWER = "invalid answer";
+    string internal constant ANSWER_OUT_OF_BOUNDS = "answer out of bounds";
 
     string internal constant SEQUENCER_DOWN = "sequencer down";
 

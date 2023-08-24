@@ -15,12 +15,12 @@ contract ChainlinkL2Oracle is BaseOracle, ChainlinkL2CollateralAdapter, StaticBo
     constructor(
         uint256 priceScale,
         address collateralFeed,
-        uint256 rangeFactor,
+        uint256 boundOffsetFactor,
         address sequencerUptimeFeed,
         uint256 gracePeriod
     )
         BaseOracle(priceScale)
-        ChainlinkCollateralAdapter(collateralFeed, rangeFactor)
+        ChainlinkCollateralAdapter(collateralFeed, boundOffsetFactor)
         ChainlinkL2BaseAdapter(sequencerUptimeFeed, gracePeriod)
     {}
 }
