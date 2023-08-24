@@ -12,6 +12,6 @@ abstract contract ChainlinkL2CollateralAdapter is ChainlinkL2BaseAdapter, Chainl
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     function collateralPrice() public view virtual override returns (uint256) {
-        return _CHAINLINK_COLLATERAL_FEED.price(SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
+        return _CHAINLINK_COLLATERAL_FEED.price(COLLATERAL_STALE_TIMEOUT, SEQUENCER_UPTIME_FEED, GRACE_PERIOD);
     }
 }

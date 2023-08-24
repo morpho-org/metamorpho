@@ -14,10 +14,14 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
 
     IChainlinkAggregatorV3 internal immutable _CHAINLINK_COLLATERAL_FEED;
 
-    constructor(address feed) {
+    uint256 public immutable COLLATERAL_STALE_TIMEOUT;
+
+    constructor(address feed, uint256 staleTimeout) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
 
         _CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
+        COLLATERAL_STALE_TIMEOUT = staleTimeout;
+
         COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
     }
 
@@ -26,6 +30,6 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
     }
 
     function collateralPrice() public view virtual override returns (uint256) {
-        return _CHAINLINK_COLLATERAL_FEED.price();
+        return _CHAINLINK_COLLATERAL_FEED.price(COLLATERAL_STALE_TIMEOUT);
     }
 }

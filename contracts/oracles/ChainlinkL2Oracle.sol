@@ -12,9 +12,15 @@ import {ChainlinkL2CollateralAdapter} from "./adapters/ChainlinkL2CollateralAdap
 contract ChainlinkL2Oracle is BaseOracle, ChainlinkL2CollateralAdapter, StaticBorrowableAdapter {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
-    constructor(uint256 priceScale, address collateralFeed, address sequencerUptimeFeed, uint256 gracePeriod)
+    constructor(
+        uint256 priceScale,
+        address collateralFeed,
+        uint256 collateralStaleTimeout,
+        address sequencerUptimeFeed,
+        uint256 gracePeriod
+    )
         BaseOracle(priceScale)
-        ChainlinkCollateralAdapter(collateralFeed)
+        ChainlinkCollateralAdapter(collateralFeed, collateralStaleTimeout)
         ChainlinkL2BaseAdapter(sequencerUptimeFeed, gracePeriod)
     {}
 }
