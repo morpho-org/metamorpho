@@ -17,8 +17,8 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
 
     constructor(address feed, uint256 rangeFactor) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
-
-        _CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
+        require(rangeFactor <= HALF_PERCENTAGE_FACTOR, ErrorsLib.INCORRECT_RANGE_FACTOR) _CHAINLINK_COLLATERAL_FEED =
+            IChainlinkAggregatorV3(feed);
         COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
         _CHAINLINK_COLLATERAL_RANGE_FACTOR = rangeFactor;
     }

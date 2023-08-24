@@ -15,7 +15,7 @@ library ChainlinkAggregatorV3Lib {
     function price(IChainlinkAggregatorV3 priceFeed, uint256 rangeFactor) internal view returns (uint256 answer) {
         (, int256 answerIn,,,) = priceFeed.latestRoundData();
 
-        require(answerIn > 0, ErrorsLib.NEGATIVE_VALUE);
+        require(answerIn >= 0, ErrorsLib.NEGATIVE_VALUE);
 
         answer = uint256(answerIn);
 
@@ -24,14 +24,14 @@ library ChainlinkAggregatorV3Lib {
             int192 minAnswerInt = IChainlinkOffchainAggregator(offchainFeed).minAnswer();
             int192 maxAnswerInt = IChainlinkOffchainAggregator(offchainFeed).maxAnswer();
 
-            require(minAnswerInt > 0 && maxAnswerInt > 0, ErrorsLib.NEGATIVE_VALUE);
+            require(minAnswerInt >= 0 && maxAnswerInt >= 0, ErrorsLib.NEGATIVE_VALUE);
 
             uint256 minAnswer = uint192(minAnswerInt).toUint192();
             uint256 maxAnswer = uint192(maxAnswerInt).toUint192();
+            uint256 rangeAdjustor = (maxAnswer - minAnswer).percentMul(rangeFactor);
 
             require(
-                answer >= minAnswer.percentAdd(rangeFactor) && answer <= maxAnswer.percentSub(rangeFactor),
-                ErrorsLib.INVALID_ANSWER
+                answer >= minAnswer + rangeAdjustor && answer <= maxAnswer - rangeAdjustor, ErrorsLib.INVALID_ANSWER
             );
         }
     }

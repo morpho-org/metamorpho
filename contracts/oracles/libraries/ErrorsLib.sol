@@ -8,6 +8,8 @@ library ErrorsLib {
 
     string internal constant NEGATIVE_VALUE = "negative value";
 
+    string internal constant INCORRECT_RANGE_FACTOR = "range factor must be between 0 and 50%";
+
     string internal constant INVALID_QUOTE_TOKEN = "invalid quote token";
 
     string internal constant INVALID_ANSWER = "invalid answer";
