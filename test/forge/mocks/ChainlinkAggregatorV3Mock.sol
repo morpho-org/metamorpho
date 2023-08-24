@@ -6,7 +6,7 @@ import {IChainlinkOffchainAggregator} from "contracts/oracles/adapters/interface
 
 contract ChainlinkOffchainAggregatorMock is IChainlinkOffchainAggregator {
     int192 public minAnswer;
-    int192 public maxAnswer = 2 ** 128 - 1;
+    int192 public maxAnswer = type(int192).max;
 }
 
 contract ChainlinkAggregatorV3Mock is IChainlinkAggregatorV3 {
