@@ -87,9 +87,11 @@ contract ChainlinkOracleTest is Test {
         borrowableFeed.setLatestAnswer(int256(borrowablePrice));
 
         uint256 scale = 10 ** (36 + borrowableDecimals - collateralDecimals);
+        uint256 collateralStaleTimeout = type(uint256).max;
+        uint256 borrowableStaleTimeout = type(uint256).max;
 
         chainlinkOracle =
-        new ChainlinkPairOracle(scale, address(collateralFeed), type(uint256).max, address(borrowableFeed), type(uint256).max);
+        new ChainlinkPairOracle(scale, address(collateralFeed), collateralStaleTimeout, address(borrowableFeed), borrowableStaleTimeout);
 
         uint256 collateralPriceInBorrowable = collateralPrice.mulDiv(10 ** borrowableFeedDecimals, borrowablePrice);
 
