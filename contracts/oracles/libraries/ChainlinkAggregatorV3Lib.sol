@@ -3,13 +3,15 @@ pragma solidity ^0.8.0;
 
 import {IChainlinkAggregatorV3} from "../adapters/interfaces/IChainlinkAggregatorV3.sol";
 
+import {ErrorsLib} from "./ErrorsLib.sol";
+
 library ChainlinkAggregatorV3Lib {
     function price(IChainlinkAggregatorV3 priceFeed, uint256 staleTimeout) internal view returns (uint256) {
         (, int256 answer,, uint256 updatedAt,) = priceFeed.latestRoundData();
 
         require(answer > 0, "ChainlinkAggregatorV3Lib: price is negative");
 
-        require(block.timestamp - updatedAt <= staleTimeout, "ChainlinkAggregatorV3Lib: price is stale");
+        require(block.timestamp - updatedAt <= staleTimeout, ErrorsLib.STALE_PRICE);
 
         return uint256(answer);
     }
