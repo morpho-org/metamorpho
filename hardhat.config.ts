@@ -1,14 +1,15 @@
-import "@nomicfoundation/hardhat-chai-matchers";
-import "@nomicfoundation/hardhat-foundry";
-import "@nomicfoundation/hardhat-network-helpers";
-import "@nomiclabs/hardhat-ethers";
-import "@typechain/hardhat";
 import * as dotenv from "dotenv";
 import "ethers-maths";
 import "hardhat-gas-reporter";
 import "hardhat-tracer";
 import { HardhatUserConfig } from "hardhat/config";
 import "solidity-coverage";
+
+import "@nomicfoundation/hardhat-chai-matchers";
+import "@nomicfoundation/hardhat-foundry";
+import "@nomicfoundation/hardhat-network-helpers";
+import "@nomiclabs/hardhat-ethers";
+import "@typechain/hardhat";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ const config: HardhatUserConfig = {
             runs: 200,
           },
           viaIR: true,
+          evmVersion: "paris",
         },
       },
     ],

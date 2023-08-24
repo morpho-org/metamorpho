@@ -2,7 +2,20 @@
 src = "contracts"
 out = "out"
 libs = ["lib"]
+fs_permissions = [{ access = "read", path = "./config/"}, { access = "read", path = "./lib/morpho-blue/out/"}]
 via-ir = true
+evm_version = "paris"
+
+[fuzz]
+runs = 32
+
+[invariant]
+runs = 16
+depth = 4
+
+[rpc_endpoints]
+mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
+tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 
 [fmt]
 wrap_comments = true

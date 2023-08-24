@@ -145,12 +145,16 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     }
 
     /// @dev Triggers a liquidation on Blue.
-    function morphoLiquidate(MarketParams calldata marketparams, address borrower, uint256 seized, bytes memory data)
-        external
-    {
+    function morphoLiquidate(
+        MarketParams calldata marketparams,
+        address borrower,
+        uint256 seizedAssets,
+        uint256 repaidShares,
+        bytes memory data
+    ) external {
         _approveMaxBlue(marketparams.borrowableToken);
 
-        MORPHO.liquidate(marketparams, borrower, seized, data);
+        MORPHO.liquidate(marketparams, borrower, seizedAssets, repaidShares, data);
     }
 
     /// @dev Triggers a flash loan on Blue.
