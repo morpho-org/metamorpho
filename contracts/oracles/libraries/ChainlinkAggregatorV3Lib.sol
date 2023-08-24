@@ -19,7 +19,7 @@ library ChainlinkAggregatorV3Lib {
     {
         (, int256 answerInt,,,) = priceFeed.latestRoundData();
 
-        require(answerInt >= 0, ErrorsLib.NEGATIVE_ANSWER_VALUE);
+        require(answerInt >= 0, ErrorsLib.NEGATIVE_ANSWER);
 
         answer = uint256(answerInt);
 
@@ -29,7 +29,7 @@ library ChainlinkAggregatorV3Lib {
             int192 maxAnswerInt = IChainlinkOffchainAggregator(offchainFeed).maxAnswer();
 
             // No need to check for maxAnswerInt since maxAnswerInt >= minAnswerInt.
-            require(minAnswerInt >= 0, ErrorsLib.NEGATIVE_MIN_ANSWER_VALUE);
+            require(minAnswerInt >= 0, ErrorsLib.NEGATIVE_MIN_ANSWER);
 
             uint256 minAnswer = uint192(minAnswerInt).toUint192();
             uint256 maxAnswer = uint192(maxAnswerInt).toUint192();

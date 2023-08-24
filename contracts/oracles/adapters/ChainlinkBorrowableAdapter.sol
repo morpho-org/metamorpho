@@ -19,7 +19,7 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
 
     constructor(address feed, uint256 boundOffsetFactor) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
-        require(boundOffsetFactor <= PercentageMath.HALF_PERCENTAGE_FACTOR, ErrorsLib.INCORRECT_BOUND_OFFSET_FACTOR);
+        require(boundOffsetFactor <= PercentageMath.HALF_PERCENTAGE_FACTOR, ErrorsLib.INVALID_BOUND_OFFSET_FACTOR);
 
         _CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
         BORROWABLE_BOUND_OFFSET_FACTOR = boundOffsetFactor;
