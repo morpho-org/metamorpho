@@ -12,13 +12,15 @@ contract ChainlinkL2PairOracle is BaseOracle, ChainlinkL2CollateralAdapter, Chai
     constructor(
         uint256 priceScale,
         address collateralFeed,
+        uint256 collateralBoundOffsetFactor,
         address borrowableFeed,
+        uint256 borrowableBoundOffsetFactor,
         address sequencerUptimeFeed,
         uint256 gracePeriod
     )
         BaseOracle(priceScale)
-        ChainlinkCollateralAdapter(collateralFeed)
-        ChainlinkBorrowableAdapter(borrowableFeed)
+        ChainlinkCollateralAdapter(collateralFeed, collateralBoundOffsetFactor)
+        ChainlinkBorrowableAdapter(borrowableFeed, borrowableBoundOffsetFactor)
         ChainlinkL2BaseAdapter(sequencerUptimeFeed, gracePeriod)
     {}
 }
