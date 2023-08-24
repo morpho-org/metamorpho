@@ -6,8 +6,8 @@ import {StaticBorrowableAdapter} from "./adapters/StaticBorrowableAdapter.sol";
 import {ChainlinkCollateralAdapter} from "./adapters/ChainlinkCollateralAdapter.sol";
 
 contract ChainlinkOracle is BaseOracle, ChainlinkCollateralAdapter, StaticBorrowableAdapter {
-    constructor(uint256 scaleFactor, address feed, uint256 relativePriceLimit)
+    constructor(uint256 scaleFactor, address feed, uint256 rangeFactor)
         BaseOracle(scaleFactor)
-        ChainlinkCollateralAdapter(feed, relativePriceLimit)
+        ChainlinkCollateralAdapter(feed, rangeFactor)
     {}
 }

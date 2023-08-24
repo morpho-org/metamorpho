@@ -10,12 +10,12 @@ contract UniswapV3ChainlinkOracle is BaseOracle, UniswapV3CollateralAdapter, Cha
         uint256 scaleFactor,
         address pool,
         address feed,
-        uint256 relativePriceLimit,
+        uint256 rangeFactor,
         uint32 collateralPriceWindow,
         address collateralPriceQuoteToken
     )
         BaseOracle(scaleFactor)
         UniswapV3CollateralAdapter(pool, collateralPriceWindow, collateralPriceQuoteToken)
-        ChainlinkBorrowableAdapter(feed, relativePriceLimit)
+        ChainlinkBorrowableAdapter(feed, rangeFactor)
     {}
 }

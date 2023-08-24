@@ -13,14 +13,14 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     IChainlinkAggregatorV3 internal immutable _CHAINLINK_COLLATERAL_FEED;
-    uint256 internal immutable _CHAINLINK_COLLATERAL_RELATIVE_PRICE_LIMIT;
+    uint256 internal immutable _CHAINLINK_COLLATERAL_RANGE_FACTOR;
 
-    constructor(address feed, uint256 relativePriceLimit) {
+    constructor(address feed, uint256 rangeFactor) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
 
         _CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
         COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
-        _CHAINLINK_COLLATERAL_RELATIVE_PRICE_LIMIT = relativePriceLimit;
+        _CHAINLINK_COLLATERAL_RANGE_FACTOR = rangeFactor;
     }
 
     function COLLATERAL_FEED() external view returns (string memory, address) {
@@ -28,6 +28,6 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
     }
 
     function collateralPrice() public view virtual override returns (uint256) {
-        return _CHAINLINK_COLLATERAL_FEED.price(_CHAINLINK_COLLATERAL_RELATIVE_PRICE_LIMIT);
+        return _CHAINLINK_COLLATERAL_FEED.price(_CHAINLINK_COLLATERAL_RANGE_FACTOR);
     }
 }
