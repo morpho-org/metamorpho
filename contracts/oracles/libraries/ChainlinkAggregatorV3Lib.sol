@@ -17,11 +17,11 @@ library ChainlinkAggregatorV3Lib {
         view
         returns (uint256 answer)
     {
-        (, int256 answerIn,,,) = priceFeed.latestRoundData();
+        (, int256 answerInt,,,) = priceFeed.latestRoundData();
 
-        require(answerIn >= 0, ErrorsLib.NEGATIVE_ANSWER_VALUE);
+        require(answerInt >= 0, ErrorsLib.NEGATIVE_ANSWER_VALUE);
 
-        answer = uint256(answerIn);
+        answer = uint256(answerInt);
 
         if (boundOffsetFactor > 0) {
             address offchainFeed = priceFeed.aggregator();
