@@ -22,8 +22,9 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
         require(boundOffsetFactor <= PercentageMath.HALF_PERCENTAGE_FACTOR, ErrorsLib.INCORRECT_BOUND_OFFSET_FACTOR);
 
         _CHAINLINK_COLLATERAL_FEED = IChainlinkAggregatorV3(feed);
-        COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
         COLLATERAL_BOUND_OFFSET_FACTOR = boundOffsetFactor;
+
+        COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
     }
 
     function COLLATERAL_FEED() external view returns (string memory, address) {
