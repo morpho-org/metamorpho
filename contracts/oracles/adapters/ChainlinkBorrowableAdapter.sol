@@ -13,12 +13,14 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
     using ChainlinkAggregatorV3Lib for IChainlinkAggregatorV3;
 
     IChainlinkAggregatorV3 internal immutable _CHAINLINK_BORROWABLE_FEED;
+    uint256 internal immutable _CHAINLINK_BORROWABLE_RELATIVE_PRICE_LIMIT;
 
-    constructor(address feed) {
+    constructor(address feed, uint256 relativePriceLimit) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
 
         _CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
         BORROWABLE_SCALE = 10 ** _CHAINLINK_BORROWABLE_FEED.decimals();
+        _CHAINLINK_BORROWABLE_RELATIVE_PRICE_LIMIT = relativePriceLimit;
     }
 
     function BORROWABLE_FEED() external view returns (string memory, address) {
@@ -26,6 +28,6 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
     }
 
     function borrowablePrice() public view virtual override returns (uint256) {
-        return _CHAINLINK_BORROWABLE_FEED.price();
+        return _CHAINLINK_BORROWABLE_FEED.price(_CHAINLINK_BORROWABLE_RELATIVE_PRICE_LIMIT);
     }
 }

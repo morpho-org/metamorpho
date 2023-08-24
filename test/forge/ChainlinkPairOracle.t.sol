@@ -23,6 +23,7 @@ contract ChainlinkOracleTest is Test {
     uint256 SCALE_FACTOR;
     uint8 COLLATERAL_DECIMALS = 8;
     uint8 BORROWABLE_DECIMALS = 10;
+    uint256 RELATIVE_PRICE_LIMIT = 0;
 
     function setUp() public {
         collateral = new ERC20Mock("Collateral", "COL", 18);
@@ -36,7 +37,8 @@ contract ChainlinkOracleTest is Test {
 
         SCALE_FACTOR = 10 ** (36 + COLLATERAL_DECIMALS - BORROWABLE_DECIMALS);
 
-        chainlinkOracle = new ChainlinkPairOracle(SCALE_FACTOR, address(collateralFeed), address(borrowableFeed));
+        chainlinkOracle =
+        new ChainlinkPairOracle(SCALE_FACTOR, address(collateralFeed), address(borrowableFeed), RELATIVE_PRICE_LIMIT);
     }
 
     function testConfig() public {
@@ -95,7 +97,8 @@ contract ChainlinkOracleTest is Test {
 
         uint256 scale = 10 ** (36 + borrowableDecimals - collateralDecimals);
 
-        chainlinkOracle = new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed));
+        chainlinkOracle =
+            new ChainlinkPairOracle(scale, address(collateralFeed), address(borrowableFeed), RELATIVE_PRICE_LIMIT);
 
         uint256 collateralPriceInBorrowable = collateralPrice.mulDiv(10 ** borrowableFeedDecimals, borrowablePrice);
 
