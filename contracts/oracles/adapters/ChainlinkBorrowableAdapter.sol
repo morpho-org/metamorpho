@@ -15,7 +15,7 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
 
     IChainlinkAggregatorV3 internal immutable _CHAINLINK_BORROWABLE_FEED;
 
-    uint256 public immutable CHAINLINK_BORROWABLE_BOUND_OFFSET_FACTOR;
+    uint256 public immutable BORROWABLE_BOUND_OFFSET_FACTOR;
 
     constructor(address feed, uint256 boundOffsetFactor) {
         require(feed != address(0), ErrorsLib.ZERO_ADDRESS);
@@ -23,7 +23,7 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
 
         _CHAINLINK_BORROWABLE_FEED = IChainlinkAggregatorV3(feed);
         BORROWABLE_SCALE = 10 ** _CHAINLINK_BORROWABLE_FEED.decimals();
-        CHAINLINK_BORROWABLE_BOUND_OFFSET_FACTOR = boundOffsetFactor;
+        BORROWABLE_BOUND_OFFSET_FACTOR = boundOffsetFactor;
     }
 
     function BORROWABLE_FEED() external view returns (string memory, address) {
@@ -31,6 +31,6 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
     }
 
     function borrowablePrice() public view virtual override returns (uint256) {
-        return _CHAINLINK_BORROWABLE_FEED.price(CHAINLINK_BORROWABLE_BOUND_OFFSET_FACTOR);
+        return _CHAINLINK_BORROWABLE_FEED.price(BORROWABLE_BOUND_OFFSET_FACTOR);
     }
 }

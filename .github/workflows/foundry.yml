@@ -12,24 +12,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  forge-test:
-    strategy:
-      fail-fast: true
-      matrix:
-        type: ["slow", "fast"]
-        include:
-          - type: "slow"
-            fuzz-runs: 100000
-            max-test-rejects: 500000
-            invariant-runs: 1000
-            invariant-depth: 100
-          - type: "fast"
-            fuzz-runs: 256
-            max-test-rejects: 65536
-            invariant-runs: 256
-            invariant-depth: 15
-
+  build-via-ir:
+    name: Compilation (via IR)
     runs-on: ubuntu-latest
+
     steps:
       - name: Generate a token
         id: generate-token
@@ -41,16 +27,104 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          token:  ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Run Forge tests in ${{ matrix.type }} mode
-        run: forge test -vvv
+      - name: Build contracts via IR & check sizes
+        run: make contracts # don't use compilation cache
+
+  test-local:
+    name: Local tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        type: ["slow", "fast"]
+        include:
+          - type: "slow"
+            fuzz-runs: 100000
+            max-test-rejects: 500000
+            invariant-runs: 64
+            invariant-depth: 1024
+          - type: "fast"
+            fuzz-runs: 256
+            max-test-rejects: 65536
+            invariant-runs: 16
+            invariant-depth: 256
+
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run local tests in ${{ matrix.type }} mode
+        run: make test-local
         env:
           FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
           FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
           FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
+          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
+
+  test-mainnet:
+    name: Ethereum tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        type: ["slow", "fast"]
+        include:
+          - type: "slow"
+            fuzz-runs: 1024
+            max-test-rejects: 65536
+            invariant-runs: 64
+            invariant-depth: 1024
+          - type: "fast"
+            fuzz-runs: 256
+            max-test-rejects: 65536
+            invariant-runs: 16
+            invariant-depth: 256
+
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run mainnet tests in ${{ matrix.type }} mode
+        run: make test-mainnet
+        env:
+          ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
+          FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
+          FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
+          FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
+          FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
+          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}

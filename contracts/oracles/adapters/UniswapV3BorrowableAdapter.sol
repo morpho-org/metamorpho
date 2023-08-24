@@ -14,7 +14,7 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
 
     IUniswapV3Pool private immutable _UNI_V3_BORROWABLE_POOL;
     uint32 private immutable _UNI_V3_BORROWABLE_WINDOW;
-    bool private immutable _PRICE_INVERSED;
+    bool private immutable _BORROWABLE_PRICE_INVERSED;
 
     /// @dev Warning: assumes `quoteToken` is either the pool's token0 or token1.
     constructor(address pool, uint32 window, address quoteToken) {
@@ -28,7 +28,7 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
         address token1 = _UNI_V3_BORROWABLE_POOL.token1();
         require(quoteToken == token0 || quoteToken == token1, ErrorsLib.INVALID_QUOTE_TOKEN);
 
-        _PRICE_INVERSED = quoteToken == token0;
+        _BORROWABLE_PRICE_INVERSED = quoteToken == token0;
 
         BORROWABLE_SCALE = 1 << 128;
     }
@@ -41,7 +41,11 @@ abstract contract UniswapV3BorrowableAdapter is BaseOracle {
         return _UNI_V3_BORROWABLE_WINDOW;
     }
 
+    function BORROWABLE_PRICE_INVERSED() external view returns (bool) {
+        return _BORROWABLE_PRICE_INVERSED;
+    }
+
     function borrowablePrice() public view virtual override returns (uint256) {
-        return _UNI_V3_BORROWABLE_POOL.priceX128(_UNI_V3_BORROWABLE_WINDOW, _PRICE_INVERSED);
+        return _UNI_V3_BORROWABLE_POOL.priceX128(_UNI_V3_BORROWABLE_WINDOW, _BORROWABLE_PRICE_INVERSED);
     }
 }

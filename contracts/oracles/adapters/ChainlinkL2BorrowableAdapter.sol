@@ -13,7 +13,7 @@ abstract contract ChainlinkL2BorrowableAdapter is ChainlinkL2BaseAdapter, Chainl
 
     function borrowablePrice() public view virtual override returns (uint256) {
         return _CHAINLINK_BORROWABLE_FEED.price(
-            CHAINLINK_BORROWABLE_BOUND_OFFSET_FACTOR, SEQUENCER_UPTIME_FEED, GRACE_PERIOD
+            BORROWABLE_BOUND_OFFSET_FACTOR, SEQUENCER_UPTIME_FEED, GRACE_PERIOD
         );
     }
 }
