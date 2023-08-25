@@ -5,7 +5,7 @@ import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 import {PercentageMath} from "@morpho-utils/math/PercentageMath.sol";
-import {ChainlinkAggregatorV3Lib} from "../libraries/ChainlinkAggregatorV3Lib.sol";
+import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
 

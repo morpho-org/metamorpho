@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
-import {UniswapV3PoolLib} from "../libraries/UniswapV3PoolLib.sol";
+import {UniswapV3PoolLib} from "./libraries/UniswapV3PoolLib.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
 
