@@ -14,7 +14,7 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
 
     IUniswapV3Pool private immutable _UNI_V3_COLLATERAL_POOL;
     uint32 private immutable _UNI_V3_COLLATERAL_WINDOW;
-    bool private immutable _PRICE_INVERSED;
+    bool private immutable _COLLATERAL_PRICE_INVERSED;
 
     constructor(address pool, uint32 window, address quoteToken) {
         require(pool != address(0), ErrorsLib.ZERO_ADDRESS);
@@ -27,7 +27,7 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
         address token1 = _UNI_V3_COLLATERAL_POOL.token1();
         require(quoteToken == token0 || quoteToken == token1, ErrorsLib.INVALID_QUOTE_TOKEN);
 
-        _PRICE_INVERSED = quoteToken == token0;
+        _COLLATERAL_PRICE_INVERSED = quoteToken == token0;
 
         COLLATERAL_SCALE = 1 << 128;
     }
@@ -40,7 +40,11 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
         return _UNI_V3_COLLATERAL_WINDOW;
     }
 
+    function COLLATERAL_PRICE_INVERSED() external view returns (bool) {
+        return _COLLATERAL_PRICE_INVERSED;
+    }
+
     function collateralPrice() public view virtual override returns (uint256) {
-        return _UNI_V3_COLLATERAL_POOL.priceX128(_UNI_V3_COLLATERAL_WINDOW, _PRICE_INVERSED);
+        return _UNI_V3_COLLATERAL_POOL.priceX128(_UNI_V3_COLLATERAL_WINDOW, _COLLATERAL_PRICE_INVERSED);
     }
 }

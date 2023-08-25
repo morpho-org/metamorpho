@@ -27,9 +27,9 @@ abstract contract BaseOracle is IOracle {
 
     function price() external view returns (uint256) {
         // Using FullMath's 512 bit multiplication to avoid overflowing.
-        uint256 collateralPriceInBorrowable = collateralPrice().mulDiv(BORROWABLE_SCALE, borrowablePrice());
+        uint256 invBorrowablePrice = SCALE_FACTOR.mulDiv(BORROWABLE_SCALE, borrowablePrice());
 
-        return SCALE_FACTOR.mulDiv(collateralPriceInBorrowable, COLLATERAL_SCALE);
+        return collateralPrice().mulDiv(invBorrowablePrice, COLLATERAL_SCALE);
     }
 
     function collateralPrice() public view virtual returns (uint256);

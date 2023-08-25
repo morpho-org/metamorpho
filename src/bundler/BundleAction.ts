@@ -46,8 +46,11 @@ class BundleAction {
     return BundleAction.ERC20_BUNDLER_IFC.encodeFunctionData("transferFrom2", [asset, amount]);
   }
 
-  static morphoSetAuthorization(authorization: AuthorizationStruct, signature: SignatureStruct): BundleCall {
-    return BundleAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoSetAuthorization", [authorization, signature]);
+  static morphoSetAuthorizationWithSig(authorization: AuthorizationStruct, signature: SignatureStruct): BundleCall {
+    return BundleAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoSetAuthorizationWithSig", [
+      authorization,
+      signature,
+    ]);
   }
 
   static morphoSupply(
@@ -80,7 +83,7 @@ class BundleAction {
     ]);
   }
 
-  static morphoBorrow(market: MarketStruct, amount: BigNumberish, receiver: string): BundleCall {
+  static morphoBorrow(market: MarketStruct, amount: BigNumberish, shares: BigNumberish, receiver: string): BundleCall {
     return BundleAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoBorrow", [market, amount, shares, receiver]);
   }
 
@@ -116,13 +119,15 @@ class BundleAction {
   static morphoLiquidate(
     market: MarketStruct,
     borrower: string,
-    amount: BigNumberish,
+    seizedAssets: BigNumberish,
+    repaidShares: BigNumberish,
     callbackCalls: BundleCall[],
   ): BundleCall {
     return BundleAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoLiquidate", [
       market,
       borrower,
-      amount,
+      seizedAssets,
+      repaidShares,
       BundleAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
     ]);
   }
