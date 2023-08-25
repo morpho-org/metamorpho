@@ -10,11 +10,13 @@ contract ChainlinkPairOracle is BaseOracle, ChainlinkCollateralAdapter, Chainlin
         uint256 scaleFactor,
         address collateralFeed,
         uint256 collateralStaleTimeout,
+        uint256 collateralBoundOffsetFactor,
         address borrowableFeed,
-        uint256 borrowableStaleTimeout
+        uint256 borrowableStaleTimeout,
+        uint256 borrowableBoundOffsetFactor
     )
         BaseOracle(scaleFactor)
-        ChainlinkCollateralAdapter(collateralFeed, collateralStaleTimeout)
-        ChainlinkBorrowableAdapter(borrowableFeed, borrowableStaleTimeout)
+        ChainlinkCollateralAdapter(collateralFeed, collateralStaleTimeout, collateralBoundOffsetFactor)
+        ChainlinkBorrowableAdapter(borrowableFeed, borrowableStaleTimeout, borrowableBoundOffsetFactor)
     {}
 }

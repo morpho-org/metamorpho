@@ -36,7 +36,7 @@ abstract contract ForkTest is BaseTest, Configured {
             ConfigMarket memory configMarket = configMarkets[i];
 
             ChainlinkOracle oracle =
-            new ChainlinkOracle(10 ** (36 + ERC20(configMarket.collateralToken).decimals() - ERC20(configMarket.borrowableToken).decimals()), configMarket.chainlinkFeed, type(uint256).max);
+            new ChainlinkOracle(10 ** (36 + ERC20(configMarket.collateralToken).decimals() - ERC20(configMarket.borrowableToken).decimals()), configMarket.chainlinkFeed, type(uint256).max, 0);
 
             MarketParams memory marketParams = MarketParams({
                 collateralToken: configMarket.collateralToken,
