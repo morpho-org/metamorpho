@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
-import {OracleFeed} from "../libraries/OracleFeed.sol";
 import {PercentageMath} from "@morpho-utils/math/PercentageMath.sol";
-import {ChainlinkAggregatorV3Lib} from "../libraries/ChainlinkAggregatorV3Lib.sol";
+import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
 
@@ -27,8 +26,8 @@ abstract contract ChainlinkCollateralAdapter is BaseOracle {
         COLLATERAL_SCALE = 10 ** _CHAINLINK_COLLATERAL_FEED.decimals();
     }
 
-    function COLLATERAL_FEED() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK_V3, address(_CHAINLINK_COLLATERAL_FEED));
+    function COLLATERAL_FEED() external view returns (address) {
+        return address(_CHAINLINK_COLLATERAL_FEED);
     }
 
     function collateralPrice() public view virtual override returns (uint256) {

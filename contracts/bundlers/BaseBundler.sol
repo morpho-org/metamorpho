@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {IMulticall} from "./interfaces/IMulticall.sol";
-
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
 import {BaseSelfMulticall} from "../BaseSelfMulticall.sol";

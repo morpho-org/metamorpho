@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {IUniswapV3Pool} from "@uniswap/v3-core/interfaces/IUniswapV3Pool.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
-import {OracleFeed} from "../libraries/OracleFeed.sol";
-import {UniswapV3PoolLib} from "../libraries/UniswapV3PoolLib.sol";
+import {UniswapV3PoolLib} from "./libraries/UniswapV3PoolLib.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
 
@@ -32,8 +31,8 @@ abstract contract UniswapV3CollateralAdapter is BaseOracle {
         COLLATERAL_SCALE = 1 << 128;
     }
 
-    function COLLATERAL_FEED() external view returns (string memory, address) {
-        return (OracleFeed.UNISWAP_V3, address(_UNI_V3_COLLATERAL_POOL));
+    function COLLATERAL_FEED() external view returns (address) {
+        return address(_UNI_V3_COLLATERAL_POOL);
     }
 
     function COLLATERAL_WINDOW() external view returns (uint32) {
