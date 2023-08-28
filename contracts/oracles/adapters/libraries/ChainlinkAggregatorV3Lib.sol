@@ -8,8 +8,6 @@ import {ErrorsLib} from "../../libraries/ErrorsLib.sol";
 import {PercentageMath} from "@morpho-utils/math/PercentageMath.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {ErrorsLib} from "./ErrorsLib.sol";
-
 library ChainlinkAggregatorV3Lib {
     using SafeCast for uint192;
     using PercentageMath for uint256;
