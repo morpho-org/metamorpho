@@ -1,7 +1,0 @@
-.
-└── constructor
-    └── Do constructor steps of ChainlinkL2BaseAdapter, ChainlinkCollateralAdapter
-
-.
-└── collateralPrice()
-    └── return feed.price(sequencerUptimeFeed, gracePeriod)
