@@ -77,14 +77,12 @@ contract AaveV3OptimizerBundler is BaseBundler, ERC20Bundler {
     }
 
     function aaveV3OptimizerApproveManagerWithSig(
-        address delegator,
-        address manager,
         bool isAllowed,
         uint256 nonce,
         uint256 deadline,
         Types.Signature calldata signature
     ) external {
-        AAVE_V3_OPTIMIZER.approveManagerWithSig(delegator, manager, isAllowed, nonce, deadline, signature);
+        AAVE_V3_OPTIMIZER.approveManagerWithSig(_initiator, address(this), isAllowed, nonce, deadline, signature);
     }
 
     function _approveMaxAaveV3Optimizer(address asset) internal {
