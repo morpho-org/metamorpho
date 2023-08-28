@@ -7,6 +7,7 @@ solmate/=lib/solmate/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 
 @forge-std/=lib/morpho-blue/lib/forge-std/src/
+@morpho-v1/=lib/morpho-v1/src/
 @morpho-blue/=lib/morpho-blue/src/
 @morpho-utils/=lib/morpho-utils/src/
 @morpho-aave-v3/=lib/morpho-aave-v3/src

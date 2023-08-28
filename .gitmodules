@@ -29,3 +29,6 @@
 [submodule "lib/morpho-aave-v3"]
 	path = lib/morpho-aave-v3
 	url = https://github.com/morpho-org/morpho-aave-v3
+[submodule "lib/morpho-v1"]
+	path = lib/morpho-v1
+	url = https://github.com/morpho-org/morpho-v1
