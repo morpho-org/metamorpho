@@ -13,6 +13,7 @@ contract EVMBundlerTest is BaseBundlerTest {
     using SharesMathLib for uint256;
 
     EVMBundler private bundler;
+    bytes[] private bundleData;
 
     function setUp() public override {
         super.setUp();
@@ -28,19 +29,6 @@ contract EVMBundlerTest is BaseBundlerTest {
         // So tests can borrow/withdraw on behalf of USER without pranking it.
         morpho.setAuthorization(address(this), true);
         vm.stopPrank();
-    }
-
-    /* INVARIANTS */
-
-    function invariantBundlerBalanceOfZero() public {
-        assertEq(collateralToken.balanceOf(address(bundler)), 0, "collateral.balanceOf(bundler)");
-        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "borrowable.balanceOf(bundler)");
-    }
-
-    function invariantBundlerPositionZero() public {
-        assertEq(morpho.collateral(id, address(bundler)), 0, "collateral(bundler)");
-        assertEq(morpho.supplyShares(id, address(bundler)), 0, "supplyShares(bundler)");
-        assertEq(morpho.borrowShares(id, address(bundler)), 0, "borrowShares(bundler)");
     }
 
     /* TESTS */
@@ -77,6 +65,34 @@ contract EVMBundlerTest is BaseBundlerTest {
         bundler.multicall(block.timestamp, transferFromData);
         vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
         bundler.multicall(block.timestamp, approve2Data);
+    }
+
+    function testTransfer(uint256 amount, address receiver) public {
+        vm.assume(receiver != address(0) && receiver != address(bundler));
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(ERC20Bundler.transfer, (address(borrowableToken), receiver, amount));
+
+        borrowableToken.setBalance(address(bundler), amount);
+        bundler.multicall(block.timestamp, data);
+
+        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "borrowable.balanceOf(address(bundler))");
+        assertEq(borrowableToken.balanceOf(receiver), amount, "borrowable.balanceOf(receiver)");
+    }
+
+    function testTransferFrom2(uint256 amount) public {
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(borrowableToken), amount));
+
+        borrowableToken.setBalance(USER, amount);
+        vm.prank(USER);
+        bundler.multicall(block.timestamp, data);
+
+        assertEq(borrowableToken.balanceOf(address(bundler)), amount, "borrowable.balanceOf(address(bundler))");
+        assertEq(borrowableToken.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
     }
 
     function testBundlerAddress(uint256 amount) public {
@@ -116,7 +132,7 @@ contract EVMBundlerTest is BaseBundlerTest {
         assertEq(borrowableToken.balanceOf(address(morpho)), amount, "borrowable.balanceOf(address(morpho))");
 
         assertEq(morpho.collateral(id, USER), 0, "collateral(USER)");
-        assertEq(morpho.supplyShares(id, USER), amount.toSharesDown(0,0), "supplyShares(USER)");
+        assertEq(morpho.supplyShares(id, USER), amount.toSharesDown(0, 0), "supplyShares(USER)");
         assertEq(morpho.borrowShares(id, USER), 0, "borrowShares(USER)");
     }
 
@@ -143,7 +159,7 @@ contract EVMBundlerTest is BaseBundlerTest {
 
     function testWithdraw(uint256 amount, uint256 withdrawnShares) public {
         amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
-        uint256 expectedSupplyShares = amount.toSharesDown(0,0);
+        uint256 expectedSupplyShares = amount.toSharesDown(0, 0);
         withdrawnShares = bound(withdrawnShares, 1, expectedSupplyShares);
         uint256 expectedWithdrawnAmount = withdrawnShares.toAssetsDown(amount, expectedSupplyShares);
 
@@ -160,7 +176,11 @@ contract EVMBundlerTest is BaseBundlerTest {
 
         assertEq(borrowableToken.balanceOf(USER), expectedWithdrawnAmount, "borrowable.balanceOf(USER)");
         assertEq(borrowableToken.balanceOf(address(bundler)), 0, "borrowable.balanceOf(address(bundler))");
-        assertEq(borrowableToken.balanceOf(address(morpho)), amount - expectedWithdrawnAmount, "borrowable.balanceOf(address(morpho))");
+        assertEq(
+            borrowableToken.balanceOf(address(morpho)),
+            amount - expectedWithdrawnAmount,
+            "borrowable.balanceOf(address(morpho))"
+        );
 
         assertEq(morpho.collateral(id, USER), 0, "collateral(USER)");
         assertEq(morpho.supplyShares(id, USER), expectedSupplyShares - withdrawnShares, "supplyShares(USER)");
@@ -308,5 +328,223 @@ contract EVMBundlerTest is BaseBundlerTest {
         bundler.multicall(block.timestamp, data);
 
         _testRepayWithdrawCollateral(collateralAmount, receiver);
+    }
+
+    struct BundleTransactionsVars {
+        uint256 expectedSupplyShares;
+        uint256 expectedBorrowShares;
+        uint256 expectedTotalSupply;
+        uint256 expectedTotalBorrow;
+        uint256 expectedCollateral;
+        uint256 expectedBundlerBorrowableBalance;
+        uint256 expectedBundlerCollateralBalance;
+        uint256 initialUserBorrowableBalance;
+        uint256 initialUserCollateralBalance;
+    }
+
+    function testBundleTransactions(uint256 size, uint256 seedAction, uint256 seedAmount) public {
+        seedAction = bound(seedAction, 0, type(uint256).max - 30);
+        seedAmount = bound(seedAmount, 0, type(uint256).max - 30);
+
+        BundleTransactionsVars memory vars;
+
+        for (uint256 i; i < size % 30; ++i) {
+            uint256 actionId = uint256(keccak256(abi.encode(seedAmount + i))) % 11;
+            uint256 amount = uint256(keccak256(abi.encode(seedAmount + i)));
+            if (actionId < 3) _addSupplyData(vars, amount);
+            else if (actionId < 6) _addSupplyCollateralData(vars, amount);
+            else if (actionId < 8) _addBorrowData(vars, amount);
+            else if (actionId < 9) _addRepayData(vars, amount);
+            else if (actionId < 10) _addWithdrawData(vars, amount);
+            else if (actionId == 10) _addWithdrawCollateralData(vars, amount);
+        }
+
+        // borrowableToken.setBalance(USER, vars.initialUserBorrowableBalance);
+        // collateralToken.setBalance(USER, vars.initialUserCollateralBalance);
+        borrowableToken.setBalance(USER, vars.initialUserBorrowableBalance);
+        collateralToken.setBalance(USER, vars.initialUserCollateralBalance);
+
+        vm.prank(USER);
+        bundler.multicall(block.timestamp, bundleData);
+
+        assertEq(morpho.supplyShares(id, USER), vars.expectedSupplyShares, "User's supply shares");
+        assertEq(morpho.borrowShares(id, USER), vars.expectedBorrowShares, "User's borrow shares");
+        assertEq(morpho.totalSupplyShares(id), vars.expectedSupplyShares, "Total supply shares");
+        assertEq(morpho.totalBorrowShares(id), vars.expectedBorrowShares, "Total borrow shares");
+        assertEq(morpho.totalSupplyAssets(id), vars.expectedTotalSupply, "Total supply");
+        assertEq(morpho.totalBorrowAssets(id), vars.expectedTotalBorrow, "Total borrow");
+        assertEq(morpho.collateral(id, USER), vars.expectedCollateral, "User's collateral");
+
+        assertEq(borrowableToken.balanceOf(USER), 0, "User's borrowable balance");
+        assertEq(collateralToken.balanceOf(USER), 0, "User's collateral balance");
+        assertEq(
+            borrowableToken.balanceOf(address(morpho)),
+            vars.expectedTotalSupply - vars.expectedTotalBorrow,
+            "User's borrowable balance"
+        );
+        assertEq(collateralToken.balanceOf(address(morpho)), vars.expectedCollateral, "Morpho's collateral balance");
+        assertEq(
+            borrowableToken.balanceOf(address(bundler)),
+            vars.expectedBundlerBorrowableBalance,
+            "Bundler's borrowable balance"
+        );
+        assertEq(
+            collateralToken.balanceOf(address(bundler)),
+            vars.expectedBundlerCollateralBalance,
+            "Bundler's collateral balance"
+        );
+    }
+
+    function _getTransferData(address tokenAddress, uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(ERC20Bundler.transfer, (tokenAddress, USER, amount));
+    }
+
+    function _getTransferFrom2Data(address tokenAddress, uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(ERC20Bundler.transferFrom2, (tokenAddress, amount));
+    }
+
+    function _getSupplyData(uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(MorphoBundler.morphoSupply, (marketParams, amount, 0, USER, hex""));
+    }
+
+    function _getSupplyCollateralData(uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (marketParams, amount, USER, hex""));
+    }
+
+    function _getWithdrawData(uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(MorphoBundler.morphoWithdraw, (marketParams, amount, 0, address(bundler)));
+    }
+
+    function _getWithdrawCollateralData(uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(MorphoBundler.morphoWithdrawCollateral, (marketParams, amount, address(bundler)));
+    }
+
+    function _getBorrowData(uint256 shares) internal view returns (bytes memory data) {
+        data = abi.encodeCall(MorphoBundler.morphoBorrow, (marketParams, 0, shares, address(bundler)));
+    }
+
+    function _getRepayData(uint256 amount) internal view returns (bytes memory data) {
+        data = abi.encodeCall(MorphoBundler.morphoRepay, (marketParams, amount, 0, USER, hex""));
+    }
+
+    function _addSupplyData(BundleTransactionsVars memory vars, uint256 amount) internal {
+        amount = bound(amount % MAX_AMOUNT, MIN_AMOUNT, MAX_AMOUNT);
+
+        if (amount > vars.expectedBundlerBorrowableBalance) {
+            uint256 missingAmount = amount - vars.expectedBundlerBorrowableBalance;
+            bundleData.push(_getTransferFrom2Data(address(borrowableToken), missingAmount));
+            vars.initialUserBorrowableBalance += missingAmount;
+            vars.expectedBundlerBorrowableBalance += missingAmount;
+        }
+        bundleData.push(_getSupplyData(amount));
+        vars.expectedBundlerBorrowableBalance -= amount;
+
+        uint256 expectedAddedSupplyShares = amount.toSharesDown(vars.expectedTotalSupply, vars.expectedSupplyShares);
+        vars.expectedTotalSupply += amount;
+        vars.expectedSupplyShares += expectedAddedSupplyShares;
+    }
+
+    function _addSupplyCollateralData(BundleTransactionsVars memory vars, uint256 amount) internal {
+        amount = bound(amount % MAX_AMOUNT, MIN_AMOUNT, MAX_AMOUNT);
+
+        if (amount > vars.expectedBundlerCollateralBalance) {
+            uint256 missingAmount = amount - vars.expectedBundlerCollateralBalance;
+            bundleData.push(_getTransferFrom2Data(address(collateralToken), missingAmount));
+            vars.initialUserCollateralBalance += missingAmount;
+            vars.expectedBundlerCollateralBalance += missingAmount;
+        }
+        bundleData.push(_getSupplyCollateralData(amount));
+        vars.expectedBundlerCollateralBalance -= amount;
+
+        vars.expectedCollateral += amount;
+    }
+
+    function _addWithdrawData(BundleTransactionsVars memory vars, uint256 amount) internal {
+        uint256 availableLiquidity = vars.expectedTotalSupply - vars.expectedTotalBorrow;
+        if (availableLiquidity == 0 || vars.expectedSupplyShares == 0) return;
+
+        uint256 supplyBalance =
+            vars.expectedSupplyShares.toAssetsDown(vars.expectedTotalSupply, vars.expectedSupplyShares);
+
+        uint256 maxAmount = min(supplyBalance, availableLiquidity);
+        amount = bound(amount % maxAmount, 1, maxAmount);
+
+        bundleData.push(_getWithdrawData(amount));
+        vars.expectedBundlerBorrowableBalance += amount;
+
+        uint256 expectedDecreasedSupplyShares = amount.toSharesUp(vars.expectedTotalSupply, vars.expectedSupplyShares);
+        vars.expectedTotalSupply -= amount;
+        vars.expectedSupplyShares -= expectedDecreasedSupplyShares;
+    }
+
+    function _addBorrowData(BundleTransactionsVars memory vars, uint256 shares) internal {
+        uint256 availableLiquidity = vars.expectedTotalSupply - vars.expectedTotalBorrow;
+        if (availableLiquidity == 0 || vars.expectedCollateral == 0) return;
+
+        uint256 totalBorrowPower = vars.expectedCollateral.wMulDown(marketParams.lltv);
+
+        uint256 borrowed = vars.expectedBorrowShares.toAssetsUp(vars.expectedTotalBorrow, vars.expectedBorrowShares);
+
+        uint256 currentBorrowPower = totalBorrowPower - borrowed;
+        if (currentBorrowPower == 0) return;
+
+        uint256 maxShares = min(currentBorrowPower, availableLiquidity).toSharesDown(
+            vars.expectedTotalBorrow, vars.expectedBorrowShares
+        );
+        if (maxShares < MIN_AMOUNT) return;
+        shares = bound(shares % maxShares, MIN_AMOUNT, maxShares);
+
+        bundleData.push(_getBorrowData(shares));
+        uint256 expectedBorrowedAmount = shares.toAssetsDown(vars.expectedTotalBorrow, vars.expectedBorrowShares);
+        vars.expectedBundlerBorrowableBalance += expectedBorrowedAmount;
+
+        vars.expectedTotalBorrow += expectedBorrowedAmount;
+        vars.expectedBorrowShares += shares;
+    }
+
+    function _addRepayData(BundleTransactionsVars memory vars, uint256 amount) internal {
+        if (vars.expectedBorrowShares == 0) return;
+
+        uint256 borrowBalance =
+            vars.expectedBorrowShares.toAssetsDown(vars.expectedTotalBorrow, vars.expectedBorrowShares);
+
+        amount = bound(amount % borrowBalance, 1, borrowBalance);
+
+        if (amount > vars.expectedBundlerBorrowableBalance) {
+            uint256 missingAmount = amount - vars.expectedBundlerBorrowableBalance;
+            bundleData.push(_getTransferFrom2Data(address(borrowableToken), missingAmount));
+            vars.initialUserBorrowableBalance += missingAmount;
+            vars.expectedBundlerBorrowableBalance += missingAmount;
+        }
+
+        bundleData.push(_getRepayData(amount));
+        vars.expectedBundlerBorrowableBalance -= amount;
+
+        uint256 expectedDecreasedBorrowShares = amount.toSharesDown(vars.expectedTotalBorrow, vars.expectedBorrowShares);
+        vars.expectedTotalBorrow -= amount;
+        vars.expectedBorrowShares -= expectedDecreasedBorrowShares;
+    }
+
+    function _addWithdrawCollateralData(BundleTransactionsVars memory vars, uint256 amount) internal {
+        if (vars.expectedCollateral == 0) return;
+
+        uint256 borrowPower = vars.expectedCollateral.wMulDown(marketParams.lltv);
+        uint256 borrowed = vars.expectedBorrowShares.toAssetsUp(vars.expectedTotalBorrow, vars.expectedBorrowShares);
+
+        uint256 withdrawableCollateral = (borrowPower - borrowed).wDivDown(marketParams.lltv);
+        if (withdrawableCollateral == 0) return;
+
+        amount = bound(amount % withdrawableCollateral, 1, withdrawableCollateral);
+
+        bundleData.push(_getWithdrawCollateralData(amount));
+        vars.expectedBundlerCollateralBalance += amount;
+
+        vars.expectedCollateral -= amount;
+    }
+
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            z := xor(x, mul(xor(x, y), lt(y, x)))
+        }
     }
 }
