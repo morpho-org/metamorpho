@@ -19,4 +19,6 @@ library ErrorsLib {
     string internal constant SEQUENCER_DOWN = "sequencer down";
 
     string internal constant GRACE_PERIOD_NOT_OVER = "grace period not over";
+
+    string internal constant STALE_PRICE = "price is stale";
 }

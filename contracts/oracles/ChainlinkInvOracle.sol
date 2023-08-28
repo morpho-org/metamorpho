@@ -6,8 +6,8 @@ import {StaticCollateralAdapter} from "./adapters/StaticCollateralAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./adapters/ChainlinkBorrowableAdapter.sol";
 
 contract ChainlinkInvOracle is BaseOracle, StaticCollateralAdapter, ChainlinkBorrowableAdapter {
-    constructor(uint256 scaleFactor, address feed, uint256 boundOffsetFactor)
+    constructor(uint256 scaleFactor, address feed, uint256 staleTimeout, uint256 boundOffsetFactor)
         BaseOracle(scaleFactor)
-        ChainlinkBorrowableAdapter(feed, boundOffsetFactor)
+        ChainlinkBorrowableAdapter(feed, staleTimeout, boundOffsetFactor)
     {}
 }

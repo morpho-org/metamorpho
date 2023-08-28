@@ -12,14 +12,15 @@ library ChainlinkAggregatorV3Lib {
     using SafeCast for uint192;
     using PercentageMath for uint256;
 
-    function price(IChainlinkAggregatorV3 priceFeed, uint256 boundOffsetFactor)
+    function price(IChainlinkAggregatorV3 priceFeed, uint256 staleTimeout, uint256 boundOffsetFactor)
         internal
         view
         returns (uint256 answer)
     {
-        (, int256 answerInt,,,) = priceFeed.latestRoundData();
+        (, int256 answerInt,, uint256 updatedAt,) = priceFeed.latestRoundData();
 
         require(answerInt >= 0, ErrorsLib.NEGATIVE_ANSWER);
+        require(block.timestamp - updatedAt <= staleTimeout, ErrorsLib.STALE_PRICE);
 
         answer = uint256(answerInt);
 
@@ -43,6 +44,7 @@ library ChainlinkAggregatorV3Lib {
 
     function price(
         IChainlinkAggregatorV3 priceFeed,
+        uint256 staleTimeout,
         uint256 boundOffsetFactor,
         IChainlinkAggregatorV3 sequencerUptimeFeed,
         uint256 gracePeriod
@@ -56,6 +58,6 @@ library ChainlinkAggregatorV3Lib {
         // Make sure the grace period has passed after the sequencer is back up.
         require(block.timestamp - startedAt > gracePeriod, ErrorsLib.GRACE_PERIOD_NOT_OVER);
 
-        return price(priceFeed, boundOffsetFactor);
+        return price(priceFeed, staleTimeout, boundOffsetFactor);
     }
 }

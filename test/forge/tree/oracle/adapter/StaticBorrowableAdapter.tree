@@ -1,0 +1,11 @@
+.
+└── BORROWABLE_FEED()
+    └── return (STATIC, address(0))
+
+.
+└── BORROWABLE_SCALE()
+    └── 1
+
+.
+└── borrowablePrice()
+    └── return 1

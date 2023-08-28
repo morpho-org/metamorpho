@@ -1,0 +1,17 @@
+.
+└── getWeightedArithmeticMeanTick(IUniswapV3Pool pool, uint32 secondsAgo)
+    └── return (observe(0) - observe(secondsAgo)) / secondsAgo. If delta is negative and there is a remainder, then subtract 1.
+
+.
+└── priceX128(IUniswapV3Pool pool, uint32 secondsAgo, bool Inversed)
+    └── Calculate sqrtRatio = getWeightedArithmeticMeanTick(meanTick(pool, secondsAgo))
+        ├── If sqrtRatio < 2^128
+        │   ├── If inversed
+        │   │   └── return 2^192 * 2^128 / (sqrtRatio * sqrtRatio)
+        │   └── else
+        │       └── return (sqrtRatio * sqrtRatio) / 2^64
+        └── Else
+            ├── If inversed
+            │   └── sqrtRatio * sqrtRatio / 2^64
+            └── else
+                └── return 2^128 * 2^128 / (sqrtRatio * sqrtRatio)

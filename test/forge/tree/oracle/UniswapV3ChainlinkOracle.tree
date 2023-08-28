@@ -1,0 +1,17 @@
+.
+└── constructor(uint256 scaleFactor, address feed, address pool, uint32 collateralPriceWindow, address collateralPriceQuoteToken)
+    ├── BaseOracle(scaleFactor)
+    ├── UniswapV3CollateralAdapter(pool, collateralPriceWindow, collateralPriceQuoteToken)
+    └── ChainlinkBorrowableAdapter(feed)
+
+.
+└── collateralPrice()
+    └── return pool.priceX128(collateralPriceWindow, pool.token0() == collateralPriceQuoteToken)
+
+.
+└── borrowablePrice()
+    └── return feed.price()
+
+.
+└── price()
+    └── return scaleFactor * pool.priceX128(collateralPriceWindow, pool.token0() == collateralPriceQuoteToken) * 10 ** feed.decimals() / feed.price() / 2^128

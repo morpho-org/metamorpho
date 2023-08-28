@@ -1,0 +1,18 @@
+.
+└── constructor(address pool, uint32 window, address quoteToken)
+    ├── if pool == address(0)
+    │   └── revert ZERO_ADDRESS
+    ├── if window == 0
+    │   └── revert ZERO_INPUT
+    ├── if quoteToken != pool.token0 && quoteToken != pool.token1()
+    │   └── revert INVALID_QUOTE_TOKEN
+    ├── BORROWABLE_FEED = (UNISWAP_V3, pool)
+    ├── BORROWABLE_WINDOW = window
+    ├── BORROWABLE_SCALE = 2^128
+    ├── PRICE_INVERSED = quoteToken == pool.token0()
+    ├── COLLATERAL_SCALE is uninitialized
+    └── SCALE_FACTOR is uninitialized
+
+.
+└── borrowablePrice()
+    └── return pool.priceX128(window, quoteToken = pool.token0()) from lib

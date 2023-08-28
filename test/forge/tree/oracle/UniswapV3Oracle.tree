@@ -1,0 +1,16 @@
+.
+└── constructor(uint256 scaleFactor, address pool, uint32 window, address quoteToken)
+    ├── BaseOracle(scaleFactor)
+    └── UniswapV3CollateralAdapter(pool, collateralPriceWindow, collateralPriceQuoteToken)
+
+.
+└── borrowablePrice()
+    └── return 1
+
+.
+└── collateralPrice()
+    └── return pool.price(delay, pool.token0() == quoteToken)
+
+.
+└── price()
+    └── return scaleFactor * pool.price(delay) / 2^128
