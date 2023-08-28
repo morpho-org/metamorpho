@@ -2,9 +2,9 @@
 pragma solidity >=0.5.0;
 
 interface ICompoundV3 {
-	function baseToken() external view returns (address);
+    function baseToken() external view returns (address);
 
-	function supplyFrom(address from, address dst, address asset, uint amount) external;
+    function supplyFrom(address from, address dst, address asset, uint256 amount) external;
 
     function withdrawFrom(address src, address to, address asset, uint256 amount) external;
 
