@@ -1,7 +1,0 @@
-.
-└── constructor(address sequencerUptimeFeed, uint256 gracePeriod)
-    ├── If sequencerUptimeFeed == address(0)
-    │   └── revert with ZERO_ADDRESS
-    ├── If gracePeriod == 0
-    │   └── revert with ZERO_INPUT
-    └── (SEQUENCER_UPTIME_FEED, GRACE_PERIOD) = (sequencerUptimeFeed, gracePeriod)
