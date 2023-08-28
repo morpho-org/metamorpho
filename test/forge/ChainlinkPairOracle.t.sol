@@ -20,6 +20,7 @@ contract ChainlinkOracleTest is Test {
     uint256 SCALE_FACTOR;
     uint8 COLLATERAL_DECIMALS = 8;
     uint8 BORROWABLE_DECIMALS = 10;
+    uint256 STALE_TIMEOUT = type(uint256).max;
     uint256 BOUND_OFFSET_FACTOR = 0;
 
     function setUp() public {
@@ -32,7 +33,7 @@ contract ChainlinkOracleTest is Test {
         SCALE_FACTOR = 10 ** (36 + BORROWABLE_DECIMALS - COLLATERAL_DECIMALS);
 
         chainlinkOracle =
-        new ChainlinkPairOracle(SCALE_FACTOR, address(collateralFeed), BOUND_OFFSET_FACTOR, address(borrowableFeed), BOUND_OFFSET_FACTOR);
+        new ChainlinkPairOracle(SCALE_FACTOR, address(collateralFeed), STALE_TIMEOUT, BOUND_OFFSET_FACTOR, address(borrowableFeed), STALE_TIMEOUT, BOUND_OFFSET_FACTOR);
     }
 
     function testConfig() public {
@@ -86,7 +87,7 @@ contract ChainlinkOracleTest is Test {
         uint256 scale = 10 ** (36 + borrowableDecimals - collateralDecimals);
 
         chainlinkOracle =
-        new ChainlinkPairOracle(scale, address(collateralFeed), BOUND_OFFSET_FACTOR, address(borrowableFeed), BOUND_OFFSET_FACTOR);
+        new ChainlinkPairOracle(scale, address(collateralFeed), STALE_TIMEOUT, BOUND_OFFSET_FACTOR, address(borrowableFeed), STALE_TIMEOUT, BOUND_OFFSET_FACTOR);
 
         uint256 invBorrowablePrice = scale.mulDiv(10 ** borrowableFeedDecimals, borrowablePrice);
 
