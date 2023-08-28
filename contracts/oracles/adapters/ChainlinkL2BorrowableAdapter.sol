@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
-import {ChainlinkAggregatorV3Lib} from "../libraries/ChainlinkAggregatorV3Lib.sol";
+import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {ChainlinkL2BaseAdapter} from "./ChainlinkL2BaseAdapter.sol";
 import {ChainlinkBorrowableAdapter} from "./ChainlinkBorrowableAdapter.sol";

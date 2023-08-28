@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import {IChainlinkAggregatorV3} from "./interfaces/IChainlinkAggregatorV3.sol";
 
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
-import {OracleFeed} from "../libraries/OracleFeed.sol";
 import {PercentageMath} from "@morpho-utils/math/PercentageMath.sol";
-import {ChainlinkAggregatorV3Lib} from "../libraries/ChainlinkAggregatorV3Lib.sol";
+import {ChainlinkAggregatorV3Lib} from "./libraries/ChainlinkAggregatorV3Lib.sol";
 
 import {BaseOracle} from "../BaseOracle.sol";
 
@@ -29,8 +28,8 @@ abstract contract ChainlinkBorrowableAdapter is BaseOracle {
         BORROWABLE_SCALE = 10 ** _CHAINLINK_BORROWABLE_FEED.decimals();
     }
 
-    function BORROWABLE_FEED() external view returns (string memory, address) {
-        return (OracleFeed.CHAINLINK_V3, address(_CHAINLINK_BORROWABLE_FEED));
+    function BORROWABLE_FEED() external view returns (address) {
+        return address(_CHAINLINK_BORROWABLE_FEED);
     }
 
     function borrowablePrice() public view virtual override returns (uint256) {
