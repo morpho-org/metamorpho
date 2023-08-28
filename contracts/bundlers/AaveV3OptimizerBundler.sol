@@ -2,7 +2,6 @@
 pragma solidity 0.8.21;
 
 import {BaseBundler} from "./BaseBundler.sol";
-import {ERC20Bundler} from "./ERC20Bundler.sol";
 
 import {IMorpho} from "@morpho-aave-v3/interfaces/IMorpho.sol";
 
@@ -11,7 +10,7 @@ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
 
-contract AaveV3OptimizerBundler is BaseBundler, ERC20Bundler {
+contract AaveV3OptimizerBundler is BaseBundler {
     using SafeTransferLib for ERC20;
 
     IMorpho immutable AAVE_V3_OPTIMIZER;
