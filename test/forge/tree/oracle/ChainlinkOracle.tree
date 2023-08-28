@@ -1,0 +1,19 @@
+.
+└── constructor(uint256 scaleFactor, address feed)
+    ├── SCALE_FACTOR = scaleFactor
+    ├── COLLATERAL_FEED = (CHAINLINK_V3, feed)
+    ├── COLLATERAL_SCALE = 10 ** feed.decimals()
+    ├── BORROWABLE_FEED = (STATIC, address(0))
+    └── BORROWABLE_SCALE = 1
+
+.
+└── borrowablePrice()
+    └── return 1
+
+.
+└── collateralPrice()
+    └── return feed.price()
+
+.
+└── price()
+    └── return scaleFactor * feed.price() / (10 ** feed.decimals())

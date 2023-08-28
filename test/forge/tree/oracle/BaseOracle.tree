@@ -1,0 +1,11 @@
+.
+└── constructor(uint256 scaleFactor)
+    ├── SCALE_FACTOR initialized to scaleFactor
+    │   └── revert if scaleFactor is zero
+    ├── COLLATERAL_SCALE is zero
+    └── BORROWABLE_SCALE is zero
+
+.
+└── price() test while overriding COLLATERAL_SCALE, BORROWABLE_SCALE, collateralPrice(), borrowablePrice()
+    ├── Should overflow if result > type(uint256).max
+    └── Else return scaleFactor * collateralPrice() * BORROWABLE_SCALE / (borrowablePrice() * COLLATERAL_SCALE)
