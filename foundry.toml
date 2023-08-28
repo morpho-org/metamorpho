@@ -20,4 +20,5 @@ tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 [fmt]
 wrap_comments = true
 
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
