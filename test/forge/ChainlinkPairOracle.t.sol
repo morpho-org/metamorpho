@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
 import {ChainlinkAggregatorV3Mock} from "test/forge/mocks/ChainlinkAggregatorV3Mock.sol";
