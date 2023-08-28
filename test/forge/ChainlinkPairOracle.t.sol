@@ -5,7 +5,6 @@ import {ChainlinkAggregatorV3Mock} from "test/forge/mocks/ChainlinkAggregatorV3M
 
 import "contracts/oracles/ChainlinkPairOracle.sol";
 
-import {OracleFeed} from "contracts/oracles/libraries/OracleFeed.sol";
 import {FullMath} from "@uniswap/v3-core/libraries/FullMath.sol";
 
 import "@forge-std/console2.sol";
@@ -37,11 +36,9 @@ contract ChainlinkOracleTest is Test {
     }
 
     function testConfig() public {
-        (string memory collateralOracleFeed, address collateralChainlinkFeed) = chainlinkOracle.COLLATERAL_FEED();
-        (string memory borrowableOracleFeed, address borrowableChainlinkFeed) = chainlinkOracle.BORROWABLE_FEED();
+        address collateralChainlinkFeed = chainlinkOracle.COLLATERAL_FEED();
+        address borrowableChainlinkFeed = chainlinkOracle.BORROWABLE_FEED();
 
-        assertEq(collateralOracleFeed, OracleFeed.CHAINLINK_V3, "collateralOracleFeed");
-        assertEq(borrowableOracleFeed, OracleFeed.CHAINLINK_V3, "borrowableOracleFeed");
         assertEq(collateralChainlinkFeed, address(collateralFeed), "collateralChainlinkFeed");
         assertEq(borrowableChainlinkFeed, address(borrowableFeed), "borrowableChainlinkFeed");
         assertEq(chainlinkOracle.COLLATERAL_SCALE(), 10 ** COLLATERAL_DECIMALS);

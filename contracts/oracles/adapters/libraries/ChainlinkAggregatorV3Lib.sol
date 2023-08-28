@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {IChainlinkAggregatorV3} from "../adapters/interfaces/IChainlinkAggregatorV3.sol";
-import {IChainlinkOffchainAggregator} from "../adapters/interfaces/IChainlinkOffchainAggregator.sol";
+import {IChainlinkAggregatorV3} from "../interfaces/IChainlinkAggregatorV3.sol";
+import {IChainlinkOffchainAggregator} from "../interfaces/IChainlinkOffchainAggregator.sol";
 
-import {ErrorsLib} from "./ErrorsLib.sol";
+import {ErrorsLib} from "../../libraries/ErrorsLib.sol";
 import {PercentageMath} from "@morpho-utils/math/PercentageMath.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
