@@ -1,8 +1,10 @@
+config/=config/
 contracts/=contracts/
 test/=test/
 
 @solmate/=lib/solmate/src/
 solmate/=lib/solmate/
+openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 
 @forge-std/=lib/morpho-blue/lib/forge-std/src/
 @morpho-blue/=lib/morpho-blue/src/

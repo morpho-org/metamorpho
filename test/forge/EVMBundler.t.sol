@@ -1,15 +1,17 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
+
+import {SigUtils} from "test/forge/helpers/SigUtils.sol";
+import {ErrorsLib as BulkerErrorsLib} from "contracts/bundlers/libraries/ErrorsLib.sol";
+
+import "./helpers/LocalTest.sol";
 
 import "contracts/bundlers/EVMBundler.sol";
 
-import {ErrorsLib as BulkerErrorsLib} from "contracts/bundlers/libraries/ErrorsLib.sol";
-
-import "./BaseBundlerTest.sol";
-
-contract EVMBundlerTest is BaseBundlerTest {
-    using MorphoLib for IMorpho;
+contract EVMBundlerLocalTest is LocalTest {
     using MathLib for uint256;
+    using MorphoLib for IMorpho;
+    using MorphoBalancesLib for IMorpho;
     using SharesMathLib for uint256;
 
     EVMBundler private bundler;
@@ -26,12 +28,37 @@ contract EVMBundlerTest is BaseBundlerTest {
         borrowableToken.approve(address(bundler), type(uint256).max);
         collateralToken.approve(address(bundler), type(uint256).max);
         morpho.setAuthorization(address(bundler), true);
-        // So tests can borrow/withdraw on behalf of USER without pranking it.
-        morpho.setAuthorization(address(this), true);
         vm.stopPrank();
     }
 
     /* TESTS */
+
+    function testSetAuthorization(uint256 privateKey, uint32 deadline) public {
+        privateKey = bound(privateKey, 1, type(uint32).max);
+        deadline = uint32(bound(deadline, block.timestamp + 1, type(uint32).max));
+
+        address user = vm.addr(privateKey);
+        vm.assume(user != USER);
+
+        Authorization memory authorization;
+        authorization.authorizer = user;
+        authorization.authorized = address(bundler);
+        authorization.deadline = deadline;
+        authorization.nonce = morpho.nonce(user);
+        authorization.isAuthorized = true;
+
+        bytes32 digest = SigUtils.getTypedDataHash(morpho.DOMAIN_SEPARATOR(), authorization);
+
+        Signature memory sig;
+        (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(MorphoBundler.morphoSetAuthorizationWithSig, (authorization, sig));
+
+        bundler.multicall(block.timestamp, data);
+
+        assertTrue(morpho.isAuthorized(user, address(bundler)), "isAuthorized(bundler)");
+    }
 
     function testTranferInvalidAddresses(uint256 amount) public {
         amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
@@ -115,25 +142,37 @@ contract EVMBundlerTest is BaseBundlerTest {
         bundler.multicall(block.timestamp, repayData);
     }
 
-    function testSupply(uint256 amount) public {
+    function testSupply(uint256 amount, address onBehalf) public {
+        vm.assume(onBehalf != address(0));
+        vm.assume(onBehalf != address(morpho));
+        vm.assume(onBehalf != address(bundler));
+
         amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
 
         bytes[] memory data = new bytes[](2);
-
         data[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(borrowableToken), amount));
-        data[1] = abi.encodeCall(MorphoBundler.morphoSupply, (marketParams, amount, 0, USER, hex""));
+        data[1] = abi.encodeCall(MorphoBundler.morphoSupply, (marketParams, amount, 0, onBehalf, hex""));
 
         borrowableToken.setBalance(USER, amount);
+
         vm.prank(USER);
         bundler.multicall(block.timestamp, data);
 
+        assertEq(collateralToken.balanceOf(USER), 0, "collateral.balanceOf(USER)");
         assertEq(borrowableToken.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
-        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "borrowable.balanceOf(address(bundler))");
-        assertEq(borrowableToken.balanceOf(address(morpho)), amount, "borrowable.balanceOf(address(morpho))");
 
-        assertEq(morpho.collateral(id, USER), 0, "collateral(USER)");
-        assertEq(morpho.supplyShares(id, USER), amount.toSharesDown(0, 0), "supplyShares(USER)");
-        assertEq(morpho.borrowShares(id, USER), 0, "borrowShares(USER)");
+        assertEq(collateralToken.balanceOf(onBehalf), 0, "collateral.balanceOf(onBehalf)");
+        assertEq(borrowableToken.balanceOf(onBehalf), 0, "borrowable.balanceOf(onBehalf)");
+
+        assertEq(morpho.collateral(id, onBehalf), 0, "collateral(onBehalf)");
+        assertEq(morpho.supplyShares(id, onBehalf), amount * SharesMathLib.VIRTUAL_SHARES, "supplyShares(onBehalf)");
+        assertEq(morpho.borrowShares(id, onBehalf), 0, "borrowShares(onBehalf)");
+
+        if (onBehalf != USER) {
+            assertEq(morpho.collateral(id, USER), 0, "collateral(USER)");
+            assertEq(morpho.supplyShares(id, USER), 0, "supplyShares(USER)");
+            assertEq(morpho.borrowShares(id, USER), 0, "borrowShares(USER)");
+        }
     }
 
     function testSupplyCollateral(uint256 amount) public {
