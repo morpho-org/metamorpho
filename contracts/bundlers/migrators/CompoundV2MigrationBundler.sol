@@ -14,7 +14,7 @@ import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 contract CompoundV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundler, WNativeBundler {
     using SafeTransferLib for ERC20;
 
-    ICEth C_NATIVE;
+    ICEth immutable C_NATIVE;
 
     constructor(address morpho, address wNative, address cNative) MorphoBundler(morpho) WNativeBundler(wNative) {
         C_NATIVE = ICEth(cNative);
