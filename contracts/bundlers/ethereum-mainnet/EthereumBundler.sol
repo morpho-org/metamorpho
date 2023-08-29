@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 
 import {ERC20Bundler} from "../ERC20Bundler.sol";
+import {ERC4626Bundler} from "../ERC4626Bundler.sol";
 import {MorphoBundler} from "../MorphoBundler.sol";
 import {WNativeBundler} from "../WNativeBundler.sol";
 import {StEthBundler} from "./StEthBundler.sol";
@@ -9,7 +10,7 @@ import {StEthBundler} from "./StEthBundler.sol";
 /// @title EthereumBundler
 /// @author Morpho Labs
 /// @custom:contact security@morpho.xyz
-contract EthereumBundler is ERC20Bundler, WNativeBundler, StEthBundler, MorphoBundler {
+contract EthereumBundler is ERC20Bundler, ERC4626Bundler, WNativeBundler, StEthBundler, MorphoBundler {
     /* CONSTANTS */
 
     /// @dev The address of the WETH contract on Ethreum mainnet.
