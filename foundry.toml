@@ -3,21 +3,33 @@ src = "contracts"
 out = "out"
 libs = ["lib"]
 fs_permissions = [{ access = "read", path = "./config/"}, { access = "read", path = "./lib/morpho-blue/out/"}]
+names = true
+sizes = true
 via-ir = true
 evm_version = "paris"
 
-[fuzz]
+[profile.default.fuzz]
 runs = 32
 
-[invariant]
+[profile.default.invariant]
 runs = 16
 depth = 4
 
-[rpc_endpoints]
+[profile.default.rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
 tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 
-[fmt]
+[profile.default.fmt]
 wrap_comments = true
+
+
+[profile.build]
+test = "/dev/null"
+script = "/dev/null"
+
+
+[profile.test]
+via-ir = false
+
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

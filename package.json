@@ -9,13 +9,24 @@
     "lib/**/*"
   ],
   "scripts": {
-    "build": "tsc --build ./tsconfig.build.json",
     "prepare": "husky install",
+    "postinstall": "forge install",
+    "build:ts": "yarn build:hardhat && tsc --build ./tsconfig.build.json",
+    "build:forge": "FOUNDRY_PROFILE=build forge build",
+    "build:hardhat": "npx hardhat compile",
+    "build:blue": "cd lib/morpho-blue/ && yarn build:forge && cd ../..",
     "typecheck": "tsc --noEmit",
-    "compile": "npx hardhat compile --force",
-    "test": "npx hardhat test",
-    "lint": "prettier --check src/ && forge fmt --check",
-    "lint:fix": "prettier --write src/ && forge fmt"
+    "test:forge": "yarn build:blue && FOUNDRY_PROFILE=test forge test",
+    "test:forge:local": "FOUNDRY_MATCH_CONTRACT=LocalTest yarn test:forge",
+    "test:forge:mainnet": "FOUNDRY_MATCH_CONTRACT=EthereumTest yarn test:forge",
+    "test:hardhat": "npx hardhat test",
+    "lint": "yarn lint:forge && yarn lint:ts",
+    "lint:ts": "prettier --check src",
+    "lint:forge": "forge fmt --check",
+    "lint:fix": "yarn lint:forge:fix && yarn lint:ts:fix",
+    "lint:ts:fix": "prettier --write src",
+    "lint:forge:fix": "forge fmt",
+    "clean": "npx hardhat clean && forge clean"
   },
   "repository": {
     "type": "git",
@@ -63,11 +74,6 @@
     "typechain": "^8.3.1",
     "typescript": "^5.1.6"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
   "lint-staged": {
     "*.sol": "forge fmt",
     "*.js": "prettier",
@@ -75,9 +81,27 @@
     "*.json": "prettier",
     "*.yml": "prettier"
   },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"
     ]
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "printWidth": 120,
+    "plugins": [
+      "@trivago/prettier-plugin-sort-imports"
+    ],
+    "importOrder": [
+      "^@",
+      "^\\.\\.",
+      "^\\."
+    ],
+    "importOrderSeparation": true
   }
 }
