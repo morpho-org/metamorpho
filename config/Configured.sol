@@ -53,7 +53,10 @@ abstract contract Configured is StdChains {
 
         allAssets = [dai, usdc, usdt, link, wbtc, weth];
 
-        configMarkets = config.getMarkets();
+        ConfigMarket[] memory allConfigMarkets = config.getMarkets();
+        for (uint256 i; i < allConfigMarkets.length; ++i) {
+            configMarkets.push(allConfigMarkets[i]);
+        }
 
         for (uint256 i; i < lsdNatives.length; ++i) {
             allAssets.push(lsdNatives[i]);
