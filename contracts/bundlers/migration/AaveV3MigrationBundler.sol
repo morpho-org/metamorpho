@@ -19,14 +19,14 @@ contract AaveV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundler {
         AAVE_V3_POOl = IPool(aaveV3Pool);
     }
 
-    function aaveV3WithdrawAll(address asset, address to) external {
-        AAVE_V3_POOl.withdraw(asset, type(uint256).max, to);
+    function aaveV3Withdraw(address asset, address to, uint256 amount) external {
+        AAVE_V3_POOl.withdraw(asset, amount, to);
     }
 
-    function aaveV3RepayAll(address asset, uint256 interestRateMode) external {
+    function aaveV3Repay(address asset, uint256 amount, uint256 interestRateMode) external {
         _approveMaxAaveV3Pool(asset);
 
-        AAVE_V3_POOl.repay(asset, type(uint256).max, interestRateMode, _initiator);
+        AAVE_V3_POOl.repay(asset, amount, interestRateMode, _initiator);
     }
 
     function aaveV3PermitAToken(address aToken, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)

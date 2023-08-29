@@ -21,6 +21,8 @@ abstract contract Configured is StdChains {
     address internal wNative;
     address[] internal lsdNatives;
     address[] internal allAssets;
+    address internal aaveV3Pool;
+    address internal aaveV2LendingPool;
 
     ConfigMarket[] internal configMarkets;
 
@@ -58,5 +60,7 @@ abstract contract Configured is StdChains {
         for (uint256 i; i < lsdNatives.length; ++i) {
             allAssets.push(lsdNatives[i]);
         }
+        aaveV3Pool = config.getAddress("aaveV3Pool");
+        aaveV2LendingPool = config.getAddress("aaveV2LendingPool");
     }
 }
