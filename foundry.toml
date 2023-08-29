@@ -26,7 +26,6 @@ wrap_comments = true
 [profile.build]
 test = "/dev/null"
 script = "/dev/null"
-force = true
 
 
 [profile.test]
