@@ -4,7 +4,7 @@ runs:
   using: composite
 
   steps:
-    - uses: ./install
+    - uses: ./.github/actions/install
 
     - name: Restore forge compilation cache
       uses: actions/cache/restore@v3
