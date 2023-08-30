@@ -58,10 +58,10 @@ abstract contract ForkTest is BaseTest, Configured {
 
     function _fork() internal virtual {
         string memory rpcUrl = vm.rpcUrl(_rpcAlias());
-        uint256 forkBlockNumber = config.getForkBlockNumber();
+        uint256 forkBlockNumber = CONFIG.getForkBlockNumber();
 
         forkId = forkBlockNumber == 0 ? vm.createSelectFork(rpcUrl) : vm.createSelectFork(rpcUrl, forkBlockNumber);
-        vm.chainId(config.getChainId());
+        vm.chainId(CONFIG.getChainId());
     }
 
     function _loadConfig() internal virtual override {
@@ -92,7 +92,7 @@ abstract contract ForkTest is BaseTest, Configured {
     function _deal(address asset, address user, uint256 amount) internal {
         if (amount == 0) return;
 
-        if (asset == weth) deal(weth, weth.balance + amount); // Refill wrapped Ether.
+        if (asset == WETH) deal(WETH, WETH.balance + amount); // Refill wrapped Ether.
 
         deal(asset, user, amount);
     }
