@@ -75,6 +75,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
         assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
+        assertFalse(morpho.isAuthorized(user, address(bundler)));
     }
 
     /// forge-config: default.fuzz.runs = 3
@@ -114,6 +115,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
         assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
+        assertFalse(morpho.isAuthorized(user, address(bundler)));
     }
 
     function _getATokenV3(address asset) internal view returns (address) {

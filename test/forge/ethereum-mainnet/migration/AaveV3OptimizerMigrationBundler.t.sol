@@ -72,6 +72,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
         assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
+        assertFalse(morpho.isAuthorized(user, address(bundler)));
     }
 
     function _aaveV3OptimizerApproveManagerCall(uint256 privateKey, address manager, bool isAllowed, uint256 nonce)

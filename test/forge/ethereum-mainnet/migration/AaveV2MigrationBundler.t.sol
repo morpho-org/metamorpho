@@ -77,6 +77,7 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
 
         assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
         assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
+        assertFalse(morpho.isAuthorized(user, address(bundler)));
     }
 
     function _getATokenV2(address asset) internal view returns (address) {
