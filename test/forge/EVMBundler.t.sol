@@ -7,6 +7,7 @@ import {ErrorsLib as BulkerErrorsLib} from "contracts/bundlers/libraries/ErrorsL
 import "./helpers/LocalTest.sol";
 
 import "contracts/bundlers/EVMBundler.sol";
+import "contracts/bundlers/mocks/ERC4626Mock.sol";
 
 contract EVMBundlerLocalTest is LocalTest {
     using MathLib for uint256;
@@ -15,10 +16,13 @@ contract EVMBundlerLocalTest is LocalTest {
     using SharesMathLib for uint256;
 
     EVMBundler private bundler;
+    ERC4626 private erc4626;
     bytes[] private bundleData;
 
     function setUp() public override {
         super.setUp();
+
+        erc4626 = new ERC4626Mock(borrowableToken, "borrowable Vault", "BV");
 
         bundler = new EVMBundler(address(morpho));
 
@@ -434,11 +438,11 @@ contract EVMBundlerLocalTest is LocalTest {
         );
     }
 
-    function _getTransferData(address tokenAddress, uint256 amount) internal view returns (bytes memory data) {
+    function _getTransferData(address tokenAddress, uint256 amount) internal pure returns (bytes memory data) {
         data = abi.encodeCall(ERC20Bundler.transfer, (tokenAddress, USER, amount));
     }
 
-    function _getTransferFrom2Data(address tokenAddress, uint256 amount) internal view returns (bytes memory data) {
+    function _getTransferFrom2Data(address tokenAddress, uint256 amount) internal pure returns (bytes memory data) {
         data = abi.encodeCall(ERC20Bundler.transferFrom2, (tokenAddress, amount));
     }
 
@@ -469,12 +473,8 @@ contract EVMBundlerLocalTest is LocalTest {
     function _addSupplyData(BundleTransactionsVars memory vars, uint256 amount) internal {
         amount = bound(amount % MAX_AMOUNT, MIN_AMOUNT, MAX_AMOUNT);
 
-        if (amount > vars.expectedBundlerBorrowableBalance) {
-            uint256 missingAmount = amount - vars.expectedBundlerBorrowableBalance;
-            bundleData.push(_getTransferFrom2Data(address(borrowableToken), missingAmount));
-            vars.initialUserBorrowableBalance += missingAmount;
-            vars.expectedBundlerBorrowableBalance += missingAmount;
-        }
+        _transferMissingBorrowable(vars, amount);
+
         bundleData.push(_getSupplyData(amount));
         vars.expectedBundlerBorrowableBalance -= amount;
 
@@ -486,12 +486,8 @@ contract EVMBundlerLocalTest is LocalTest {
     function _addSupplyCollateralData(BundleTransactionsVars memory vars, uint256 amount) internal {
         amount = bound(amount % MAX_AMOUNT, MIN_AMOUNT, MAX_AMOUNT);
 
-        if (amount > vars.expectedBundlerCollateralBalance) {
-            uint256 missingAmount = amount - vars.expectedBundlerCollateralBalance;
-            bundleData.push(_getTransferFrom2Data(address(collateralToken), missingAmount));
-            vars.initialUserCollateralBalance += missingAmount;
-            vars.expectedBundlerCollateralBalance += missingAmount;
-        }
+        _transferMissingCollateral(vars, amount);
+        
         bundleData.push(_getSupplyCollateralData(amount));
         vars.expectedBundlerCollateralBalance -= amount;
 
@@ -549,12 +545,7 @@ contract EVMBundlerLocalTest is LocalTest {
 
         amount = bound(amount % borrowBalance, 1, borrowBalance);
 
-        if (amount > vars.expectedBundlerBorrowableBalance) {
-            uint256 missingAmount = amount - vars.expectedBundlerBorrowableBalance;
-            bundleData.push(_getTransferFrom2Data(address(borrowableToken), missingAmount));
-            vars.initialUserBorrowableBalance += missingAmount;
-            vars.expectedBundlerBorrowableBalance += missingAmount;
-        }
+        _transferMissingBorrowable(vars, amount);
 
         bundleData.push(_getRepayData(amount));
         vars.expectedBundlerBorrowableBalance -= amount;
@@ -579,6 +570,24 @@ contract EVMBundlerLocalTest is LocalTest {
         vars.expectedBundlerCollateralBalance += amount;
 
         vars.expectedCollateral -= amount;
+    }
+
+    function _transferMissingBorrowable(BundleTransactionsVars memory vars, uint256 amount) internal {
+        if (amount > vars.expectedBundlerBorrowableBalance) {
+            uint256 missingAmount = amount - vars.expectedBundlerBorrowableBalance;
+            bundleData.push(_getTransferFrom2Data(address(borrowableToken), missingAmount));
+            vars.initialUserBorrowableBalance += missingAmount;
+            vars.expectedBundlerBorrowableBalance += missingAmount;
+        }
+    }
+
+    function _transferMissingCollateral(BundleTransactionsVars memory vars, uint256 amount) internal {
+        if (amount > vars.expectedBundlerCollateralBalance) {
+            uint256 missingAmount = amount - vars.expectedBundlerCollateralBalance;
+            bundleData.push(_getTransferFrom2Data(address(collateralToken), missingAmount));
+            vars.initialUserCollateralBalance += missingAmount;
+            vars.expectedBundlerCollateralBalance += missingAmount;
+        }
     }
 
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
