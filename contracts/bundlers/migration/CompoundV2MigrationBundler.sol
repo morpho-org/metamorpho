@@ -20,16 +20,16 @@ contract CompoundV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundl
         C_NATIVE = ICEth(cNative);
     }
 
-    function compoundV3RepayAll(address cToken) external {
+    function compoundV2Repay(address cToken, uint256 repayAmount) external {
         if (cToken == address(C_NATIVE)) {
-            C_NATIVE.repayBorrowBehalf{value: address(this).balance}(_initiator);
+            C_NATIVE.repayBorrowBehalf{value: repayAmount}(_initiator);
         } else {
             _approveMaxCompoundV2(cToken, ICToken(cToken).underlying());
-            ICToken(cToken).repayBorrowBehalf(_initiator, type(uint256).max);
+            ICToken(cToken).repayBorrowBehalf(_initiator, repayAmount);
         }
     }
 
-    function compoundV3Redeem(address cToken, uint256 amount) external {
+    function compoundV2Redeem(address cToken, uint256 amount) external {
         ICToken(cToken).redeem(amount);
     }
 
