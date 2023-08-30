@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./BaseMigrationTest.sol";
 
-import {ICEth} from "contracts/bundlers/migration/interfaces/ICeth.sol";
+import {ICEth} from "contracts/bundlers/migration/interfaces/ICEth.sol";
 import {ICToken} from "contracts/bundlers/migration/interfaces/ICToken.sol";
 import {IComptroller} from "contracts/bundlers/migration/interfaces/IComptroller.sol";
 
