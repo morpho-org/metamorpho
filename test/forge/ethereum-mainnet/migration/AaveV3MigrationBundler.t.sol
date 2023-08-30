@@ -66,7 +66,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
         callbackData[4] = _aaveV3PermitATokenCall(privateKey, aToken, address(bundler), aTokenBalance, 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
-        callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, address(bundler), collateralSupplied);
+        callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));
         data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
@@ -105,7 +105,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
         callbackData[4] = _erc20Approve2Call(privateKey, aToken, uint160(aTokenBalance), address(bundler), 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
-        callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, address(bundler), collateralSupplied);
+        callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));
         data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
@@ -149,7 +149,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         return abi.encodeCall(AaveV3MigrationBundler.aaveV3Repay, (asset, amount, interestRateMode));
     }
 
-    function _aaveV3WithdrawCall(address asset, address to, uint256 amount) internal pure returns (bytes memory) {
-        return abi.encodeCall(AaveV3MigrationBundler.aaveV3Withdraw, (asset, to, amount));
+    function _aaveV3WithdrawCall(address asset, uint256 amount, address to) internal pure returns (bytes memory) {
+        return abi.encodeCall(AaveV3MigrationBundler.aaveV3Withdraw, (asset, amount, to));
     }
 }

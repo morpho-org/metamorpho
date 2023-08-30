@@ -19,7 +19,7 @@ contract AaveV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundler {
         AAVE_V3_POOl = IPool(aaveV3Pool);
     }
 
-    function aaveV3Withdraw(address asset, address to, uint256 amount) external {
+    function aaveV3Withdraw(address asset, uint256 amount, address to) external {
         AAVE_V3_POOl.withdraw(asset, amount, to);
     }
 

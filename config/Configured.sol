@@ -63,7 +63,7 @@ abstract contract Configured is StdChains {
         for (uint256 i; i < lsdNatives.length; ++i) {
             allAssets.push(lsdNatives[i]);
         }
-        aaveV3Pool = config.getAddress("aaveV3Pool");
-        aaveV2LendingPool = config.getAddress("aaveV2LendingPool");
+        aaveV3Pool = CONFIG.getAddress("aaveV3Pool");
+        aaveV2LendingPool = CONFIG.getAddress("aaveV2LendingPool");
     }
 }
