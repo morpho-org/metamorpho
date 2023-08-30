@@ -17,8 +17,6 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
     AaveV3OptimizerMigrationBundler bundler;
 
-    MarketParams marketParams;
-
     uint256 collateralSupplied = 10_000 ether;
     uint256 supplied = 10_000 ether;
     uint256 borrowed = 1 ether;
@@ -26,10 +24,10 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     function setUp() public override {
         super.setUp();
 
+        _initMarket(DAI, WETH);
+
         vm.label(aaveV3Optimizer, "Aave V3 Optimizer");
         vm.label(address(bundler), "Aave V3 Optimizer Migration Bundler");
-
-        marketParams = allMarketParams[0];
 
         bundler = new AaveV3OptimizerMigrationBundler(address(morpho), address(aaveV3Optimizer));
 
@@ -43,6 +41,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     function testMigrateBorrowerWithOptimizerPermit(uint256 privateKey) public {
         privateKey = bound(privateKey, 1, type(uint32).max);
         address user = vm.addr(privateKey);
+        vm.label(user, "user");
 
         deal(marketParams.collateralToken, user, collateralSupplied + 1);
 
@@ -57,14 +56,14 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         bytes[] memory callbackData = new bytes[](7);
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
-        callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
+        callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
         callbackData[3] = _aaveV3OptimizerRepayCall(marketParams.borrowableToken, borrowed);
         callbackData[4] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), true, 0);
         callbackData[5] =
             _aaveV3OptimizerWithdrawCollateralCall(marketParams.collateralToken, collateralSupplied, address(bundler));
         callbackData[6] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), false, 1);
-        data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
 

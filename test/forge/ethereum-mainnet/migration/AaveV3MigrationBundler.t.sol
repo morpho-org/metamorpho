@@ -18,8 +18,6 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
     AaveV3MigrationBundler bundler;
 
-    MarketParams marketParams;
-
     uint256 collateralSupplied = 10_000 ether;
     uint256 supplied = 10_000 ether;
     uint256 borrowed = 1 ether;
@@ -27,10 +25,10 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     function setUp() public override {
         super.setUp();
 
+        _initMarket(DAI, WETH);
+
         vm.label(aaveV3Pool, "Aave V3 Pool");
         vm.label(address(bundler), "Aave V3 Migration Bundler");
-
-        marketParams = allMarketParams[0];
 
         bundler = new AaveV3MigrationBundler(address(morpho), address(aaveV3Pool));
 
@@ -61,13 +59,13 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         bytes[] memory callbackData = new bytes[](7);
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
-        callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
+        callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
         callbackData[3] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
         callbackData[4] = _aaveV3PermitATokenCall(privateKey, aToken, address(bundler), aTokenBalance, 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
         callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));
-        data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
 
@@ -80,8 +78,8 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
     /// forge-config: default.fuzz.runs = 3
     function testMigrateBorrowerWithPermit2(uint256 privateKey) public {
-        privateKey = bound(privateKey, 1, type(uint32).max);
-        address user = vm.addr(privateKey);
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
 
         deal(marketParams.collateralToken, user, collateralSupplied);
 
@@ -101,13 +99,13 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         bytes[] memory callbackData = new bytes[](7);
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
-        callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
+        callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
         callbackData[3] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
         callbackData[4] = _erc20Approve2Call(privateKey, aToken, uint160(aTokenBalance), address(bundler), 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
         callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));
-        data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
 

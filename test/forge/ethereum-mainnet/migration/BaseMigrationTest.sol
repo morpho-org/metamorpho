@@ -5,6 +5,7 @@ import {IAllowanceTransfer} from "@permit2/interfaces/IAllowanceTransfer.sol";
 
 import {MorphoBundler} from "contracts/bundlers/MorphoBundler.sol";
 import {ERC20Bundler} from "contracts/bundlers/ERC20Bundler.sol";
+import {WNativeBundler} from "contracts/bundlers/WNativeBundler.sol";
 
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -15,7 +16,35 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import "../../helpers/ForkTest.sol";
 
 contract BaseMigrationTest is ForkTest {
+    using MarketParamsLib for MarketParams;
+
     uint256 internal constant SIG_DEADLINE = type(uint32).max;
+
+    MarketParams marketParams;
+
+    function setUp() public virtual override {
+        super.setUp();
+    }
+
+    function _initMarket(address collateral, address borrowable) internal {
+        marketParams.collateralToken = collateral;
+        marketParams.borrowableToken = borrowable;
+        marketParams.oracle = address(oracle);
+        marketParams.irm = address(irm);
+        marketParams.lltv = 0.8 ether;
+
+        (,,,, uint128 lastUpdate,) = morpho.market(marketParams.id());
+        if (lastUpdate == 0) {
+            morpho.createMarket(marketParams);
+        }
+    }
+
+    function _getUserAndKey(uint256 privateKey) internal returns (uint256, address) {
+        privateKey = bound(privateKey, 1, type(uint32).max);
+        address user = vm.addr(privateKey);
+        vm.label(user, "user");
+        return (privateKey, user);
+    }
 
     function _network() internal pure override returns (string memory) {
         return "ethereum-mainnet";
@@ -47,20 +76,15 @@ contract BaseMigrationTest is ForkTest {
         return abi.encodeCall(MorphoBundler.morphoSetAuthorizationWithSig, (auth, sig));
     }
 
-    function _morphoBorrowCall(MarketParams memory marketParams, uint256 amount, address receiver)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function _morphoBorrowCall(uint256 amount, address receiver) internal view returns (bytes memory) {
         return abi.encodeCall(MorphoBundler.morphoBorrow, (marketParams, amount, 0, receiver));
     }
 
-    function _morphoSupplyCollateralCall(
-        MarketParams memory marketParams,
-        uint256 amount,
-        address onBehalf,
-        bytes[] memory callbackData
-    ) internal pure returns (bytes memory) {
+    function _morphoSupplyCollateralCall(uint256 amount, address onBehalf, bytes[] memory callbackData)
+        internal
+        view
+        returns (bytes memory)
+    {
         return abi.encodeCall(
             MorphoBundler.morphoSupplyCollateral, (marketParams, amount, onBehalf, abi.encode(callbackData))
         );
@@ -95,5 +119,13 @@ contract BaseMigrationTest is ForkTest {
         (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
 
         return abi.encodeCall(ERC20Bundler.approve2, (asset, amount, SIG_DEADLINE, sig));
+    }
+
+    function _wNativeUnwrapCall(uint256 amount, address receiver) internal pure returns (bytes memory) {
+        return abi.encodeCall(WNativeBundler.unwrapNative, (amount, receiver));
+    }
+
+    function _wNativeWrapCall(uint256 amount, address receiver) internal pure returns (bytes memory) {
+        return abi.encodeCall(WNativeBundler.wrapNative, (amount, receiver));
     }
 }

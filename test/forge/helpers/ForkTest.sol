@@ -18,6 +18,8 @@ abstract contract ForkTest is BaseTest, Configured {
 
     uint256 internal snapshotId = type(uint256).max;
 
+    OracleMock oracle;
+
     MarketParams[] allMarketParams;
 
     constructor() {
@@ -35,7 +37,7 @@ abstract contract ForkTest is BaseTest, Configured {
         for (uint256 i; i < configMarkets.length; ++i) {
             ConfigMarket memory configMarket = configMarkets[i];
 
-            OracleMock oracle = new OracleMock();
+            oracle = new OracleMock();
 
             oracle.setPrice(ORACLE_PRICE_SCALE);
 

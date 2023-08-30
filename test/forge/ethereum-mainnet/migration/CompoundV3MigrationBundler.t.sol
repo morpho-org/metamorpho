@@ -15,8 +15,6 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
 
     CompoundV3MigrationBundler bundler;
 
-    MarketParams marketParams;
-
     ICompoundV3 cToken;
 
     mapping(address => address) _cTokens;
@@ -28,12 +26,12 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
     function setUp() public override {
         super.setUp();
 
+        _initMarket(cbETH, WETH);
+
         vm.label(cWETHv3, "cWETHv3");
         _cTokens[WETH] = cWETHv3;
 
         vm.label(address(bundler), "Compound V3 Migration Bundler");
-
-        marketParams = allMarketParams[1];
         cToken = ICompoundV3(_getCTokenV3(marketParams.borrowableToken));
 
         bundler = new CompoundV3MigrationBundler(address(morpho));
@@ -46,8 +44,8 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
 
     /// forge-config: default.fuzz.runs = 3
     function testMigrateBorrowerWithCompoundAllowance(uint256 privateKey) public {
-        privateKey = bound(privateKey, 1, type(uint32).max);
-        address user = vm.addr(privateKey);
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
 
         deal(marketParams.collateralToken, user, collateralSupplied);
 
@@ -62,14 +60,14 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         bytes[] memory callbackData = new bytes[](7);
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
-        callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
+        callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
         callbackData[3] = _compoundV3RepayCall(address(cToken), marketParams.borrowableToken, borrowed);
         callbackData[4] = _compoundV3AllowCall(privateKey, address(cToken), address(bundler), true, 0);
         callbackData[5] =
             _compoundV3WithdrawCall(address(cToken), address(bundler), marketParams.collateralToken, collateralSupplied);
         callbackData[6] = _compoundV3AllowCall(privateKey, address(cToken), address(bundler), false, 1);
-        data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
 

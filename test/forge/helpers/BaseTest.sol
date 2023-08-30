@@ -11,6 +11,7 @@ import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
 import {IrmMock} from "@morpho-blue/mocks/IrmMock.sol";
+import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";

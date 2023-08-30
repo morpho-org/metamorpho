@@ -18,12 +18,14 @@ abstract contract Configured is StdChains {
     address internal LINK;
     address internal WBTC;
     address internal WETH;
+    address internal cbETH;
     address internal WNATIVE;
     address[] internal lsdNatives;
     address[] internal allAssets;
     address internal aaveV3Pool;
     address internal aaveV2LendingPool;
     address internal aaveV3Optimizer;
+    address internal comptroller;
     address internal cDAIv2;
     address internal cETHv2;
     address internal cWETHv3;
@@ -54,6 +56,7 @@ abstract contract Configured is StdChains {
         LINK = CONFIG.getAddress("LINK");
         WBTC = CONFIG.getAddress("WBTC");
         WETH = CONFIG.getAddress("WETH");
+        cbETH = CONFIG.getAddress("cbETH");
         WNATIVE = CONFIG.getWrappedNative();
 
         lsdNatives = CONFIG.getLsdNatives();
@@ -70,6 +73,7 @@ abstract contract Configured is StdChains {
         aaveV3Pool = CONFIG.getAddress("aaveV3Pool");
         aaveV2LendingPool = CONFIG.getAddress("aaveV2LendingPool");
         aaveV3Optimizer = CONFIG.getAddress("aaveV3Optimizer");
+        comptroller = CONFIG.getAddress("comptroller");
         cDAIv2 = CONFIG.getAddress("cDAIv2");
         cETHv2 = CONFIG.getAddress("cETHv2");
         cWETHv3 = CONFIG.getAddress("cWETHv3");
