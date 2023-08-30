@@ -33,7 +33,7 @@ abstract contract Configured is StdChains {
     function _initConfig() internal returns (Config storage) {
         if (bytes(CONFIG.json).length == 0) {
             string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/CONFIG/", _network(), ".json");
+            string memory path = string.concat(root, "/config/", _network(), ".json");
 
             CONFIG.json = vm.readFile(path);
         }
@@ -51,7 +51,7 @@ abstract contract Configured is StdChains {
         WNATIVE = CONFIG.getWrappedNative();
 
         lsdNatives = CONFIG.getLsdNatives();
-        allAssets = [dai, USDC, USDT, LINK, WBTC, WETH];
+        allAssets = [DAI, USDC, USDT, LINK, WBTC, WETH];
 
         ConfigMarket[] memory allConfigMarkets = CONFIG.getMarkets();
         for (uint256 i; i < allConfigMarkets.length; ++i) {

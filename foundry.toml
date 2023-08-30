@@ -1,12 +1,13 @@
 [profile.default]
-src = "contracts"
-out = "out"
-libs = ["lib"]
-fs_permissions = [{ access = "read", path = "./config/"}, { access = "read", path = "./lib/morpho-blue/out/"}]
 names = true
 sizes = true
 via-ir = true
+src = "contracts"
 evm_version = "paris"
+fs_permissions = [
+    { access = "read", path = "./config/"},
+    { access = "read", path = "./lib/morpho-blue/out/"}
+]
 
 [profile.default.fuzz]
 runs = 32
