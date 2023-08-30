@@ -28,6 +28,7 @@ abstract contract Configured is StdChains {
     address internal comptroller;
     address internal cDAIv2;
     address internal cETHv2;
+    address internal cUSDCv2;
     address internal cWETHv3;
 
     ConfigMarket[] internal configMarkets;
@@ -76,6 +77,7 @@ abstract contract Configured is StdChains {
         comptroller = CONFIG.getAddress("comptroller");
         cDAIv2 = CONFIG.getAddress("cDAIv2");
         cETHv2 = CONFIG.getAddress("cETHv2");
+        cUSDCv2 = CONFIG.getAddress("cUSDCv2");
         cWETHv3 = CONFIG.getAddress("cWETHv3");
     }
 }

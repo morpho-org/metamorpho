@@ -27,9 +27,9 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         _initMarket(DAI, WETH);
 
         vm.label(aaveV3Optimizer, "Aave V3 Optimizer");
-        vm.label(address(bundler), "Aave V3 Optimizer Migration Bundler");
 
         bundler = new AaveV3OptimizerMigrationBundler(address(morpho), address(aaveV3Optimizer));
+        vm.label(address(bundler), "Aave V3 Optimizer Migration Bundler");
 
         // Provide liquidity.
         deal(marketParams.borrowableToken, address(this), borrowed * 10);

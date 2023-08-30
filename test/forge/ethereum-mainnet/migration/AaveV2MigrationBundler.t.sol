@@ -28,9 +28,9 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
         _initMarket(DAI, WETH);
 
         vm.label(aaveV2LendingPool, "Aave V2 Pool");
-        vm.label(address(bundler), "Aave V2 Migration Bundler");
 
         bundler = new AaveV2MigrationBundler(address(morpho), address(aaveV2LendingPool));
+        vm.label(address(bundler), "Aave V2 Migration Bundler");
 
         // Provide liquidity.
         deal(marketParams.borrowableToken, address(this), borrowed * 10);

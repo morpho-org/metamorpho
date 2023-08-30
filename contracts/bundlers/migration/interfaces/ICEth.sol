@@ -12,5 +12,5 @@ interface ICEth {
 
     function borrow(uint256 borrowAmount) external returns (uint256);
 
-    function mint() external payable returns (uint256);
+    function mint() external payable;
 }
