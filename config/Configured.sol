@@ -23,6 +23,7 @@ abstract contract Configured is StdChains {
     address[] internal allAssets;
     address internal aaveV3Pool;
     address internal aaveV2LendingPool;
+    address internal aaveV3Optimizer;
 
     ConfigMarket[] internal configMarkets;
 
@@ -65,5 +66,6 @@ abstract contract Configured is StdChains {
         }
         aaveV3Pool = CONFIG.getAddress("aaveV3Pool");
         aaveV2LendingPool = CONFIG.getAddress("aaveV2LendingPool");
+        aaveV3Optimizer = CONFIG.getAddress("aaveV3Optimizer");
     }
 }

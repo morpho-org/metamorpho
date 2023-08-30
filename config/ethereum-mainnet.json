@@ -25,5 +25,6 @@
         "rETH"
     ],
     "aaveV3Pool": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
-    "aaveV2LendingPool": "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9"
+    "aaveV2LendingPool": "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9",
+    "aaveV3Optimizer": "0x33333aea097c193e66081E930c33020272b33333"
 }

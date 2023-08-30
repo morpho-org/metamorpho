@@ -62,8 +62,8 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
         callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
-        callbackData[2] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
-        callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
+        callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
+        callbackData[3] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
         callbackData[4] = _aaveV3PermitATokenCall(privateKey, aToken, address(bundler), aTokenBalance, 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
         callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));
@@ -101,8 +101,8 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
         callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
-        callbackData[2] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
-        callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
+        callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
+        callbackData[3] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
         callbackData[4] = _erc20Approve2Call(privateKey, aToken, uint160(aTokenBalance), address(bundler), 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
         callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));

@@ -64,8 +64,8 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
 
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
         callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
-        callbackData[2] = _aaveV2RepayCall(marketParams.borrowableToken, borrowed, 2);
-        callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
+        callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
+        callbackData[3] = _aaveV2RepayCall(marketParams.borrowableToken, borrowed, 2);
         callbackData[4] = _erc20Approve2Call(privateKey, aToken, uint160(aTokenBalance), address(bundler), 0);
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
         callbackData[6] = _aaveV2WithdrawCall(marketParams.collateralToken, collateralSupplied, address(bundler));
@@ -84,11 +84,7 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
         return reserve.aTokenAddress;
     }
 
-    function _aaveV2RepayCall(address asset, uint256 amount, uint256 rateMode)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function _aaveV2RepayCall(address asset, uint256 amount, uint256 rateMode) internal pure returns (bytes memory) {
         return abi.encodeCall(AaveV2MigrationBundler.aaveV2Repay, (asset, amount, rateMode));
     }
 

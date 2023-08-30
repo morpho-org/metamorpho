@@ -18,18 +18,20 @@ contract AaveV3OptimizerMigrationBundler is MorphoBundler, ERC4626Bundler {
         AAVE_V3_OPTIMIZER = IMorpho(aaveV3Optimizer);
     }
 
-    function aaveV3OptimizerRepayAll(address underlying, uint256 amount) external {
+    function aaveV3OptimizerRepay(address underlying, uint256 amount) external {
         _approveMaxAaveV3Optimizer(underlying);
 
         AAVE_V3_OPTIMIZER.repay(underlying, amount, _initiator);
     }
 
-    function aaveV3OptimizerWithdrawAll(address underlying, address receiver, uint256 maxIterations) external {
-        AAVE_V3_OPTIMIZER.withdraw(underlying, type(uint256).max, _initiator, receiver, maxIterations);
+    function aaveV3OptimizerWithdraw(address underlying, uint256 amount, address receiver, uint256 maxIterations)
+        external
+    {
+        AAVE_V3_OPTIMIZER.withdraw(underlying, amount, _initiator, receiver, maxIterations);
     }
 
-    function aaveV3OptimizerWithdrawAllCollateral(address underlying, address receiver) external {
-        AAVE_V3_OPTIMIZER.withdrawCollateral(underlying, type(uint256).max, _initiator, receiver);
+    function aaveV3OptimizerWithdrawCollateral(address underlying, uint256 amount, address receiver) external {
+        AAVE_V3_OPTIMIZER.withdrawCollateral(underlying, amount, _initiator, receiver);
     }
 
     function aaveV3OptimizerApproveManagerWithSig(
