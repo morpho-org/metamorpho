@@ -19,7 +19,7 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
 
     ICompoundV3 cToken;
 
-    mapping (address => address) _cTokens;
+    mapping(address => address) _cTokens;
 
     uint256 collateralSupplied = 10 ether;
     uint256 supplied = 10 ether;
@@ -66,7 +66,8 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
         callbackData[3] = _compoundV3RepayCall(address(cToken), marketParams.borrowableToken, borrowed);
         callbackData[4] = _compoundV3AllowCall(privateKey, address(cToken), address(bundler), true, 0);
-        callbackData[5] = _compoundV3WithdrawCall(address(cToken), address(bundler), marketParams.collateralToken, collateralSupplied);
+        callbackData[5] =
+            _compoundV3WithdrawCall(address(cToken), address(bundler), marketParams.collateralToken, collateralSupplied);
         callbackData[6] = _compoundV3AllowCall(privateKey, address(cToken), address(bundler), false, 1);
         data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
 
@@ -85,17 +86,24 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         return result;
     }
 
-    function _compoundV3AllowCall(
-        uint256 privateKey,
-        address instance,
-        address manager,
-        bool isAllowed,
-        uint256 nonce
-    ) internal view returns (bytes memory) {
+    function _compoundV3AllowCall(uint256 privateKey, address instance, address manager, bool isAllowed, uint256 nonce)
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 permitTypehash =
             keccak256("Authorization(address owner,address manager,bool isAllowed,uint256 nonce,uint256 expiry)");
-        bytes32 domainTypehash = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-        bytes32 domainSeparator = keccak256(abi.encode(domainTypehash, keccak256(bytes(ICompoundV3(instance).name())), keccak256(bytes(ICompoundV3(instance).version())), block.chainid, instance));
+        bytes32 domainTypehash =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                domainTypehash,
+                keccak256(bytes(ICompoundV3(instance).name())),
+                keccak256(bytes(ICompoundV3(instance).version())),
+                block.chainid,
+                instance
+            )
+        );
         bytes32 digest = ECDSA.toTypedDataHash(
             domainSeparator,
             keccak256(abi.encode(permitTypehash, vm.addr(privateKey), manager, isAllowed, nonce, SIG_DEADLINE))
@@ -105,7 +113,8 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
 
         return abi.encodeCall(
-            CompoundV3MigrationBundler.compoundV3AllowBySig, (instance, isAllowed, nonce, SIG_DEADLINE, sig.v, sig.r, sig.s)
+            CompoundV3MigrationBundler.compoundV3AllowBySig,
+            (instance, isAllowed, nonce, SIG_DEADLINE, sig.v, sig.r, sig.s)
         );
     }
 
@@ -117,7 +126,11 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         return abi.encodeCall(CompoundV3MigrationBundler.compoundV3Supply, (instance, asset, amount));
     }
 
-    function _compoundV3WithdrawCall(address instance, address to, address asset, uint256 amount) internal pure returns (bytes memory) {
+    function _compoundV3WithdrawCall(address instance, address to, address asset, uint256 amount)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeCall(CompoundV3MigrationBundler.compoundV3Withdraw, (instance, to, asset, amount));
     }
 }

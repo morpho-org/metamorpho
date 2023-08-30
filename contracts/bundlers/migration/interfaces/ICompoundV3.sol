@@ -8,7 +8,7 @@ interface ICompoundV3 {
 
     function baseToken() external view returns (address);
 
-    function balanceOf(address) external view returns (uint256); 
+    function balanceOf(address) external view returns (uint256);
 
     function supply(address asset, uint256 amount) external;
 
