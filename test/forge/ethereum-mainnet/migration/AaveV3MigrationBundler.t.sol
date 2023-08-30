@@ -6,13 +6,15 @@ import "./BaseMigrationTest.sol";
 import {IPool} from "@aave/v3-core/interfaces/IPool.sol";
 import {IAToken} from "@aave/v3-core/interfaces/IAToken.sol";
 
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {DataTypes} from "@aave/v3-core/protocol/libraries/types/DataTypes.sol";
 
 import {AaveV3MigrationBundler} from "contracts/bundlers/migration/AaveV3MigrationBundler.sol";
 
 contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     using SafeTransferLib for ERC20;
+    using MarketParamsLib for MarketParams;
+    using MorphoLib for IMorpho;
+    using MorphoBalancesLib for IMorpho;
 
     AaveV3MigrationBundler bundler;
 
@@ -39,16 +41,16 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     }
 
     /// forge-config: default.fuzz.runs = 3
-    function testMigrateBorrower(uint256 privateKey) public {
+    function testMigrateBorrowerWithATokenPermit(uint256 privateKey) public {
         privateKey = bound(privateKey, 1, type(uint32).max);
         address user = vm.addr(privateKey);
 
-        deal(marketParams.collateralToken, user, collateralSupplied + 100);
+        deal(marketParams.collateralToken, user, collateralSupplied);
 
         vm.startPrank(user);
 
         ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, type(uint256).max);
-        IPool(aaveV3Pool).supply(marketParams.collateralToken, collateralSupplied + 100, user, 0);
+        IPool(aaveV3Pool).supply(marketParams.collateralToken, collateralSupplied, user, 0);
         IPool(aaveV3Pool).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
         ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, 0);
 
@@ -58,33 +60,60 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
 
-        // Authorize the Bundler to manage user's position on Morpho.
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
-
-        // Borrow from Morpho.
         callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
-
-        // Repay the debt on Aave on behalf of the user.
         callbackData[2] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
-
-        // Revoke the bundler's authorization to manage user's position on Morpho.
         callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
-
-        // Approve the Bundler to trasfer the aTokens.
         callbackData[4] = _aaveV3PermitATokenCall(privateKey, aToken, address(bundler), aTokenBalance, 0);
-
-        // Transfer the aTokens from the user to the bundler (consumes the approval)
         callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
-
-        // Withdraw from Aave and transfer them to Morpho.
         callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, address(bundler), collateralSupplied);
-
-        // Supply collateral on Morpho.
         data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
 
         vm.stopPrank();
+
+        assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
+        assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
+    }
+
+    /// forge-config: default.fuzz.runs = 3
+    function testMigrateBorrowerWithPermit2(uint256 privateKey) public {
+        privateKey = bound(privateKey, 1, type(uint32).max);
+        address user = vm.addr(privateKey);
+
+        deal(marketParams.collateralToken, user, collateralSupplied);
+
+        vm.startPrank(user);
+
+        ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, type(uint256).max);
+        IPool(aaveV3Pool).supply(marketParams.collateralToken, collateralSupplied, user, 0);
+        IPool(aaveV3Pool).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
+        ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, 0);
+
+        address aToken = _getATokenV3(marketParams.collateralToken);
+        uint256 aTokenBalance = IAToken(aToken).balanceOf(user);
+
+        ERC20(aToken).safeApprove(address(Permit2Lib.PERMIT2), aTokenBalance);
+
+        bytes[] memory data = new bytes[](1);
+        bytes[] memory callbackData = new bytes[](7);
+
+        callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
+        callbackData[1] = _morphoBorrowCall(marketParams, borrowed, address(bundler));
+        callbackData[2] = _aaveV3RepayCall(marketParams.borrowableToken, borrowed, 2);
+        callbackData[3] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 1);
+        callbackData[4] = _erc20Approve2Call(privateKey, aToken, uint160(aTokenBalance), address(bundler), 0);
+        callbackData[5] = _erc20TransferFrom2Call(aToken, aTokenBalance);
+        callbackData[6] = _aaveV3WithdrawCall(marketParams.collateralToken, address(bundler), collateralSupplied);
+        data[0] = _morphoSupplyCollateralCall(marketParams, collateralSupplied, user, callbackData);
+
+        bundler.multicall(SIG_DEADLINE, data);
+
+        vm.stopPrank();
+
+        assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
+        assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
     }
 
     function _getATokenV3(address asset) internal view returns (address) {
@@ -92,30 +121,31 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         return reserve.aTokenAddress;
     }
 
-    function _aaveV3PermitATokenCall(
-        uint256 privateKey,
-        address aToken,
-        address spender,
-        uint256 value,
-        uint256 nonce
-    ) internal view returns (bytes memory) {
+    function _aaveV3PermitATokenCall(uint256 privateKey, address aToken, address spender, uint256 value, uint256 nonce)
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 permitTypehash =
             keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                IAToken(aToken).DOMAIN_SEPARATOR(),
-                keccak256(abi.encode(permitTypehash, vm.addr(privateKey), spender, value, nonce, SIG_DEADLINE))
-            )
+        bytes32 digest = ECDSA.toTypedDataHash(
+            IAToken(aToken).DOMAIN_SEPARATOR(),
+            keccak256(abi.encode(permitTypehash, vm.addr(privateKey), spender, value, nonce, SIG_DEADLINE))
         );
 
         Signature memory sig;
         (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
 
-        return abi.encodeCall(AaveV3MigrationBundler.aaveV3PermitAToken, (aToken, value, SIG_DEADLINE, sig.v, sig.r, sig.s));
+        return abi.encodeCall(
+            AaveV3MigrationBundler.aaveV3PermitAToken, (aToken, value, SIG_DEADLINE, sig.v, sig.r, sig.s)
+        );
     }
 
-    function _aaveV3RepayCall(address asset, uint256 amount, uint256 interestRateMode) internal pure returns (bytes memory) {
+    function _aaveV3RepayCall(address asset, uint256 amount, uint256 interestRateMode)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeCall(AaveV3MigrationBundler.aaveV3Repay, (asset, amount, interestRateMode));
     }
 
