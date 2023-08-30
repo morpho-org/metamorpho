@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity >=0.6.2;
 
-interface ISupplyVault {
-    /* STRUCTS */
+import {MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 
-    /* ERRORS */
-
-    error OnlyRiskManager();
-
-    error OnlyAllocationManager();
-
-    error UnauthorizedCollateral(address collateral);
+struct MarketAllocation {
+    MarketParams marketParams;
+    uint256 assets;
 }
+
+interface ISupplyVault {}

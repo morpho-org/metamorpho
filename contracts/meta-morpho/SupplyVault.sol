@@ -1,92 +1,110 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import {ISupplyVault} from "./interfaces/ISupplyVault.sol";
-import {IVaultAllocationManager} from "./interfaces/IVaultAllocationManager.sol";
+import {IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
+import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
+import {IVaultAllocationStrategy} from "./interfaces/IVaultAllocationStrategy.sol";
 
-import {Events} from "./libraries/Events.sol";
-import {MarketAllocation} from "./libraries/Types.sol";
-import {IMorpho, MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
-import {UnauthorizedMarket, InconsistentAsset, SupplyCapExceeded} from "./libraries/Errors.sol";
-import {MarketConfig, MarketConfigData, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
+import {ErrorsLib} from "./libraries/ErrorsLib.sol";
+import {EventsLib} from "./libraries/EventsLib.sol";
+import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
+import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
+import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
 import {Id, MarketParams, MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
 import {IERC20, ERC20, ERC4626, Context} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
+contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVault {
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
+    using MorphoBalancesLib for IMorpho;
 
-    address private _riskManager;
-    address private _allocationManager;
+    mapping(address => bool) public isRiskManager;
+    mapping(address => bool) public isAllocator;
+
+    IVaultAllocationStrategy public supplyStrategy;
+    IVaultAllocationStrategy public withdrawStrategy;
 
     ConfigSet private _config;
 
-    constructor(address morpho, address forwarder, string memory name_, string memory symbol_, IERC20 asset_)
+    /* CONSTRUCTORS */
+
+    constructor(address morpho, address forwarder, IERC20 asset_, string memory name_, string memory symbol_)
         InternalSupplyRouter(morpho, forwarder)
-        ERC20(name_, symbol_)
         ERC4626(asset_)
+        ERC20(name_, symbol_)
     {}
 
+    /* MODIFIERS */
+
     modifier onlyRiskManager() {
-        _checkRiskManager();
+        require(isRiskManager[_msgSender()], ErrorsLib.NOT_RISK_MANAGER);
+
         _;
     }
 
-    modifier onlyAllocationManager() {
-        _checkAllocationManager();
+    modifier onlyAllocator() {
+        require(isAllocator[_msgSender()], ErrorsLib.NOT_ALLOCATOR);
+
         _;
+    }
+
+    /* ONLY OWNER FUNCTIONS */
+
+    function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
+        isRiskManager[newRiskManager] = newIsRiskManager;
+
+        emit EventsLib.SetRiskManager(newRiskManager, newIsRiskManager);
+    }
+
+    function setAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
+        isAllocator[newAllocator] = newIsAllocator;
+
+        emit EventsLib.SetAllocator(newAllocator, newIsAllocator);
+    }
+
+    function setSupplyStrategy(address newSupplyStrategy) external onlyOwner {
+        supplyStrategy = IVaultAllocationStrategy(newSupplyStrategy);
+
+        emit EventsLib.SetSupplyStrategy(newSupplyStrategy);
+    }
+
+    function setWithdrawStrategy(address newWithdrawStrategy) external onlyOwner {
+        withdrawStrategy = IVaultAllocationStrategy(newWithdrawStrategy);
+
+        emit EventsLib.SetWithdrawStrategy(newWithdrawStrategy);
     }
 
     /* EXTERNAL */
 
-    function setRiskManager(address newRiskManager) external onlyOwner {
-        _setRiskManager(newRiskManager);
-    }
-
-    function setAllocationManager(address newAllocationManager) external onlyOwner {
-        _setAllocationManager(newAllocationManager);
-    }
-
-    function setMarketConfig(MarketParams memory marketParams, MarketConfigData calldata marketConfig)
+    function setConfig(MarketParams memory marketParams, VaultMarketConfig calldata marketConfig)
         external
-        virtual
         onlyRiskManager
     {
-        address _asset = address(marketParams.borrowableToken);
-        if (_asset != asset()) revert InconsistentAsset(_asset);
+        require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
 
-        _config.update(marketParams.id(), marketConfig);
+        _config.update(marketParams, marketConfig);
     }
 
-    function disableMarket(Id id) external virtual onlyRiskManager {
+    function disableMarket(Id id) external onlyRiskManager {
         _config.remove(id);
     }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
-        virtual
-        onlyAllocationManager
+        onlyAllocator
     {
         _reallocate(withdrawn, supplied);
     }
 
     /* PUBLIC */
 
-    function riskManager() public view virtual returns (address) {
-        return _riskManager;
-    }
-
-    function allocationManager() public view virtual returns (address) {
-        return _allocationManager;
-    }
-
-    function config(Id id) public view virtual returns (MarketConfigData memory) {
+    function config(Id id) public view returns (VaultMarketConfig memory) {
         return _market(id).config;
     }
 
@@ -96,9 +114,9 @@ contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
-            Id id = _config.at(i);
+            MarketParams memory marketParams = _config.at(i);
 
-            assets += _supplyBalance(id);
+            assets += _supplyBalance(marketParams);
         }
     }
 
@@ -110,10 +128,12 @@ contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
 
         // TODO: MarketAllocation[] could be bytes and save gas
 
-        (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
-            IVaultAllocationManager(_allocationManager).allocateSupply(caller, owner, assets, shares);
+        if (address(supplyStrategy) != address(0)) {
+            (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
+                supplyStrategy.allocate(caller, owner, assets, shares);
 
-        _reallocate(withdrawn, supplied);
+            _reallocate(withdrawn, supplied);
+        }
     }
 
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
@@ -121,10 +141,12 @@ contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
         internal
         override
     {
-        (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
-            IVaultAllocationManager(_allocationManager).allocateWithdraw(caller, receiver, owner, assets, shares);
+        if (address(withdrawStrategy) != address(0)) {
+            (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
+                withdrawStrategy.allocate(caller, owner, assets, shares);
 
-        _reallocate(withdrawn, supplied);
+            _reallocate(withdrawn, supplied);
+        }
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
@@ -139,48 +161,25 @@ contract SupplyVault is ISupplyVault, InternalSupplyRouter, ERC4626, Ownable {
         return ERC2771Context._msgData();
     }
 
-    function _checkRiskManager() internal view {
-        if (_msgSender() != riskManager()) revert OnlyRiskManager();
-    }
-
-    function _checkAllocationManager() internal view {
-        if (_msgSender() != allocationManager()) revert OnlyAllocationManager();
-    }
-
-    function _market(Id id) internal view returns (MarketConfig storage) {
+    function _market(Id id) internal view returns (VaultMarket storage) {
         return _config.getMarket(id);
     }
 
-    function _setRiskManager(address newRiskManager) internal {
-        _riskManager = newRiskManager;
-
-        emit Events.RiskManagerSet(newRiskManager);
-    }
-
-    function _setAllocationManager(address newAllocationManager) internal {
-        _riskManager = newAllocationManager;
-
-        emit Events.AllocationManagerSet(newAllocationManager);
-    }
-
-    function _supplyBalance(Id marketId) internal view returns (uint256) {
-        // TODO: calculate accrued interests
-        return _MORPHO.supplyShares(marketId, address(this)).toAssetsDown(
-            _MORPHO.totalSupplyAssets(marketId), _MORPHO.totalSupplyShares(marketId)
-        );
+    function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
+        return _MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
         Id id = allocation.marketParams.id();
-        if (!_config.contains(id)) revert UnauthorizedMarket(allocation.marketParams);
+        require(_config.contains(id), ErrorsLib.UNAUTHORIZED_MARKET);
 
-        MarketConfig storage marketParams = _market(id);
+        VaultMarket storage market = _market(id);
 
-        uint256 cap = marketParams.config.cap;
+        uint256 cap = market.config.cap;
         if (cap > 0) {
-            uint256 newSupply = allocation.assets + _supplyBalance(id);
+            uint256 newSupply = allocation.assets + _supplyBalance(allocation.marketParams);
 
-            if (newSupply > cap) revert SupplyCapExceeded(newSupply);
+            require(newSupply <= cap, ErrorsLib.SUPPLY_CAP_EXCEEDED);
         }
 
         super._supply(allocation, onBehalf);
