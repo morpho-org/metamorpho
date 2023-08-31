@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {MorphoBundler} from "../MorphoBundler.sol";
-import {ERC4626Bundler} from "../ERC4626Bundler.sol";
-import {ERC20Bundler} from "../ERC20Bundler.sol";
+import {EVMBundler} from "../EVMBundler.sol";
 
 import {ILendingPool} from "@morpho-v1/aave-v2/interfaces/aave/ILendingPool.sol";
 
@@ -14,7 +12,7 @@ contract AaveV2MigrationBundler is EVMBundler {
 
     ILendingPool immutable AAVE_V2_POOl;
 
-    constructor(address morpho, address aaveV2Pool) MorphoBundler(morpho) {
+    constructor(address morpho, address aaveV2Pool) EVMBundler(morpho) {
         AAVE_V2_POOl = ILendingPool(aaveV2Pool);
     }
 
