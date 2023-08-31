@@ -57,7 +57,8 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
 
     /// @dev Approves this contract to manage the `authorization.authorizer`'s position via EIP712 `signature`.
     function morphoSetAuthorizationWithSig(Authorization calldata authorization, Signature calldata signature)
-        external payable
+        external
+        payable
     {
         MORPHO.setAuthorizationWithSig(authorization, signature);
     }
@@ -105,7 +106,8 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     /// @dev Borrows `amount` of `asset` on behalf of the sender. Sender must have previously approved the bundler as
     /// their manager on Blue.
     function morphoBorrow(MarketParams calldata marketparams, uint256 amount, uint256 shares, address receiver)
-        external payable
+        external
+        payable
     {
         MORPHO.borrow(marketparams, amount, shares, _initiator, receiver);
     }
@@ -133,14 +135,18 @@ abstract contract MorphoBundler is BaseBundler, IMorphoBundler {
     /// @dev Withdraws `amount` of the borrowable asset on behalf of `onBehalf`. Sender must have previously authorized
     /// the bundler to act on their behalf on Blue.
     function morphoWithdraw(MarketParams calldata marketparams, uint256 amount, uint256 shares, address receiver)
-        external payable
+        external
+        payable
     {
         MORPHO.withdraw(marketparams, amount, shares, _initiator, receiver);
     }
 
     /// @dev Withdraws `amount` of the collateral asset on behalf of sender. Sender must have previously authorized the
     /// bundler to act on their behalf on Blue.
-    function morphoWithdrawCollateral(MarketParams calldata marketparams, uint256 amount, address receiver) external payable {
+    function morphoWithdrawCollateral(MarketParams calldata marketparams, uint256 amount, address receiver)
+        external
+        payable
+    {
         MORPHO.withdrawCollateral(marketparams, amount, _initiator, receiver);
     }
 
