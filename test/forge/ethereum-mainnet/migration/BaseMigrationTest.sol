@@ -22,10 +22,6 @@ contract BaseMigrationTest is ForkTest {
 
     MarketParams marketParams;
 
-    function setUp() public virtual override {
-        super.setUp();
-    }
-
     function _initMarket(address collateral, address borrowable) internal {
         marketParams.collateralToken = collateral;
         marketParams.borrowableToken = borrowable;

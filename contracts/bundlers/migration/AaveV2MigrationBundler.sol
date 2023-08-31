@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import {ILendingPool} from "@morpho-v1/aave-v2/interfaces/aave/ILendingPool.sol";
+
 import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
-
-import {ILendingPool} from "@morpho-v1/aave-v2/interfaces/aave/ILendingPool.sol";
 
 contract AaveV2MigrationBundler is MigrationBundler, ERC20Bundler {
     ILendingPool immutable AAVE_V2_POOl;

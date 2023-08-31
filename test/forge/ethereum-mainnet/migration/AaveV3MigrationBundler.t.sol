@@ -40,8 +40,8 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
     /// forge-config: default.fuzz.runs = 3
     function testMigrateBorrowerWithATokenPermit(uint256 privateKey) public {
-        privateKey = bound(privateKey, 1, type(uint32).max);
-        address user = vm.addr(privateKey);
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
 
         deal(marketParams.collateralToken, user, collateralSupplied);
 

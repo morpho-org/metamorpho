@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {MigrationBundler} from "./MigrationBundler.sol";
-
 import {IMorpho} from "@morpho-aave-v3/interfaces/IMorpho.sol";
 
 import {Types} from "@morpho-aave-v3/libraries/Types.sol";
+
+import {MigrationBundler} from "./MigrationBundler.sol";
 
 contract AaveV3OptimizerMigrationBundler is MigrationBundler {
     IMorpho immutable AAVE_V3_OPTIMIZER;

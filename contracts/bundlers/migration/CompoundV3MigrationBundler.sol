@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import {ICompoundV3} from "./interfaces/ICompoundV3.sol";
+
 import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
-
-import {ICompoundV3} from "./interfaces/ICompoundV3.sol";
 
 contract CompoundV3MigrationBundler is MigrationBundler, ERC20Bundler {
     constructor(address morpho) MigrationBundler(morpho) {}

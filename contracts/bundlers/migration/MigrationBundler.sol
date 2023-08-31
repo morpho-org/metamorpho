@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+
 import {MorphoBundler} from "../MorphoBundler.sol";
 import {ERC4626Bundler} from "../ERC4626Bundler.sol";
-
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
 abstract contract MigrationBundler is MorphoBundler, ERC4626Bundler {
     using SafeTransferLib for ERC20;
