@@ -27,9 +27,9 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         _initMarket(DAI, WETH);
 
-        vm.label(aaveV3Pool, "Aave V3 Pool");
+        vm.label(AAVE_V3_POOL, "Aave V3 Pool");
 
-        bundler = new AaveV3MigrationBundler(address(morpho), address(aaveV3Pool));
+        bundler = new AaveV3MigrationBundler(address(morpho), address(AAVE_V3_POOL));
         vm.label(address(bundler), "Aave V3 Migration Bundler");
 
         // Provide liquidity.
@@ -47,10 +47,10 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         vm.startPrank(user);
 
-        ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, type(uint256).max);
-        IPool(aaveV3Pool).supply(marketParams.collateralToken, collateralSupplied, user, 0);
-        IPool(aaveV3Pool).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
-        ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, 0);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_POOL, type(uint256).max);
+        IPool(AAVE_V3_POOL).supply(marketParams.collateralToken, collateralSupplied, user, 0);
+        IPool(AAVE_V3_POOL).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_POOL, 0);
 
         address aToken = _getATokenV3(marketParams.collateralToken);
         uint256 aTokenBalance = IAToken(aToken).balanceOf(user);
@@ -85,10 +85,10 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         vm.startPrank(user);
 
-        ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, type(uint256).max);
-        IPool(aaveV3Pool).supply(marketParams.collateralToken, collateralSupplied, user, 0);
-        IPool(aaveV3Pool).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
-        ERC20(marketParams.collateralToken).safeApprove(aaveV3Pool, 0);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_POOL, type(uint256).max);
+        IPool(AAVE_V3_POOL).supply(marketParams.collateralToken, collateralSupplied, user, 0);
+        IPool(AAVE_V3_POOL).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_POOL, 0);
 
         address aToken = _getATokenV3(marketParams.collateralToken);
         uint256 aTokenBalance = IAToken(aToken).balanceOf(user);
@@ -117,7 +117,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     }
 
     function _getATokenV3(address asset) internal view returns (address) {
-        DataTypes.ReserveData memory reserve = IPool(aaveV3Pool).getReserveData(asset);
+        DataTypes.ReserveData memory reserve = IPool(AAVE_V3_POOL).getReserveData(asset);
         return reserve.aTokenAddress;
     }
 

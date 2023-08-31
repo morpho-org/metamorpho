@@ -26,9 +26,9 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         _initMarket(DAI, WETH);
 
-        vm.label(aaveV3Optimizer, "Aave V3 Optimizer");
+        vm.label(AAVE_V3_OPTIMIZER, "Aave V3 Optimizer");
 
-        bundler = new AaveV3OptimizerMigrationBundler(address(morpho), address(aaveV3Optimizer));
+        bundler = new AaveV3OptimizerMigrationBundler(address(morpho), address(AAVE_V3_OPTIMIZER));
         vm.label(address(bundler), "Aave V3 Optimizer Migration Bundler");
 
         // Provide liquidity.
@@ -47,10 +47,10 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         vm.startPrank(user);
 
-        ERC20(marketParams.collateralToken).safeApprove(aaveV3Optimizer, type(uint256).max);
-        IAaveV3Optimizer(aaveV3Optimizer).supplyCollateral(marketParams.collateralToken, collateralSupplied + 1, user);
-        IAaveV3Optimizer(aaveV3Optimizer).borrow(marketParams.borrowableToken, borrowed, user, user, 15);
-        ERC20(marketParams.collateralToken).safeApprove(aaveV3Optimizer, 0);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_OPTIMIZER, type(uint256).max);
+        IAaveV3Optimizer(AAVE_V3_OPTIMIZER).supplyCollateral(marketParams.collateralToken, collateralSupplied + 1, user);
+        IAaveV3Optimizer(AAVE_V3_OPTIMIZER).borrow(marketParams.borrowableToken, borrowed, user, user, 15);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_OPTIMIZER, 0);
 
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
@@ -82,7 +82,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         bytes32 permitTypehash =
             keccak256("Authorization(address delegator,address manager,bool isAllowed,uint256 nonce,uint256 deadline)");
         bytes32 digest = ECDSA.toTypedDataHash(
-            IAaveV3Optimizer(aaveV3Optimizer).DOMAIN_SEPARATOR(),
+            IAaveV3Optimizer(AAVE_V3_OPTIMIZER).DOMAIN_SEPARATOR(),
             keccak256(abi.encode(permitTypehash, vm.addr(privateKey), manager, isAllowed, nonce, SIG_DEADLINE))
         );
 

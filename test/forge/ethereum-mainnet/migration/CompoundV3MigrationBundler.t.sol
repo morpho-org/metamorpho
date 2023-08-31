@@ -26,10 +26,10 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
     function setUp() public override {
         super.setUp();
 
-        _initMarket(cbETH, WETH);
+        _initMarket(CB_ETH, WETH);
 
-        vm.label(cWETHv3, "cWETHv3");
-        _cTokens[WETH] = cWETHv3;
+        vm.label(C_WETH_V3, "cWETHv3");
+        _cTokens[WETH] = C_WETH_V3;
 
         vm.label(address(bundler), "Compound V3 Migration Bundler");
         cToken = ICompoundV3(_getCTokenV3(marketParams.borrowableToken));

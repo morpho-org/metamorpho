@@ -18,18 +18,19 @@ abstract contract Configured is StdChains {
     address internal LINK;
     address internal WBTC;
     address internal WETH;
-    address internal cbETH;
+    address internal CB_ETH;
     address internal WNATIVE;
     address[] internal lsdNatives;
     address[] internal allAssets;
-    address internal aaveV3Pool;
-    address internal aaveV2LendingPool;
-    address internal aaveV3Optimizer;
-    address internal comptroller;
-    address internal cDAIv2;
-    address internal cETHv2;
-    address internal cUSDCv2;
-    address internal cWETHv3;
+
+    address internal AAVE_V2_POOL;
+    address internal AAVE_V3_POOL;
+    address internal AAVE_V3_OPTIMIZER;
+    address internal COMPTROLLER;
+    address internal C_DAI_V2;
+    address internal C_ETH_V2;
+    address internal C_USDC_V2;
+    address internal C_WETH_V3;
 
     ConfigMarket[] internal configMarkets;
 
@@ -57,7 +58,7 @@ abstract contract Configured is StdChains {
         LINK = CONFIG.getAddress("LINK");
         WBTC = CONFIG.getAddress("WBTC");
         WETH = CONFIG.getAddress("WETH");
-        cbETH = CONFIG.getAddress("cbETH");
+        CB_ETH = CONFIG.getAddress("cbETH");
         WNATIVE = CONFIG.getWrappedNative();
 
         lsdNatives = CONFIG.getLsdNatives();
@@ -71,13 +72,13 @@ abstract contract Configured is StdChains {
         for (uint256 i; i < lsdNatives.length; ++i) {
             allAssets.push(lsdNatives[i]);
         }
-        aaveV3Pool = CONFIG.getAddress("aaveV3Pool");
-        aaveV2LendingPool = CONFIG.getAddress("aaveV2LendingPool");
-        aaveV3Optimizer = CONFIG.getAddress("aaveV3Optimizer");
-        comptroller = CONFIG.getAddress("comptroller");
-        cDAIv2 = CONFIG.getAddress("cDAIv2");
-        cETHv2 = CONFIG.getAddress("cETHv2");
-        cUSDCv2 = CONFIG.getAddress("cUSDCv2");
-        cWETHv3 = CONFIG.getAddress("cWETHv3");
+        AAVE_V3_POOL = CONFIG.getAddress("aaveV3Pool");
+        AAVE_V2_POOL = CONFIG.getAddress("aaveV2Pool");
+        AAVE_V3_OPTIMIZER = CONFIG.getAddress("aaveV3Optimizer");
+        COMPTROLLER = CONFIG.getAddress("comptroller");
+        C_DAI_V2 = CONFIG.getAddress("cDAIv2");
+        C_ETH_V2 = CONFIG.getAddress("cETHv2");
+        C_USDC_V2 = CONFIG.getAddress("cUSDCv2");
+        C_WETH_V3 = CONFIG.getAddress("cWETHv3");
     }
 }

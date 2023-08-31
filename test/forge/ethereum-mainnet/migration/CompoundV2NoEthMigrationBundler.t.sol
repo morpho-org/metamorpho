@@ -31,14 +31,14 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
 
         _initMarket(DAI, USDC);
 
-        vm.label(cETHv2, "cETHv2");
-        _cTokens[WETH] = cETHv2;
-        vm.label(cDAIv2, "cDAIv2");
-        _cTokens[DAI] = cDAIv2;
-        vm.label(cUSDCv2, "cUSDCv2");
-        _cTokens[USDC] = cUSDCv2;
+        vm.label(C_ETH_V2, "cETHv2");
+        _cTokens[WETH] = C_ETH_V2;
+        vm.label(C_DAI_V2, "cDAIv2");
+        _cTokens[DAI] = C_DAI_V2;
+        vm.label(C_USDC_V2, "cUSDCv2");
+        _cTokens[USDC] = C_USDC_V2;
 
-        bundler = new CompoundV2MigrationBundler(address(morpho), WETH, cETHv2);
+        bundler = new CompoundV2MigrationBundler(address(morpho), WETH, C_ETH_V2);
         vm.label(address(bundler), "Compound V2 Migration Bundler");
 
         collateralCToken = _getCToken(DAI);
@@ -64,7 +64,7 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
         require(ICToken(collateralCToken).mint(collateralSupplied) == 0, "mint error");
         address[] memory enteredMarkets = new address[](1);
         enteredMarkets[0] = collateralCToken;
-        require(IComptroller(comptroller).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
+        require(IComptroller(COMPTROLLER).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
         require(ICToken(borrowableCToken).borrow(borrowed) == 0, "borrow error");
         ERC20(marketParams.collateralToken).safeApprove(collateralCToken, 0);
 

@@ -30,14 +30,14 @@ contract CompoundV2EthBorrowableMigrationBundler is BaseMigrationTest {
 
         _initMarket(DAI, WETH);
 
-        vm.label(cETHv2, "cETHv2");
-        _cTokens[WETH] = cETHv2;
-        vm.label(cDAIv2, "cDAIv2");
-        _cTokens[DAI] = cDAIv2;
-        vm.label(cUSDCv2, "cUSDCv2");
-        _cTokens[USDC] = cUSDCv2;
+        vm.label(C_ETH_V2, "cETHv2");
+        _cTokens[WETH] = C_ETH_V2;
+        vm.label(C_DAI_V2, "cDAIv2");
+        _cTokens[DAI] = C_DAI_V2;
+        vm.label(C_USDC_V2, "cUSDCv2");
+        _cTokens[USDC] = C_USDC_V2;
 
-        bundler = new CompoundV2MigrationBundler(address(morpho), WETH, cETHv2);
+        bundler = new CompoundV2MigrationBundler(address(morpho), WETH, C_ETH_V2);
         vm.label(address(bundler), "Compound V2 Migration Bundler");
 
         collateralCToken = _getCToken(DAI);
@@ -62,8 +62,8 @@ contract CompoundV2EthBorrowableMigrationBundler is BaseMigrationTest {
         require(ICToken(collateralCToken).mint(collateralSupplied) == 0, "mint error");
         address[] memory enteredMarkets = new address[](1);
         enteredMarkets[0] = collateralCToken;
-        require(IComptroller(comptroller).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
-        require(ICEth(cETHv2).borrow(borrowed) == 0, "borrow error");
+        require(IComptroller(COMPTROLLER).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
+        require(ICEth(C_ETH_V2).borrow(borrowed) == 0, "borrow error");
         ERC20(marketParams.collateralToken).safeApprove(collateralCToken, 0);
 
         uint256 cTokenBalance = ICToken(collateralCToken).balanceOf(user);
@@ -76,7 +76,7 @@ contract CompoundV2EthBorrowableMigrationBundler is BaseMigrationTest {
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
         callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
-        callbackData[3] = _compoundV2RepayCall(cETHv2, borrowed);
+        callbackData[3] = _compoundV2RepayCall(C_ETH_V2, borrowed);
         callbackData[4] = _erc20Approve2Call(privateKey, collateralCToken, uint160(cTokenBalance), address(bundler), 0);
         callbackData[5] = _erc20TransferFrom2Call(collateralCToken, cTokenBalance);
         callbackData[6] = _compoundV2WithdrawCall(collateralCToken, collateralSupplied);

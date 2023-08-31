@@ -27,9 +27,9 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
 
         _initMarket(DAI, WETH);
 
-        vm.label(aaveV2LendingPool, "Aave V2 Pool");
+        vm.label(AAVE_V2_POOL, "Aave V2 Pool");
 
-        bundler = new AaveV2MigrationBundler(address(morpho), address(aaveV2LendingPool));
+        bundler = new AaveV2MigrationBundler(address(morpho), address(AAVE_V2_POOL));
         vm.label(address(bundler), "Aave V2 Migration Bundler");
 
         // Provide liquidity.
@@ -48,10 +48,10 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
 
         vm.startPrank(user);
 
-        ERC20(marketParams.collateralToken).safeApprove(aaveV2LendingPool, type(uint256).max);
-        ILendingPool(aaveV2LendingPool).deposit(marketParams.collateralToken, collateralSupplied, user, 0);
-        ILendingPool(aaveV2LendingPool).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
-        ERC20(marketParams.collateralToken).safeApprove(aaveV2LendingPool, 0);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V2_POOL, type(uint256).max);
+        ILendingPool(AAVE_V2_POOL).deposit(marketParams.collateralToken, collateralSupplied, user, 0);
+        ILendingPool(AAVE_V2_POOL).borrow(marketParams.borrowableToken, borrowed, 2, 0, user);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V2_POOL, 0);
 
         address aToken = _getATokenV2(marketParams.collateralToken);
         uint256 aTokenBalance = IAToken(aToken).balanceOf(user);
@@ -80,7 +80,7 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
     }
 
     function _getATokenV2(address asset) internal view returns (address) {
-        DataTypes.ReserveData memory reserve = ILendingPool(aaveV2LendingPool).getReserveData(asset);
+        DataTypes.ReserveData memory reserve = ILendingPool(AAVE_V2_POOL).getReserveData(asset);
         return reserve.aTokenAddress;
     }
 

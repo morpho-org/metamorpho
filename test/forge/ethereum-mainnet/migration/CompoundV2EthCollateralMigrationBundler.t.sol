@@ -30,14 +30,14 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
 
         _initMarket(WETH, DAI);
 
-        vm.label(cETHv2, "cETHv2");
-        _cTokens[WETH] = cETHv2;
-        vm.label(cDAIv2, "cDAIv2");
-        _cTokens[DAI] = cDAIv2;
-        vm.label(cUSDCv2, "cUSDCv2");
-        _cTokens[USDC] = cUSDCv2;
+        vm.label(C_ETH_V2, "cETHv2");
+        _cTokens[WETH] = C_ETH_V2;
+        vm.label(C_DAI_V2, "cDAIv2");
+        _cTokens[DAI] = C_DAI_V2;
+        vm.label(C_USDC_V2, "cUSDCv2");
+        _cTokens[USDC] = C_USDC_V2;
 
-        bundler = new CompoundV2MigrationBundler(address(morpho), WETH, cETHv2);
+        bundler = new CompoundV2MigrationBundler(address(morpho), WETH, C_ETH_V2);
         vm.label(address(bundler), "Compound V2 Migration Bundler");
 
         borrowableCToken = _getCToken(DAI);
@@ -58,16 +58,16 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
 
         vm.startPrank(user);
 
-        ICEth(cETHv2).mint{value: collateralSupplied}();
+        ICEth(C_ETH_V2).mint{value: collateralSupplied}();
         address[] memory enteredMarkets = new address[](1);
-        enteredMarkets[0] = cETHv2;
-        require(IComptroller(comptroller).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
+        enteredMarkets[0] = C_ETH_V2;
+        require(IComptroller(COMPTROLLER).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
         require(ICToken(borrowableCToken).borrow(borrowed) == 0, "borrow error");
-        ERC20(marketParams.collateralToken).safeApprove(cETHv2, 0);
+        ERC20(marketParams.collateralToken).safeApprove(C_ETH_V2, 0);
 
-        uint256 cTokenBalance = ICEth(cETHv2).balanceOf(user);
+        uint256 cTokenBalance = ICEth(C_ETH_V2).balanceOf(user);
 
-        ERC20(cETHv2).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
+        ERC20(C_ETH_V2).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
 
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
@@ -76,9 +76,9 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
         callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
         callbackData[3] = _compoundV2RepayCall(borrowableCToken, borrowed);
-        callbackData[4] = _erc20Approve2Call(privateKey, cETHv2, uint160(cTokenBalance), address(bundler), 0);
-        callbackData[5] = _erc20TransferFrom2Call(cETHv2, cTokenBalance);
-        callbackData[6] = _compoundV2WithdrawCall(cETHv2, collateralSupplied);
+        callbackData[4] = _erc20Approve2Call(privateKey, C_ETH_V2, uint160(cTokenBalance), address(bundler), 0);
+        callbackData[5] = _erc20TransferFrom2Call(C_ETH_V2, cTokenBalance);
+        callbackData[6] = _compoundV2WithdrawCall(C_ETH_V2, collateralSupplied);
         data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
 
         bundler.multicall(SIG_DEADLINE, data);
