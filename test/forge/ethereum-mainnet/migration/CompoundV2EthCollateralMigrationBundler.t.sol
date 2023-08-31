@@ -50,9 +50,8 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
 
     /// forge-config: default.fuzz.runs = 3
     function testMigrateBorrowerWithPermit2(uint256 privateKey) public {
-        privateKey = bound(privateKey, 1, type(uint32).max);
-        address user = vm.addr(privateKey);
-        vm.label(user, "user");
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
 
         deal(user, collateralSupplied);
 
