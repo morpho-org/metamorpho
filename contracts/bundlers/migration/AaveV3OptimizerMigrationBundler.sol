@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {MorphoBundler} from "../MorphoBundler.sol";
-import {ERC4626Bundler} from "../ERC4626Bundler.sol";
+import {MigrationBundler} from "./MigrationBundler.sol";
 
 import {IMorpho} from "@morpho-aave-v3/interfaces/IMorpho.sol";
 
 import {Types} from "@morpho-aave-v3/libraries/Types.sol";
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 
-contract AaveV3OptimizerMigrationBundler is MorphoBundler, ERC4626Bundler {
-    using SafeTransferLib for ERC20;
-
+contract AaveV3OptimizerMigrationBundler is MigrationBundler {
     IMorpho immutable AAVE_V3_OPTIMIZER;
 
-    constructor(address morpho, address aaveV3Optimizer) MorphoBundler(morpho) {
+    constructor(address morpho, address aaveV3Optimizer) MigrationBundler(morpho) {
         AAVE_V3_OPTIMIZER = IMorpho(aaveV3Optimizer);
     }
 
     function aaveV3OptimizerRepay(address underlying, uint256 amount) external {
-        _approveMaxAaveV3Optimizer(underlying);
+        _approveMaxTo(underlying, address(AAVE_V3_OPTIMIZER));
 
         AAVE_V3_OPTIMIZER.repay(underlying, amount, _initiator);
     }
@@ -41,11 +37,5 @@ contract AaveV3OptimizerMigrationBundler is MorphoBundler, ERC4626Bundler {
         Types.Signature calldata signature
     ) external {
         AAVE_V3_OPTIMIZER.approveManagerWithSig(_initiator, address(this), isAllowed, nonce, deadline, signature);
-    }
-
-    function _approveMaxAaveV3Optimizer(address asset) internal {
-        if (ERC20(asset).allowance(address(this), address(AAVE_V3_OPTIMIZER)) == 0) {
-            ERC20(asset).safeApprove(address(AAVE_V3_OPTIMIZER), type(uint256).max);
-        }
     }
 }

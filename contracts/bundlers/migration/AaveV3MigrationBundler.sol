@@ -1,43 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {MorphoBundler} from "../MorphoBundler.sol";
-import {ERC4626Bundler} from "../ERC4626Bundler.sol";
+import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 import {IPool} from "@aave/v3-core/interfaces/IPool.sol";
 import {IAToken} from "@aave/v3-core/interfaces/IAToken.sol";
 
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+contract AaveV3MigrationBundler is MigrationBundler, ERC20Bundler {
+    IPool immutable AAVE_V3_POOL;
 
-contract AaveV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundler {
-    using SafeTransferLib for ERC20;
-
-    IPool immutable AAVE_V3_POOl;
-
-    constructor(address morpho, address AAVE_V3_POOL) MorphoBundler(morpho) {
-        AAVE_V3_POOl = IPool(AAVE_V3_POOL);
+    constructor(address morpho, address aaveV3Pool) MigrationBundler(morpho) {
+        AAVE_V3_POOL = IPool(aaveV3Pool);
     }
 
     function aaveV3Withdraw(address asset, uint256 amount, address to) external {
-        AAVE_V3_POOl.withdraw(asset, amount, to);
+        AAVE_V3_POOL.withdraw(asset, amount, to);
     }
 
     function aaveV3Repay(address asset, uint256 amount, uint256 interestRateMode) external {
-        _approveMaxAaveV3Pool(asset);
+        _approveMaxTo(asset, address(AAVE_V3_POOL));
 
-        AAVE_V3_POOl.repay(asset, amount, interestRateMode, _initiator);
+        AAVE_V3_POOL.repay(asset, amount, interestRateMode, _initiator);
     }
 
     function aaveV3PermitAToken(address aToken, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         external
     {
         IAToken(aToken).permit(_initiator, address(this), value, deadline, v, r, s);
-    }
-
-    function _approveMaxAaveV3Pool(address asset) internal {
-        if (ERC20(asset).allowance(address(this), address(AAVE_V3_POOl)) == 0) {
-            ERC20(asset).safeApprove(address(AAVE_V3_POOl), type(uint256).max);
-        }
     }
 }

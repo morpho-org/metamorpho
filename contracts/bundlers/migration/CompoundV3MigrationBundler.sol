@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {MorphoBundler} from "../MorphoBundler.sol";
-import {ERC4626Bundler} from "../ERC4626Bundler.sol";
+import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 import {ICompoundV3} from "./interfaces/ICompoundV3.sol";
 
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
-
-contract CompoundV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundler {
-    using SafeTransferLib for ERC20;
-
-    constructor(address morpho) MorphoBundler(morpho) {}
+contract CompoundV3MigrationBundler is MigrationBundler, ERC20Bundler {
+    constructor(address morpho) MigrationBundler(morpho) {}
 
     function compoundV3Supply(address instance, address asset, uint256 amount) external {
-        _approveMaxCompoundV3(instance, asset);
+        _approveMaxTo(asset, instance);
         ICompoundV3(instance).supplyTo(_initiator, asset, amount);
     }
 
@@ -33,11 +28,5 @@ contract CompoundV3MigrationBundler is MorphoBundler, ERC4626Bundler, ERC20Bundl
         bytes32 s
     ) external {
         ICompoundV3(instance).allowBySig(_initiator, address(this), isAllowed, nonce, expiry, v, r, s);
-    }
-
-    function _approveMaxCompoundV3(address instance, address asset) internal {
-        if (ERC20(asset).allowance(address(this), instance) == 0) {
-            ERC20(asset).safeApprove(instance, type(uint256).max);
-        }
     }
 }

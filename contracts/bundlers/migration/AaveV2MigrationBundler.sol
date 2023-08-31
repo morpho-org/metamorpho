@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {EVMBundler} from "../EVMBundler.sol";
+import {MigrationBundler} from "./MigrationBundler.sol";
+import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 import {ILendingPool} from "@morpho-v1/aave-v2/interfaces/aave/ILendingPool.sol";
 
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
-
-contract AaveV2MigrationBundler is EVMBundler {
-    using SafeTransferLib for ERC20;
-
+contract AaveV2MigrationBundler is MigrationBundler, ERC20Bundler {
     ILendingPool immutable AAVE_V2_POOl;
 
-    constructor(address morpho, address aaveV2Pool) EVMBundler(morpho) {
+    constructor(address morpho, address aaveV2Pool) MigrationBundler(morpho) {
         AAVE_V2_POOl = ILendingPool(aaveV2Pool);
     }
 
@@ -21,14 +18,8 @@ contract AaveV2MigrationBundler is EVMBundler {
     }
 
     function aaveV2Repay(address asset, uint256 amount, uint256 rateMode) external {
-        _approveMaxAaveV2Pool(asset);
+        _approveMaxTo(asset, address(AAVE_V2_POOl));
 
         AAVE_V2_POOl.repay(asset, amount, rateMode, _initiator);
-    }
-
-    function _approveMaxAaveV2Pool(address asset) internal {
-        if (ERC20(asset).allowance(address(this), address(AAVE_V2_POOl)) == 0) {
-            ERC20(asset).safeApprove(address(AAVE_V2_POOl), type(uint256).max);
-        }
     }
 }
