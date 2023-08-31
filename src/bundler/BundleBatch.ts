@@ -1,5 +1,5 @@
 import { BigNumberish } from "ethers";
-import { BaseBundler__factory } from "types";
+import { BaseBundler__factory } from "src/types";
 
 import { BundleCall } from "./BundleAction";
 

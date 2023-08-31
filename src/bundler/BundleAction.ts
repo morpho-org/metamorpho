@@ -11,7 +11,7 @@ import {
   UniV2Bundler__factory,
   UniV3Bundler__factory,
   WNativeBundler__factory,
-} from "types";
+} from "src/types";
 import { PoolAddress } from "types/contracts/bundler/UniV3Bundler";
 import { MarketStruct, SignatureStruct, AuthorizationStruct } from "types/contracts/interfaces/IMorpho";
 
