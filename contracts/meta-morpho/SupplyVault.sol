@@ -1,25 +1,24 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import {IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
+import {IIrm} from "@morpho-blue/interfaces/IIrm.sol";
+import {Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
 import {IVaultAllocationStrategy} from "./interfaces/IVaultAllocationStrategy.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
-import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
-import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
+import {WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
+import {IMorphoMarketStruct, MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {Id, MarketParams, MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
-import {IERC20, ERC20, ERC4626, Context} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {IERC20, ERC20, ERC4626, Context, Math} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVault {
-    using MorphoLib for IMorpho;
-    using SharesMathLib for uint256;
+    using Math for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
@@ -29,6 +28,12 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     IVaultAllocationStrategy public supplyStrategy;
     IVaultAllocationStrategy public withdrawStrategy;
+
+    uint96 fee;
+    address feeRecipient;
+
+    /// @dev Stores the total assets owned by this vault when the fee was last accrued.
+    uint256 lastTotalAssets;
 
     ConfigSet private _config;
 
@@ -80,6 +85,35 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         emit EventsLib.SetWithdrawStrategy(newWithdrawStrategy);
     }
 
+    function setFee(uint256 newFee) external onlyOwner {
+        require(newFee != fee, ErrorsLib.ALREADY_SET);
+        require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
+
+        // Accrue interest using the previous fee set before changing it.
+        _accrueFee();
+
+        // Safe "unchecked" cast.
+        fee = uint96(newFee);
+
+        emit EventsLib.SetFee(newFee);
+
+        if (newFee != 0) lastTotalAssets = totalAssets();
+    }
+
+    function setFeeRecipient(address newFeeRecipient) external onlyOwner {
+        require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
+
+        // Accrue interest to the previous fee recipient set before changing it.
+        _accrueFee();
+
+        // Safe "unchecked" cast.
+        feeRecipient = newFeeRecipient;
+
+        emit EventsLib.SetFeeRecipient(newFeeRecipient);
+
+        if (newFeeRecipient != address(0)) lastTotalAssets = totalAssets();
+    }
+
     /* EXTERNAL */
 
     function setConfig(MarketParams memory marketParams, VaultMarketConfig calldata marketConfig)
@@ -110,6 +144,30 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     /* ERC4626 */
 
+    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
+        _accrueFee();
+
+        return super.deposit(assets, receiver);
+    }
+
+    function mint(uint256 shares, address receiver) public virtual override returns (uint256) {
+        _accrueFee();
+
+        return super.mint(shares, receiver);
+    }
+
+    function withdraw(uint256 assets, address receiver, address owner) public virtual override returns (uint256) {
+        _accrueFee();
+
+        return super.withdraw(assets, receiver, owner);
+    }
+
+    function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256) {
+        _accrueFee();
+
+        return super.redeem(shares, receiver, owner);
+    }
+
     function totalAssets() public view override returns (uint256 assets) {
         uint256 nbMarkets = _config.length();
 
@@ -118,6 +176,8 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
             assets += _supplyBalance(marketParams);
         }
+
+        assets += ERC20(asset()).balanceOf(address(this));
     }
 
     // TODO: maxWithdraw, maxRedeem are limited by markets liquidity
@@ -153,20 +213,20 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     /* INTERNAL */
 
-    function _msgSender() internal view override(Context, ERC2771Context) returns (address) {
-        return ERC2771Context._msgSender();
-    }
-
-    function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
-        return ERC2771Context._msgData();
-    }
-
     function _market(Id id) internal view returns (VaultMarket storage) {
         return _config.getMarket(id);
     }
 
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
         return _MORPHO.expectedSupplyBalance(marketParams, address(this));
+    }
+
+    function _msgSender() internal view override(Context, ERC2771Context) returns (address) {
+        return ERC2771Context._msgSender();
+    }
+
+    function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
+        return ERC2771Context._msgData();
     }
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
@@ -188,5 +248,27 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
         _withdrawAll(withdrawn, address(this), address(this));
         _supplyAll(supplied, address(this));
+    }
+
+    function _accrueFee() internal {
+        if (fee == 0 || feeRecipient == address(0)) return;
+
+        uint256 newTotalAssets = totalAssets();
+        uint256 totalInterest = newTotalAssets - lastTotalAssets;
+
+        lastTotalAssets = newTotalAssets;
+
+        if (totalInterest == 0) return;
+
+        uint256 feeAmount = totalInterest.mulDiv(fee, WAD);
+        // The fee amount is subtracted from the total assets in this calculation to compensate for the fact
+        // that total assets is already increased by the total interest (including the fee amount).
+        uint256 feeShares = feeAmount.mulDiv(
+            totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAmount + 1, Math.Rounding.Down
+        );
+
+        _mint(feeRecipient, feeShares);
+
+        emit EventsLib.AccrueFee(feeShares);
     }
 }

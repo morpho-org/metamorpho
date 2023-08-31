@@ -11,4 +11,10 @@ library ErrorsLib {
     string internal constant INCONSISTENT_ASSET = "inconsistent asset";
 
     string internal constant SUPPLY_CAP_EXCEEDED = "supply cap exceeded";
+
+    /// @notice Thrown when the fee to set exceeds the maximum fee.
+    string internal constant MAX_FEE_EXCEEDED = "max fee exceeded";
+
+    /// @notice Thrown when the value is already set.
+    string internal constant ALREADY_SET = "already set";
 }
