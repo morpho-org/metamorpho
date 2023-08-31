@@ -18,7 +18,7 @@ abstract contract ERC4626Bundler is BaseBundler {
 
     /* ACTIONS */
 
-    function mint(address vault, uint256 shares, address receiver) external {
+    function mint(address vault, uint256 shares, address receiver) external payable {
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 
         address asset = IERC4626(vault).asset();
@@ -33,7 +33,7 @@ abstract contract ERC4626Bundler is BaseBundler {
         IERC4626(vault).mint(shares, receiver);
     }
 
-    function deposit(address vault, uint256 amount, address receiver) external {
+    function deposit(address vault, uint256 amount, address receiver) external payable {
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 
         address asset = IERC4626(vault).asset();
@@ -47,7 +47,7 @@ abstract contract ERC4626Bundler is BaseBundler {
         IERC4626(vault).deposit(amount, receiver);
     }
 
-    function withdraw(address vault, uint256 amount, address receiver) external {
+    function withdraw(address vault, uint256 amount, address receiver) external payable {
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 
         address initiator = _initiator;
@@ -58,7 +58,7 @@ abstract contract ERC4626Bundler is BaseBundler {
         IERC4626(vault).withdraw(amount, receiver, initiator);
     }
 
-    function redeem(address vault, uint256 shares, address receiver) external {
+    function redeem(address vault, uint256 shares, address receiver) external payable {
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 
         address initiator = _initiator;
