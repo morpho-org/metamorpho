@@ -7,7 +7,7 @@ import {ErrorsLib as BulkerErrorsLib} from "contracts/bundlers/libraries/ErrorsL
 import "./helpers/LocalTest.sol";
 
 import "contracts/bundlers/EVMBundler.sol";
-import "contracts/bundlers/mocks/ERC4626Mock.sol";
+import {ERC4626Mock} from "./mocks/ERC4626Mock.sol";
 
 contract EVMBundlerLocalTest is LocalTest {
     using MathLib for uint256;
@@ -16,7 +16,7 @@ contract EVMBundlerLocalTest is LocalTest {
     using SharesMathLib for uint256;
 
     EVMBundler private bundler;
-    ERC4626 private vault;
+    ERC4626Mock private vault;
     bytes[] private bundleData;
 
     function setUp() public override {
@@ -51,7 +51,7 @@ contract EVMBundlerLocalTest is LocalTest {
         bundler.multicall(block.timestamp, bundlerAddressData);
     }
 
-    function testTranferZeroAmount(address receiver, Signature calldata signature) public {
+    function testERC20ZeroAmount(address receiver, Signature calldata signature) public {
         vm.assume(receiver != address(0) && receiver != address(bundler));
 
         bytes[] memory transferData = new bytes[](1);
@@ -355,7 +355,6 @@ contract EVMBundlerLocalTest is LocalTest {
 
         borrowableToken.setBalance(USER, amount);
         vm.startPrank(USER);
-
         morpho.supply(marketParams, amount, 0, USER, hex"");
         bundler.multicall(block.timestamp, data);
         vm.stopPrank();
@@ -545,8 +544,6 @@ contract EVMBundlerLocalTest is LocalTest {
             else if (actionId == 10) _addWithdrawCollateralData(vars, amount);
         }
 
-        // borrowableToken.setBalance(USER, vars.initialUserBorrowableBalance);
-        // collateralToken.setBalance(USER, vars.initialUserCollateralBalance);
         borrowableToken.setBalance(USER, vars.initialUserBorrowableBalance);
         collateralToken.setBalance(USER, vars.initialUserCollateralBalance);
 
@@ -581,12 +578,12 @@ contract EVMBundlerLocalTest is LocalTest {
         );
     }
 
-    function _getTransferData(address tokenAddress, uint256 amount) internal pure returns (bytes memory data) {
-        data = abi.encodeCall(ERC20Bundler.transfer, (tokenAddress, USER, amount));
+    function _getTransferData(address token, uint256 amount) internal pure returns (bytes memory data) {
+        data = abi.encodeCall(ERC20Bundler.transfer, (token, USER, amount));
     }
 
-    function _getTransferFrom2Data(address tokenAddress, uint256 amount) internal pure returns (bytes memory data) {
-        data = abi.encodeCall(ERC20Bundler.transferFrom2, (tokenAddress, amount));
+    function _getTransferFrom2Data(address token, uint256 amount) internal pure returns (bytes memory data) {
+        data = abi.encodeCall(ERC20Bundler.transferFrom2, (token, amount));
     }
 
     function _getSupplyData(uint256 amount) internal view returns (bytes memory data) {
