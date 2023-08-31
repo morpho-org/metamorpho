@@ -33,6 +33,7 @@ abstract contract BaseTest is Test {
 
     IMorpho internal morpho;
     IrmMock internal irm;
+    OracleMock oracle;
 
     function setUp() public virtual {
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(OWNER)));
@@ -42,6 +43,9 @@ abstract contract BaseTest is Test {
 
         vm.prank(OWNER);
         morpho.enableIrm(address(irm));
+
+        oracle = new OracleMock();
+        oracle.setPrice(ORACLE_PRICE_SCALE);
 
         vm.prank(USER);
         // So tests can borrow/withdraw on behalf of USER without pranking it.
