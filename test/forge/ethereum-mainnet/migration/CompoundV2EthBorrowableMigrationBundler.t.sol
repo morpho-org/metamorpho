@@ -90,10 +90,9 @@ contract CompoundV2EthBorrowableMigrationBundler is BaseMigrationTest {
         assertFalse(morpho.isAuthorized(user, address(bundler)));
     }
 
-    function _getCToken(address asset) internal view returns (address) {
-        address res = _cTokens[asset];
+    function _getCToken(address asset) internal view returns (address res) {
+        res = _cTokens[asset];
         require(res != address(0), "unknown compound v2 asset");
-        return res;
     }
 
     function _compoundV2RepayCall(address cToken, uint256 repayAmount) internal pure returns (bytes memory) {

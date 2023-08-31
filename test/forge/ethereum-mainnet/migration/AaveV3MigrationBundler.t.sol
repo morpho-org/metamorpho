@@ -117,8 +117,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     }
 
     function _getATokenV3(address asset) internal view returns (address) {
-        DataTypes.ReserveData memory reserve = IPool(AAVE_V3_POOL).getReserveData(asset);
-        return reserve.aTokenAddress;
+IPool(AAVE_V3_POOL).getReserveData(asset).aTokenAddress;
     }
 
     function _aaveV3PermitATokenCall(uint256 privateKey, address aToken, address spender, uint256 value, uint256 nonce)
