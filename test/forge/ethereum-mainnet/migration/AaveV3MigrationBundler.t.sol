@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "./BaseMigrationTest.sol";
 
 import {IPool} from "@aave/v3-core/interfaces/IPool.sol";
 import {IAToken} from "@aave/v3-core/interfaces/IAToken.sol";
 
-import {DataTypes} from "@aave/v3-core/protocol/libraries/types/DataTypes.sol";
-
+import "./BaseMigrationTest.sol";
 import {AaveV3MigrationBundler} from "contracts/bundlers/migration/AaveV3MigrationBundler.sol";
 
 contract AaveV3MigrationBundlerTest is BaseMigrationTest {
@@ -19,7 +17,6 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     AaveV3MigrationBundler bundler;
 
     uint256 collateralSupplied = 10_000 ether;
-    uint256 supplied = 10_000 ether;
     uint256 borrowed = 1 ether;
 
     function setUp() public override {
@@ -117,7 +114,7 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     }
 
     function _getATokenV3(address asset) internal view returns (address) {
-        IPool(AAVE_V3_POOL).getReserveData(asset).aTokenAddress;
+        return IPool(AAVE_V3_POOL).getReserveData(asset).aTokenAddress;
     }
 
     function _aaveV3PermitATokenCall(uint256 privateKey, address aToken, address spender, uint256 value, uint256 nonce)

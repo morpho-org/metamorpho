@@ -3,10 +3,6 @@ pragma solidity ^0.8.0;
 
 import {IAllowanceTransfer} from "@permit2/interfaces/IAllowanceTransfer.sol";
 
-import {MorphoBundler} from "contracts/bundlers/MorphoBundler.sol";
-import {ERC20Bundler} from "contracts/bundlers/ERC20Bundler.sol";
-import {WNativeBundler} from "contracts/bundlers/WNativeBundler.sol";
-
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
@@ -14,6 +10,9 @@ import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
 import "../../helpers/ForkTest.sol";
+import {MorphoBundler} from "contracts/bundlers/MorphoBundler.sol";
+import {ERC20Bundler} from "contracts/bundlers/ERC20Bundler.sol";
+import {WNativeBundler} from "contracts/bundlers/WNativeBundler.sol";
 
 contract BaseMigrationTest is ForkTest {
     using MarketParamsLib for MarketParams;

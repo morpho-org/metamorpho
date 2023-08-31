@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "./BaseMigrationTest.sol";
-
 import {ICEth} from "contracts/bundlers/migration/interfaces/ICEth.sol";
 import {ICToken} from "contracts/bundlers/migration/interfaces/ICToken.sol";
 import {IComptroller} from "contracts/bundlers/migration/interfaces/IComptroller.sol";
 
+import "./BaseMigrationTest.sol";
 import {CompoundV2MigrationBundler} from "contracts/bundlers/migration/CompoundV2MigrationBundler.sol";
 
 contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
@@ -23,7 +22,6 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
     address borrowableCToken;
 
     uint256 collateralSupplied = 10 ether;
-    uint256 supplied = 10 ether;
     uint256 borrowed = 1e6;
 
     function setUp() public override {

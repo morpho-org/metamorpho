@@ -5,9 +5,9 @@ import "./BaseMigrationTest.sol";
 
 import {IMorpho as IAaveV3Optimizer} from "@morpho-aave-v3/interfaces/IMorpho.sol";
 
-import {AaveV3OptimizerMigrationBundler} from "contracts/bundlers/migration/AaveV3OptimizerMigrationBundler.sol";
-
 import {Types} from "@morpho-aave-v3/libraries/Types.sol";
+
+import {AaveV3OptimizerMigrationBundler} from "contracts/bundlers/migration/AaveV3OptimizerMigrationBundler.sol";
 
 contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     using SafeTransferLib for ERC20;
@@ -18,7 +18,6 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
     AaveV3OptimizerMigrationBundler bundler;
 
     uint256 collateralSupplied = 10_000 ether;
-    uint256 supplied = 10_000 ether;
     uint256 borrowed = 1 ether;
 
     function setUp() public override {

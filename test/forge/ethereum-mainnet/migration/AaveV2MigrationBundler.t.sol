@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "./BaseMigrationTest.sol";
-
 import {ILendingPool} from "@morpho-v1/aave-v2/interfaces/aave/ILendingPool.sol";
 import {IAToken} from "@morpho-v1/aave-v2/interfaces/aave/IAToken.sol";
 
-import {DataTypes} from "@morpho-v1/aave-v2/libraries/aave/DataTypes.sol";
-
+import "./BaseMigrationTest.sol";
 import {AaveV2MigrationBundler} from "contracts/bundlers/migration/AaveV2MigrationBundler.sol";
 
 contract AaveV2MigrationBundlerTest is BaseMigrationTest {
@@ -19,7 +16,6 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
     AaveV2MigrationBundler bundler;
 
     uint256 collateralSupplied = 10_000 ether;
-    uint256 supplied = 10_000 ether;
     uint256 borrowed = 1 ether;
 
     function setUp() public override {
@@ -79,8 +75,7 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
     }
 
     function _getATokenV2(address asset) internal view returns (address) {
-        DataTypes.ReserveData memory reserve = ILendingPool(AAVE_V2_POOL).getReserveData(asset);
-        return reserve.aTokenAddress;
+        return ILendingPool(AAVE_V2_POOL).getReserveData(asset).aTokenAddress;
     }
 
     function _aaveV2RepayCall(address asset, uint256 amount, uint256 rateMode) internal pure returns (bytes memory) {
