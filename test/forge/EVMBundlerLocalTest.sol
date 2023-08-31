@@ -16,14 +16,13 @@ contract EVMBundlerLocalTest is LocalTest {
     using SharesMathLib for uint256;
 
     EVMBundler private bundler;
-    ERC4626 private erc4626;
+    ERC4626 private vault;
     bytes[] private bundleData;
 
     function setUp() public override {
         super.setUp();
 
-        erc4626 = new ERC4626Mock(borrowableToken, "borrowable Vault", "BV");
-
+        vault = new ERC4626Mock(borrowableToken, "borrowable Vault", "BV");
         bundler = new EVMBundler(address(morpho));
 
         vm.startPrank(USER);
@@ -35,34 +34,7 @@ contract EVMBundlerLocalTest is LocalTest {
         vm.stopPrank();
     }
 
-    /* TESTS */
-
-    function testSetAuthorization(uint256 privateKey, uint32 deadline) public {
-        privateKey = bound(privateKey, 1, type(uint32).max);
-        deadline = uint32(bound(deadline, block.timestamp + 1, type(uint32).max));
-
-        address user = vm.addr(privateKey);
-        vm.assume(user != USER);
-
-        Authorization memory authorization;
-        authorization.authorizer = user;
-        authorization.authorized = address(bundler);
-        authorization.deadline = deadline;
-        authorization.nonce = morpho.nonce(user);
-        authorization.isAuthorized = true;
-
-        bytes32 digest = SigUtils.getTypedDataHash(morpho.DOMAIN_SEPARATOR(), authorization);
-
-        Signature memory sig;
-        (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
-
-        bytes[] memory data = new bytes[](1);
-        data[0] = abi.encodeCall(MorphoBundler.morphoSetAuthorizationWithSig, (authorization, sig));
-
-        bundler.multicall(block.timestamp, data);
-
-        assertTrue(morpho.isAuthorized(user, address(bundler)), "isAuthorized(bundler)");
-    }
+    /* TESTS ERC20 BUNDLER */
 
     function testTranferInvalidAddresses(uint256 amount) public {
         amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
@@ -124,6 +96,177 @@ contract EVMBundlerLocalTest is LocalTest {
 
         assertEq(borrowableToken.balanceOf(address(bundler)), amount, "borrowable.balanceOf(address(bundler))");
         assertEq(borrowableToken.balanceOf(USER), 0, "borrowable.balanceOf(USER)");
+    }
+
+    /* TESTS ERC4626 BUNDLER */
+
+    function testERC4626BundlerZeroAdress(uint256 amount, uint256 shares) public {
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+        shares = bound(shares, MIN_AMOUNT, MAX_AMOUNT);
+
+        bytes[] memory mintData = new bytes[](1);
+        bytes[] memory depositData = new bytes[](1);
+        bytes[] memory withdrawData = new bytes[](1);
+        bytes[] memory redeemData = new bytes[](1);
+
+        mintData[0] = abi.encodeCall(ERC4626Bundler.mint, (address(vault), shares, address(0)));
+        depositData[0] = abi.encodeCall(ERC4626Bundler.deposit, (address(vault), amount, address(0)));
+        withdrawData[0] = abi.encodeCall(ERC4626Bundler.withdraw, (address(vault), amount, address(0)));
+        redeemData[0] = abi.encodeCall(ERC4626Bundler.redeem, (address(vault), shares, address(0)));
+
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_ADDRESS));
+        bundler.multicall(block.timestamp, mintData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_ADDRESS));
+        bundler.multicall(block.timestamp, depositData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_ADDRESS));
+        bundler.multicall(block.timestamp, withdrawData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_ADDRESS));
+        bundler.multicall(block.timestamp, redeemData);
+    }
+
+    function testERC4626BundlerZeroAmount(address receiver) public {
+        vm.assume(receiver != address(0));
+
+        bytes[] memory mintData = new bytes[](1);
+        bytes[] memory depositData = new bytes[](1);
+        bytes[] memory withdrawData = new bytes[](1);
+        bytes[] memory redeemData = new bytes[](1);
+
+        mintData[0] = abi.encodeCall(ERC4626Bundler.mint, (address(vault), 0, receiver));
+        depositData[0] = abi.encodeCall(ERC4626Bundler.deposit, (address(vault), 0, receiver));
+        withdrawData[0] = abi.encodeCall(ERC4626Bundler.withdraw, (address(vault), 0, receiver));
+        redeemData[0] = abi.encodeCall(ERC4626Bundler.redeem, (address(vault), 0, receiver));
+
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
+        bundler.multicall(block.timestamp, mintData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
+        bundler.multicall(block.timestamp, depositData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_AMOUNT));
+        bundler.multicall(block.timestamp, withdrawData);
+        vm.expectRevert(bytes(BulkerErrorsLib.ZERO_SHARES));
+        bundler.multicall(block.timestamp, redeemData);
+    }
+
+    function testMintVault(uint256 shares, address receiver) public {
+        vm.assume(receiver != address(0));
+        shares = bound(shares, MIN_AMOUNT, MAX_AMOUNT);
+
+        uint256 expectedAmount = vault.previewMint(shares);
+        vm.assume(expectedAmount != 0);
+
+        bytes[] memory data = new bytes[](2);
+        data[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(borrowableToken), expectedAmount));
+        data[1] = abi.encodeCall(ERC4626Bundler.mint, (address(vault), shares, receiver));
+
+        borrowableToken.setBalance(USER, expectedAmount);
+        vm.prank(USER);
+        bundler.multicall(block.timestamp, data);
+
+        assertEq(borrowableToken.balanceOf(address(vault)), expectedAmount, "vault's balance");
+        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "bundler's balance");
+        assertEq(vault.balanceOf(receiver), shares, "receiver's shares");
+    }
+
+    function testDepositVault(uint256 amount, address receiver) public {
+        vm.assume(receiver != address(0));
+        amount = bound(amount, MIN_AMOUNT, MAX_AMOUNT);
+
+        uint256 expectedShares = vault.previewDeposit(amount);
+        vm.assume(expectedShares != 0);
+
+        bytes[] memory data = new bytes[](2);
+        data[0] = abi.encodeCall(ERC20Bundler.transferFrom2, (address(borrowableToken), amount));
+        data[1] = abi.encodeCall(ERC4626Bundler.deposit, (address(vault), amount, receiver));
+
+        borrowableToken.setBalance(USER, amount);
+        vm.prank(USER);
+        bundler.multicall(block.timestamp, data);
+
+        assertEq(borrowableToken.balanceOf(address(vault)), amount, "vault's balance");
+        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "bundler's balance");
+        assertEq(vault.balanceOf(receiver), expectedShares, "receiver's shares");
+    }
+
+    function testWithdrawVault(uint256 depositedAmount, uint256 withdrawnAmount, address receiver) public {
+        vm.assume(receiver != address(0));
+        depositedAmount = bound(depositedAmount, MIN_AMOUNT, MAX_AMOUNT);
+
+        uint256 suppliedShares = depositOnVault(depositedAmount);
+
+        withdrawnAmount = bound(withdrawnAmount, MIN_AMOUNT, depositedAmount);
+        uint256 withdrawnShares = vault.previewWithdraw(withdrawnAmount);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(ERC4626Bundler.withdraw, (address(vault), withdrawnAmount, receiver));
+
+        vm.prank(USER);
+        bundler.multicall(block.timestamp, data);
+
+        assertEq(borrowableToken.balanceOf(address(vault)), depositedAmount - withdrawnAmount, "vault's balance");
+        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "bundler's balance");
+        assertEq(borrowableToken.balanceOf(receiver), withdrawnAmount, "bundler's balance");
+        assertEq(vault.balanceOf(USER), suppliedShares - withdrawnShares, "receiver's shares");
+    }
+
+    function testRedeemVault(uint256 depositedAmount, uint256 redeemedShares, address receiver) public {
+        vm.assume(receiver != address(0));
+        depositedAmount = bound(depositedAmount, MIN_AMOUNT, MAX_AMOUNT);
+
+        uint256 suppliedShares = depositOnVault(depositedAmount);
+
+        redeemedShares = bound(redeemedShares, MIN_AMOUNT, suppliedShares);
+        uint256 withdrawnAmount = vault.previewRedeem(redeemedShares);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(ERC4626Bundler.redeem, (address(vault), redeemedShares, receiver));
+
+        vm.prank(USER);
+        bundler.multicall(block.timestamp, data);
+
+        assertEq(borrowableToken.balanceOf(address(vault)), depositedAmount - withdrawnAmount, "vault's balance");
+        assertEq(borrowableToken.balanceOf(address(bundler)), 0, "bundler's balance");
+        assertEq(borrowableToken.balanceOf(receiver), withdrawnAmount, "bundler's balance");
+        assertEq(vault.balanceOf(USER), suppliedShares - redeemedShares, "receiver's shares");
+    }
+
+    function depositOnVault(uint256 amount) internal returns (uint256 shares) {
+        shares = vault.previewDeposit(amount);
+
+        borrowableToken.setBalance(USER, amount);
+        vm.startPrank(USER);
+        borrowableToken.approve(address(vault), type(uint256).max);
+        vault.deposit(amount, USER);
+        vault.approve(address(bundler), type(uint256).max);
+        vm.stopPrank();
+    }
+
+    /* TESTS MORPHO BUNDLER */
+
+    function testSetAuthorization(uint256 privateKey, uint32 deadline) public {
+        privateKey = bound(privateKey, 1, type(uint32).max);
+        deadline = uint32(bound(deadline, block.timestamp + 1, type(uint32).max));
+
+        address user = vm.addr(privateKey);
+        vm.assume(user != USER);
+
+        Authorization memory authorization;
+        authorization.authorizer = user;
+        authorization.authorized = address(bundler);
+        authorization.deadline = deadline;
+        authorization.nonce = morpho.nonce(user);
+        authorization.isAuthorized = true;
+
+        bytes32 digest = SigUtils.getTypedDataHash(morpho.DOMAIN_SEPARATOR(), authorization);
+
+        Signature memory sig;
+        (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
+
+        bytes[] memory data = new bytes[](1);
+        data[0] = abi.encodeCall(MorphoBundler.morphoSetAuthorizationWithSig, (authorization, sig));
+
+        bundler.multicall(block.timestamp, data);
+
+        assertTrue(morpho.isAuthorized(user, address(bundler)), "isAuthorized(bundler)");
     }
 
     function testBundlerAddress(uint256 amount) public {
@@ -487,7 +630,7 @@ contract EVMBundlerLocalTest is LocalTest {
         amount = bound(amount % MAX_AMOUNT, MIN_AMOUNT, MAX_AMOUNT);
 
         _transferMissingCollateral(vars, amount);
-        
+
         bundleData.push(_getSupplyCollateralData(amount));
         vars.expectedBundlerCollateralBalance -= amount;
 
@@ -501,7 +644,7 @@ contract EVMBundlerLocalTest is LocalTest {
         uint256 supplyBalance =
             vars.expectedSupplyShares.toAssetsDown(vars.expectedTotalSupply, vars.expectedSupplyShares);
 
-        uint256 maxAmount = min(supplyBalance, availableLiquidity);
+        uint256 maxAmount = UtilsLib.min(supplyBalance, availableLiquidity);
         amount = bound(amount % maxAmount, 1, maxAmount);
 
         bundleData.push(_getWithdrawData(amount));
@@ -523,7 +666,7 @@ contract EVMBundlerLocalTest is LocalTest {
         uint256 currentBorrowPower = totalBorrowPower - borrowed;
         if (currentBorrowPower == 0) return;
 
-        uint256 maxShares = min(currentBorrowPower, availableLiquidity).toSharesDown(
+        uint256 maxShares = UtilsLib.min(currentBorrowPower, availableLiquidity).toSharesDown(
             vars.expectedTotalBorrow, vars.expectedBorrowShares
         );
         if (maxShares < MIN_AMOUNT) return;
@@ -587,12 +730,6 @@ contract EVMBundlerLocalTest is LocalTest {
             bundleData.push(_getTransferFrom2Data(address(collateralToken), missingAmount));
             vars.initialUserCollateralBalance += missingAmount;
             vars.expectedBundlerCollateralBalance += missingAmount;
-        }
-    }
-
-    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        assembly {
-            z := xor(x, mul(xor(x, y), lt(y, x)))
         }
     }
 }

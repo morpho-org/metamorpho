@@ -6,10 +6,5 @@ import {ERC20 as ERC20oz} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {ERC4626} from "openzeppelin-contracts/token/ERC20/extensions/ERC4626.sol";
 
 contract ERC4626Mock is ERC4626 {
-    constructor(IERC20 asset_, string memory name, string memory symbol) ERC4626(asset_) ERC20oz(name, symbol) {
-    }
-
-    // function totalAssets() public view override returns (uint256){
-    //     return 0;
-    // }
+    constructor(IERC20 asset_, string memory name, string memory symbol) ERC4626(asset_) ERC20oz(name, symbol) {}
 }

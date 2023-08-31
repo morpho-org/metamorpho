@@ -6,6 +6,7 @@ import "@morpho-blue/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MathLib, WAD} from "@morpho-blue/libraries/MathLib.sol";
+import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
@@ -29,6 +30,7 @@ abstract contract BaseTest is Test {
     address internal constant USER = address(0x1234);
     address internal constant SUPPLIER = address(0x5678);
     address internal constant OWNER = address(0xdead);
+    address internal constant RECEIVER = address(uint160(uint256(keccak256(bytes("morpho receiver")))));
 
     IMorpho internal morpho;
     IrmMock internal irm;
