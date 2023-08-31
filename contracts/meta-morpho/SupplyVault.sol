@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import {IIrm} from "@morpho-blue/interfaces/IIrm.sol";
-import {Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
 import {IVaultAllocationStrategy} from "./interfaces/IVaultAllocationStrategy.sol";
+import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
+import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
-import {IMorphoMarketStruct, MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
-import {Id, MarketParams, MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
+import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
+import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
@@ -19,6 +19,7 @@ import {IERC20, ERC20, ERC4626, Context, Math} from "@openzeppelin/contracts/tok
 
 contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
+    using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
@@ -186,11 +187,9 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
         super._deposit(caller, owner, assets, shares);
 
-        // TODO: MarketAllocation[] could be bytes and save gas
-
         if (address(supplyStrategy) != address(0)) {
             (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
-                supplyStrategy.allocate(caller, owner, assets, shares);
+                supplyStrategy.allocate(caller, owner, assets, _config.allMarketParams);
 
             _reallocate(withdrawn, supplied);
         }
@@ -203,7 +202,7 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     {
         if (address(withdrawStrategy) != address(0)) {
             (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
-                withdrawStrategy.allocate(caller, owner, assets, shares);
+                withdrawStrategy.allocate(caller, owner, assets, _config.allMarketParams);
 
             _reallocate(withdrawn, supplied);
         }
@@ -254,7 +253,7 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         if (fee == 0 || feeRecipient == address(0)) return;
 
         uint256 newTotalAssets = totalAssets();
-        uint256 totalInterest = newTotalAssets - lastTotalAssets;
+        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
 
         lastTotalAssets = newTotalAssets;
 
