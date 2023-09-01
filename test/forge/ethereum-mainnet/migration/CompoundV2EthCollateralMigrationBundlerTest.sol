@@ -51,16 +51,16 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
         deal(user, collateralSupplied);
 
         vm.startPrank(user);
-
         ICEth(C_ETH_V2).mint{value: collateralSupplied}();
         address[] memory enteredMarkets = new address[](1);
         enteredMarkets[0] = C_ETH_V2;
         require(IComptroller(COMPTROLLER).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
         require(ICToken(borrowableCToken).borrow(borrowed) == 0, "borrow error");
-        ERC20(marketParams.collateralToken).safeApprove(C_ETH_V2, 0);
+        vm.stopPrank();
 
         uint256 cTokenBalance = ICEth(C_ETH_V2).balanceOf(user);
 
+        vm.prank(user);
         ERC20(C_ETH_V2).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
 
         bytes[] memory data = new bytes[](1);
@@ -75,9 +75,8 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
         callbackData[6] = _compoundV2WithdrawCall(C_ETH_V2, collateralSupplied);
         data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
     }

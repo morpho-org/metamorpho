@@ -45,10 +45,10 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         deal(marketParams.collateralToken, user, collateralSupplied);
 
         vm.startPrank(user);
-
         ERC20(marketParams.collateralToken).safeApprove(cToken, collateralSupplied);
         ICompoundV3(cToken).supply(marketParams.collateralToken, collateralSupplied);
         ICompoundV3(cToken).withdraw(marketParams.borrowableToken, borrowed);
+        vm.stopPrank();
 
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
@@ -63,9 +63,8 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[6] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
         data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
     }
@@ -78,10 +77,10 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         deal(marketParams.borrowableToken, user, supplied + 100);
 
         vm.startPrank(user);
-
         // Margin necessary due to CompoundV3 roundings.
         ERC20(marketParams.borrowableToken).safeApprove(cToken, supplied + 100);
         ICompoundV3(cToken).supply(marketParams.borrowableToken, supplied + 100);
+        vm.stopPrank();
 
         bytes[] memory data = new bytes[](4);
 
@@ -90,9 +89,8 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         data[2] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
         data[3] = _morphoSupplyCall(supplied, user, hex"");
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertSupplierPosition(supplied, user, address(bundler));
     }
@@ -105,12 +103,14 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         deal(marketParams.borrowableToken, user, supplied + 100);
 
         vm.startPrank(user);
-
         // Margin necessary due to CompoundV3 roundings.
         ERC20(marketParams.borrowableToken).safeApprove(cToken, supplied + 100);
         ICompoundV3(cToken).supply(marketParams.borrowableToken, supplied + 100);
+        vm.stopPrank();
 
         uint256 cTokenBalance = ICompoundV3(cToken).balanceOf(user);
+
+        vm.prank(user);
         ERC20(cToken).safeApprove(address(Permit2Lib.PERMIT2), type(uint256).max);
 
         bytes[] memory data = new bytes[](4);
@@ -120,9 +120,8 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         data[2] = _compoundV3WithdrawCall(cToken, marketParams.borrowableToken, supplied);
         data[3] = _morphoSupplyCall(supplied, user, hex"");
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertSupplierPosition(supplied, user, address(bundler));
     }

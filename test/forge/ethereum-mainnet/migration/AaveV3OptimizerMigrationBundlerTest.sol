@@ -41,10 +41,10 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         deal(marketParams.collateralToken, user, collateralSupplied + 1);
 
         vm.startPrank(user);
-
         ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_OPTIMIZER, collateralSupplied + 1);
         IAaveV3Optimizer(AAVE_V3_OPTIMIZER).supplyCollateral(marketParams.collateralToken, collateralSupplied + 1, user);
         IAaveV3Optimizer(AAVE_V3_OPTIMIZER).borrow(marketParams.borrowableToken, borrowed, user, user, 15);
+        vm.stopPrank();
 
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
@@ -59,9 +59,8 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[6] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), false, 1);
         data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
     }
@@ -74,9 +73,9 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         deal(marketParams.borrowableToken, user, supplied + 1);
 
         vm.startPrank(user);
-
         ERC20(marketParams.borrowableToken).safeApprove(AAVE_V3_OPTIMIZER, supplied + 1);
         IAaveV3Optimizer(AAVE_V3_OPTIMIZER).supply(marketParams.borrowableToken, supplied + 1, user, 15);
+        vm.stopPrank();
 
         bytes[] memory data = new bytes[](4);
 
@@ -85,9 +84,8 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         data[2] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), false, 1);
         data[3] = _morphoSupplyCall(supplied, user, hex"");
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertSupplierPosition(supplied, user, address(bundler));
     }

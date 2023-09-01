@@ -53,16 +53,17 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
         deal(marketParams.collateralToken, user, collateralSupplied);
 
         vm.startPrank(user);
-
         ERC20(marketParams.collateralToken).safeApprove(collateralCToken, collateralSupplied);
         require(ICToken(collateralCToken).mint(collateralSupplied) == 0, "mint error");
         address[] memory enteredMarkets = new address[](1);
         enteredMarkets[0] = collateralCToken;
         require(IComptroller(COMPTROLLER).enterMarkets(enteredMarkets)[0] == 0, "enter market error");
         require(ICToken(borrowableCToken).borrow(borrowed) == 0, "borrow error");
+        vm.stopPrank();
 
         uint256 cTokenBalance = ICToken(collateralCToken).balanceOf(user);
 
+        vm.prank(user);
         ERC20(collateralCToken).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
 
         bytes[] memory data = new bytes[](1);
@@ -77,9 +78,8 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
         callbackData[6] = _compoundV2WithdrawCall(collateralCToken, collateralSupplied);
         data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
     }
@@ -92,12 +92,13 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
         deal(marketParams.borrowableToken, user, supplied);
 
         vm.startPrank(user);
-
         ERC20(marketParams.borrowableToken).safeApprove(borrowableCToken, supplied);
         require(ICToken(borrowableCToken).mint(supplied) == 0, "mint error");
+        vm.stopPrank();
 
         uint256 cTokenBalance = ICToken(borrowableCToken).balanceOf(user);
 
+        vm.prank(user);
         ERC20(borrowableCToken).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
 
         bytes[] memory data = new bytes[](4);
@@ -107,9 +108,8 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
         data[2] = _compoundV2WithdrawCall(borrowableCToken, supplied);
         data[3] = _morphoSupplyCall(supplied, user, hex"");
 
+        vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
-
-        vm.stopPrank();
 
         _assertSupplierPosition(supplied, user, address(bundler));
     }
