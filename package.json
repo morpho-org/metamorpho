@@ -19,12 +19,12 @@
     "test:forge": "yarn build:blue && FOUNDRY_PROFILE=test forge test",
     "test:forge:local": "FOUNDRY_MATCH_CONTRACT=LocalTest yarn test:forge",
     "test:forge:mainnet": "FOUNDRY_MATCH_CONTRACT=EthereumTest yarn test:forge",
-    "test:hardhat": "npx hardhat test",
+    "test:hardhat": "yarn build:blue && npx hardhat test",
     "lint": "yarn lint:forge && yarn lint:ts",
-    "lint:ts": "prettier --check src",
+    "lint:ts": "prettier --check src test/hardhat",
     "lint:forge": "forge fmt --check",
     "lint:fix": "yarn lint:forge:fix && yarn lint:ts:fix",
-    "lint:ts:fix": "prettier --write src",
+    "lint:ts:fix": "prettier --write src test/hardhat",
     "lint:forge:fix": "forge fmt",
     "clean": "npx hardhat clean && forge clean"
   },
@@ -41,34 +41,33 @@
     "url": "https://github.com/morpho-labs/morpho-blue-periphery/issues"
   },
   "homepage": "https://github.com/morpho-labs/morpho-blue-periphery#readme",
+  "dependencies": {
+    "ethers": "^6.7.1",
+    "ethers-maths": "^4.0.2",
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
-    "@commitlint/cli": "^17.6.7",
-    "@commitlint/config-conventional": "^17.6.7",
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
-    "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
-    "@nomicfoundation/hardhat-foundry": "^1.0.2",
+    "@commitlint/cli": "^17.7.1",
+    "@commitlint/config-conventional": "^17.7.0",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.2",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
+    "@nomicfoundation/hardhat-foundry": "^1.0.3",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
-    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@trivago/prettier-plugin-sort-imports": "^4.2.0",
-    "@typechain/ethers-v5": "^11.1.1",
-    "@typechain/hardhat": "^8.0.3",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
     "@types/chai": "^4.3.5",
-    "@types/lodash": "^4.14.196",
+    "@types/lodash": "^4.14.197",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^20.4.8",
+    "@types/node": "^20.5.4",
     "chai": "^4.3.7",
     "dotenv": "^16.3.1",
-    "ethers": "^5.7.2",
-    "ethers-maths": "^3.5.3",
     "hardhat": "^2.17.1",
     "hardhat-gas-reporter": "^1.0.9",
     "hardhat-tracer": "^2.6.0",
     "husky": "^8.0.3",
-    "lint-staged": "^13.2.3",
-    "lodash": "^4.17.21",
-    "prettier": "^3.0.1",
+    "lint-staged": "^14.0.1",
+    "prettier": "^3.0.2",
     "solidity-coverage": "^0.8.4",
     "ts-node": "^10.9.1",
     "typechain": "^8.3.1",
@@ -81,18 +80,12 @@
     "*.json": "prettier",
     "*.yml": "prettier"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"
     ]
   },
   "prettier": {
-    "tabWidth": 2,
     "printWidth": 120,
     "plugins": [
       "@trivago/prettier-plugin-sort-imports"

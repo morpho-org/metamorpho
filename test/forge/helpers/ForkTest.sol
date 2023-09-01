@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 import {PermitHash} from "@permit2/libraries/PermitHash.sol";
 
-import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
+import {OracleMock} from "contracts/mocks/OracleMock.sol";
 
 import "config/Configured.sol";
 import "./BaseTest.sol";

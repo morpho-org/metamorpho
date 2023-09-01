@@ -67,6 +67,7 @@ contract HighestAPRSupplyStrategy is IVaultAllocationStrategy {
             }
         }
 
+        withdrawn = new MarketAllocation[](0);
         supplied = new MarketAllocation[](1);
         supplied[0] = MarketAllocation({marketParams: topMarketParams, assets: assets});
     }

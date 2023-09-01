@@ -7,15 +7,15 @@ import {MarketAllocation} from "./interfaces/ISupplyVault.sol";
 import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
 import {Permit2Lib, ERC20 as ERC20Permit2} from "@permit2/libraries/Permit2Lib.sol";
 
-import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 
-abstract contract InternalSupplyRouter is ERC2771Context {
+abstract contract InternalSupplyRouter is Context {
     using Permit2Lib for ERC20Permit2;
     using SafeTransferLib for ERC20;
 
     IMorpho internal immutable _MORPHO;
 
-    constructor(address morpho, address forwarder) ERC2771Context(forwarder) {
+    constructor(address morpho) {
         _MORPHO = IMorpho(morpho);
     }
 

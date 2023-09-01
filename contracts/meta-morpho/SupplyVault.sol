@@ -13,8 +13,8 @@ import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./librari
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 
+import {InternalSupplyRouter} from "./InternalSupplyRouter.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {InternalSupplyRouter, ERC2771Context} from "./InternalSupplyRouter.sol";
 import {IERC20, ERC20, ERC4626, Context, Math} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVault {
@@ -40,8 +40,8 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     /* CONSTRUCTORS */
 
-    constructor(address morpho, address forwarder, IERC20 asset_, string memory name_, string memory symbol_)
-        InternalSupplyRouter(morpho, forwarder)
+    constructor(address morpho, IERC20 asset_, string memory name_, string memory symbol_)
+        InternalSupplyRouter(morpho)
         ERC4626(asset_)
         ERC20(name_, symbol_)
     {}
@@ -261,14 +261,6 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
         return _MORPHO.expectedSupplyBalance(marketParams, address(this));
-    }
-
-    function _msgSender() internal view override(Context, ERC2771Context) returns (address) {
-        return ERC2771Context._msgSender();
-    }
-
-    function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
-        return ERC2771Context._msgData();
     }
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
