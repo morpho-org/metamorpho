@@ -59,7 +59,7 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[3] = _compoundV3RepayCall(cToken, marketParams.borrowableToken, borrowed);
         callbackData[4] = _compoundV3AllowCall(privateKey, cToken, address(bundler), true, 0);
         callbackData[5] =
-            _compoundV3WithdrawCall(cToken, address(bundler), marketParams.collateralToken, collateralSupplied);
+            _compoundV3WithdrawFromCall(cToken, address(bundler), marketParams.collateralToken, collateralSupplied);
         callbackData[6] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
         data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
@@ -86,8 +86,38 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         bytes[] memory data = new bytes[](4);
 
         data[0] = _compoundV3AllowCall(privateKey, cToken, address(bundler), true, 0);
-        data[1] = _compoundV3WithdrawCall(cToken, address(bundler), marketParams.borrowableToken, supplied);
+        data[1] = _compoundV3WithdrawFromCall(cToken, address(bundler), marketParams.borrowableToken, supplied);
         data[2] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
+        data[3] = _morphoSupplyCall(supplied, user, hex"");
+
+        bundler.multicall(SIG_DEADLINE, data);
+
+        vm.stopPrank();
+
+        _assertSupplierPosition(supplied, user, address(bundler));
+    }
+
+    function testMigrateSupplierWithPermit2(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 100);
+
+        vm.startPrank(user);
+
+        // Margin necessary due to CompoundV3 roundings.
+        ERC20(marketParams.borrowableToken).safeApprove(cToken, supplied + 100);
+        ICompoundV3(cToken).supply(marketParams.borrowableToken, supplied + 100);
+
+        uint256 cTokenBalance = ICompoundV3(cToken).balanceOf(user);
+        ERC20(cToken).safeApprove(address(Permit2Lib.PERMIT2), type(uint256).max);
+    
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _erc20Approve2Call(privateKey, cToken, uint160(cTokenBalance), address(bundler), 0);
+        data[1] = _erc20TransferFrom2Call(cToken, cTokenBalance);
+        data[2] = _compoundV3WithdrawCall(cToken, marketParams.borrowableToken, supplied);
         data[3] = _morphoSupplyCall(supplied, user, hex"");
 
         bundler.multicall(SIG_DEADLINE, data);
@@ -143,11 +173,19 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         return abi.encodeCall(CompoundV3MigrationBundler.compoundV3Supply, (instance, asset, amount));
     }
 
-    function _compoundV3WithdrawCall(address instance, address to, address asset, uint256 amount)
+    function _compoundV3WithdrawCall(address instance, address asset, uint256 amount)
         internal
         pure
         returns (bytes memory)
     {
-        return abi.encodeCall(CompoundV3MigrationBundler.compoundV3Withdraw, (instance, to, asset, amount));
+        return abi.encodeCall(CompoundV3MigrationBundler.compoundV3Withdraw, (instance, asset, amount));
+    }
+
+    function _compoundV3WithdrawFromCall(address instance, address to, address asset, uint256 amount)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeCall(CompoundV3MigrationBundler.compoundV3WithdrawFrom, (instance, to, asset, amount));
     }
 }

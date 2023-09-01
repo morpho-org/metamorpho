@@ -14,7 +14,11 @@ contract CompoundV3MigrationBundler is MigrationBundler, ERC20Bundler {
         ICompoundV3(instance).supplyTo(_initiator, asset, amount);
     }
 
-    function compoundV3Withdraw(address instance, address to, address asset, uint256 amount) external {
+    function compoundV3Withdraw(address instance, address asset, uint256 amount) external {
+        ICompoundV3(instance).withdraw(asset, amount);
+    }
+
+    function compoundV3WithdrawFrom(address instance, address to, address asset, uint256 amount) external {
         ICompoundV3(instance).withdrawFrom(_initiator, to, asset, amount);
     }
 
