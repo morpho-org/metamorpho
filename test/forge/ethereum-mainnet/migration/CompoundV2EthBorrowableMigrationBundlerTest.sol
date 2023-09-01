@@ -111,6 +111,34 @@ contract CompoundV2EthBorrowableMigrationBundler is BaseMigrationTest {
         _assertSupplierPosition(supplied, user, address(bundler));
     }
 
+    function testMigrateSupplierToVaultWithPermit2(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 0.1 ether, 100 ether);
+
+        deal(user, supplied);
+
+        vm.prank(user);
+        ICEth(C_ETH_V2).mint{value: supplied}();
+
+        uint256 cTokenBalance = ICEth(C_ETH_V2).balanceOf(user);
+
+        vm.prank(user);
+        ERC20(C_ETH_V2).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _erc20Approve2Call(privateKey, C_ETH_V2, uint160(cTokenBalance), address(bundler), 0);
+        data[1] = _erc20TransferFrom2Call(C_ETH_V2, cTokenBalance);
+        data[2] = _compoundV2WithdrawCall(C_ETH_V2, supplied);
+        data[3] = _erc4626DepositCall(address(suppliersVault), supplied, user);
+
+        vm.prank(user);
+        bundler.multicall(SIG_DEADLINE, data);
+
+        _assertVaultSupplierPosition(supplied, user, address(bundler));
+    }
+
     function _getCToken(address asset) internal view returns (address res) {
         res = _cTokens[asset];
         require(res != address(0), "unknown compound v2 asset");

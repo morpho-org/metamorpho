@@ -90,6 +90,31 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         _assertSupplierPosition(supplied, user, address(bundler));
     }
 
+    function testMigrateSupplierToVaultWithOptimizerPermit(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 1);
+
+        vm.startPrank(user);
+        ERC20(marketParams.borrowableToken).safeApprove(AAVE_V3_OPTIMIZER, supplied + 1);
+        IAaveV3Optimizer(AAVE_V3_OPTIMIZER).supply(marketParams.borrowableToken, supplied + 1, user, 15);
+        vm.stopPrank();
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), true, 0);
+        data[1] = _aaveV3OptimizerWithdraw(marketParams.borrowableToken, supplied, address(bundler), 15);
+        data[2] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), false, 1);
+        data[3] = _erc4626DepositCall(address(suppliersVault), supplied, user);
+
+        vm.prank(user);
+        bundler.multicall(SIG_DEADLINE, data);
+
+        _assertVaultSupplierPosition(supplied, user, address(bundler));
+    }
+
     function _aaveV3OptimizerApproveManagerCall(uint256 privateKey, address manager, bool isAllowed, uint256 nonce)
         internal
         view

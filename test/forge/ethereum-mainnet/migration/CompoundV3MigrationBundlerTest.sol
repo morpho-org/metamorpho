@@ -126,6 +126,63 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         _assertSupplierPosition(supplied, user, address(bundler));
     }
 
+    function testMigrateSupplierToVaultWithCompoundAllowance(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 100);
+
+        vm.startPrank(user);
+        // Margin necessary due to CompoundV3 roundings.
+        ERC20(marketParams.borrowableToken).safeApprove(cToken, supplied + 100);
+        ICompoundV3(cToken).supply(marketParams.borrowableToken, supplied + 100);
+        vm.stopPrank();
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _compoundV3AllowCall(privateKey, cToken, address(bundler), true, 0);
+        data[1] = _compoundV3WithdrawFromCall(cToken, address(bundler), marketParams.borrowableToken, supplied);
+        data[2] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
+        data[3] = _erc4626DepositCall(address(suppliersVault), supplied, user);
+
+        vm.prank(user);
+        bundler.multicall(SIG_DEADLINE, data);
+
+        _assertVaultSupplierPosition(supplied, user, address(bundler));
+    }
+
+    function testMigrateSupplierToVaultWithPermit2(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 100);
+
+        vm.startPrank(user);
+        // Margin necessary due to CompoundV3 roundings.
+        ERC20(marketParams.borrowableToken).safeApprove(cToken, supplied + 100);
+        ICompoundV3(cToken).supply(marketParams.borrowableToken, supplied + 100);
+        vm.stopPrank();
+
+        uint256 cTokenBalance = ICompoundV3(cToken).balanceOf(user);
+
+        vm.prank(user);
+        ERC20(cToken).safeApprove(address(Permit2Lib.PERMIT2), type(uint256).max);
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _erc20Approve2Call(privateKey, cToken, uint160(cTokenBalance), address(bundler), 0);
+        data[1] = _erc20TransferFrom2Call(cToken, cTokenBalance);
+        data[2] = _compoundV3WithdrawCall(cToken, marketParams.borrowableToken, supplied);
+        data[3] = _erc4626DepositCall(address(suppliersVault), supplied, user);
+
+        vm.prank(user);
+        bundler.multicall(SIG_DEADLINE, data);
+
+        _assertVaultSupplierPosition(supplied, user, address(bundler));
+    }
+
     function _getCTokenV3(address asset) internal view returns (address) {
         address result = _cTokens[asset];
         require(result != address(0), "unknown compound v3 market");

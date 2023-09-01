@@ -99,6 +99,37 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
         _assertSupplierPosition(supplied, user, address(bundler));
     }
 
+    function testMigrateSupplierToVaultWithPermit2(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 1);
+
+        vm.startPrank(user);
+        ERC20(marketParams.borrowableToken).safeApprove(AAVE_V2_POOL, supplied + 1);
+        ILendingPool(AAVE_V2_POOL).deposit(marketParams.borrowableToken, supplied + 1, user, 0);
+        vm.stopPrank();
+
+        address aToken = _getATokenV2(marketParams.borrowableToken);
+        uint256 aTokenBalance = IAToken(aToken).balanceOf(user);
+
+        vm.prank(user);
+        ERC20(aToken).safeApprove(address(Permit2Lib.PERMIT2), aTokenBalance);
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _erc20Approve2Call(privateKey, aToken, uint160(aTokenBalance), address(bundler), 0);
+        data[1] = _erc20TransferFrom2Call(aToken, aTokenBalance);
+        data[2] = _aaveV2WithdrawCall(marketParams.borrowableToken, supplied, address(bundler));
+        data[3] = _erc4626DepositCall(address(suppliersVault), supplied, user);
+
+        vm.prank(user);
+        bundler.multicall(SIG_DEADLINE, data);
+
+        _assertVaultSupplierPosition(supplied, user, address(bundler));
+    }
+
     function _getATokenV2(address asset) internal view returns (address) {
         return ILendingPool(AAVE_V2_POOL).getReserveData(asset).aTokenAddress;
     }

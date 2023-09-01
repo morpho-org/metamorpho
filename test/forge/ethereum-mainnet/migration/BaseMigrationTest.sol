@@ -11,7 +11,9 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 
 import "../../helpers/ForkTest.sol";
 import {MorphoBundler} from "contracts/bundlers/MorphoBundler.sol";
+import {ERC4626Bundler} from "contracts/bundlers/ERC4626Bundler.sol";
 import {ERC20Bundler} from "contracts/bundlers/ERC20Bundler.sol";
+import {ERC4626Mock} from "../../mocks/ERC4626Mock.sol";
 
 contract BaseMigrationTest is ForkTest {
     using SafeTransferLib for ERC20;
@@ -22,6 +24,7 @@ contract BaseMigrationTest is ForkTest {
     uint256 internal constant SIG_DEADLINE = type(uint32).max;
 
     MarketParams marketParams;
+    ERC4626Mock suppliersVault;
 
     function _initMarket(address collateral, address borrowable) internal {
         marketParams.collateralToken = collateral;
@@ -34,6 +37,9 @@ contract BaseMigrationTest is ForkTest {
         if (lastUpdate == 0) {
             morpho.createMarket(marketParams);
         }
+
+        suppliersVault = new ERC4626Mock(marketParams.borrowableToken, "suppliers vault", "vault");
+        vm.label(address(suppliersVault), "Suppliers Vault");
     }
 
     function _getUserAndKey(uint256 privateKey) internal returns (uint256, address) {
@@ -124,6 +130,14 @@ contract BaseMigrationTest is ForkTest {
         return abi.encodeCall(ERC20Bundler.approve2, (asset, amount, SIG_DEADLINE, sig));
     }
 
+    function _erc4626DepositCall(address vault, uint256 amount, address receiver)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeCall(ERC4626Bundler.deposit, (vault, amount, receiver));
+    }
+
     function _provideLiquidity(uint256 liquidity) internal {
         deal(marketParams.borrowableToken, address(this), liquidity);
         ERC20(marketParams.borrowableToken).safeApprove(address(morpho), liquidity);
@@ -143,6 +157,12 @@ contract BaseMigrationTest is ForkTest {
         assertEq(morpho.expectedSupplyBalance(marketParams, user), supplied, "wrong supply amount");
         assertEq(morpho.collateral(marketParams.id(), user), 0, "collateral supplied != 0");
         assertEq(morpho.expectedBorrowBalance(marketParams, user), 0, "borrow != 0");
+        assertFalse(morpho.isAuthorized(user, bundler), "authorization not revoked");
+    }
+
+    function _assertVaultSupplierPosition(uint256 supplied, address user, address bundler) internal {
+        uint256 shares = suppliersVault.balanceOf(user);
+        assertEq(suppliersVault.convertToAssets(shares), supplied, "wrong supply amount");
         assertFalse(morpho.isAuthorized(user, bundler), "authorization not revoked");
     }
 }

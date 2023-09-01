@@ -114,6 +114,36 @@ contract CompoundV2NoEthMigrationBundler is BaseMigrationTest {
         _assertSupplierPosition(supplied, user, address(bundler));
     }
 
+    function testMigrateSupplierToVaultWithPermit2(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied);
+
+        vm.startPrank(user);
+        ERC20(marketParams.borrowableToken).safeApprove(borrowableCToken, supplied);
+        require(ICToken(borrowableCToken).mint(supplied) == 0, "mint error");
+        vm.stopPrank();
+
+        uint256 cTokenBalance = ICToken(borrowableCToken).balanceOf(user);
+
+        vm.prank(user);
+        ERC20(borrowableCToken).safeApprove(address(Permit2Lib.PERMIT2), cTokenBalance);
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _erc20Approve2Call(privateKey, borrowableCToken, uint160(cTokenBalance), address(bundler), 0);
+        data[1] = _erc20TransferFrom2Call(borrowableCToken, cTokenBalance);
+        data[2] = _compoundV2WithdrawCall(borrowableCToken, supplied);
+        data[3] = _erc4626DepositCall(address(suppliersVault), supplied, user);
+
+        vm.prank(user);
+        bundler.multicall(SIG_DEADLINE, data);
+
+        _assertVaultSupplierPosition(supplied, user, address(bundler));
+    }
+
     function _getCToken(address asset) internal view returns (address) {
         address res = _cTokens[asset];
         require(res != address(0), "unknown compound v2 asset");
