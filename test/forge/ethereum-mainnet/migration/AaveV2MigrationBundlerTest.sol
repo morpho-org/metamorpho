@@ -38,7 +38,6 @@ contract AaveV2MigrationBundlerTest is BaseMigrationTest {
 
         deal(marketParams.collateralToken, user, collateralSupplied);
 
-        
         vm.startPrank(user);
         ERC20(marketParams.collateralToken).safeApprove(AAVE_V2_POOL, collateralSupplied);
         ILendingPool(AAVE_V2_POOL).deposit(marketParams.collateralToken, collateralSupplied, user, 0);

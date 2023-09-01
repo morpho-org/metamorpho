@@ -62,7 +62,6 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         vm.prank(user);
         bundler.multicall(SIG_DEADLINE, data);
 
-
         _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
     }
 
