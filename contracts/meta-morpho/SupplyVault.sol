@@ -13,16 +13,24 @@ import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./librari
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 
-import {InternalSupplyRouter} from "./InternalSupplyRouter.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {IERC20, ERC20, ERC4626, Context, Math} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {
+    IERC20,
+    ERC20,
+    ERC4626,
+    Context,
+    Math,
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVault {
+contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
     using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
+
+    IMorpho internal immutable _MORPHO;
 
     mapping(address => bool) public isRiskManager;
     mapping(address => bool) public isAllocator;
@@ -40,11 +48,14 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     /* CONSTRUCTORS */
 
-    constructor(address morpho, IERC20 asset_, string memory name_, string memory symbol_)
-        InternalSupplyRouter(morpho)
-        ERC4626(asset_)
-        ERC20(name_, symbol_)
-    {}
+    constructor(address morpho, IERC20 _asset, string memory _name, string memory _symbol)
+        ERC4626(_asset)
+        ERC20(_name, _symbol)
+    {
+        _MORPHO = IMorpho(morpho);
+
+        SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
+    }
 
     /* MODIFIERS */
 
@@ -65,13 +76,13 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
         isRiskManager[newRiskManager] = newIsRiskManager;
 
-        emit EventsLib.SetRiskManager(newRiskManager, newIsRiskManager);
+        emit EventsLib.SetIsRiskManager(newRiskManager, newIsRiskManager);
     }
 
-    function setAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
+    function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
         isAllocator[newAllocator] = newIsAllocator;
 
-        emit EventsLib.SetAllocator(newAllocator, newIsAllocator);
+        emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
     function setSupplyStrategy(address newSupplyStrategy) external onlyOwner {
@@ -93,7 +104,7 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
-        // Safe "unchecked" cast.
+        // Safe "unchecked" cast because newFee <= WAD.
         fee = uint96(newFee);
 
         emit EventsLib.SetFee(newFee);
@@ -107,7 +118,6 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         // Accrue interest to the previous fee recipient set before changing it.
         _accrueFee();
 
-        // Safe "unchecked" cast.
         feeRecipient = newFeeRecipient;
 
         emit EventsLib.SetFeeRecipient(newFeeRecipient);
@@ -263,7 +273,7 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         return _MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
 
-    function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
+    function _supplyMorpho(MarketAllocation memory allocation) internal {
         Id id = allocation.marketParams.id();
         VaultMarketConfig storage marketConfig = _market(id).config;
 
@@ -274,12 +284,23 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
             require(newSupply <= cap, ErrorsLib.SUPPLY_CAP_EXCEEDED);
         }
 
-        super._supply(allocation, onBehalf);
+        _MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
     }
 
     function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
-        _withdrawAll(withdrawn, address(this), address(this));
-        _supplyAll(supplied, address(this));
+        uint256 nbWithdrawn = withdrawn.length;
+
+        for (uint256 i; i < nbWithdrawn; ++i) {
+            MarketAllocation memory allocation = withdrawn[i];
+
+            _MORPHO.withdraw(allocation.marketParams, allocation.assets, 0, address(this), address(this));
+        }
+
+        uint256 nbSupplied = supplied.length;
+
+        for (uint256 i; i < nbSupplied; ++i) {
+            _supplyMorpho(supplied[i]); // TODO: should we check config if supplied is provided by an onchain strategy?
+        }
     }
 
     function _accrueFee() internal {

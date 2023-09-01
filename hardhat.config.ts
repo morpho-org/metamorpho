@@ -21,12 +21,7 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
       accounts: {
-        count: 251,
-      },
-      mining: {
-        mempool: {
-          order: "fifo",
-        },
+        count: 253, // must be odd
       },
     },
   },
