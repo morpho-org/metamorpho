@@ -1,6 +1,6 @@
 {
-  "name": "morpho-blue-periphery",
-  "description": "Morpho Blue Periphery Contracts",
+  "name": "morpho-stack",
+  "description": "Morpho Stack Contracts",
   "license": "GPL-2.0-or-later",
   "version": "1.0.0",
   "main": "lib/index.js",
@@ -30,17 +30,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/morpho-labs/morpho-blue-periphery.git"
+    "url": "git+https://github.com/morpho-labs/morpho-stack.git"
   },
   "author": {
     "name": "Morpho Labs",
-    "email": "security@morpho.xyz",
+    "email": "security@morpho.org",
     "url": "https://github.com/morpho-labs"
   },
   "bugs": {
-    "url": "https://github.com/morpho-labs/morpho-blue-periphery/issues"
+    "url": "https://github.com/morpho-labs/morpho-stack/issues"
   },
-  "homepage": "https://github.com/morpho-labs/morpho-blue-periphery#readme",
+  "homepage": "https://github.com/morpho-labs/morpho-stack#readme",
   "dependencies": {
     "ethers": "^6.7.1",
     "ethers-maths": "^4.0.2",
