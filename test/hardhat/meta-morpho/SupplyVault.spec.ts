@@ -38,7 +38,7 @@ const forwardTimestamp = async () => {
   await setNextBlockTimestamp(block!.timestamp + elapsed);
 };
 
-describe("Morpho", () => {
+describe("SupplyVault", () => {
   let admin: SignerWithAddress;
   let riskManager: SignerWithAddress;
   let allocator: SignerWithAddress;
