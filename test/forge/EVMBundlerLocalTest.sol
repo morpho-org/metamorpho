@@ -52,7 +52,7 @@ contract EVMBundlerLocalTest is LocalTest {
         return (privateKey, user);
     }
 
-     function _morphoSetAuthorizationWithSigCall(
+    function _morphoSetAuthorizationWithSigCall(
         uint256 privateKey,
         address authorized,
         bool isAuthorized,
@@ -420,7 +420,9 @@ contract EVMBundlerLocalTest is LocalTest {
         assertEq(morpho.borrowShares(id, user), 0, "borrowShares(user)");
     }
 
-    function _testSupplyCollateralBorrow(address user, uint256 amount, uint256 collateralAmount, address receiver) internal {
+    function _testSupplyCollateralBorrow(address user, uint256 amount, uint256 collateralAmount, address receiver)
+        internal
+    {
         assertEq(collateralToken.balanceOf(user), 0, "collateral.balanceOf(user)");
         assertEq(borrowableToken.balanceOf(user), 0, "borrowable.balanceOf(user)");
 
