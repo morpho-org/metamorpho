@@ -112,7 +112,7 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
 
         uint256 cTokenBalance = ICompoundV3(cToken).balanceOf(user);
         ERC20(cToken).safeApprove(address(Permit2Lib.PERMIT2), type(uint256).max);
-    
+
         bytes[] memory data = new bytes[](4);
 
         data[0] = _erc20Approve2Call(privateKey, cToken, uint160(cTokenBalance), address(bundler), 0);
