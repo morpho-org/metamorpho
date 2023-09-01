@@ -12,6 +12,7 @@ import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
 import {IrmMock} from "@morpho-blue/mocks/IrmMock.sol";
+import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
@@ -34,6 +35,7 @@ abstract contract BaseTest is Test {
 
     IMorpho internal morpho;
     IrmMock internal irm;
+    OracleMock internal oracle;
 
     function setUp() public virtual {
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(OWNER)));
@@ -43,6 +45,9 @@ abstract contract BaseTest is Test {
 
         vm.prank(OWNER);
         morpho.enableIrm(address(irm));
+
+        oracle = new OracleMock();
+        oracle.setPrice(ORACLE_PRICE_SCALE);
 
         vm.prank(USER);
         // So tests can borrow/withdraw on behalf of USER without pranking it.

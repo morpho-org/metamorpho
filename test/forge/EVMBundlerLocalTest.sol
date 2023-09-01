@@ -25,7 +25,7 @@ contract EVMBundlerLocalTest is LocalTest {
     function setUp() public override {
         super.setUp();
 
-        vault = new ERC4626Mock(borrowableToken, "borrowable Vault", "BV");
+        vault = new ERC4626Mock(address(borrowableToken), "borrowable Vault", "BV");
         bundler = new EVMBundler(address(morpho));
 
         vm.startPrank(USER);
@@ -333,7 +333,7 @@ contract EVMBundlerLocalTest is LocalTest {
         bundler.multicall(block.timestamp, repayData);
     }
 
-    function testSupply(uint256 privateKey, uint256 amount, address onBehalf) public {
+    function testSupply(uint256 amount, address onBehalf) public {
         vm.assume(onBehalf != address(0));
         vm.assume(onBehalf != address(morpho));
         vm.assume(onBehalf != address(bundler));
@@ -619,7 +619,7 @@ contract EVMBundlerLocalTest is LocalTest {
             else if (actionId < 6) _addSupplyCollateralData(vars, amount, user);
             else if (actionId < 8) _addBorrowData(vars, amount);
             else if (actionId < 9) _addRepayData(vars, amount, user);
-            else if (actionId < 10) _addWithdrawData(vars, amount, user);
+            else if (actionId < 10) _addWithdrawData(vars, amount);
             else if (actionId == 10) _addWithdrawCollateralData(vars, amount);
         }
 
@@ -673,7 +673,7 @@ contract EVMBundlerLocalTest is LocalTest {
         data = abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (marketParams, amount, user, hex""));
     }
 
-    function _getWithdrawData(uint256 amount, address user) internal view returns (bytes memory data) {
+    function _getWithdrawData(uint256 amount) internal view returns (bytes memory data) {
         data = abi.encodeCall(MorphoBundler.morphoWithdraw, (marketParams, amount, 0, address(bundler)));
     }
 
@@ -713,7 +713,7 @@ contract EVMBundlerLocalTest is LocalTest {
         vars.expectedCollateral += amount;
     }
 
-    function _addWithdrawData(BundleTransactionsVars memory vars, uint256 amount, address user) internal {
+    function _addWithdrawData(BundleTransactionsVars memory vars, uint256 amount) internal {
         uint256 availableLiquidity = vars.expectedTotalSupply - vars.expectedTotalBorrow;
         if (availableLiquidity == 0 || vars.expectedSupplyShares == 0) return;
 
@@ -723,7 +723,7 @@ contract EVMBundlerLocalTest is LocalTest {
         uint256 maxAmount = UtilsLib.min(supplyBalance, availableLiquidity);
         amount = bound(amount % maxAmount, 1, maxAmount);
 
-        bundleData.push(_getWithdrawData(amount, user));
+        bundleData.push(_getWithdrawData(amount));
         vars.expectedBundlerBorrowableBalance += amount;
 
         uint256 expectedDecreasedSupplyShares = amount.toSharesUp(vars.expectedTotalSupply, vars.expectedSupplyShares);
