@@ -2,8 +2,7 @@ config/=config/
 contracts/=contracts/
 test/=test/
 
-@solmate/=lib/solmate/src/
-solmate/=lib/permit2/lib/solmate/
+solmate/=lib/solmate/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 
 @forge-std/=lib/morpho-blue/lib/forge-std/src/

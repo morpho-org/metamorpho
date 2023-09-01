@@ -6,7 +6,7 @@ import "@morpho-blue/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MathLib, WAD} from "@morpho-blue/libraries/MathLib.sol";
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
