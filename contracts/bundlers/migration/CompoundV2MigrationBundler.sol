@@ -5,11 +5,13 @@ import {IWNative} from "../interfaces/IWNative.sol";
 import {ICToken} from "./interfaces/ICToken.sol";
 import {ICEth} from "./interfaces/ICEth.sol";
 
+import {ErrorsLib} from "./libraries/ErrorsLib.sol";
+
 import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 contract CompoundV2MigrationBundler is MigrationBundler, ERC20Bundler {
-    ICEth public immutable _NATIVE;
+    ICEth public immutable C_NATIVE;
     IWNative public immutable WRAPPED_NATIVE;
 
     constructor(address morpho, address wNative, address cNative) MigrationBundler(morpho) {
@@ -28,13 +30,13 @@ contract CompoundV2MigrationBundler is MigrationBundler, ERC20Bundler {
 
             // Doesn't revert in case of error.
             uint256 err = ICToken(cToken).repayBorrowBehalf(_initiator, repayAmount);
-            require(err == 0, "repay error");
+            require(err == 0, ErrorsLib.REPAY_ERROR);
         }
     }
 
     function compoundV2Redeem(address cToken, uint256 amount) external {
         uint256 err = ICToken(cToken).redeemUnderlying(amount);
-        require(err == 0, "redeem error");
+        require(err == 0, ErrorsLib.REDEEM_ERROR);
 
         if (cToken == address(C_NATIVE)) WRAPPED_NATIVE.deposit{value: amount}();
     }
