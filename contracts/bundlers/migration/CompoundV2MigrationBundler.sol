@@ -42,6 +42,6 @@ contract CompoundV2MigrationBundler is MigrationBundler, ERC20Bundler {
     }
 
     receive() external payable {
-        require(msg.sender == address(WRAPPED_NATIVE) || msg.sender == address(C_NATIVE));
+        require(msg.sender == address(WRAPPED_NATIVE) || msg.sender == address(C_NATIVE), ErrorsLib.UNAUTHORIZED_SENDER);
     }
 }

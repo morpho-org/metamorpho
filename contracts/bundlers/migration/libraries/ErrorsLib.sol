@@ -5,4 +5,6 @@ library ErrorsLib {
     string internal constant REDEEM_ERROR = "redeem error";
 
     string internal constant REPAY_ERROR = "repay error";
+
+    string internal constant UNAUTHORIZED_SENDER = "unauthorized sender";
 }
