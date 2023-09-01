@@ -13,7 +13,7 @@ import MorphoArtifact from "../../../lib/morpho-blue/out/Morpho.sol/Morpho.json"
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
-const nbMarkets = 10;
+const nbMarkets = 8;
 
 let seed = 42;
 const random = () => {
@@ -154,19 +154,17 @@ describe("Morpho", () => {
         allMarketParams.map((marketParams) => ({ marketParams, assets: assets / toBigInt(nbMarkets + 1) / 2n })),
       );
 
-      // if (random() < 1 / 2) await forwardTimestamp();
+      const borrower = borrowers[i];
 
-      // const borrower = borrowers[i];
+      for (const marketParams of allMarketParams) {
+        const market = await morpho.market(identifier(marketParams));
+        const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
 
-      // const market = await morpho.market(id);
-      // const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
+        assets = liquidity / 2n;
 
-      // assets = assets.min(liquidity / 2n);
-
-      // await morpho.connect(borrower).supplyCollateral(marketParams, assets, borrower.address, "0x");
-      // await morpho.connect(borrower).borrow(marketParams, assets / 2n, 0, borrower.address, borrower.address);
-      // await morpho.connect(borrower).repay(marketParams, assets / 4n, 0, borrower.address, "0x");
-      // await morpho.connect(borrower).withdrawCollateral(marketParams, assets / 8n, borrower.address, borrower.address);
+        await morpho.connect(borrower).supplyCollateral(marketParams, assets, borrower.address, "0x");
+        await morpho.connect(borrower).borrow(marketParams, assets / 3n, 0, borrower.address, borrower.address);
+      }
     }
   });
 });

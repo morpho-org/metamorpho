@@ -21,7 +21,7 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
       initialBaseFeePerGas: 0,
       accounts: {
-        count: 253, // must be odd
+        count: 153, // must be odd
       },
     },
   },
