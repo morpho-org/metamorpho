@@ -8,7 +8,7 @@ import {Types} from "@morpho-aave-v3/libraries/Types.sol";
 import {MigrationBundler} from "./MigrationBundler.sol";
 
 contract AaveV3OptimizerMigrationBundler is MigrationBundler {
-    IAaveV3Optimizer immutable AAVE_V3_OPTIMIZER;
+    IAaveV3Optimizer public immutable AAVE_V3_OPTIMIZER;
 
     constructor(address morpho, address aaveV3Optimizer) MigrationBundler(morpho) {
         AAVE_V3_OPTIMIZER = IAaveV3Optimizer(aaveV3Optimizer);

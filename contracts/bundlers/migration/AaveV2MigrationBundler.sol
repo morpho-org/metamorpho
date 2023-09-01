@@ -7,7 +7,7 @@ import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 contract AaveV2MigrationBundler is MigrationBundler, ERC20Bundler {
-    ILendingPool immutable AAVE_V2_POOl;
+    ILendingPool public immutable AAVE_V2_POOl;
 
     constructor(address morpho, address aaveV2Pool) MigrationBundler(morpho) {
         AAVE_V2_POOl = ILendingPool(aaveV2Pool);

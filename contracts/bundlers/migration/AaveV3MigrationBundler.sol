@@ -8,7 +8,7 @@ import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 contract AaveV3MigrationBundler is MigrationBundler, ERC20Bundler {
-    IPool immutable AAVE_V3_POOL;
+    IPool public immutable AAVE_V3_POOL;
 
     constructor(address morpho, address aaveV3Pool) MigrationBundler(morpho) {
         AAVE_V3_POOL = IPool(aaveV3Pool);

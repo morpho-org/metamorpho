@@ -9,8 +9,8 @@ import {MigrationBundler} from "./MigrationBundler.sol";
 import {ERC20Bundler} from "../ERC20Bundler.sol";
 
 contract CompoundV2MigrationBundler is MigrationBundler, ERC20Bundler {
-    ICEth immutable C_NATIVE;
-    IWNative immutable WRAPPED_NATIVE;
+    ICEth public immutable _NATIVE;
+    IWNative public immutable WRAPPED_NATIVE;
 
     constructor(address morpho, address wNative, address cNative) MigrationBundler(morpho) {
         WRAPPED_NATIVE = IWNative(wNative);
