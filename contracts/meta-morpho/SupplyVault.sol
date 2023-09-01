@@ -115,7 +115,7 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         if (newFeeRecipient != address(0)) lastTotalAssets = totalAssets();
     }
 
-    /* EXTERNAL */
+    /* ONLY RISK MANAGER FUNCTIONS */
 
     function setConfig(MarketParams memory marketParams, VaultMarketConfig calldata marketConfig)
         external
@@ -129,6 +129,8 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     function disableMarket(Id id) external onlyRiskManager {
         _config.remove(id);
     }
+
+    /* ONLY ALLOCATOR FUNCTIONS */
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
@@ -145,6 +147,36 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     /* ERC4626 */
 
+    function maxWithdraw(address owner) public view virtual override returns (uint256) {
+        _accruedFeeShares();
+
+        uint256 maxAssets = super.maxWithdraw(owner);
+        uint256 liquidity = ERC20(asset()).balanceOf(address(this));
+
+        if (address(withdrawStrategy) != address(0)) {
+            // Try/catch because `maxWithdraw` MUST NOT revert.
+            try withdrawStrategy.allocate(_msgSender(), owner, maxAssets, _config.allMarketParams) returns (
+                MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied
+            ) {
+                uint256 nbWithdrawn = withdrawn.length;
+                for (uint256 i; i < nbWithdrawn; ++i) {
+                    liquidity += withdrawn[i].assets; // TODO: can overflow
+                }
+
+                uint256 nbSupplied = supplied.length;
+                for (uint256 i; i < nbSupplied; ++i) {
+                    liquidity = liquidity.zeroFloorSub(supplied[i].assets);
+                }
+            } catch {}
+        }
+
+        return UtilsLib.min(maxAssets, liquidity);
+    }
+
+    function maxRedeem(address owner) public view override returns (uint256) {
+        return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
+    }
+
     function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
         _accrueFee();
 
@@ -157,16 +189,27 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
         return super.mint(shares, receiver);
     }
 
-    function withdraw(uint256 assets, address receiver, address owner) public virtual override returns (uint256) {
+    function withdraw(uint256 assets, address receiver, address owner)
+        public
+        virtual
+        override
+        returns (uint256 shares)
+    {
         _accrueFee();
 
-        return super.withdraw(assets, receiver, owner);
+        // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
+
+        shares = previewWithdraw(assets);
+        _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
-    function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256) {
+    function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256 assets) {
         _accrueFee();
 
-        return super.redeem(shares, receiver, owner);
+        // Do not call expensive `maxRedeem` and optimistically redeem shares.
+
+        assets = previewRedeem(shares);
+        _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
     function totalAssets() public view override returns (uint256 assets) {
@@ -180,8 +223,6 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
         assets += ERC20(asset()).balanceOf(address(this));
     }
-
-    // TODO: maxWithdraw, maxRedeem are limited by markets liquidity
 
     /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
@@ -213,6 +254,8 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     /* INTERNAL */
 
     function _market(Id id) internal view returns (VaultMarket storage) {
+        require(_config.contains(id), ErrorsLib.UNAUTHORIZED_MARKET);
+
         return _config.getMarket(id);
     }
 
@@ -230,11 +273,9 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
 
     function _supply(MarketAllocation memory allocation, address onBehalf) internal override {
         Id id = allocation.marketParams.id();
-        require(_config.contains(id), ErrorsLib.UNAUTHORIZED_MARKET);
+        VaultMarketConfig storage marketConfig = _market(id).config;
 
-        VaultMarket storage market = _market(id);
-
-        uint256 cap = market.config.cap;
+        uint256 cap = marketConfig.cap;
         if (cap > 0) {
             uint256 newSupply = allocation.assets + _supplyBalance(allocation.marketParams);
 
@@ -252,22 +293,26 @@ contract SupplyVault is InternalSupplyRouter, ERC4626, Ownable2Step, ISupplyVaul
     function _accrueFee() internal {
         if (fee == 0 || feeRecipient == address(0)) return;
 
-        uint256 newTotalAssets = totalAssets();
-        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
+        (uint256 newTotalAssets, uint256 feeShares) = _accruedFeeShares();
 
         lastTotalAssets = newTotalAssets;
 
-        if (totalInterest == 0) return;
+        if (feeShares != 0) _mint(feeRecipient, feeShares);
 
-        uint256 feeAmount = totalInterest.mulDiv(fee, WAD);
-        // The fee amount is subtracted from the total assets in this calculation to compensate for the fact
-        // that total assets is already increased by the total interest (including the fee amount).
-        uint256 feeShares = feeAmount.mulDiv(
-            totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAmount + 1, Math.Rounding.Down
-        );
+        emit EventsLib.AccrueFee(newTotalAssets, feeShares);
+    }
 
-        _mint(feeRecipient, feeShares);
+    function _accruedFeeShares() internal view returns (uint256 newTotalAssets, uint256 feeShares) {
+        newTotalAssets = totalAssets();
+        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
 
-        emit EventsLib.AccrueFee(feeShares);
+        if (totalInterest != 0) {
+            uint256 feeAmount = totalInterest.mulDiv(fee, WAD);
+            // The fee amount is subtracted from the total assets in this calculation to compensate for the fact
+            // that total assets is already increased by the total interest (including the fee amount).
+            feeShares = feeAmount.mulDiv(
+                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAmount + 1, Math.Rounding.Down
+            );
+        }
     }
 }

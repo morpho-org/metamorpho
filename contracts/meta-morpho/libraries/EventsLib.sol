@@ -19,6 +19,7 @@ library EventsLib {
     event SetFeeRecipient(address indexed newFeeRecipient);
 
     /// @notice Emitted when the vault's performance fee is accrued.
+    /// @param totalAssets The total amount of assets this vault manages.
     /// @param feeShares The shares minted corresponding to the fee accrued.
-    event AccrueFee(uint256 feeShares);
+    event AccrueFee(uint256 totalAssets, uint256 feeShares);
 }
