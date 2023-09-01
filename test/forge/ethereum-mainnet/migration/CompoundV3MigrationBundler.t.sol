@@ -14,7 +14,7 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
 
     CompoundV3MigrationBundler bundler;
 
-    ICompoundV3 cToken;
+    address internal cToken;
 
     mapping(address => address) _cTokens;
 
@@ -30,14 +30,9 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         _cTokens[WETH] = C_WETH_V3;
 
         vm.label(address(bundler), "Compound V3 Migration Bundler");
-        cToken = ICompoundV3(_getCTokenV3(marketParams.borrowableToken));
+        cToken = _getCTokenV3(marketParams.borrowableToken);
 
         bundler = new CompoundV3MigrationBundler(address(morpho));
-
-        // Provide liquidity.
-        deal(marketParams.borrowableToken, address(this), borrowed * 10);
-        ERC20(marketParams.borrowableToken).safeApprove(address(morpho), type(uint256).max);
-        morpho.supply(marketParams, borrowed * 10, 0, address(this), hex"");
     }
 
     /// forge-config: default.fuzz.runs = 3
@@ -45,14 +40,15 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         address user;
         (privateKey, user) = _getUserAndKey(privateKey);
 
+        _provideLiquidity(borrowed);
+
         deal(marketParams.collateralToken, user, collateralSupplied);
 
         vm.startPrank(user);
 
-        ERC20(marketParams.collateralToken).safeApprove(address(cToken), type(uint256).max);
-        cToken.supply(marketParams.collateralToken, collateralSupplied);
-        cToken.withdraw(marketParams.borrowableToken, borrowed);
-        ERC20(marketParams.collateralToken).safeApprove(address(cToken), 0);
+        ERC20(marketParams.collateralToken).safeApprove(cToken, collateralSupplied);
+        ICompoundV3(cToken).supply(marketParams.collateralToken, collateralSupplied);
+        ICompoundV3(cToken).withdraw(marketParams.borrowableToken, borrowed);
 
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
@@ -60,20 +56,45 @@ contract CompoundV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[0] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), true, 0);
         callbackData[1] = _morphoBorrowCall(borrowed, address(bundler));
         callbackData[2] = _morphoSetAuthorizationWithSigCall(privateKey, address(bundler), false, 1);
-        callbackData[3] = _compoundV3RepayCall(address(cToken), marketParams.borrowableToken, borrowed);
-        callbackData[4] = _compoundV3AllowCall(privateKey, address(cToken), address(bundler), true, 0);
+        callbackData[3] = _compoundV3RepayCall(cToken, marketParams.borrowableToken, borrowed);
+        callbackData[4] = _compoundV3AllowCall(privateKey, cToken, address(bundler), true, 0);
         callbackData[5] =
-            _compoundV3WithdrawCall(address(cToken), address(bundler), marketParams.collateralToken, collateralSupplied);
-        callbackData[6] = _compoundV3AllowCall(privateKey, address(cToken), address(bundler), false, 1);
-        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
+            _compoundV3WithdrawCall(cToken, address(bundler), marketParams.collateralToken, collateralSupplied);
+        callbackData[6] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
         bundler.multicall(SIG_DEADLINE, data);
 
         vm.stopPrank();
 
-        assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
-        assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
-        assertFalse(morpho.isAuthorized(user, address(bundler)));
+        _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
+    }
+
+    function testMigrateSupplierWithCompoundAllowance(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 100);
+
+        vm.startPrank(user);
+
+        // Margin necessary due to CompoundV3 roundings.
+        ERC20(marketParams.borrowableToken).safeApprove(cToken, supplied + 100);
+        ICompoundV3(cToken).supply(marketParams.borrowableToken, supplied + 100);
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _compoundV3AllowCall(privateKey, cToken, address(bundler), true, 0);
+        data[1] = _compoundV3WithdrawCall(cToken, address(bundler), marketParams.borrowableToken, supplied);
+        data[2] = _compoundV3AllowCall(privateKey, cToken, address(bundler), false, 1);
+        data[3] = _morphoSupplyCall(supplied, user, hex"");
+
+        bundler.multicall(SIG_DEADLINE, data);
+
+        vm.stopPrank();
+
+        _assertSupplierPosition(supplied, user, address(bundler));
     }
 
     function _getCTokenV3(address asset) internal view returns (address) {

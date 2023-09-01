@@ -39,17 +39,14 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
         vm.label(address(bundler), "Compound V2 Migration Bundler");
 
         borrowableCToken = _getCToken(DAI);
-
-        // Provide liquidity.
-        deal(marketParams.borrowableToken, address(this), borrowed * 10);
-        ERC20(marketParams.borrowableToken).safeApprove(address(morpho), type(uint256).max);
-        morpho.supply(marketParams, borrowed * 10, 0, address(this), hex"");
     }
 
     /// forge-config: default.fuzz.runs = 3
     function testMigrateBorrowerWithPermit2(uint256 privateKey) public {
         address user;
         (privateKey, user) = _getUserAndKey(privateKey);
+
+        _provideLiquidity(borrowed);
 
         deal(user, collateralSupplied);
 
@@ -76,15 +73,13 @@ contract CompoundV2EthCollateralMigrationBundler is BaseMigrationTest {
         callbackData[4] = _erc20Approve2Call(privateKey, C_ETH_V2, uint160(cTokenBalance), address(bundler), 0);
         callbackData[5] = _erc20TransferFrom2Call(C_ETH_V2, cTokenBalance);
         callbackData[6] = _compoundV2WithdrawCall(C_ETH_V2, collateralSupplied);
-        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
         bundler.multicall(SIG_DEADLINE, data);
 
         vm.stopPrank();
 
-        assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
-        assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
-        assertFalse(morpho.isAuthorized(user, address(bundler)));
+        _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
     }
 
     function _getCToken(address asset) internal view returns (address) {

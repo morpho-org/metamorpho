@@ -29,27 +29,22 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
 
         bundler = new AaveV3OptimizerMigrationBundler(address(morpho), address(AAVE_V3_OPTIMIZER));
         vm.label(address(bundler), "Aave V3 Optimizer Migration Bundler");
-
-        // Provide liquidity.
-        deal(marketParams.borrowableToken, address(this), borrowed * 10);
-        ERC20(marketParams.borrowableToken).safeApprove(address(morpho), type(uint256).max);
-        morpho.supply(marketParams, borrowed * 10, 0, address(this), hex"");
     }
 
     /// forge-config: default.fuzz.runs = 3
     function testMigrateBorrowerWithOptimizerPermit(uint256 privateKey) public {
-        privateKey = bound(privateKey, 1, type(uint32).max);
-        address user = vm.addr(privateKey);
-        vm.label(user, "user");
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+
+        _provideLiquidity(borrowed);
 
         deal(marketParams.collateralToken, user, collateralSupplied + 1);
 
         vm.startPrank(user);
 
-        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_OPTIMIZER, type(uint256).max);
+        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_OPTIMIZER, collateralSupplied + 1);
         IAaveV3Optimizer(AAVE_V3_OPTIMIZER).supplyCollateral(marketParams.collateralToken, collateralSupplied + 1, user);
         IAaveV3Optimizer(AAVE_V3_OPTIMIZER).borrow(marketParams.borrowableToken, borrowed, user, user, 15);
-        ERC20(marketParams.collateralToken).safeApprove(AAVE_V3_OPTIMIZER, 0);
 
         bytes[] memory data = new bytes[](1);
         bytes[] memory callbackData = new bytes[](7);
@@ -62,15 +57,39 @@ contract AaveV3MigrationBundlerTest is BaseMigrationTest {
         callbackData[5] =
             _aaveV3OptimizerWithdrawCollateralCall(marketParams.collateralToken, collateralSupplied, address(bundler));
         callbackData[6] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), false, 1);
-        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, callbackData);
+        data[0] = _morphoSupplyCollateralCall(collateralSupplied, user, abi.encode(callbackData));
 
         bundler.multicall(SIG_DEADLINE, data);
 
         vm.stopPrank();
 
-        assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied);
-        assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed);
-        assertFalse(morpho.isAuthorized(user, address(bundler)));
+        _assertBorrowerPosition(collateralSupplied, borrowed, user, address(bundler));
+    }
+
+    function testMigrateSupplierWithOptimizerPermit(uint256 privateKey, uint256 supplied) public {
+        address user;
+        (privateKey, user) = _getUserAndKey(privateKey);
+        supplied = bound(supplied, 100, 100 ether);
+
+        deal(marketParams.borrowableToken, user, supplied + 1);
+
+        vm.startPrank(user);
+
+        ERC20(marketParams.borrowableToken).safeApprove(AAVE_V3_OPTIMIZER, supplied + 1);
+        IAaveV3Optimizer(AAVE_V3_OPTIMIZER).supply(marketParams.borrowableToken, supplied + 1, user, 15);
+
+        bytes[] memory data = new bytes[](4);
+
+        data[0] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), true, 0);
+        data[1] = _aaveV3OptimizerWithdraw(marketParams.borrowableToken, supplied, address(bundler), 15);
+        data[2] = _aaveV3OptimizerApproveManagerCall(privateKey, address(bundler), false, 1);
+        data[3] = _morphoSupplyCall(supplied, user, hex"");
+
+        bundler.multicall(SIG_DEADLINE, data);
+
+        vm.stopPrank();
+
+        _assertSupplierPosition(supplied, user, address(bundler));
     }
 
     function _aaveV3OptimizerApproveManagerCall(uint256 privateKey, address manager, bool isAllowed, uint256 nonce)

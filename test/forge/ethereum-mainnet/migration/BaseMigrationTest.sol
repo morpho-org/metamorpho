@@ -12,10 +12,12 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import "../../helpers/ForkTest.sol";
 import {MorphoBundler} from "contracts/bundlers/MorphoBundler.sol";
 import {ERC20Bundler} from "contracts/bundlers/ERC20Bundler.sol";
-import {WNativeBundler} from "contracts/bundlers/WNativeBundler.sol";
 
 contract BaseMigrationTest is ForkTest {
+    using SafeTransferLib for ERC20;
     using MarketParamsLib for MarketParams;
+    using MorphoLib for IMorpho;
+    using MorphoBalancesLib for IMorpho;
 
     uint256 internal constant SIG_DEADLINE = type(uint32).max;
 
@@ -75,14 +77,20 @@ contract BaseMigrationTest is ForkTest {
         return abi.encodeCall(MorphoBundler.morphoBorrow, (marketParams, amount, 0, receiver));
     }
 
-    function _morphoSupplyCollateralCall(uint256 amount, address onBehalf, bytes[] memory callbackData)
+    function _morphoSupplyCall(uint256 amount, address onBehalf, bytes memory callbackData)
         internal
         view
         returns (bytes memory)
     {
-        return abi.encodeCall(
-            MorphoBundler.morphoSupplyCollateral, (marketParams, amount, onBehalf, abi.encode(callbackData))
-        );
+        return abi.encodeCall(MorphoBundler.morphoSupply, (marketParams, amount, 0, onBehalf, callbackData));
+    }
+
+    function _morphoSupplyCollateralCall(uint256 amount, address onBehalf, bytes memory callbackData)
+        internal
+        view
+        returns (bytes memory)
+    {
+        return abi.encodeCall(MorphoBundler.morphoSupplyCollateral, (marketParams, amount, onBehalf, callbackData));
     }
 
     function _erc20TransferFrom2Call(address asset, uint256 amount) internal pure returns (bytes memory) {
@@ -116,11 +124,25 @@ contract BaseMigrationTest is ForkTest {
         return abi.encodeCall(ERC20Bundler.approve2, (asset, amount, SIG_DEADLINE, sig));
     }
 
-    function _wNativeUnwrapCall(uint256 amount, address receiver) internal pure returns (bytes memory) {
-        return abi.encodeCall(WNativeBundler.unwrapNative, (amount, receiver));
+    function _provideLiquidity(uint256 liquidity) internal {
+        deal(marketParams.borrowableToken, address(this), liquidity);
+        ERC20(marketParams.borrowableToken).safeApprove(address(morpho), liquidity);
+        morpho.supply(marketParams, liquidity, 0, address(this), hex"");
     }
 
-    function _wNativeWrapCall(uint256 amount, address receiver) internal pure returns (bytes memory) {
-        return abi.encodeCall(WNativeBundler.wrapNative, (amount, receiver));
+    function _assertBorrowerPosition(uint256 collateralSupplied, uint256 borrowed, address user, address bundler)
+        internal
+    {
+        assertEq(morpho.expectedSupplyBalance(marketParams, user), 0, "supply != 0");
+        assertEq(morpho.collateral(marketParams.id(), user), collateralSupplied, "wrong collateral supply amount");
+        assertEq(morpho.expectedBorrowBalance(marketParams, user), borrowed, "wrong borrow amount");
+        assertFalse(morpho.isAuthorized(user, bundler), "authorization not revoked");
+    }
+
+    function _assertSupplierPosition(uint256 supplied, address user, address bundler) internal {
+        assertEq(morpho.expectedSupplyBalance(marketParams, user), supplied, "wrong supply amount");
+        assertEq(morpho.collateral(marketParams.id(), user), 0, "collateral supplied != 0");
+        assertEq(morpho.expectedBorrowBalance(marketParams, user), 0, "borrow != 0");
+        assertFalse(morpho.isAuthorized(user, bundler), "authorization not revoked");
     }
 }

@@ -33,7 +33,7 @@ abstract contract BaseTest is Test {
 
     IMorpho internal morpho;
     IrmMock internal irm;
-    OracleMock oracle;
+    OracleMock internal oracle;
 
     function setUp() public virtual {
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(OWNER)));
