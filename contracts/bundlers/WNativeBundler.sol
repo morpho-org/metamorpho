@@ -32,7 +32,7 @@ abstract contract WNativeBundler is BaseBundler {
     /* CALLBACKS */
 
     /// @dev Only the wNative contract is allowed to transfer the native token to this contract, without any calldata.
-    receive() external payable {
+    receive() external payable virtual {
         require(msg.sender == WRAPPED_NATIVE, ErrorsLib.ONLY_WNATIVE);
     }
 
