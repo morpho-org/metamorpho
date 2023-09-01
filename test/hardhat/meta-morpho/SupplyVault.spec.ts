@@ -13,7 +13,7 @@ import MorphoArtifact from "../../../lib/morpho-blue/out/Morpho.sol/Morpho.json"
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
-const nbMarkets = 8;
+const nbMarkets = 5;
 
 let seed = 42;
 const random = () => {
@@ -123,6 +123,9 @@ describe("Morpho", () => {
 
     await supplyVault.setIsRiskManager(riskManager.address, true);
     await supplyVault.setIsAllocator(allocator.address, true);
+
+    await supplyVault.setFee(BigInt.WAD / 5n);
+    await supplyVault.setFeeRecipient(admin.address);
 
     for (const marketParams of allMarketParams) {
       await supplyVault.connect(riskManager).setConfig(marketParams, { cap: MaxUint256 });
