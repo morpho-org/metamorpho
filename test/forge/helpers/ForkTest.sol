@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import {Permit2Lib} from "@permit2/libraries/Permit2Lib.sol";
 import {PermitHash} from "@permit2/libraries/PermitHash.sol";
 
-import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
-
 import "config/Configured.sol";
 import "./BaseTest.sol";
 
@@ -34,10 +32,6 @@ abstract contract ForkTest is BaseTest, Configured {
 
         for (uint256 i; i < configMarkets.length; ++i) {
             ConfigMarket memory configMarket = configMarkets[i];
-
-            OracleMock oracle = new OracleMock();
-
-            oracle.setPrice(ORACLE_PRICE_SCALE);
 
             MarketParams memory marketParams = MarketParams({
                 collateralToken: configMarket.collateralToken,
