@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {IOracle} from "@morpho-blue/interfaces/IOracle.sol";
-
 import {ERC20Mock} from "contracts/mocks/ERC20Mock.sol";
-import {OracleMock} from "contracts/mocks/OracleMock.sol";
 
 import "./BaseTest.sol";
 
@@ -18,7 +15,6 @@ abstract contract LocalTest is BaseTest {
 
     ERC20Mock internal borrowableToken;
     ERC20Mock internal collateralToken;
-    IOracle internal oracle;
 
     MarketParams internal marketParams;
     Id internal id;
@@ -28,11 +24,6 @@ abstract contract LocalTest is BaseTest {
 
         borrowableToken = new ERC20Mock("borrowable", "B");
         collateralToken = new ERC20Mock("collateral", "C");
-
-        OracleMock oracleMock = new OracleMock();
-        oracle = oracleMock;
-
-        oracleMock.setPrice(ORACLE_PRICE_SCALE);
 
         marketParams =
             MarketParams(address(borrowableToken), address(collateralToken), address(oracle), address(irm), LLTV);

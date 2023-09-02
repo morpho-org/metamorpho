@@ -23,3 +23,12 @@
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate
+[submodule "lib/aave-v3-core"]
+	path = lib/aave-v3-core
+	url = https://github.com/aave/aave-v3-core
+[submodule "lib/morpho-aave-v3"]
+	path = lib/morpho-aave-v3
+	url = https://github.com/morpho-org/morpho-aave-v3
+[submodule "lib/morpho-v1"]
+	path = lib/morpho-v1
+	url = https://github.com/morpho-org/morpho-v1
