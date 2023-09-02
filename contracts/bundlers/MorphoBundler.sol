@@ -7,7 +7,7 @@ import {MarketParams, Signature, Authorization, IMorpho} from "@morpho-blue/inte
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
 import {Math} from "@morpho-utils/math/Math.sol";
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {BaseBundler} from "./BaseBundler.sol";
 

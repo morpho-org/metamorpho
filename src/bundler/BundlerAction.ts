@@ -75,7 +75,7 @@ class BundlerAction {
       amount,
       shares,
       onBehalf,
-      BundlerAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BundlerAction.MORPHO_BUNDLER_IFC.getAbiCoder().encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -89,7 +89,7 @@ class BundlerAction {
       market,
       amount,
       onBehalf,
-      BundlerAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BundlerAction.MORPHO_BUNDLER_IFC.getAbiCoder().encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -114,7 +114,7 @@ class BundlerAction {
       amount,
       shares,
       onBehalf,
-      BundlerAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BundlerAction.MORPHO_BUNDLER_IFC.getAbiCoder().encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -143,7 +143,7 @@ class BundlerAction {
       borrower,
       seizedAssets,
       repaidShares,
-      BundlerAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BundlerAction.MORPHO_BUNDLER_IFC.getAbiCoder().encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
@@ -151,7 +151,7 @@ class BundlerAction {
     return BundlerAction.MORPHO_BUNDLER_IFC.encodeFunctionData("morphoFlashLoan", [
       asset,
       amount,
-      BundlerAction.MORPHO_BUNDLER_IFC._abiCoder.encode(["bytes[]"], [callbackCalls]),
+      BundlerAction.MORPHO_BUNDLER_IFC.getAbiCoder().encode(["bytes[]"], [callbackCalls]),
     ]);
   }
 
