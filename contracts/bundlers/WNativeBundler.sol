@@ -39,7 +39,7 @@ abstract contract WNativeBundler is BaseBundler {
     /* ACTIONS */
 
     /// @dev Wraps the given `amount` of the native token to wNative and transfers it to `receiver`.
-    function wrapNative(uint256 amount, address receiver) external {
+    function wrapNative(uint256 amount, address receiver) external payable {
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 
         amount = Math.min(amount, address(this).balance);
@@ -52,7 +52,7 @@ abstract contract WNativeBundler is BaseBundler {
     }
 
     /// @dev Unwraps the given `amount` of wNative to the native token and transfers it to `receiver`.
-    function unwrapNative(uint256 amount, address receiver) external {
+    function unwrapNative(uint256 amount, address receiver) external payable {
         require(receiver != address(this), ErrorsLib.BUNDLER_ADDRESS);
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 

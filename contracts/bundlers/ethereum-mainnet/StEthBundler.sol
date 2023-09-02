@@ -33,7 +33,7 @@ abstract contract StEthBundler is BaseBundler {
     /* ACTIONS */
 
     /// @dev Wraps the given `amount` of stETH to wstETH and transfers it to `receiver`.
-    function wrapStEth(uint256 amount, address receiver) external {
+    function wrapStEth(uint256 amount, address receiver) external payable {
         amount = Math.min(amount, ERC20(ST_ETH).balanceOf(address(this)));
 
         require(amount != 0, ErrorsLib.ZERO_AMOUNT);
@@ -44,7 +44,7 @@ abstract contract StEthBundler is BaseBundler {
     }
 
     /// @dev Unwraps the given `amount` of wstETH to stETH and transfers it to `receiver`.
-    function unwrapStEth(uint256 amount, address receiver) external {
+    function unwrapStEth(uint256 amount, address receiver) external payable {
         require(receiver != address(this), ErrorsLib.BUNDLER_ADDRESS);
         require(receiver != address(0), ErrorsLib.ZERO_ADDRESS);
 
