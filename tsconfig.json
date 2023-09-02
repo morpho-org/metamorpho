@@ -6,10 +6,10 @@
     "rootDir": ".",
     "baseUrl": ".",
     "outDir": "dist",
-    "moduleResolution": "nodenext",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true
   },
-  "include": ["src", "types", "test/hardhat", "types"],
+  "include": ["src", "types", "test/hardhat"],
   "files": ["./hardhat.config.ts"]
 }

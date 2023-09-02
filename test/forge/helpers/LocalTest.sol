@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {IOracle} from "@morpho-blue/interfaces/IOracle.sol";
-
-import {ERC20Mock} from "@morpho-blue/mocks/ERC20Mock.sol";
-import {OracleMock} from "@morpho-blue/mocks/OracleMock.sol";
+import {ERC20Mock} from "contracts/mocks/ERC20Mock.sol";
 
 import "./BaseTest.sol";
 

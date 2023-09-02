@@ -2,7 +2,6 @@ config/=config/
 contracts/=contracts/
 test/=test/
 
-@solmate/=lib/solmate/src/
 solmate/=lib/solmate/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 

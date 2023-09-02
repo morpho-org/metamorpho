@@ -5,7 +5,7 @@ import {IWNative} from "./interfaces/IWNative.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {Math} from "@morpho-utils/math/Math.sol";
-import {SafeTransferLib, ERC20} from "@solmate/utils/SafeTransferLib.sol";
+import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {BaseBundler} from "./BaseBundler.sol";
 
@@ -32,7 +32,7 @@ abstract contract WNativeBundler is BaseBundler {
     /* CALLBACKS */
 
     /// @dev Only the wNative contract is allowed to transfer the native token to this contract, without any calldata.
-    receive() external payable {
+    receive() external payable virtual {
         require(msg.sender == WRAPPED_NATIVE, ErrorsLib.ONLY_WNATIVE);
     }
 
