@@ -7,4 +7,4 @@
 [submodule "lib/morpho-blue"]
 	path = lib/morpho-blue
 	url = https://github.com/morpho-labs/morpho-blue
-	branch = 0.8.21
+	branch = chore/remove-remapping-context
