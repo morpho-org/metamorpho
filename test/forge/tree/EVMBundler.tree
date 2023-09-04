@@ -1,3 +1,0 @@
-.
-└── constructor(address morpho)
-    └── call constructor of MorphoBundler

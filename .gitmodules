@@ -1,34 +1,10 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/permit2"]
-	path = lib/permit2
-	url = https://github.com/Uniswap/permit2
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
-[submodule "lib/morpho-utils"]
-	path = lib/morpho-utils
-	url = https://github.com/morpho-dao/morpho-utils
-[submodule "lib/v3-periphery"]
-	path = lib/v3-periphery
-	url = https://github.com/Uniswap/v3-periphery
-[submodule "lib/v3-core"]
-	path = lib/v3-core
-	url = https://github.com/Uniswap/v3-core
 [submodule "lib/morpho-blue"]
 	path = lib/morpho-blue
 	url = https://github.com/morpho-labs/morpho-blue
 	branch = 0.8.21
-[submodule "lib/solmate"]
-	path = lib/solmate
-	url = https://github.com/transmissions11/solmate
-[submodule "lib/aave-v3-core"]
-	path = lib/aave-v3-core
-	url = https://github.com/aave/aave-v3-core
-[submodule "lib/morpho-aave-v3"]
-	path = lib/morpho-aave-v3
-	url = https://github.com/morpho-org/morpho-aave-v3
-[submodule "lib/morpho-v1"]
-	path = lib/morpho-v1
-	url = https://github.com/morpho-org/morpho-v1
