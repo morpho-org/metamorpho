@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.21;
+pragma solidity 0.8.19;
 
 import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
@@ -227,7 +227,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
         super._deposit(caller, owner, assets, shares);
 
-        require(_depositOrdered(assets) == assets, ErrorsLib.DEPOSIT_ORDERED_FAILED);
+        require(_depositOrdered(assets) == 0, ErrorsLib.DEPOSIT_ORDERED_FAILED);
     }
 
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
@@ -235,7 +235,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         internal
         override
     {
-        require(_withdrawOrdered(assets) == assets, ErrorsLib.WITHDRAW_ORDERED_FAILED);
+        require(_withdrawOrdered(assets) == 0, ErrorsLib.WITHDRAW_ORDERED_FAILED);
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
