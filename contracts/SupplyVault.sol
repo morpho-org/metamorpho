@@ -137,20 +137,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
     }
 
-    function _removeFromOrderedMarkets(Id[] storage orderedMarkets, Id id) internal {
-        uint256 length = _config.length();
-
-        for (uint256 i; i < length; ++i) {
-            // Do not conserve the order of the markets.
-            if (Id.unwrap(orderedMarkets[i]) == Id.unwrap(id)) {
-                orderedMarkets[i] = orderedMarkets[length - 1];
-                orderedMarkets.pop();
-
-                return;
-            }
-        }
-    }
-
     function setOrderedSupply(Id[] calldata newOrderedSupply) external onlyRiskManager {
         _checkOrderedMarkets(orderedSupply, newOrderedSupply);
 
@@ -161,102 +147,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _checkOrderedMarkets(orderedWithdraw, newOrderedWithdraw);
 
         orderedWithdraw = newOrderedWithdraw;
-    }
-
-    function _checkOrderedMarkets(Id[] storage oldOrderedMarkets, Id[] calldata newOrderedMarkets) internal view {
-        uint256 length = newOrderedMarkets.length;
-
-        require(length == oldOrderedMarkets.length, ErrorsLib.INVALID_LENGTH);
-
-        for (uint256 i; i < length; ++i) {
-            require(_config.contains(newOrderedMarkets[i]), ErrorsLib.INVALID_ORDERED_MARKETS);
-        }
-    }
-
-    /// @dev MUST NOT revert on a market.
-    function _depositOrdered(uint256 assets) internal returns (uint256) {
-        uint256 i;
-        uint256 length = orderedSupply.length;
-
-        while (assets > 0 && i < length) {
-            Id id = orderedSupply[i];
-            ++i;
-
-            VaultMarketConfig storage marketConfig = _market(id).config;
-            uint256 cap = marketConfig.cap;
-            uint256 toDeposit;
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
-
-            if (cap > 0) {
-                uint256 currentSupply = _supplyBalance(marketParams);
-                uint256 newSupply = assets + currentSupply;
-
-                if (newSupply > cap) toDeposit = cap - currentSupply;
-                else toDeposit = assets;
-            }
-
-            bytes memory encodedCall =
-                abi.encodeCall(_MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
-            (bool success,) = address(_MORPHO).call(encodedCall);
-
-            if (success) assets -= toDeposit;
-        }
-
-        return assets;
-    }
-
-    /// @dev MUST NOT revert on a market.
-    function _staticWithdrawOrdered(uint256 assets) internal view returns (uint256) {
-        uint256 i;
-        uint256 length = orderedWithdraw.length;
-
-        while (assets > 0 && i < length) {
-            Id id = orderedWithdraw[i];
-            ++i;
-
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
-            (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
-            uint256 available = totalBorrow - totalSupply;
-
-            if (available > 0) {
-                uint256 toWithdraw = UtilsLib.min(available, assets);
-
-                bytes memory encodedCall =
-                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                (bool success,) = address(_MORPHO).staticcall(encodedCall);
-
-                if (success) assets -= toWithdraw;
-            }
-        }
-
-        return assets;
-    }
-
-    /// @dev MUST NOT revert on a market.
-    function _withdrawOrdered(uint256 assets) internal returns (uint256) {
-        uint256 i;
-        uint256 length = orderedWithdraw.length;
-
-        while (assets > 0 && i < length) {
-            Id id = orderedWithdraw[i];
-            ++i;
-
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
-            (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
-            uint256 available = totalBorrow - totalSupply;
-
-            if (available > 0) {
-                uint256 toWithdraw = UtilsLib.min(available, assets);
-
-                bytes memory encodedCall =
-                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                (bool success,) = address(_MORPHO).call(encodedCall);
-
-                if (success) assets -= toWithdraw;
-            }
-        }
-
-        return assets;
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
@@ -389,6 +279,116 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         for (uint256 i; i < nbSupplied; ++i) {
             _supplyMorpho(supplied[i]); // TODO: should we check config if supplied is provided by an onchain strategy?
+        }
+    }
+
+    /// @dev MUST NOT revert on a market.
+    function _depositOrdered(uint256 assets) internal returns (uint256) {
+        uint256 i;
+        uint256 length = orderedSupply.length;
+
+        while (assets > 0 && i < length) {
+            Id id = orderedSupply[i];
+            ++i;
+
+            VaultMarketConfig storage marketConfig = _market(id).config;
+            uint256 cap = marketConfig.cap;
+            uint256 toDeposit;
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
+
+            if (cap > 0) {
+                uint256 currentSupply = _supplyBalance(marketParams);
+                uint256 newSupply = assets + currentSupply;
+
+                if (newSupply > cap) toDeposit = cap - currentSupply;
+                else toDeposit = assets;
+            }
+
+            bytes memory encodedCall =
+                abi.encodeCall(_MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
+            (bool success,) = address(_MORPHO).call(encodedCall);
+
+            if (success) assets -= toDeposit;
+        }
+
+        return assets;
+    }
+
+    /// @dev MUST NOT revert on a market.
+    function _staticWithdrawOrdered(uint256 assets) internal view returns (uint256) {
+        uint256 i;
+        uint256 length = orderedWithdraw.length;
+
+        while (assets > 0 && i < length) {
+            Id id = orderedWithdraw[i];
+            ++i;
+
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
+            (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
+            uint256 available = totalBorrow - totalSupply;
+
+            if (available > 0) {
+                uint256 toWithdraw = UtilsLib.min(available, assets);
+
+                bytes memory encodedCall =
+                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(_MORPHO).staticcall(encodedCall);
+
+                if (success) assets -= toWithdraw;
+            }
+        }
+
+        return assets;
+    }
+
+    /// @dev MUST NOT revert on a market.
+    function _withdrawOrdered(uint256 assets) internal returns (uint256) {
+        uint256 i;
+        uint256 length = orderedWithdraw.length;
+
+        while (assets > 0 && i < length) {
+            Id id = orderedWithdraw[i];
+            ++i;
+
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
+            (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
+            uint256 available = totalBorrow - totalSupply;
+
+            if (available > 0) {
+                uint256 toWithdraw = UtilsLib.min(available, assets);
+
+                bytes memory encodedCall =
+                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(_MORPHO).call(encodedCall);
+
+                if (success) assets -= toWithdraw;
+            }
+        }
+
+        return assets;
+    }
+
+    function _removeFromOrderedMarkets(Id[] storage orderedMarkets, Id id) internal {
+        uint256 length = _config.length();
+
+        for (uint256 i; i < length; ++i) {
+            // Do not conserve the order of the markets.
+            if (Id.unwrap(orderedMarkets[i]) == Id.unwrap(id)) {
+                orderedMarkets[i] = orderedMarkets[length - 1];
+                orderedMarkets.pop();
+
+                return;
+            }
+        }
+    }
+
+    function _checkOrderedMarkets(Id[] storage oldOrderedMarkets, Id[] calldata newOrderedMarkets) internal view {
+        uint256 length = newOrderedMarkets.length;
+
+        require(length == oldOrderedMarkets.length, ErrorsLib.INVALID_LENGTH);
+
+        for (uint256 i; i < length; ++i) {
+            require(_config.contains(newOrderedMarkets[i]), ErrorsLib.INVALID_ORDERED_MARKETS);
         }
     }
 
