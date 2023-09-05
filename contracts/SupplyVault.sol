@@ -2,7 +2,6 @@
 pragma solidity 0.8.21;
 
 import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
-import {IVaultAllocationStrategy} from "./interfaces/IVaultAllocationStrategy.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
@@ -153,7 +152,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function setOrderedSupply(Id[] calldata newOrderedSupply) external onlyRiskManager {
-        _checkOrdredMarkets(orderedSupply, newOrderedSupply);
+        _checkOrderedMarkets(orderedSupply, newOrderedSupply);
 
         orderedSupply = newOrderedSupply;
     }
@@ -170,12 +169,12 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(length == oldOrderedMarkets.length, ErrorsLib.INVALID_LENGTH);
 
         for (uint256 i; i < length; ++i) {
-            require(_config.contains(newOrderedSupply[i]), ErrorsLib.INVALID_ORDERED_MARKETS);
+            require(_config.contains(newOrderedMarkets[i]), ErrorsLib.INVALID_ORDERED_MARKETS);
         }
     }
 
     /// @dev MUST NOT revert on a market.
-    function _depositOrdered(uint256 assets, bool skipCalls) internal returns (uint256) {
+    function _depositOrdered(uint256 assets) internal returns (uint256) {
         uint256 i;
         uint256 length = orderedSupply.length;
 
@@ -197,8 +196,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
             bytes memory encodedCall =
                 abi.encodeCall(_MORPHO.supply.selector, marketParams, toDeposit, 0, address(this), hex"");
-
-            (bool success,) = skipCalls ? address(_MORPHO).staticcall(encodedCall) : address(_MORPHO).call(encodedCall);
+            (bool success,) = address(_MORPHO).call(encodedCall);
 
             if (success) assets -= toDeposit;
         }
@@ -254,27 +252,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function maxWithdraw(address owner) public view virtual override returns (uint256) {
         _accruedFeeShares();
 
-        uint256 maxAssets = super.maxWithdraw(owner);
-        uint256 liquidity = ERC20(asset()).balanceOf(address(this));
-
-        if (address(orderedWithdraw) != address(0)) {
-            // Try/catch because `maxWithdraw` MUST NOT revert.
-            try orderedWithdraw.allocate(_msgSender(), owner, maxAssets, _config.allMarketParams) returns (
-                MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied
-            ) {
-                uint256 nbWithdrawn = withdrawn.length;
-                for (uint256 i; i < nbWithdrawn; ++i) {
-                    liquidity += withdrawn[i].assets; // TODO: can overflow
-                }
-
-                uint256 nbSupplied = supplied.length;
-                for (uint256 i; i < nbSupplied; ++i) {
-                    liquidity = liquidity.zeroFloorSub(supplied[i].assets);
-                }
-            } catch {}
-        }
-
-        return UtilsLib.min(maxAssets, liquidity);
+        return _withdrawOrdered(super.maxWithdraw(owner), true);
     }
 
     function maxRedeem(address owner) public view override returns (uint256) {
@@ -340,7 +318,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         internal
         override
     {
-        require(_withdrawOrdered(assets) == assets, ErrorsLib.WITHDRAW_ORDERED_FAILED);
+        require(_withdrawOrdered(assets, false) == assets, ErrorsLib.WITHDRAW_ORDERED_FAILED);
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
