@@ -1,7 +1,7 @@
 [profile.default]
 names = true
 sizes = true
-via-ir = true
+via-ir = false
 src = "contracts"
 evm_version = "paris"
 fs_permissions = [

@@ -29,4 +29,6 @@ library ErrorsLib {
     string internal constant DEPOSIT_ORDERED_FAILED = "deposit ordered failed";
 
     string internal constant WITHDRAW_ORDERED_FAILED = "withdraw ordered failed";
+
+    string internal constant MARKET_NOT_CREATED = "market not created";
 }

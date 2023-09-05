@@ -8,8 +8,8 @@ import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
-import {SupplyVault, VaultMarketConfig, IERC20} from "contracts/SupplyVault.sol";
-import {Morpho, MarketParamsLib, MarketParams, SharesMathLib} from "@morpho-blue/Morpho.sol";
+import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib} from "contracts/SupplyVault.sol";
+import {Morpho, MarketParamsLib, MarketParams, SharesMathLib, Id} from "@morpho-blue/Morpho.sol";
 
 contract BaseTest is Test {
     uint256 internal constant HIGH_COLLATERAL_AMOUNT = 1e35;

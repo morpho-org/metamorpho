@@ -119,6 +119,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         onlyRiskManager
     {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
+        (,,,, uint128 lastUpdate,) = _MORPHO.market(marketParams.id());
+        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
 
         Id id = marketParams.id();
         // Add market to the ordered lists if the market is added.
