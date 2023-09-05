@@ -108,8 +108,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         fee = uint96(newFee);
 
         emit EventsLib.SetFee(newFee);
-
-        if (newFee != 0) lastTotalAssets = totalAssets();
     }
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
@@ -121,8 +119,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         feeRecipient = newFeeRecipient;
 
         emit EventsLib.SetFeeRecipient(newFeeRecipient);
-
-        if (newFeeRecipient != address(0)) lastTotalAssets = totalAssets();
     }
 
     /* ONLY RISK MANAGER FUNCTIONS */
