@@ -34,8 +34,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     mapping(address => bool) public isRiskManager;
     mapping(address => bool) public isAllocator;
 
-    Id[] public orderedSupply;
-    Id[] public orderedWithdraw;
+    Id[] public supplyAllocationOrder;
+    Id[] public withdrawAllocationOrder;
 
     uint96 fee;
     address feeRecipient;
@@ -123,34 +123,34 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
 
         Id id = marketParams.id();
-        // Add market to the ordered lists if the market is added.
+        // Add market to the ordered lists if the market is added and not just updated.
         if (!_config.contains(id)) {
-            orderedSupply.push(id);
-            orderedWithdraw.push(id);
+            supplyAllocationOrder.push(id);
+            withdrawAllocationOrder.push(id);
         }
 
         require(_config.update(marketParams, marketConfig), ErrorsLib.CONFIG_UDPATE_FAILED);
     }
 
     function disableMarket(Id id) external onlyRiskManager {
-        _removeFromOrderedMarkets(orderedSupply, id);
-        _removeFromOrderedMarkets(orderedWithdraw, id);
+        _removeFromAllocationOrder(supplyAllocationOrder, id);
+        _removeFromAllocationOrder(withdrawAllocationOrder, id);
 
         require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
 
-    function setOrderedSupply(Id[] calldata newOrderedSupply) external onlyAllocator {
-        _checkOrderedMarkets(orderedSupply, newOrderedSupply);
+    function setSupplyAllocationOrder(Id[] calldata newSupplyAllocationOrder) external onlyAllocator {
+        _checkAllocationOrder(supplyAllocationOrder, newSupplyAllocationOrder);
 
-        orderedSupply = newOrderedSupply;
+        supplyAllocationOrder = newSupplyAllocationOrder;
     }
 
-    function setOrderedWithdraw(Id[] calldata newOrderedWithdraw) external onlyAllocator {
-        _checkOrderedMarkets(orderedWithdraw, newOrderedWithdraw);
+    function setWithdrawAllocationOrder(Id[] calldata newWithdrawAllocationOrder) external onlyAllocator {
+        _checkAllocationOrder(withdrawAllocationOrder, newWithdrawAllocationOrder);
 
-        orderedWithdraw = newOrderedWithdraw;
+        withdrawAllocationOrder = newWithdrawAllocationOrder;
     }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
@@ -171,7 +171,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function maxWithdraw(address owner) public view virtual override returns (uint256) {
         _accruedFeeShares();
 
-        return _staticWithdrawOrdered(super.maxWithdraw(owner));
+        return _staticWithdrawOrder(super.maxWithdraw(owner));
     }
 
     function maxRedeem(address owner) public view override returns (uint256) {
@@ -229,7 +229,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
         super._deposit(caller, owner, assets, shares);
 
-        require(_depositOrdered(assets) == 0, ErrorsLib.DEPOSIT_ORDERED_FAILED);
+        require(_depositOrder(assets) == 0, ErrorsLib.DEPOSIT_ORDER_FAILED);
     }
 
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
@@ -237,7 +237,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         internal
         override
     {
-        require(_withdrawOrdered(assets) == 0, ErrorsLib.WITHDRAW_ORDERED_FAILED);
+        require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
@@ -285,11 +285,11 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     /// @dev MUST NOT revert on a market.
-    function _depositOrdered(uint256 assets) internal returns (uint256) {
-        uint256 length = orderedSupply.length;
+    function _depositOrder(uint256 assets) internal returns (uint256) {
+        uint256 length = supplyAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            Id id = orderedSupply[i];
+            Id id = supplyAllocationOrder[i];
 
             MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
             VaultMarketConfig storage marketConfig = _market(id).config;
@@ -317,11 +317,11 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     /// @dev MUST NOT revert on a market.
-    function _staticWithdrawOrdered(uint256 assets) internal view returns (uint256) {
-        uint256 length = orderedWithdraw.length;
+    function _staticWithdrawOrder(uint256 assets) internal view returns (uint256) {
+        uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, orderedWithdraw[i]);
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
 
             if (toWithdraw > 0) {
                 bytes memory encodedCall =
@@ -338,11 +338,11 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     /// @dev MUST NOT revert on a market.
-    function _withdrawOrdered(uint256 assets) internal returns (uint256) {
-        uint256 length = orderedWithdraw.length;
+    function _withdrawOrder(uint256 assets) internal returns (uint256) {
+        uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, orderedWithdraw[i]);
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
 
             if (toWithdraw > 0) {
                 bytes memory encodedCall =
@@ -369,27 +369,27 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         withdrawable = UtilsLib.min(available, assets);
     }
 
-    function _removeFromOrderedMarkets(Id[] storage orderedMarkets, Id id) internal {
+    function _removeFromAllocationOrder(Id[] storage order, Id id) internal {
         uint256 length = _config.length();
 
         for (uint256 i; i < length; ++i) {
-            // Do not conserve the order of the markets.
-            if (Id.unwrap(orderedMarkets[i]) == Id.unwrap(id)) {
-                orderedMarkets[i] = orderedMarkets[length - 1];
-                orderedMarkets.pop();
+            // Do not conserve the previous order.
+            if (Id.unwrap(order[i]) == Id.unwrap(id)) {
+                order[i] = order[length - 1];
+                order.pop();
 
                 return;
             }
         }
     }
 
-    function _checkOrderedMarkets(Id[] storage oldOrderedMarkets, Id[] calldata newOrderedMarkets) internal view {
-        uint256 length = newOrderedMarkets.length;
+    function _checkAllocationOrder(Id[] storage oldOrder, Id[] calldata newOrder) internal view {
+        uint256 length = newOrder.length;
 
-        require(length == oldOrderedMarkets.length, ErrorsLib.INVALID_LENGTH);
+        require(length == oldOrder.length, ErrorsLib.INVALID_LENGTH);
 
         for (uint256 i; i < length; ++i) {
-            require(_config.contains(newOrderedMarkets[i]), ErrorsLib.INVALID_ORDERED_MARKETS);
+            require(_config.contains(newOrder[i]), ErrorsLib.MARKET_NOT_WHITELISTED);
         }
     }
 
