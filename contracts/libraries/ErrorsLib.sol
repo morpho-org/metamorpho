@@ -17,4 +17,16 @@ library ErrorsLib {
 
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
+
+    string internal constant CONFIG_UDPATE_FAILED = "config update failed";
+
+    string internal constant DISABLE_MARKET_FAILED = "disable market failed";
+
+    string internal constant INVALID_LENGTH = "invalid length";
+
+    string internal constant INVALID_ORDERED_MARKETS = "invalid ordered markets";
+
+    string internal constant DEPOSIT_ORDERED_FAILED = "deposit ordered failed";
+
+    string internal constant WITHDRAW_ORDERED_FAILED = "withdraw ordered failed";
 }
