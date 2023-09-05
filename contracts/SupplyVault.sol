@@ -139,19 +139,19 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
     }
 
-    function setOrderedSupply(Id[] calldata newOrderedSupply) external onlyRiskManager {
+    /* ONLY ALLOCATOR FUNCTIONS */
+
+    function setOrderedSupply(Id[] calldata newOrderedSupply) external onlyAllocator {
         _checkOrderedMarkets(orderedSupply, newOrderedSupply);
 
         orderedSupply = newOrderedSupply;
     }
 
-    function setOrderedWithdraw(Id[] calldata newOrderedWithdraw) external onlyRiskManager {
+    function setOrderedWithdraw(Id[] calldata newOrderedWithdraw) external onlyAllocator {
         _checkOrderedMarkets(orderedWithdraw, newOrderedWithdraw);
 
         orderedWithdraw = newOrderedWithdraw;
     }
-
-    /* ONLY ALLOCATOR FUNCTIONS */
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external

@@ -68,6 +68,7 @@ contract MarketTest is BaseTest {
         vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        vm.stopPrank();
 
         assertEq(Id.unwrap(vault.orderedSupply(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.orderedSupply(1)), Id.unwrap(allMarkets[1].id()));
@@ -78,6 +79,7 @@ contract MarketTest is BaseTest {
         orderedSupply[1] = allMarkets[2].id();
         orderedSupply[2] = allMarkets[0].id();
 
+        vm.prank(ALLOCATOR);
         vault.setOrderedSupply(orderedSupply);
 
         assertEq(Id.unwrap(vault.orderedSupply(0)), Id.unwrap(allMarkets[1].id()));
@@ -90,11 +92,13 @@ contract MarketTest is BaseTest {
         vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        vm.stopPrank();
 
         Id[] memory orderedSupply = new Id[](3);
         orderedSupply[0] = allMarkets[0].id();
         orderedSupply[1] = allMarkets[1].id();
 
+        vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_ORDERED_MARKETS));
         vault.setOrderedSupply(orderedSupply);
     }
@@ -104,11 +108,13 @@ contract MarketTest is BaseTest {
         vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        vm.stopPrank();
 
         Id[] memory orderedSupply1 = new Id[](2);
         orderedSupply1[0] = allMarkets[0].id();
         orderedSupply1[1] = allMarkets[1].id();
 
+        vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setOrderedSupply(orderedSupply1);
 
@@ -118,6 +124,7 @@ contract MarketTest is BaseTest {
         orderedSupply2[2] = allMarkets[2].id();
         orderedSupply2[3] = allMarkets[3].id();
 
+        vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setOrderedSupply(orderedSupply2);
     }
@@ -127,6 +134,7 @@ contract MarketTest is BaseTest {
         vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        vm.stopPrank();
 
         assertEq(Id.unwrap(vault.orderedWithdraw(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.orderedWithdraw(1)), Id.unwrap(allMarkets[1].id()));
@@ -137,6 +145,7 @@ contract MarketTest is BaseTest {
         orderedWithdraw[1] = allMarkets[2].id();
         orderedWithdraw[2] = allMarkets[0].id();
 
+        vm.prank(ALLOCATOR);
         vault.setOrderedWithdraw(orderedWithdraw);
 
         assertEq(Id.unwrap(vault.orderedWithdraw(0)), Id.unwrap(allMarkets[1].id()));
@@ -149,11 +158,13 @@ contract MarketTest is BaseTest {
         vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        vm.stopPrank();
 
         Id[] memory orderedWithdraw = new Id[](3);
         orderedWithdraw[0] = allMarkets[0].id();
         orderedWithdraw[1] = allMarkets[1].id();
 
+        vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_ORDERED_MARKETS));
         vault.setOrderedWithdraw(orderedWithdraw);
     }
@@ -163,11 +174,13 @@ contract MarketTest is BaseTest {
         vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
         vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        vm.stopPrank();
 
         Id[] memory orderedWithdraw1 = new Id[](2);
         orderedWithdraw1[0] = allMarkets[0].id();
         orderedWithdraw1[1] = allMarkets[1].id();
 
+        vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setOrderedWithdraw(orderedWithdraw1);
 
@@ -177,6 +190,7 @@ contract MarketTest is BaseTest {
         orderedWithdraw2[2] = allMarkets[2].id();
         orderedWithdraw2[3] = allMarkets[3].id();
 
+        vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setOrderedWithdraw(orderedWithdraw2);
     }
