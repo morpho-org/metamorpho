@@ -176,13 +176,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(id);
 
-        require(_config.update(marketParams, uint256(pendingMarket[id].value)));
+        require(_config.update(marketParams, uint256(pendingMarket[id].value)), ErrorsLib.ENABLE_MARKET_FAILED);
     }
 
     function setCap(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
-        Id id = marketParams.id();
-        require(_config.contains(id));
-        require(_config.update(marketParams, cap), ErrorsLib.CONFIG_UDPATE_FAILED);
+        require(_config.contains(marketParams.id()), ErrorsLib.MARKET_NOT_ENABLED);
+
+        _config.update(marketParams, cap);
     }
 
     function disableMarket(Id id) external onlyRiskManager {
@@ -440,7 +440,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(length == oldOrder.length, ErrorsLib.INVALID_LENGTH);
 
         for (uint256 i; i < length; ++i) {
-            require(_config.contains(newOrder[i]), ErrorsLib.MARKET_NOT_WHITELISTED);
+            require(_config.contains(newOrder[i]), ErrorsLib.MARKET_NOT_ENABLED);
         }
     }
 

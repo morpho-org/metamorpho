@@ -29,6 +29,14 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(id));
     }
 
+    function testEnableMarketShouldRevertWhenAlreadyEnabled() public {
+        _submitAndEnableMarket(allMarkets[0], CAP);
+
+        vm.prank(RISK_MANAGER);
+        vm.expectRevert(bytes(ErrorsLib.ENABLE_MARKET_FAILED));
+        vault.enableMarket(allMarkets[0].id());
+    }
+
     function testEnableMarketShouldRevertWhenTimelockNotElapsed(uint128 timelock, uint256 timeElapsed) public {
         timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
         _submitAndSetTimelock(timelock);
@@ -94,6 +102,17 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
     }
 
+    function testDisableMarketShouldRevertWhenAlreadyDisabled() public {
+        _submitAndEnableMarket(allMarkets[0], CAP);
+
+        vm.startPrank(RISK_MANAGER);
+        vault.disableMarket(allMarkets[0].id());
+
+        vm.expectRevert(bytes(ErrorsLib.DISABLE_MARKET_FAILED));
+        vault.disableMarket(allMarkets[0].id());
+        vm.stopPrank();
+    }
+
     function testDisableMarketShouldRevertWhenMarketIsNotEnabled(MarketParams memory marketParamsFuzz) public {
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.DISABLE_MARKET_FAILED));
@@ -132,7 +151,7 @@ contract MarketTest is BaseTest {
         supplyAllocationOrder[1] = allMarkets[1].id();
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_WHITELISTED));
+        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
         vault.setSupplyAllocationOrder(supplyAllocationOrder);
     }
 
@@ -192,7 +211,7 @@ contract MarketTest is BaseTest {
         withdrawAllocationOrder[1] = allMarkets[1].id();
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_WHITELISTED));
+        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
         vault.setWithdrawAllocationOrder(withdrawAllocationOrder);
     }
 
@@ -218,5 +237,20 @@ contract MarketTest is BaseTest {
         vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setWithdrawAllocationOrder(withdrawAllocationOrder2);
+    }
+
+    function testSetCap(uint128 cap) public {
+        _submitAndEnableMarket(allMarkets[0], CAP);
+
+        vm.prank(RISK_MANAGER);
+        vault.setCap(allMarkets[0], cap);
+
+        assertEq(vault.marketCap(allMarkets[0].id()), cap);
+    }
+
+    function testSetCapShouldRevertWhenMarketIsNotEnabled(MarketParams memory marketParamsFuzz) public {
+        vm.prank(RISK_MANAGER);
+        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
+        vault.setCap(marketParamsFuzz, CAP);
     }
 }
