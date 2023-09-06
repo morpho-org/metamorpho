@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.19;
 
-import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
+import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
+import {MarketAllocation, Pending, ISupplyVault} from "./interfaces/ISupplyVault.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
@@ -21,15 +22,6 @@ import {
     Math,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-
-interface IMorphoMarketParams {
-    function idToMarketParams(Id id) external returns (MarketParams memory marketParams);
-}
-
-struct Pending {
-    uint128 value;
-    uint128 timestamp;
-}
 
 contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
