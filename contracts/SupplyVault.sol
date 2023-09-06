@@ -164,9 +164,9 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     function submitPendingMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
-        (,,,, uint128 lastUpdate,) = _MORPHO.market(marketParams.id());
-        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
         Id id = marketParams.id();
+        (,,,, uint128 lastUpdate,) = _MORPHO.market(id);
+        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
         require(!_config.contains(id));
 
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
@@ -178,18 +178,17 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         supplyAllocationOrder.push(id);
         withdrawAllocationOrder.push(id);
 
-        MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(id);
         uint128 cap = pendingMarket[id].value;
 
-        require(_config.update(marketParams, uint256(cap)), ErrorsLib.ENABLE_MARKET_FAILED);
+        require(_config.update(id, uint256(cap)), ErrorsLib.ENABLE_MARKET_FAILED);
 
         emit EventsLib.EnableMarket(id, cap);
     }
 
-    function setCap(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
-        require(_config.contains(marketParams.id()), ErrorsLib.MARKET_NOT_ENABLED);
+    function setCap(Id id, uint128 cap) external onlyRiskManager {
+        require(_config.contains(id), ErrorsLib.MARKET_NOT_ENABLED);
 
-        _config.update(marketParams, cap);
+        _config.update(id, cap);
 
         emit EventsLib.SetCap(cap);
     }
@@ -281,7 +280,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
-            MarketParams memory marketParams = _config.at(i);
+            MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(_config.at(i));
 
             assets += _supplyBalance(marketParams);
         }
@@ -354,7 +353,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         for (uint256 i; i < length; ++i) {
             Id id = supplyAllocationOrder[i];
 
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
+            MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(id);
             uint256 cap = marketCap(id);
             uint256 toDeposit = assets;
 
@@ -425,7 +424,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         view
         returns (MarketParams memory marketParams, uint256 withdrawable)
     {
-        marketParams = _config.at(_config.getMarket(id).rank);
+        marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(id);
         (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
         uint256 available = totalBorrow - totalSupply;
         withdrawable = UtilsLib.min(available, assets);

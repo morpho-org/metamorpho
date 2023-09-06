@@ -113,10 +113,10 @@ contract MarketTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testDisableMarketShouldRevertWhenMarketIsNotEnabled(MarketParams memory marketParamsFuzz) public {
+    function testDisableMarketShouldRevertWhenMarketIsNotEnabled(Id idFuzz) public {
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.DISABLE_MARKET_FAILED));
-        vault.disableMarket(marketParamsFuzz.id());
+        vault.disableMarket(idFuzz);
     }
 
     function testSetSupplyAllocationOrder() public {
@@ -243,14 +243,14 @@ contract MarketTest is BaseTest {
         _submitAndEnableMarket(allMarkets[0], CAP);
 
         vm.prank(RISK_MANAGER);
-        vault.setCap(allMarkets[0], cap);
+        vault.setCap(allMarkets[0].id(), cap);
 
         assertEq(vault.marketCap(allMarkets[0].id()), cap);
     }
 
-    function testSetCapShouldRevertWhenMarketIsNotEnabled(MarketParams memory marketParamsFuzz) public {
+    function testSetCapShouldRevertWhenMarketIsNotEnabled(Id idFuzz) public {
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
-        vault.setCap(marketParamsFuzz, CAP);
+        vault.setCap(idFuzz, CAP);
     }
 }

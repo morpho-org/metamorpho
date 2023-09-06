@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
+import {IMorphoMarketParams} from "contracts/interfaces/IMorphoMarketParams.sol";
+
 import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";

@@ -11,7 +11,7 @@ struct VaultMarket {
 }
 
 struct ConfigSet {
-    MarketParams[] allMarketParams;
+    Id[] allMarketIds;
     mapping(Id id => VaultMarket) market;
 }
 
@@ -22,18 +22,17 @@ library ConfigSetLib {
     /**
      * @dev Add a value to a set. O(1).
      */
-    function update(ConfigSet storage set, MarketParams memory marketParams, uint256 cap) internal returns (bool) {
-        Id id = marketParams.id();
+    function update(ConfigSet storage set, Id id, uint256 cap) internal returns (bool) {
         VaultMarket storage market = set.getMarket(id);
 
         market.cap = cap;
 
         if (set.contains(id)) return false;
 
-        set.allMarketParams.push(marketParams);
+        set.allMarketIds.push(id);
         // The value is stored at length-1, but we add 1 to all indexes
         // and use 0 as a sentinel value
-        market.rank = set.allMarketParams.length;
+        market.rank = set.allMarketIds.length;
 
         return true;
     }
@@ -51,7 +50,7 @@ library ConfigSetLib {
         if (rank == 0) return false;
 
         // Equivalent to contains(set, value)
-        // To delete an element from the allMarketParams array in O(1), we swap the element to delete with the last one
+        // To delete an element from the allMarketIds array in O(1), we swap the element to delete with the last one
         // in
         // the array, and then remove the last element (sometimes called as 'swap and pop').
         // This modifies the order of the array, as noted in {at}.
@@ -61,21 +60,21 @@ library ConfigSetLib {
 
         unchecked {
             toDeleteIndex = rank - 1;
-            lastIndex = set.allMarketParams.length - 1;
+            lastIndex = set.allMarketIds.length - 1;
         }
 
         if (lastIndex != toDeleteIndex) {
-            MarketParams memory lastMarketParams = set.allMarketParams[lastIndex];
+            Id lastId = set.allMarketIds[lastIndex];
 
             // Move the last value to the index where the value to delete is
-            set.allMarketParams[toDeleteIndex] = lastMarketParams;
+            set.allMarketIds[toDeleteIndex] = lastId;
 
             // Update the index for the moved value
-            set.market[lastMarketParams.id()].rank = rank; // Replace lastId's index to rank
+            set.market[lastId].rank = rank; // Replace lastId's index to rank
         }
 
         // Delete the slot where the moved value was stored
-        set.allMarketParams.pop();
+        set.allMarketIds.pop();
 
         // Delete the index for the deleted slot
         delete set.market[id];
@@ -94,7 +93,7 @@ library ConfigSetLib {
      * @dev Returns the number of values on the set. O(1).
      */
     function length(ConfigSet storage set) internal view returns (uint256) {
-        return set.allMarketParams.length;
+        return set.allMarketIds.length;
     }
 
     /**
@@ -107,8 +106,8 @@ library ConfigSetLib {
      *
      * - `index` must be strictly less than {length}.
      */
-    function at(ConfigSet storage set, uint256 index) internal view returns (MarketParams memory) {
-        return set.allMarketParams[index];
+    function at(ConfigSet storage set, uint256 index) internal view returns (Id id) {
+        return set.allMarketIds[index];
     }
 
     /**
