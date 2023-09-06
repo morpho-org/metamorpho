@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.21;
+pragma solidity 0.8.19;
 
 import {MarketAllocation, ISupplyVault} from "./interfaces/ISupplyVault.sol";
-import {IVaultAllocationStrategy} from "./interfaces/IVaultAllocationStrategy.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
@@ -35,8 +34,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     mapping(address => bool) public isRiskManager;
     mapping(address => bool) public isAllocator;
 
-    IVaultAllocationStrategy public supplyStrategy;
-    IVaultAllocationStrategy public withdrawStrategy;
+    Id[] public supplyAllocationOrder;
+    Id[] public withdrawAllocationOrder;
 
     uint96 fee;
     address feeRecipient;
@@ -85,18 +84,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    function setSupplyStrategy(address newSupplyStrategy) external onlyOwner {
-        supplyStrategy = IVaultAllocationStrategy(newSupplyStrategy);
-
-        emit EventsLib.SetSupplyStrategy(newSupplyStrategy);
-    }
-
-    function setWithdrawStrategy(address newWithdrawStrategy) external onlyOwner {
-        withdrawStrategy = IVaultAllocationStrategy(newWithdrawStrategy);
-
-        emit EventsLib.SetWithdrawStrategy(newWithdrawStrategy);
-    }
-
     function setFee(uint256 newFee) external onlyOwner {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
@@ -128,15 +115,39 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         onlyRiskManager
     {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
+        (,,,, uint128 lastUpdate,) = _MORPHO.market(marketParams.id());
+        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
 
-        _config.update(marketParams, marketConfig);
+        Id id = marketParams.id();
+        // Add market to the ordered lists if the market is added and not just updated.
+        if (!_config.contains(id)) {
+            supplyAllocationOrder.push(id);
+            withdrawAllocationOrder.push(id);
+        }
+
+        require(_config.update(marketParams, marketConfig), ErrorsLib.CONFIG_UDPATE_FAILED);
     }
 
     function disableMarket(Id id) external onlyRiskManager {
-        _config.remove(id);
+        _removeFromAllocationOrder(supplyAllocationOrder, id);
+        _removeFromAllocationOrder(withdrawAllocationOrder, id);
+
+        require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
+
+    function setSupplyAllocationOrder(Id[] calldata newSupplyAllocationOrder) external onlyAllocator {
+        _checkAllocationOrder(supplyAllocationOrder, newSupplyAllocationOrder);
+
+        supplyAllocationOrder = newSupplyAllocationOrder;
+    }
+
+    function setWithdrawAllocationOrder(Id[] calldata newWithdrawAllocationOrder) external onlyAllocator {
+        _checkAllocationOrder(withdrawAllocationOrder, newWithdrawAllocationOrder);
+
+        withdrawAllocationOrder = newWithdrawAllocationOrder;
+    }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
@@ -156,27 +167,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function maxWithdraw(address owner) public view virtual override returns (uint256) {
         _accruedFeeShares();
 
-        uint256 maxAssets = super.maxWithdraw(owner);
-        uint256 liquidity = ERC20(asset()).balanceOf(address(this));
-
-        if (address(withdrawStrategy) != address(0)) {
-            // Try/catch because `maxWithdraw` MUST NOT revert.
-            try withdrawStrategy.allocate(_msgSender(), owner, maxAssets, _config.allMarketParams) returns (
-                MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied
-            ) {
-                uint256 nbWithdrawn = withdrawn.length;
-                for (uint256 i; i < nbWithdrawn; ++i) {
-                    liquidity += withdrawn[i].assets; // TODO: can overflow
-                }
-
-                uint256 nbSupplied = supplied.length;
-                for (uint256 i; i < nbSupplied; ++i) {
-                    liquidity = liquidity.zeroFloorSub(supplied[i].assets);
-                }
-            } catch {}
-        }
-
-        return UtilsLib.min(maxAssets, liquidity);
+        return _staticWithdrawOrder(super.maxWithdraw(owner));
     }
 
     function maxRedeem(address owner) public view override returns (uint256) {
@@ -234,12 +225,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
         super._deposit(caller, owner, assets, shares);
 
-        if (address(supplyStrategy) != address(0)) {
-            (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
-                supplyStrategy.allocate(caller, owner, assets, _config.allMarketParams);
-
-            _reallocate(withdrawn, supplied);
-        }
+        require(_depositOrder(assets) == 0, ErrorsLib.DEPOSIT_ORDER_FAILED);
     }
 
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
@@ -247,12 +233,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         internal
         override
     {
-        if (address(withdrawStrategy) != address(0)) {
-            (MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) =
-                withdrawStrategy.allocate(caller, owner, assets, _config.allMarketParams);
-
-            _reallocate(withdrawn, supplied);
-        }
+        require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
@@ -296,6 +277,115 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         for (uint256 i; i < nbSupplied; ++i) {
             _supplyMorpho(supplied[i]); // TODO: should we check config if supplied is provided by an onchain strategy?
+        }
+    }
+
+    /// @dev MUST NOT revert on a market.
+    function _depositOrder(uint256 assets) internal returns (uint256) {
+        uint256 length = supplyAllocationOrder.length;
+
+        for (uint256 i; i < length; ++i) {
+            Id id = supplyAllocationOrder[i];
+
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
+            VaultMarketConfig storage marketConfig = _market(id).config;
+            uint256 cap = marketConfig.cap;
+            uint256 toDeposit = assets;
+
+            if (cap > 0) {
+                uint256 currentSupply = _supplyBalance(marketParams);
+
+                toDeposit = UtilsLib.min(cap.zeroFloorSub(currentSupply), assets);
+            }
+
+            if (toDeposit > 0) {
+                bytes memory encodedCall =
+                    abi.encodeCall(_MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
+                (bool success,) = address(_MORPHO).call(encodedCall);
+
+                if (success) assets -= toDeposit;
+            }
+
+            if (assets == 0) break;
+        }
+
+        return assets;
+    }
+
+    /// @dev MUST NOT revert on a market.
+    function _staticWithdrawOrder(uint256 assets) internal view returns (uint256) {
+        uint256 length = withdrawAllocationOrder.length;
+
+        for (uint256 i; i < length; ++i) {
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
+
+            if (toWithdraw > 0) {
+                bytes memory encodedCall =
+                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(_MORPHO).staticcall(encodedCall);
+
+                if (success) assets -= toWithdraw;
+            }
+
+            if (assets == 0) break;
+        }
+
+        return assets;
+    }
+
+    /// @dev MUST NOT revert on a market.
+    function _withdrawOrder(uint256 assets) internal returns (uint256) {
+        uint256 length = withdrawAllocationOrder.length;
+
+        for (uint256 i; i < length; ++i) {
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
+
+            if (toWithdraw > 0) {
+                bytes memory encodedCall =
+                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(_MORPHO).call(encodedCall);
+
+                if (success) assets -= toWithdraw;
+            }
+
+            if (assets == 0) break;
+        }
+
+        return assets;
+    }
+
+    function _withdrawable(uint256 assets, Id id)
+        internal
+        view
+        returns (MarketParams memory marketParams, uint256 withdrawable)
+    {
+        marketParams = _config.at(_config.getMarket(id).rank);
+        (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
+        uint256 available = totalBorrow - totalSupply;
+        withdrawable = UtilsLib.min(available, assets);
+    }
+
+    function _removeFromAllocationOrder(Id[] storage order, Id id) internal {
+        uint256 length = _config.length();
+
+        for (uint256 i; i < length; ++i) {
+            // Do not conserve the previous order.
+            if (Id.unwrap(order[i]) == Id.unwrap(id)) {
+                order[i] = order[length - 1];
+                order.pop();
+
+                return;
+            }
+        }
+    }
+
+    function _checkAllocationOrder(Id[] storage oldOrder, Id[] calldata newOrder) internal view {
+        uint256 length = newOrder.length;
+
+        require(length == oldOrder.length, ErrorsLib.INVALID_LENGTH);
+
+        for (uint256 i; i < length; ++i) {
+            require(_config.contains(newOrder[i]), ErrorsLib.MARKET_NOT_WHITELISTED);
         }
     }
 

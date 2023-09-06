@@ -6,10 +6,6 @@ library EventsLib {
 
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
-    event SetSupplyStrategy(address indexed supplyStrategy);
-
-    event SetWithdrawStrategy(address indexed withdrawStrategy);
-
     /// @notice Emitted when setting a new fee.
     /// @param newFee The new fee.
     event SetFee(uint256 newFee);
