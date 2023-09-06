@@ -91,9 +91,9 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _;
     }
 
-    modifier timelockPassed(uint128 timestamp) {
-        require(block.timestamp >= timestamp + timelock);
-        require(block.timestamp <= timestamp + TIMELOCK_EXPIRATION);
+    modifier timelockElapsed(uint128 timestamp) {
+        require(block.timestamp >= timestamp + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
+        require(block.timestamp <= timestamp + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
 
         _;
     }
@@ -107,7 +107,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
     }
 
-    function setTimelock() external timelockPassed(pendingTimelock.timestamp) onlyOwner {
+    function setTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
         timelock = pendingTimelock.value;
         delete pendingTimelock;
 
@@ -134,7 +134,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         pendingFee = Pending(uint128(newFee), uint128(block.timestamp));
     }
 
-    function setFee() external timelockPassed(pendingFee.timestamp) onlyOwner {
+    function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
@@ -169,7 +169,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
     }
 
-    function enableMarket(Id id) external timelockPassed(pendingMarket[id].timestamp) onlyRiskManager {
+    function enableMarket(Id id) external timelockElapsed(pendingMarket[id].timestamp) onlyRiskManager {
         // Add market to the ordered lists if the market is added and not just updated.
         supplyAllocationOrder.push(id);
         withdrawAllocationOrder.push(id);

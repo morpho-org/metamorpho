@@ -29,6 +29,36 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(id));
     }
 
+    function testEnableMarketShouldRevertWhenTimelockNotElapsed(uint128 timelock, uint256 timeElapsed) public {
+        timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
+        _submitAndSetTimelock(timelock);
+
+        timeElapsed = bound(timeElapsed, 0, timelock - 1);
+
+        vm.startPrank(RISK_MANAGER);
+        vault.submitPendingMarket(allMarkets[0], CAP);
+
+        vm.warp(block.timestamp + timeElapsed);
+
+        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
+        vault.enableMarket(allMarkets[0].id());
+    }
+
+    function testEnableMarketShouldRevertWhenTimelockExpirationExceeded(uint128 timelock, uint256 timeElapsed) public {
+        timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
+        _submitAndSetTimelock(timelock);
+
+        timeElapsed = bound(timeElapsed, timelock + vault.TIMELOCK_EXPIRATION() + 1, type(uint128).max);
+
+        vm.startPrank(RISK_MANAGER);
+        vault.submitPendingMarket(allMarkets[0], CAP);
+
+        vm.warp(block.timestamp + timeElapsed);
+
+        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
+        vault.enableMarket(allMarkets[0].id());
+    }
+
     function testSubmitPendingMarketShouldRevertWhenInconsistenAsset(MarketParams memory marketParamsFuzz) public {
         vm.assume(marketParamsFuzz.borrowableToken != address(borrowableToken));
 

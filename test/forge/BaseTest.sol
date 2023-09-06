@@ -108,6 +108,14 @@ contract BaseTest is Test {
         return address(uint160(uint256(keccak256(bytes(str)))));
     }
 
+    function _submitAndSetTimelock(uint128 timelock) internal {
+        vm.startPrank(OWNER);
+        vault.submitPendingTimelock(timelock);
+        vm.warp(block.timestamp + vault.timelock());
+        vault.setTimelock();
+        vm.stopPrank();
+    }
+
     function _submitAndEnableMarket(MarketParams memory params, uint128 cap) internal {
         vm.startPrank(RISK_MANAGER);
         vault.submitPendingMarket(params, cap);

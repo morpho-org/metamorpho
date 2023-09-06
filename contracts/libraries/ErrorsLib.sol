@@ -33,4 +33,8 @@ library ErrorsLib {
     string internal constant MARKET_NOT_CREATED = "market not created";
 
     string internal constant MAX_TIMELOCK_EXCEEDED = "max timelock exceeded";
+
+    string internal constant TIMELOCK_NOT_ELAPSED = "timelock not elapsed";
+
+    string internal constant TIMELOCK_EXPIRATION_EXCEEDED = "timelock expiration exceeded";
 }
