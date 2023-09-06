@@ -26,17 +26,17 @@ interface IMorphoMarketParams {
     function idToMarketParams(Id id) external returns (MarketParams memory marketParams);
 }
 
+struct Pending {
+    uint128 value;
+    uint128 timestamp;
+}
+
 contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
     using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
-
-    struct Pending {
-        uint128 value;
-        uint128 timestamp;
-    }
 
     uint256 public constant TIMELOCK_EXPIRATION = 2 days;
     uint256 public constant MAX_TIMELOCK = 2 weeks;
@@ -52,11 +52,11 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     mapping(Id => Pending) public pendingMarket;
 
     Pending public pendingFee;
-    uint96 fee;
+    uint96 public fee;
     address feeRecipient;
 
     Pending public pendingTimelock;
-    uint256 timelock;
+    uint256 public timelock;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 lastTotalAssets;
@@ -101,13 +101,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     /* ONLY OWNER FUNCTIONS */
 
     function submitPendingTimelock(uint256 newTimelock) external onlyOwner {
-        require(newTimelock <= MAX_TIMELOCK);
+        require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         // Safe "unchecked" cast because newFee <= MAX_TIMELOCK.
         pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
     }
 
-    function setTimelock() external onlyOwner timelockPassed(pendingTimelock.timestamp) {
+    function setTimelock() external timelockPassed(pendingTimelock.timestamp) onlyOwner {
         timelock = pendingTimelock.value;
         delete pendingTimelock;
 
@@ -134,7 +134,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         pendingFee = Pending(uint128(newFee), uint128(block.timestamp));
     }
 
-    function setFee() external onlyOwner timelockPassed(pendingFee.timestamp) {
+    function setFee() external timelockPassed(pendingFee.timestamp) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
@@ -162,14 +162,14 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function submitPendingMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
         (,,,, uint128 lastUpdate,) = _MORPHO.market(marketParams.id());
-        require(lastUpdate == 0, ErrorsLib.MARKET_NOT_CREATED);
+        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
         Id id = marketParams.id();
         require(!_config.contains(id));
 
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
     }
 
-    function enableMarket(Id id) external onlyRiskManager timelockPassed(pendingMarket[id].timestamp) {
+    function enableMarket(Id id) external timelockPassed(pendingMarket[id].timestamp) onlyRiskManager {
         // Add market to the ordered lists if the market is added and not just updated.
         supplyAllocationOrder.push(id);
         withdrawAllocationOrder.push(id);

@@ -31,4 +31,6 @@ library ErrorsLib {
     string internal constant WITHDRAW_ORDER_FAILED = "withdraw order failed";
 
     string internal constant MARKET_NOT_CREATED = "market not created";
+
+    string internal constant MAX_TIMELOCK_EXCEEDED = "max timelock exceeded";
 }

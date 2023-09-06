@@ -6,52 +6,59 @@ import "./BaseTest.sol";
 contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
-    function testSetConfig(uint256 seed, VaultMarketConfig calldata marketConfigFuzz) public {
+    function testSubmitPendingMarket(uint256 seed, uint128 cap) public {
         MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
 
         vm.prank(RISK_MANAGER);
-        vault.setConfig(marketParamsFuzz, marketConfigFuzz);
+        vault.submitPendingMarket(marketParamsFuzz, cap);
+
+        (uint128 value, uint128 timestamp) = vault.pendingMarket(marketParamsFuzz.id());
+        assertEq(value, cap);
+        assertEq(timestamp, block.timestamp);
+    }
+
+    function testEnableMarket(uint256 seed, uint128 cap) public {
+        MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
+
+        _submitAndEnableMarket(marketParamsFuzz, cap);
 
         Id id = marketParamsFuzz.id();
 
-        VaultMarketConfig memory config = vault.config(id);
-
-        assertEq(config.cap, marketConfigFuzz.cap);
+        assertEq(vault.marketCap(id), cap);
         assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(id));
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(id));
     }
 
-    function testSetConfigShouldRevertWhenInconsistenAsset(MarketParams memory marketParamsFuzz) public {
+    function testSubmitPendingMarketShouldRevertWhenInconsistenAsset(MarketParams memory marketParamsFuzz) public {
         vm.assume(marketParamsFuzz.borrowableToken != address(borrowableToken));
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.INCONSISTENT_ASSET));
-        vault.setConfig(marketParamsFuzz, VaultMarketConfig({cap: 0}));
+        vault.submitPendingMarket(marketParamsFuzz, 0);
     }
 
-    function testSetConfigShouldRevertWhenMarketNotCreated(MarketParams memory marketParamsFuzz) public {
+    function testSubmitPendingMarketShouldRevertWhenMarketNotCreated(MarketParams memory marketParamsFuzz) public {
         marketParamsFuzz.borrowableToken = address(borrowableToken);
         (,,,, uint128 lastUpdate,) = morpho.market(marketParamsFuzz.id());
         vm.assume(lastUpdate == 0);
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));
-        vault.setConfig(marketParamsFuzz, VaultMarketConfig({cap: 0}));
+        vault.submitPendingMarket(marketParamsFuzz, 0);
     }
 
     function testDisableMarket() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         Id id = allMarkets[1].id();
 
+        vm.prank(RISK_MANAGER);
         vault.disableMarket(id);
-        vm.stopPrank();
 
         vm.expectRevert(bytes(ErrorsLib.UNAUTHORIZED_MARKET));
-        vault.config(id);
+        vault.marketCap(id);
 
         assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
@@ -64,11 +71,9 @@ contract MarketTest is BaseTest {
     }
 
     function testSetSupplyAllocationOrder() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
-        vm.stopPrank();
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[1].id()));
@@ -88,11 +93,9 @@ contract MarketTest is BaseTest {
     }
 
     function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
-        vm.stopPrank();
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         Id[] memory supplyAllocationOrder = new Id[](3);
         supplyAllocationOrder[0] = allMarkets[0].id();
@@ -104,11 +107,9 @@ contract MarketTest is BaseTest {
     }
 
     function testSetSupplyAllocationOrderRevertWhenInvalidLength() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
-        vm.stopPrank();
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         Id[] memory supplyAllocationOrder1 = new Id[](2);
         supplyAllocationOrder1[0] = allMarkets[0].id();
@@ -130,11 +131,9 @@ contract MarketTest is BaseTest {
     }
 
     function testSetWithdrawAllocationOrder() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
-        vm.stopPrank();
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(allMarkets[1].id()));
@@ -154,11 +153,9 @@ contract MarketTest is BaseTest {
     }
 
     function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
-        vm.stopPrank();
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         Id[] memory withdrawAllocationOrder = new Id[](3);
         withdrawAllocationOrder[0] = allMarkets[0].id();
@@ -170,11 +167,9 @@ contract MarketTest is BaseTest {
     }
 
     function testSetWithdrawAllocationOrderRevertWhenInvalidLength() public {
-        vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 100}));
-        vault.setConfig(allMarkets[2], VaultMarketConfig({cap: 100}));
-        vm.stopPrank();
+        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndEnableMarket(allMarkets[1], CAP);
+        _submitAndEnableMarket(allMarkets[2], CAP);
 
         Id[] memory withdrawAllocationOrder1 = new Id[](2);
         withdrawAllocationOrder1[0] = allMarkets[0].id();
