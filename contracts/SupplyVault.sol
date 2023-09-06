@@ -104,6 +104,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
         pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
+
+        emit EventsLib.SubmitPendingTimelock(newTimelock);
     }
 
     function setTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
@@ -132,6 +134,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         // Safe "unchecked" cast because newFee <= WAD.
         pendingFee = Pending(uint128(newFee), uint128(block.timestamp));
+
+        emit EventsLib.SubmitPendingFee(newFee);
     }
 
     function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
@@ -166,6 +170,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(!_config.contains(id));
 
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
+
+        emit EventsLib.SubmitPendingMarket(id);
     }
 
     function enableMarket(Id id) external timelockElapsed(pendingMarket[id].timestamp) onlyRiskManager {
@@ -173,14 +179,19 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         withdrawAllocationOrder.push(id);
 
         MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(id);
+        uint128 cap = pendingMarket[id].value;
 
-        require(_config.update(marketParams, uint256(pendingMarket[id].value)), ErrorsLib.ENABLE_MARKET_FAILED);
+        require(_config.update(marketParams, uint256(cap)), ErrorsLib.ENABLE_MARKET_FAILED);
+
+        emit EventsLib.EnableMarket(id, cap);
     }
 
     function setCap(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(_config.contains(marketParams.id()), ErrorsLib.MARKET_NOT_ENABLED);
 
         _config.update(marketParams, cap);
+
+        emit EventsLib.SetCap(cap);
     }
 
     function disableMarket(Id id) external onlyRiskManager {
@@ -188,6 +199,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _removeFromAllocationOrder(withdrawAllocationOrder, id);
 
         require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
+
+        emit EventsLib.DisableMarket(id);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
