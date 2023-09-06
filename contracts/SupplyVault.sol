@@ -30,18 +30,23 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
 
+    /* CONSTANTS */
+
     uint256 public constant TIMELOCK_EXPIRATION = 2 days;
     uint256 public constant MAX_TIMELOCK = 2 weeks;
 
+    /* IMMUTABMES */
+
     IMorpho internal immutable _MORPHO;
+
+    /* STORAGE */
 
     mapping(address => bool) public isRiskManager;
     mapping(address => bool) public isAllocator;
+    mapping(Id => Pending) public pendingMarket;
 
     Id[] public supplyAllocationOrder;
     Id[] public withdrawAllocationOrder;
-
-    mapping(Id => Pending) public pendingMarket;
 
     Pending public pendingFee;
     uint96 public fee;
@@ -55,13 +60,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     ConfigSet private _config;
 
-    /* CONSTRUCTORS */
+    /* CONSTRUCTOR */
 
     constructor(address morpho, uint256 initialTimelock, IERC20 _asset, string memory _name, string memory _symbol)
         ERC4626(_asset)
         ERC20(_name, _symbol)
     {
-        require(initialTimelock <= MAX_TIMELOCK);
+        require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         _MORPHO = IMorpho(morpho);
         timelock = initialTimelock;
@@ -97,7 +102,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function submitPendingTimelock(uint256 newTimelock) external onlyOwner {
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
-        // Safe "unchecked" cast because newFee <= MAX_TIMELOCK.
+        // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
         pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
     }
 
@@ -162,7 +167,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function enableMarket(Id id) external timelockElapsed(pendingMarket[id].timestamp) onlyRiskManager {
-        // Add market to the ordered lists if the market is added and not just updated.
         supplyAllocationOrder.push(id);
         withdrawAllocationOrder.push(id);
 
