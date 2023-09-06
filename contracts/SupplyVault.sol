@@ -59,13 +59,15 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     /* MODIFIERS */
 
     modifier onlyRiskManager() {
-        require(isRiskManager[_msgSender()], ErrorsLib.NOT_RISK_MANAGER);
+        require(isRiskManager[_msgSender()] || _msgSender() == owner(), ErrorsLib.NOT_RISK_MANAGER);
 
         _;
     }
 
     modifier onlyAllocator() {
-        require(isAllocator[_msgSender()], ErrorsLib.NOT_ALLOCATOR);
+        require(
+            isAllocator[_msgSender()] || isRiskManager[_msgSender()] || _msgSender() == owner(), ErrorsLib.NOT_ALLOCATOR
+        );
 
         _;
     }

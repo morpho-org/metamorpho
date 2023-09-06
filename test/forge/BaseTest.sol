@@ -8,7 +8,7 @@ import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
-import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib} from "contracts/SupplyVault.sol";
+import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib, MarketAllocation} from "contracts/SupplyVault.sol";
 import {Morpho, MarketParamsLib, MarketParams, SharesMathLib, Id} from "@morpho-blue/Morpho.sol";
 
 contract BaseTest is Test {
