@@ -8,7 +8,7 @@ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
-import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
+import {VaultMarket, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 
@@ -22,12 +22,24 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
+interface IMorphoMarketParams {
+    function idToMarketParams(Id id) external returns (MarketParams memory marketParams);
+}
+
 contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
     using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
+
+    struct Pending {
+        uint128 value;
+        uint128 timestamp;
+    }
+
+    uint256 public constant TIMELOCK_EXPIRATION = 2 days;
+    uint256 public constant MAX_TIMELOCK = 2 weeks;
 
     IMorpho internal immutable _MORPHO;
 
@@ -37,8 +49,14 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     Id[] public supplyAllocationOrder;
     Id[] public withdrawAllocationOrder;
 
+    mapping(Id => Pending) public pendingMarket;
+
+    Pending public pendingFee;
     uint96 fee;
     address feeRecipient;
+
+    Pending public pendingTimelock;
+    uint256 timelock;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 lastTotalAssets;
@@ -47,11 +65,14 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* CONSTRUCTORS */
 
-    constructor(address morpho, IERC20 _asset, string memory _name, string memory _symbol)
+    constructor(address morpho, uint256 initialTimelock, IERC20 _asset, string memory _name, string memory _symbol)
         ERC4626(_asset)
         ERC20(_name, _symbol)
     {
+        require(initialTimelock <= MAX_TIMELOCK);
+
         _MORPHO = IMorpho(morpho);
+        timelock = initialTimelock;
 
         SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
     }
@@ -70,7 +91,28 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _;
     }
 
+    modifier timelockPassed(uint128 timestamp) {
+        require(block.timestamp >= timestamp + timelock);
+        require(block.timestamp <= timestamp + TIMELOCK_EXPIRATION);
+
+        _;
+    }
+
     /* ONLY OWNER FUNCTIONS */
+
+    function submitPendingTimelock(uint256 newTimelock) external onlyOwner {
+        require(newTimelock <= MAX_TIMELOCK);
+
+        // Safe "unchecked" cast because newFee <= MAX_TIMELOCK.
+        pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
+    }
+
+    function setTimelock() external onlyOwner timelockPassed(pendingTimelock.timestamp) {
+        timelock = pendingTimelock.value;
+        delete pendingTimelock;
+
+        emit EventsLib.SetTimelock(timelock);
+    }
 
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
         isRiskManager[newRiskManager] = newIsRiskManager;
@@ -84,19 +126,22 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    function setFee(uint256 newFee) external onlyOwner {
+    function submitPendingFee(uint256 newFee) external onlyOwner {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
 
+        // Safe "unchecked" cast because newFee <= WAD.
+        pendingFee = Pending(uint128(newFee), uint128(block.timestamp));
+    }
+
+    function setFee() external onlyOwner timelockPassed(pendingFee.timestamp) {
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
-        // Safe "unchecked" cast because newFee <= WAD.
-        fee = uint96(newFee);
+        fee = uint96(pendingFee.value);
+        delete pendingFee;
 
-        emit EventsLib.SetFee(newFee);
-
-        if (newFee != 0) lastTotalAssets = totalAssets();
+        emit EventsLib.SetFee(fee);
     }
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
@@ -114,22 +159,30 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* ONLY RISK MANAGER FUNCTIONS */
 
-    function setConfig(MarketParams memory marketParams, VaultMarketConfig calldata marketConfig)
-        external
-        onlyRiskManager
-    {
+    function submitPendingMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
         (,,,, uint128 lastUpdate,) = _MORPHO.market(marketParams.id());
-        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
-
+        require(lastUpdate == 0, ErrorsLib.MARKET_NOT_CREATED);
         Id id = marketParams.id();
-        // Add market to the ordered lists if the market is added and not just updated.
-        if (!_config.contains(id)) {
-            supplyAllocationOrder.push(id);
-            withdrawAllocationOrder.push(id);
-        }
+        require(!_config.contains(id));
 
-        require(_config.update(marketParams, marketConfig), ErrorsLib.CONFIG_UDPATE_FAILED);
+        pendingMarket[id] = Pending(cap, uint128(block.timestamp));
+    }
+
+    function enableMarket(Id id) external onlyRiskManager timelockPassed(pendingMarket[id].timestamp) {
+        // Add market to the ordered lists if the market is added and not just updated.
+        supplyAllocationOrder.push(id);
+        withdrawAllocationOrder.push(id);
+
+        MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(id);
+
+        require(_config.update(marketParams, uint256(pendingMarket[id].value)));
+    }
+
+    function setCap(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
+        Id id = marketParams.id();
+        require(_config.contains(id));
+        require(_config.update(marketParams, cap), ErrorsLib.CONFIG_UDPATE_FAILED);
     }
 
     function disableMarket(Id id) external onlyRiskManager {
@@ -162,8 +215,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* PUBLIC */
 
-    function config(Id id) public view returns (VaultMarketConfig memory) {
-        return _market(id).config;
+    function marketCap(Id id) public view returns (uint256) {
+        return _market(id).cap;
     }
 
     /* ERC4626 */
@@ -256,9 +309,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     function _supplyMorpho(MarketAllocation memory allocation) internal {
         Id id = allocation.marketParams.id();
-        VaultMarketConfig storage marketConfig = _market(id).config;
 
-        uint256 cap = marketConfig.cap;
+        uint256 cap = marketCap(id);
         if (cap > 0) {
             uint256 newSupply = allocation.assets + _supplyBalance(allocation.marketParams);
 
@@ -292,8 +344,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
             Id id = supplyAllocationOrder[i];
 
             MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
-            VaultMarketConfig storage marketConfig = _market(id).config;
-            uint256 cap = marketConfig.cap;
+            uint256 cap = marketCap(id);
             uint256 toDeposit = assets;
 
             if (cap > 0) {

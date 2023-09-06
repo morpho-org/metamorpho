@@ -6,6 +6,8 @@ library EventsLib {
 
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
+    event SetTimelock(uint256 timelock);
+
     /// @notice Emitted when setting a new fee.
     /// @param newFee The new fee.
     event SetFee(uint256 newFee);

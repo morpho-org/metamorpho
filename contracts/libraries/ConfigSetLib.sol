@@ -5,13 +5,9 @@ import {Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 
-struct VaultMarketConfig {
-    uint256 cap;
-}
-
 struct VaultMarket {
     uint256 rank;
-    VaultMarketConfig config;
+    uint256 cap;
 }
 
 struct ConfigSet {
@@ -26,14 +22,11 @@ library ConfigSetLib {
     /**
      * @dev Add a value to a set. O(1).
      */
-    function update(ConfigSet storage set, MarketParams memory marketParams, VaultMarketConfig calldata config)
-        internal
-        returns (bool)
-    {
+    function update(ConfigSet storage set, MarketParams memory marketParams, uint256 cap) internal returns (bool) {
         Id id = marketParams.id();
         VaultMarket storage market = set.getMarket(id);
 
-        market.config = config;
+        market.cap = cap;
 
         if (set.contains(id)) return false;
 

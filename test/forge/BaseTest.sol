@@ -8,7 +8,7 @@ import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
-import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib} from "contracts/SupplyVault.sol";
+import {SupplyVault, IERC20, ErrorsLib} from "contracts/SupplyVault.sol";
 import {Morpho, MarketParamsLib, MarketParams, SharesMathLib, Id} from "@morpho-blue/Morpho.sol";
 
 contract BaseTest is Test {
@@ -33,6 +33,7 @@ contract BaseTest is Test {
     address internal ALLOCATOR = _addrFromHashedString("Morpho Allocator");
 
     uint256 internal constant LLTV = 0.8 ether;
+    uint256 internal constant TIMELOCK = 2 days;
 
     Morpho internal morpho;
     ERC20 internal borrowableToken;
@@ -78,7 +79,7 @@ contract BaseTest is Test {
 
         vm.startPrank(OWNER);
 
-        vault = new SupplyVault(address(morpho), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
+        vault = new SupplyVault(address(morpho), TIMELOCK, IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
 
         morpho.enableIrm(address(irm));
 
