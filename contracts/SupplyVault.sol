@@ -108,9 +108,10 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     function setTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
         timelock = pendingTimelock.value;
-        delete pendingTimelock;
 
-        emit EventsLib.SetTimelock(timelock);
+        emit EventsLib.SetTimelock(pendingTimelock.value);
+
+        delete pendingTimelock;
     }
 
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
@@ -138,9 +139,10 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _accrueFee();
 
         fee = uint96(pendingFee.value);
-        delete pendingFee;
 
-        emit EventsLib.SetFee(fee);
+        emit EventsLib.SetFee(pendingFee.value);
+
+        delete pendingFee;
     }
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
