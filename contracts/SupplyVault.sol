@@ -153,8 +153,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         feeRecipient = newFeeRecipient;
 
         emit EventsLib.SetFeeRecipient(newFeeRecipient);
-
-        if (newFeeRecipient != address(0)) lastTotalAssets = totalAssets();
     }
 
     /* ONLY RISK MANAGER FUNCTIONS */
