@@ -29,7 +29,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
 
-    IMorpho internal immutable _MORPHO;
+    IMorpho public immutable MORPHO;
 
     mapping(address => bool) public isRiskManager;
     mapping(address => bool) public isAllocator;
@@ -51,7 +51,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         ERC4626(_asset)
         ERC20(_name, _symbol)
     {
-        _MORPHO = IMorpho(morpho);
+        MORPHO = IMorpho(morpho);
 
         SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
     }
@@ -117,7 +117,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         onlyRiskManager
     {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
-        (,,,, uint128 lastUpdate,) = _MORPHO.market(marketParams.id());
+        (,,,, uint128 lastUpdate,) = MORPHO.market(marketParams.id());
         require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
 
         Id id = marketParams.id();
@@ -249,7 +249,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return _MORPHO.expectedSupplyBalance(marketParams, address(this));
+        return MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
 
     function _supplyMorpho(MarketAllocation memory allocation) internal {
@@ -263,7 +263,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
             require(newSupply <= cap, ErrorsLib.SUPPLY_CAP_EXCEEDED);
         }
 
-        _MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
+        MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
     }
 
     function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
@@ -272,7 +272,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         for (uint256 i; i < nbWithdrawn; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
 
-            _MORPHO.withdraw(allocation.marketParams, allocation.assets, 0, address(this), address(this));
+            MORPHO.withdraw(allocation.marketParams, allocation.assets, 0, address(this), address(this));
         }
 
         uint256 nbSupplied = supplied.length;
@@ -302,8 +302,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
             if (toDeposit > 0) {
                 bytes memory encodedCall =
-                    abi.encodeCall(_MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
-                (bool success,) = address(_MORPHO).call(encodedCall);
+                    abi.encodeCall(MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
+                (bool success,) = address(MORPHO).call(encodedCall);
 
                 if (success) assets -= toDeposit;
             }
@@ -323,8 +323,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
             if (toWithdraw > 0) {
                 bytes memory encodedCall =
-                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                (bool success,) = address(_MORPHO).staticcall(encodedCall);
+                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(MORPHO).staticcall(encodedCall);
 
                 if (success) assets -= toWithdraw;
             }
@@ -344,8 +344,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
             if (toWithdraw > 0) {
                 bytes memory encodedCall =
-                    abi.encodeCall(_MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                (bool success,) = address(_MORPHO).call(encodedCall);
+                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(MORPHO).call(encodedCall);
 
                 if (success) assets -= toWithdraw;
             }
@@ -362,7 +362,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         returns (MarketParams memory marketParams, uint256 withdrawable)
     {
         marketParams = _config.at(_config.getMarket(id).rank);
-        (uint256 totalSupply,, uint256 totalBorrow,) = _MORPHO.expectedMarketBalances(marketParams);
+        (uint256 totalSupply,, uint256 totalBorrow,) = MORPHO.expectedMarketBalances(marketParams);
         uint256 available = totalBorrow - totalSupply;
         withdrawable = UtilsLib.min(available, assets);
     }
