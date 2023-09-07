@@ -18,17 +18,23 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
 
-    string internal constant CONFIG_UDPATE_FAILED = "config update failed";
+    string internal constant ENABLE_MARKET_FAILED = "enable market failed";
 
     string internal constant DISABLE_MARKET_FAILED = "disable market failed";
 
     string internal constant INVALID_LENGTH = "invalid length";
 
-    string internal constant MARKET_NOT_WHITELISTED = "market is not whitelisted";
+    string internal constant MARKET_NOT_ENABLED = "market not enabled";
 
     string internal constant DEPOSIT_ORDER_FAILED = "deposit order failed";
 
     string internal constant WITHDRAW_ORDER_FAILED = "withdraw order failed";
 
     string internal constant MARKET_NOT_CREATED = "market not created";
+
+    string internal constant MAX_TIMELOCK_EXCEEDED = "max timelock exceeded";
+
+    string internal constant TIMELOCK_NOT_ELAPSED = "timelock not elapsed";
+
+    string internal constant TIMELOCK_EXPIRATION_EXCEEDED = "timelock expiration exceeded";
 }

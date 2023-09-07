@@ -11,13 +11,22 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
+        vault.submitPendingTimelock(TIMELOCK);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        vault.setTimelock();
+
+        vm.expectRevert("Ownable: caller is not the owner");
         vault.setIsRiskManager(caller, true);
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setIsAllocator(caller, true);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setFee(1);
+        vault.submitPendingFee(1);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        vault.setFee();
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setFeeRecipient(caller);
@@ -30,7 +39,13 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 0}));
+        vault.submitPendingMarket(allMarkets[0], CAP);
+
+        vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
+        vault.enableMarket(allMarkets[0].id());
+
+        vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
+        vault.setCap(allMarkets[0], CAP);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
         vault.disableMarket(allMarkets[0].id());
@@ -59,12 +74,16 @@ contract RoleTest is BaseTest {
 
     function testRiskManagerOrOwnerShouldTriggerRiskManagerFunctions() public {
         vm.startPrank(OWNER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 0}));
+        vault.submitPendingMarket(allMarkets[0], CAP);
+        vault.enableMarket(allMarkets[0].id());
+        vault.setCap(allMarkets[0], CAP);
         vault.disableMarket(allMarkets[0].id());
         vm.stopPrank();
 
         vm.startPrank(RISK_MANAGER);
-        vault.setConfig(allMarkets[1], VaultMarketConfig({cap: 0}));
+        vault.submitPendingMarket(allMarkets[1], CAP);
+        vault.enableMarket(allMarkets[1].id());
+        vault.setCap(allMarkets[1], CAP);
         vault.disableMarket(allMarkets[1].id());
         vm.stopPrank();
     }
@@ -74,8 +93,9 @@ contract RoleTest is BaseTest {
         order[0] = allMarkets[0].id();
         MarketAllocation[] memory allocation;
 
+        _submitAndEnableMarket(allMarkets[0], CAP);
+
         vm.startPrank(OWNER);
-        vault.setConfig(allMarkets[0], VaultMarketConfig({cap: 0}));
         vault.setSupplyAllocationOrder(order);
         vault.setWithdrawAllocationOrder(order);
         vault.reallocate(allocation, allocation);
