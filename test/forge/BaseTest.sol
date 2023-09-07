@@ -8,8 +8,9 @@ import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
-import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib, MarketAllocation} from "contracts/SupplyVault.sol";
 import {Morpho, MarketParamsLib, MarketParams, SharesMathLib, Id} from "@morpho-blue/Morpho.sol";
+import {UniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
+import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib, MarketAllocation} from "contracts/SupplyVault.sol";
 
 contract BaseTest is Test {
     uint256 internal constant HIGH_COLLATERAL_AMOUNT = 1e35;
@@ -40,6 +41,8 @@ contract BaseTest is Test {
     Oracle internal oracle;
     Irm internal irm;
     MarketParams internal marketParams;
+
+    UniversalRewardsDistributor internal urd;
 
     SupplyVault internal vault;
 
@@ -76,9 +79,12 @@ contract BaseTest is Test {
         marketParams =
             MarketParams(address(borrowableToken), address(collateralToken), address(oracle), address(irm), LLTV);
 
+        urd = new UniversalRewardsDistributor();
+
         vm.startPrank(OWNER);
 
-        vault = new SupplyVault(address(morpho), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
+        vault =
+            new SupplyVault(address(morpho), address(urd), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
 
         morpho.enableIrm(address(irm));
 

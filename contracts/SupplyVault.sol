@@ -21,13 +21,15 @@ import {
     Math,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {IUniversalRewardsDistributor} from "@universal-rewards-distributor/interfaces/IUniversalRewardsDistributor.sol";
 
 contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
     using UtilsLib for uint256;
+    using SafeERC20 for IERC20;
     using ConfigSetLib for ConfigSet;
-    using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
+    using MarketParamsLib for MarketParams;
 
     IMorpho internal immutable _MORPHO;
 
@@ -43,17 +45,20 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 lastTotalAssets;
 
+    address public urd;
+
     ConfigSet private _config;
 
     /* CONSTRUCTORS */
 
-    constructor(address morpho, IERC20 _asset, string memory _name, string memory _symbol)
+    constructor(address morpho, address initialUrd, IERC20 _asset, string memory _name, string memory _symbol)
         ERC4626(_asset)
         ERC20(_name, _symbol)
     {
         _MORPHO = IMorpho(morpho);
+        urd = initialUrd;
 
-        SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
+        _asset.safeApprove(morpho, type(uint256).max);
     }
 
     /* MODIFIERS */
@@ -108,6 +113,26 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         feeRecipient = newFeeRecipient;
 
         emit EventsLib.SetFeeRecipient(newFeeRecipient);
+    }
+
+    /// @dev Every approvals should be revoked on the former `urd` before the update for safety.
+    function setUrd(address newUrd) external onlyOwner {
+        urd = newUrd;
+    }
+
+    function acceptAsTreasury(uint256 distributionId) external onlyOwner {
+        IUniversalRewardsDistributor(urd).acceptAsTreasury(distributionId);
+    }
+
+    function setUrdAllowance(address token, uint256 amount) external onlyOwner {
+        uint256 balance = IERC20(token).balanceOf(address(this));
+
+        uint256 idle; // TODO: idle to track.
+        if (token == asset()) balance -= idle;
+
+        amount = UtilsLib.min(amount, balance);
+
+        IERC20(token).safeApprove(urd, amount);
     }
 
     /* ONLY RISK MANAGER FUNCTIONS */
