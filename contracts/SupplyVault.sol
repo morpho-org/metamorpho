@@ -223,6 +223,12 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _reallocate(withdrawn, supplied);
     }
 
+    /* EXTERNAL */
+
+    function markets() external view returns (bytes32[] memory) {
+        return _config.keys();
+    }
+
     /* PUBLIC */
 
     function marketCap(Id id) public view returns (uint256) {
