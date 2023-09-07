@@ -9,9 +9,9 @@ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
-import {VaultMarket, ConfigSet, ConfigSetLib} from "./libraries/ConfigSetLib.sol";
-import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
+import {EnumerableMap} from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {
@@ -26,9 +26,9 @@ import {
 contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     using Math for uint256;
     using UtilsLib for uint256;
-    using ConfigSetLib for ConfigSet;
-    using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
+    using MarketParamsLib for MarketParams;
+    using EnumerableMap for EnumerableMap.Bytes32ToUintMap;
 
     /* CONSTANTS */
 
@@ -58,7 +58,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 lastTotalAssets;
 
-    ConfigSet private _config;
+    EnumerableMap.Bytes32ToUintMap private _config;
 
     /* CONSTRUCTOR */
 
@@ -167,7 +167,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         Id id = marketParams.id();
         (,,,, uint128 lastUpdate,) = _MORPHO.market(id);
         require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
-        require(!_config.contains(id));
+        require(!_config.contains(Id.unwrap(id)));
 
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
 
@@ -180,15 +180,15 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         uint128 cap = pendingMarket[id].value;
 
-        require(_config.update(id, uint256(cap)), ErrorsLib.ENABLE_MARKET_FAILED);
+        require(_config.set(Id.unwrap(id), uint256(cap)), ErrorsLib.ENABLE_MARKET_FAILED);
 
         emit EventsLib.EnableMarket(id, cap);
     }
 
     function setCap(Id id, uint128 cap) external onlyRiskManager {
-        require(_config.contains(id), ErrorsLib.MARKET_NOT_ENABLED);
+        require(_config.contains(Id.unwrap(id)), ErrorsLib.MARKET_NOT_ENABLED);
 
-        _config.update(id, cap);
+        _config.set(Id.unwrap(id), cap);
 
         emit EventsLib.SetCap(cap);
     }
@@ -197,7 +197,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _removeFromAllocationOrder(supplyAllocationOrder, id);
         _removeFromAllocationOrder(withdrawAllocationOrder, id);
 
-        require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
+        require(_config.remove(Id.unwrap(id)), ErrorsLib.DISABLE_MARKET_FAILED);
 
         emit EventsLib.DisableMarket(id);
     }
@@ -226,7 +226,9 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     /* PUBLIC */
 
     function marketCap(Id id) public view returns (uint256) {
-        return _market(id).cap;
+        require(_config.contains(Id.unwrap(id)), ErrorsLib.UNAUTHORIZED_MARKET);
+
+        return _config.get(Id.unwrap(id));
     }
 
     /* ERC4626 */
@@ -280,7 +282,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         uint256 nbMarkets = _config.length();
 
         for (uint256 i; i < nbMarkets; ++i) {
-            MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(_config.at(i));
+            (bytes32 id,) = _config.at(i);
+            MarketParams memory marketParams = IMorphoMarketParams(address(_MORPHO)).idToMarketParams(Id.wrap(id));
 
             assets += _supplyBalance(marketParams);
         }
@@ -306,12 +309,6 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     /* INTERNAL */
-
-    function _market(Id id) internal view returns (VaultMarket storage) {
-        require(_config.contains(id), ErrorsLib.UNAUTHORIZED_MARKET);
-
-        return _config.getMarket(id);
-    }
 
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
         return _MORPHO.expectedSupplyBalance(marketParams, address(this));
@@ -450,7 +447,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(length == oldOrder.length, ErrorsLib.INVALID_LENGTH);
 
         for (uint256 i; i < length; ++i) {
-            require(_config.contains(newOrder[i]), ErrorsLib.MARKET_NOT_ENABLED);
+            require(_config.contains(Id.unwrap(newOrder[i])), ErrorsLib.MARKET_NOT_ENABLED);
         }
     }
 
