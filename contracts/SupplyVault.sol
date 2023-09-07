@@ -12,15 +12,8 @@ import {VaultMarket, VaultMarketConfig, ConfigSet, ConfigSetLib} from "./librari
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {
-    IERC20,
-    ERC20,
-    ERC4626,
-    Context,
-    Math,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
+import {IERC20, ERC20, ERC4626, Context, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 import {IUniversalRewardsDistributor} from "@universal-rewards-distributor/interfaces/IUniversalRewardsDistributor.sol";
 
 contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {

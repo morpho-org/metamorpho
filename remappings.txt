@@ -5,5 +5,5 @@ solmate/=lib/solmate/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 
 @morpho-blue/=lib/morpho-blue/src/
-@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/=lib/openzeppelin-contracts/contracts/
 @universal-rewards-distributor/=lib/universal-rewards-distributor/src/
