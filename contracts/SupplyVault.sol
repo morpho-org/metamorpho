@@ -47,6 +47,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     Id[] public supplyAllocationOrder;
     Id[] public withdrawAllocationOrder;
+    Id public immutable idleMarketId;
 
     Pending public pendingFee;
     uint96 public fee;
@@ -56,22 +57,36 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     uint256 public timelock;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
-    uint256 lastTotalAssets;
+    uint256 public lastTotalAssets;
+    uint256 public idle;
 
     ConfigSet private _config;
 
     /* CONSTRUCTOR */
 
-    constructor(address morpho, uint256 initialTimelock, IERC20 _asset, string memory _name, string memory _symbol)
-        ERC4626(_asset)
-        ERC20(_name, _symbol)
-    {
+    constructor(
+        address morpho,
+        uint256 initialTimelock,
+        uint128 idleCap,
+        IERC20 _asset,
+        string memory _name,
+        string memory _symbol
+    ) ERC4626(_asset) ERC20(_name, _symbol) {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         MORPHO = IMorpho(morpho);
         timelock = initialTimelock;
 
         SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
+
+        MarketParams memory idleMarket;
+        idleMarketId = idleMarket.id();
+        supplyAllocationOrder.push(idleMarketId);
+        withdrawAllocationOrder.push(idleMarketId);
+
+        require(_config.update(idleMarket, uint256(idleCap)), ErrorsLib.ENABLE_MARKET_FAILED);
+
+        emit EventsLib.EnableMarket(idleMarketId, idleCap);
     }
 
     /* MODIFIERS */
@@ -195,6 +210,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function disableMarket(Id id) external onlyRiskManager {
+        require(Id.unwrap(id) != Id.unwrap(idleMarketId), ErrorsLib.IDLE_MARKET);
+
         _removeFromAllocationOrder(supplyAllocationOrder, id);
         _removeFromAllocationOrder(withdrawAllocationOrder, id);
 
@@ -353,23 +370,27 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         for (uint256 i; i < length; ++i) {
             Id id = supplyAllocationOrder[i];
-
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
             uint256 cap = marketCap(id);
-            uint256 toDeposit = assets;
 
-            if (cap > 0) {
-                uint256 currentSupply = _supplyBalance(marketParams);
+            if (Id.unwrap(id) == Id.unwrap(idleMarketId)) {
+                (assets, idle) = _depositIdle(assets, cap);
+            } else {
+                MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
+                uint256 toDeposit = assets;
 
-                toDeposit = UtilsLib.min(cap.zeroFloorSub(currentSupply), assets);
-            }
+                if (cap > 0) {
+                    uint256 currentSupply = _supplyBalance(marketParams);
 
-            if (toDeposit > 0) {
-                bytes memory encodedCall =
-                    abi.encodeCall(MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
-                (bool success,) = address(MORPHO).call(encodedCall);
+                    toDeposit = UtilsLib.min(cap.zeroFloorSub(currentSupply), assets);
+                }
 
-                if (success) assets -= toDeposit;
+                if (toDeposit > 0) {
+                    bytes memory encodedCall =
+                        abi.encodeCall(MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
+                    (bool success,) = address(MORPHO).call(encodedCall);
+
+                    if (success) assets -= toDeposit;
+                }
             }
 
             if (assets == 0) break;
@@ -383,14 +404,20 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
+            Id id = withdrawAllocationOrder[i];
 
-            if (toWithdraw > 0) {
-                bytes memory encodedCall =
-                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                (bool success,) = address(MORPHO).staticcall(encodedCall);
+            if (Id.unwrap(id) == Id.unwrap(idleMarketId)) {
+                (assets,) = _withdrawIdle(assets);
+            } else {
+                (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
-                if (success) assets -= toWithdraw;
+                if (toWithdraw > 0) {
+                    bytes memory encodedCall =
+                        abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                    (bool success,) = address(MORPHO).staticcall(encodedCall);
+
+                    if (success) assets -= toWithdraw;
+                }
             }
 
             if (assets == 0) break;
@@ -404,20 +431,36 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
+            Id id = withdrawAllocationOrder[i];
 
-            if (toWithdraw > 0) {
-                bytes memory encodedCall =
-                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                (bool success,) = address(MORPHO).call(encodedCall);
+            if (Id.unwrap(id) == Id.unwrap(idleMarketId)) {
+                (assets, idle) = _withdrawIdle(assets);
+            } else {
+                (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
-                if (success) assets -= toWithdraw;
+                if (toWithdraw > 0) {
+                    bytes memory encodedCall =
+                        abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                    (bool success,) = address(MORPHO).call(encodedCall);
+
+                    if (success) assets -= toWithdraw;
+                }
             }
 
             if (assets == 0) break;
         }
 
         return assets;
+    }
+
+    function _depositIdle(uint256 assets, uint256 cap) internal view returns (uint256 newAssets, uint256 newIdle) {
+        if (assets + idle > cap) return (assets - (cap - idle), cap);
+        return (0, idle + assets);
+    }
+
+    function _withdrawIdle(uint256 assets) internal view returns (uint256 newAssets, uint256 newIdle) {
+        if (assets > idle) return (assets - idle, 0);
+        return (0, idle - assets);
     }
 
     function _withdrawable(uint256 assets, Id id)
