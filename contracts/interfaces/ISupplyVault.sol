@@ -8,4 +8,9 @@ struct MarketAllocation {
     uint256 assets;
 }
 
+struct Pending {
+    uint128 value;
+    uint128 timestamp;
+}
+
 interface ISupplyVault {}

@@ -10,9 +10,11 @@ import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
 import {Morpho, MarketParamsLib, MarketParams, SharesMathLib, Id} from "@morpho-blue/Morpho.sol";
 import {UniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
-import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib, MarketAllocation} from "contracts/SupplyVault.sol";
+import {SupplyVault, VaultMarketConfig, IERC20, ErrorsLib, Pending, MarketAllocation} from "contracts/SupplyVault.sol";
 
 contract BaseTest is Test {
+    using MarketParamsLib for MarketParams;
+
     uint256 internal constant HIGH_COLLATERAL_AMOUNT = 1e35;
     uint256 internal constant MIN_TEST_AMOUNT = 100;
     uint256 internal constant MAX_TEST_AMOUNT = 1e28;
@@ -34,6 +36,8 @@ contract BaseTest is Test {
     address internal ALLOCATOR = _addrFromHashedString("Morpho Allocator");
 
     uint256 internal constant LLTV = 0.8 ether;
+    uint256 internal constant TIMELOCK = 0;
+    uint128 internal constant CAP = type(uint128).max;
 
     Morpho internal morpho;
     ERC20 internal borrowableToken;
@@ -84,7 +88,7 @@ contract BaseTest is Test {
         vm.startPrank(OWNER);
 
         vault =
-            new SupplyVault(address(morpho), address(urd), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
+            new SupplyVault(address(morpho), TIMELOCK, address(urd), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
 
         morpho.enableIrm(address(irm));
 
@@ -102,9 +106,27 @@ contract BaseTest is Test {
         vault.setIsAllocator(ALLOCATOR, true);
 
         vm.stopPrank();
+
+        vm.warp(block.timestamp + 1);
     }
 
     function _addrFromHashedString(string memory str) internal pure returns (address) {
         return address(uint160(uint256(keccak256(bytes(str)))));
+    }
+
+    function _submitAndSetTimelock(uint128 timelock) internal {
+        vm.startPrank(OWNER);
+        vault.submitPendingTimelock(timelock);
+        vm.warp(block.timestamp + vault.timelock());
+        vault.setTimelock();
+        vm.stopPrank();
+    }
+
+    function _submitAndEnableMarket(MarketParams memory params, uint128 cap) internal {
+        vm.startPrank(RISK_MANAGER);
+        vault.submitPendingMarket(params, cap);
+        vm.warp(block.timestamp + vault.timelock());
+        vault.enableMarket(params.id());
+        vm.stopPrank();
     }
 }
