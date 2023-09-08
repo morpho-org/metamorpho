@@ -104,8 +104,10 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + 1);
 
         deal(address(borrowableToken), SUPPLIER, type(uint256).max);
-
         vm.prank(SUPPLIER);
+        borrowableToken.approve(address(vault), type(uint256).max);
+        deal(address(borrowableToken), RECEIVER, type(uint256).max);
+        vm.prank(RECEIVER);
         borrowableToken.approve(address(vault), type(uint256).max);
     }
 
