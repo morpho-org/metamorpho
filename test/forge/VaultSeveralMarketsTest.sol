@@ -25,6 +25,32 @@ contract VaultSeveralMarketsTest is BaseTest {
         vm.stopPrank();
     }
 
+    function _assertBalances(uint128 cap, uint256 amount) internal {
+        uint256 totalBalanceAfter0 = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
+        uint256 totalBalanceAfter1 = morpho.expectedSupplyBalance(allMarkets[1], address(vault));
+        uint256 totalBalanceAfter2 = morpho.expectedSupplyBalance(allMarkets[2], address(vault));
+
+        assertEq(totalBalanceAfter0 + totalBalanceAfter1 + totalBalanceAfter2, amount, "totalBalance");
+
+        if (amount >= 3 * cap) {
+            assertEq(totalBalanceAfter0, cap, "totalBalance0");
+            assertEq(totalBalanceAfter1, cap, "totalBalance1");
+            assertEq(totalBalanceAfter2, cap, "totalBalance2");
+        } else if (amount >= 2 * cap) {
+            assertEq(totalBalanceAfter0, cap, "totalBalance0");
+            assertEq(totalBalanceAfter1, cap, "totalBalance1");
+            assertEq(totalBalanceAfter2, amount % (2 * cap), "totalBalance2");
+        } else if (amount >= cap) {
+            assertEq(totalBalanceAfter0, cap, "totalBalance0");
+            assertEq(totalBalanceAfter1, amount % cap, "totalBalance1");
+            assertEq(totalBalanceAfter2, 0, "totalBalance2");
+        } else {
+            assertEq(totalBalanceAfter0, amount, "totalBalance0");
+            assertEq(totalBalanceAfter1, 0, "totalBalance1");
+            assertEq(totalBalanceAfter2, 0, "totalBalance2");
+        }
+    }
+
     function testMintWithCaps(uint128 cap, uint256 amount) public {
         cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT));
         amount = bound(amount, MIN_TEST_AMOUNT / 3, 3 * cap);
@@ -35,12 +61,8 @@ contract VaultSeveralMarketsTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.mint(shares, SUPPLIER);
 
-        uint256 totalBalanceAfter0 = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
-        uint256 totalBalanceAfter1 = morpho.expectedSupplyBalance(allMarkets[1], address(vault));
-        uint256 totalBalanceAfter2 = morpho.expectedSupplyBalance(allMarkets[2], address(vault));
-
         assertEq(vault.balanceOf(SUPPLIER), shares, "balance");
-        assertEq(totalBalanceAfter0 + totalBalanceAfter1 + totalBalanceAfter2, amount, "totalBalance");
+        _assertBalances(cap, amount);
     }
 
     function testDepositWithCaps(uint128 cap, uint256 amount) public {
@@ -52,12 +74,8 @@ contract VaultSeveralMarketsTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(amount, SUPPLIER);
 
-        uint256 totalBalanceAfter0 = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
-        uint256 totalBalanceAfter1 = morpho.expectedSupplyBalance(allMarkets[1], address(vault));
-        uint256 totalBalanceAfter2 = morpho.expectedSupplyBalance(allMarkets[2], address(vault));
-
         assertEq(vault.balanceOf(SUPPLIER), amount, "balance");
-        assertEq(totalBalanceAfter0 + totalBalanceAfter1 + totalBalanceAfter2, amount, "totalBalance");
+        _assertBalances(cap, amount);
     }
 
     function testShouldNotMintMoreThanCaps(uint128 cap, uint256 amount) public {
@@ -98,13 +116,47 @@ contract VaultSeveralMarketsTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.mint(shares, SUPPLIER);
 
+        assertEq(vault.balanceOf(SUPPLIER), shares, "balance");
+        _assertBalances(cap, alreadyDeposited + amount);
+    }
+
+    function testShouldNotMintMoreThanCapsWithSeveralUsers(uint128 cap, uint256 alreadyDeposited, uint256 amount)
+        public
+    {
+        cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT / 3));
+        alreadyDeposited = bound(alreadyDeposited, 3 * cap / 2, 3 * cap);
+        amount = bound(amount, 3 * cap - alreadyDeposited + 1, MAX_TEST_AMOUNT);
+
+        _setCaps(cap);
+
+        vm.prank(RECEIVER);
+        vault.deposit(alreadyDeposited, RECEIVER);
+
+        uint256 shares = vault.convertToShares(amount);
+
+        vm.prank(SUPPLIER);
+        vm.expectRevert(bytes(ErrorsLib.DEPOSIT_ORDER_FAILED));
+        vault.mint(shares, SUPPLIER);
+    }
+
+    function testShouldSkipMarketWhenCallFail(uint256 amount) public {
+        amount = bound(amount, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT);
+        uint256 shares = vault.convertToShares(amount);
+
+        vm.prank(SUPPLIER);
+        vm.mockCallRevert(
+            address(morpho), 0, abi.encodeCall(morpho.supply, (allMarkets[0], amount, 0, address(vault), hex"")), hex""
+        );
+        vault.mint(shares, SUPPLIER);
+
+        assertEq(vault.balanceOf(SUPPLIER), shares, "balance");
+
         uint256 totalBalanceAfter0 = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
         uint256 totalBalanceAfter1 = morpho.expectedSupplyBalance(allMarkets[1], address(vault));
         uint256 totalBalanceAfter2 = morpho.expectedSupplyBalance(allMarkets[2], address(vault));
 
-        assertEq(vault.balanceOf(SUPPLIER), shares, "balance");
-        assertEq(
-            totalBalanceAfter0 + totalBalanceAfter1 + totalBalanceAfter2, alreadyDeposited + amount, "totalBalance"
-        );
+        assertEq(totalBalanceAfter0, 0, "totalBalance0");
+        assertEq(totalBalanceAfter1, amount, "totalBalance1");
+        assertEq(totalBalanceAfter2, 0, "totalBalance2");
     }
 }
