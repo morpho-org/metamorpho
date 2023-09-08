@@ -149,7 +149,7 @@ contract VaultSeveralMarketsTest is BaseTest {
         vault.mint(shares, SUPPLIER);
     }
 
-    function testShouldSkipMarketWhenCallFail(uint256 amount) public {
+    function testMintShouldSkipMarketWhenCallFail(uint256 amount) public {
         amount = bound(amount, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT);
         uint256 shares = vault.convertToShares(amount);
 
@@ -203,11 +203,6 @@ contract VaultSeveralMarketsTest is BaseTest {
     }
 
     function _borrow(MarketParams memory marketParams, uint256 amount) internal {
-        // vm.startPrank(SUPPLIER);
-        // borrowableToken.approve(address(morpho), type(uint256).max);
-        // morpho.supply(marketParams, amount, 0, SUPPLIER, hex"");
-        // vm.stopPrank();
-
         deal(address(collateralToken), BORROWER, type(uint256).max);
 
         vm.startPrank(BORROWER);
@@ -217,14 +212,9 @@ contract VaultSeveralMarketsTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testWithdrawSeveralMarketsWithLessLiquidity(
-        uint128 cap,
-        uint256 amount,
-        uint256 toWithdraw,
-        uint256 borrowed
-    ) public {
+    function testWithdrawSeveralMarketsWithLessLiquidity(uint128 cap, uint256 toWithdraw, uint256 borrowed) public {
         cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT));
-        amount = 3 * cap;
+        uint256 amount = 3 * cap;
         borrowed = bound(borrowed, 1, cap);
 
         _setCaps(cap);
@@ -271,5 +261,89 @@ contract VaultSeveralMarketsTest is BaseTest {
             assertEq(totalBalanceAfter1, cap, "totalBalance1");
             assertEq(totalBalanceAfter2, cap - toWithdraw, "totalBalance2");
         }
+    }
+
+    function testWithdrawShouldSkipMarketWhenCallFail(uint128 cap, uint256 toWithdraw) public {
+        cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT));
+        uint256 amount = 3 * cap;
+
+        _setCaps(cap);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(amount, SUPPLIER);
+
+        toWithdraw = bound(toWithdraw, 0, 2 * cap);
+
+        vm.prank(SUPPLIER);
+        if (toWithdraw > cap) {
+            vm.mockCallRevert(
+                address(morpho),
+                0,
+                abi.encodeCall(morpho.withdraw, (allMarkets[1], toWithdraw - cap, 0, address(vault), address(vault))),
+                hex""
+            );
+        }
+        vault.withdraw(toWithdraw, SUPPLIER, SUPPLIER);
+
+        uint256 totalBalanceAfter0 = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
+        uint256 totalBalanceAfter1 = morpho.expectedSupplyBalance(allMarkets[1], address(vault));
+        uint256 totalBalanceAfter2 = morpho.expectedSupplyBalance(allMarkets[2], address(vault));
+
+        assertEq(totalBalanceAfter0 + totalBalanceAfter1 + totalBalanceAfter2, amount - toWithdraw, "totalBalance");
+
+        if (toWithdraw == 2 * cap) {
+            assertEq(totalBalanceAfter0, 0, "totalBalance0");
+            assertEq(totalBalanceAfter1, cap, "totalBalance1");
+            assertEq(totalBalanceAfter2, 0, "totalBalance2");
+        } else if (toWithdraw >= cap) {
+            assertEq(totalBalanceAfter0, 2 * cap - toWithdraw, "totalBalance0");
+            assertEq(totalBalanceAfter1, cap, "totalBalance1");
+            assertEq(totalBalanceAfter2, 0, "totalBalance2");
+        } else {
+            assertEq(totalBalanceAfter0, cap, "totalBalance0");
+            assertEq(totalBalanceAfter1, cap, "totalBalance1");
+            assertEq(totalBalanceAfter2, cap - toWithdraw, "totalBalance2");
+        }
+    }
+
+    function testWithdrawShouldRevertWhenNotEnoughLiquidity(uint128 cap, uint256 toWithdraw, uint256 borrowed) public {
+        cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT));
+        uint256 amount = 3 * cap;
+        borrowed = bound(borrowed, 1, cap);
+
+        _setCaps(cap);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(amount, SUPPLIER);
+
+        _borrow(allMarkets[1], borrowed);
+
+        toWithdraw = bound(toWithdraw, amount - borrowed + 1, amount);
+
+        vm.prank(SUPPLIER);
+        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_ORDER_FAILED));
+        vault.withdraw(toWithdraw, SUPPLIER, SUPPLIER);
+    }
+
+    function testWithdrawShouldRevertWhenSkipMarketNotEnoughLiquidity(uint128 cap, uint256 toWithdraw) public {
+        cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT));
+        uint256 amount = 3 * cap;
+
+        _setCaps(cap);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(amount, SUPPLIER);
+
+        toWithdraw = bound(toWithdraw, 2 * cap + 1, amount);
+
+        vm.prank(SUPPLIER);
+        vm.mockCallRevert(
+            address(morpho),
+            0,
+            abi.encodeCall(morpho.withdraw, (allMarkets[1], cap, 0, address(vault), address(vault))),
+            hex""
+        );
+        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_ORDER_FAILED));
+        vault.withdraw(toWithdraw, SUPPLIER, SUPPLIER);
     }
 }
