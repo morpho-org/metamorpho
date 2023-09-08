@@ -88,7 +88,7 @@ contract BaseTest is Test {
         vm.startPrank(OWNER);
 
         vault =
-            new SupplyVault(address(morpho), TIMELOCK, address(urd), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
+        new SupplyVault(address(morpho), TIMELOCK, address(urd), IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
 
         morpho.enableIrm(address(irm));
 
