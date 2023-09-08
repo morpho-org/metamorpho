@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
+import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
