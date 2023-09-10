@@ -9,15 +9,21 @@ import {MathLib} from "@morpho-blue/libraries/MathLib.sol";
 contract IrmMock is IIrm {
     using MathLib for uint128;
 
-    function borrowRateView(MarketParams memory, Market memory market) public pure returns (uint256) {
+    uint256 public rate;
+
+    function setRate(uint256 newRate) external {
+        rate = newRate;
+    }
+
+    function borrowRateView(MarketParams memory, Market memory market) public view returns (uint256) {
         uint256 utilization = market.totalBorrowAssets.wDivDown(market.totalSupplyAssets);
 
         // Divide by the number of seconds in a year.
         // This is a very simple model where x% utilization corresponds to x% APR.
-        return utilization / 365 days;
+        return rate == 0 ? utilization / 365 days : rate / 365 days;
     }
 
-    function borrowRate(MarketParams memory marketParams, Market memory market) external pure returns (uint256) {
+    function borrowRate(MarketParams memory marketParams, Market memory market) external view returns (uint256) {
         return borrowRateView(marketParams, market);
     }
 }
