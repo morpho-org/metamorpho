@@ -25,41 +25,38 @@ contract FeeTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testLastTotalAssets(uint256 amount) public {
+    function testShouldNotUpdateLastTotalAssetsMoreThanOnce(uint256 amount) public {
         amount = bound(amount, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT);
 
         _setFee();
 
-        assertEq(vault.lastTotalAssets(), 0);
+        uint256 lastTotalAssets = vault.lastTotalAssets();
 
         vm.prank(SUPPLIER);
         vault.deposit(amount, SUPPLIER);
 
-        // Update lastTotalAssets
+        // Try to update lastTotalAssets
         vm.prank(SUPPLIER);
         vault.withdraw(10, SUPPLIER, SUPPLIER);
 
-        assertEq(vault.lastTotalAssets(), amount);
+        assertEq(vault.lastTotalAssets(), lastTotalAssets);
     }
 
-    function testAccounting() public {
+    function testShouldNotIncreaseFeeRecipientBalanceWithingABlock() public {
         uint256 amount = MAX_TEST_AMOUNT;
 
         _setFee();
 
-        assertEq(vault.lastTotalAssets(), 0);
+        uint256 feeRecipientBalance = vault.balanceOf(FEE_RECIPIENT);
 
         vm.prank(SUPPLIER);
         vault.deposit(amount, SUPPLIER);
 
-        // Update lastTotalAssets
+        // Try to update feeRecipientBalance
         vm.prank(SUPPLIER);
         vault.withdraw(10, SUPPLIER, SUPPLIER);
 
-        // supplier balance 9999999999999999999999999988
-        // fee recipient balance 1111111111111111111111111111
-        console2.log("supplier balance", vault.balanceOf(SUPPLIER));
-        console2.log("fee recipient balance", vault.balanceOf(FEE_RECIPIENT));
+        assertEq(vault.balanceOf(FEE_RECIPIENT), feeRecipientBalance, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
     function testShouldMintSharesToFeeRecipient(uint256 amount) public {

@@ -57,6 +57,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
+    uint256 public lastUpdateTimestamp;
 
     ConfigSet private _config;
 
@@ -456,7 +457,10 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function _accrueFee() internal {
-        if (fee == 0 || feeRecipient == address(0)) return;
+        uint256 lastUpdate = lastUpdateTimestamp;
+        lastUpdateTimestamp = block.timestamp;
+
+        if (lastUpdate == block.timestamp || fee == 0 || feeRecipient == address(0)) return;
 
         (uint256 newTotalAssets, uint256 feeShares) = _accruedFeeShares();
 
