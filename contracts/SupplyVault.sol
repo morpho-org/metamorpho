@@ -56,7 +56,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     uint256 public timelock;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
-    uint256 lastTotalAssets;
+    uint256 public lastTotalAssets;
 
     ConfigSet private _config;
 
