@@ -8,7 +8,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { setNextBlockTimestamp } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
-import MorphoArtifact from "../../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
+import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
