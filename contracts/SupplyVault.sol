@@ -55,8 +55,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     Pending public pendingTimelock;
     uint256 public timelock;
 
-    /// @dev Stores the total assets owned by this vault when the fee was last accrued.
-    uint256 lastTotalAssets;
+    /// @dev Stores the total assets this vault manage when it last handled a deposit/withdraw.
+    uint256 public lastTotalAssets;
 
     ConfigSet private _config;
 
@@ -95,6 +95,12 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(block.timestamp <= timestamp + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
 
         _;
+    }
+
+    modifier syncLastTotalAssets() {
+        _;
+
+        lastTotalAssets = totalAssets();
     }
 
     /* ONLY OWNER FUNCTIONS */
@@ -242,13 +248,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
     }
 
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
+    function deposit(uint256 assets, address receiver) public virtual override syncLastTotalAssets returns (uint256) {
         _accrueFee();
 
         return super.deposit(assets, receiver);
     }
 
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256) {
+    function mint(uint256 shares, address receiver) public virtual override syncLastTotalAssets returns (uint256) {
         _accrueFee();
 
         return super.mint(shares, receiver);
@@ -258,6 +264,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         public
         virtual
         override
+        syncLastTotalAssets
         returns (uint256 shares)
     {
         _accrueFee();
@@ -268,7 +275,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
-    function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256 assets) {
+    function redeem(uint256 shares, address receiver, address owner)
+        public
+        virtual
+        override
+        syncLastTotalAssets
+        returns (uint256 assets)
+    {
         _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
@@ -458,17 +471,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function _accrueFee() internal {
         if (fee == 0 || feeRecipient == address(0)) return;
 
-        (uint256 newTotalAssets, uint256 feeShares) = _accruedFeeShares();
-
-        lastTotalAssets = newTotalAssets;
+        uint256 feeShares = _accruedFeeShares();
 
         if (feeShares != 0) _mint(feeRecipient, feeShares);
-
-        emit EventsLib.AccrueFee(newTotalAssets, feeShares);
     }
 
-    function _accruedFeeShares() internal view returns (uint256 newTotalAssets, uint256 feeShares) {
-        newTotalAssets = totalAssets();
+    function _accruedFeeShares() internal view returns (uint256 feeShares) {
+        uint256 newTotalAssets = totalAssets();
         uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
 
         if (totalInterest != 0) {

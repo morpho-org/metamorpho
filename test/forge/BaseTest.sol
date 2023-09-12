@@ -33,6 +33,7 @@ contract BaseTest is Test {
     address internal OWNER = _addrFromHashedString("Morpho Owner");
     address internal RISK_MANAGER = _addrFromHashedString("Morpho Risk Manager");
     address internal ALLOCATOR = _addrFromHashedString("Morpho Allocator");
+    address internal FEE_RECIPIENT = _addrFromHashedString("MetaMorpho Fee Recipient");
 
     uint256 internal constant LLTV = 0.8 ether;
     uint256 internal constant TIMELOCK = 0;
