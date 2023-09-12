@@ -26,8 +26,8 @@ contract BaseTest is Test {
     using stdJson for string;
 
     uint256 internal constant BLOCK_TIME = 12;
-    uint256 internal constant MIN_TEST_AMOUNT = 100;
-    uint256 internal constant MAX_TEST_AMOUNT = 1e28;
+    uint256 internal constant MIN_TEST_ASSETS = 100;
+    uint256 internal constant MAX_TEST_ASSETS = 1e28;
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
@@ -77,6 +77,7 @@ contract BaseTest is Test {
         vm.label(address(collateralToken), "Collateral");
 
         oracle = new OracleMock();
+        vm.label(address(oracle), "Oracle");
 
         oracle.setPrice(ORACLE_PRICE_SCALE);
 
@@ -85,29 +86,6 @@ contract BaseTest is Test {
         vm.startPrank(MORPHO_OWNER);
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
-        vm.stopPrank();
-
-        vault = new SupplyVault(address(morpho), TIMELOCK, IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
-
-        borrowableToken.approve(address(vault), type(uint256).max);
-        collateralToken.approve(address(vault), type(uint256).max);
-        vm.startPrank(SUPPLIER);
-        borrowableToken.approve(address(vault), type(uint256).max);
-        collateralToken.approve(address(vault), type(uint256).max);
-        borrowableToken.approve(address(morpho), type(uint256).max);
-        collateralToken.approve(address(morpho), type(uint256).max);
-        vm.stopPrank();
-        vm.startPrank(BORROWER);
-        borrowableToken.approve(address(morpho), type(uint256).max);
-        collateralToken.approve(address(morpho), type(uint256).max);
-        vm.stopPrank();
-        vm.startPrank(REPAYER);
-        borrowableToken.approve(address(morpho), type(uint256).max);
-        collateralToken.approve(address(morpho), type(uint256).max);
-        vm.stopPrank();
-        vm.startPrank(ONBEHALF);
-        borrowableToken.approve(address(vault), type(uint256).max);
-        collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
 
         vm.startPrank(OWNER);
@@ -120,8 +98,13 @@ contract BaseTest is Test {
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
 
-            MarketParams memory marketParams =
-                MarketParams(address(borrowableToken), address(collateralToken), address(oracle), address(irm), lltv);
+            MarketParams memory marketParams = MarketParams({
+                borrowableToken: address(borrowableToken),
+                collateralToken: address(collateralToken),
+                oracle: address(oracle),
+                irm: address(irm),
+                lltv: lltv
+            });
 
             vm.startPrank(MORPHO_OWNER);
             morpho.enableLltv(lltv);
@@ -130,6 +113,31 @@ contract BaseTest is Test {
 
             allMarkets.push(marketParams);
         }
+
+        borrowableToken.approve(address(vault), type(uint256).max);
+        collateralToken.approve(address(vault), type(uint256).max);
+
+        vm.startPrank(SUPPLIER);
+        borrowableToken.approve(address(vault), type(uint256).max);
+        collateralToken.approve(address(vault), type(uint256).max);
+        borrowableToken.approve(address(morpho), type(uint256).max);
+        collateralToken.approve(address(morpho), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(BORROWER);
+        borrowableToken.approve(address(morpho), type(uint256).max);
+        collateralToken.approve(address(morpho), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(REPAYER);
+        borrowableToken.approve(address(morpho), type(uint256).max);
+        collateralToken.approve(address(morpho), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(ONBEHALF);
+        borrowableToken.approve(address(vault), type(uint256).max);
+        collateralToken.approve(address(vault), type(uint256).max);
+        vm.stopPrank();
     }
 
     function _addrFromHashedString(string memory name) internal returns (address addr) {
