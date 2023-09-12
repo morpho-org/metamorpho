@@ -97,7 +97,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         _;
     }
 
-    modifier syncLastTotalAssets() {
+    modifier updateLastTotalAssets() {
         _;
 
         lastTotalAssets = totalAssets();
@@ -144,7 +144,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SubmitPendingFee(newFee);
     }
 
-    function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner syncLastTotalAssets {
+    function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner updateLastTotalAssets {
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
@@ -155,7 +155,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         delete pendingFee;
     }
 
-    function setFeeRecipient(address newFeeRecipient) external onlyOwner syncLastTotalAssets {
+    function setFeeRecipient(address newFeeRecipient) external onlyOwner updateLastTotalAssets {
         require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
 
         // Accrue interest to the previous fee recipient set before changing it.
@@ -293,7 +293,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function _deposit(address caller, address owner, uint256 assets, uint256 shares)
         internal
         override
-        syncLastTotalAssets
+        updateLastTotalAssets
     {
         super._deposit(caller, owner, assets, shares);
 
@@ -304,7 +304,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
-        syncLastTotalAssets
+        updateLastTotalAssets
     {
         require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
 
