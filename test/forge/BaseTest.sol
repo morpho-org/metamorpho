@@ -9,6 +9,8 @@ import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
+import {WAD} from "@morpho-blue/libraries/MathLib.sol";
+import {Math} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {SupplyVault, IERC20, ErrorsLib, Pending, MarketAllocation} from "contracts/SupplyVault.sol";
 import {Morpho, MarketParamsLib, MarketParams, SharesMathLib, Id} from "@morpho-blue/Morpho.sol";
 
@@ -31,10 +33,10 @@ contract BaseTest is Test {
     address internal ONBEHALF = _addrFromHashedString("Morpho On Behalf");
     address internal RECEIVER = _addrFromHashedString("Morpho Receiver");
     address internal LIQUIDATOR = _addrFromHashedString("Morpho Liquidator");
-    address internal OWNER = _addrFromHashedString("Morpho Owner");
-    address internal RISK_MANAGER = _addrFromHashedString("Morpho Risk Manager");
-    address internal ALLOCATOR = _addrFromHashedString("Morpho Allocator");
-    address internal FEE_RECIPIENT = _addrFromHashedString("MetaMorpho Fee Recipient");
+    address internal OWNER = _addrFromHashedString("Owner");
+    address internal RISK_MANAGER = _addrFromHashedString("Risk Manager");
+    address internal ALLOCATOR = _addrFromHashedString("Allocator");
+    address internal FEE_RECIPIENT = _addrFromHashedString("Fee Recipient");
 
     uint256 internal constant LLTV = 0.8 ether;
     uint256 internal constant TIMELOCK = 0;
@@ -130,6 +132,16 @@ contract BaseTest is Test {
         vault.submitPendingMarket(params, cap);
         vm.warp(block.timestamp + vault.timelock());
         vault.enableMarket(params.id());
+        vm.stopPrank();
+    }
+
+    function _borrow(MarketParams memory params, uint256 amount) internal {
+        deal(address(collateralToken), BORROWER, type(uint256).max);
+
+        vm.startPrank(BORROWER);
+        collateralToken.approve(address(morpho), type(uint256).max);
+        morpho.supplyCollateral(params, type(uint128).max, BORROWER, hex"");
+        morpho.borrow(params, amount, 0, BORROWER, BORROWER);
         vm.stopPrank();
     }
 }

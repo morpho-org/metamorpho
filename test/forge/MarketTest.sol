@@ -141,7 +141,7 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
     }
 
-    function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarketInTheAllocationList() public {
+    function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
         _submitAndEnableMarket(allMarkets[0], CAP);
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
@@ -201,7 +201,7 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
     }
 
-    function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarketInTheAllocationList() public {
+    function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
         _submitAndEnableMarket(allMarkets[0], CAP);
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);

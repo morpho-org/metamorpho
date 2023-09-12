@@ -202,16 +202,6 @@ contract VaultSeveralMarketsTest is BaseTest {
         _assertBalances(cap, amount - toWithdraw);
     }
 
-    function _borrow(MarketParams memory marketParams, uint256 amount) internal {
-        deal(address(collateralToken), BORROWER, type(uint256).max);
-
-        vm.startPrank(BORROWER);
-        collateralToken.approve(address(morpho), type(uint256).max);
-        morpho.supplyCollateral(marketParams, type(uint128).max, BORROWER, hex"");
-        morpho.borrow(marketParams, amount, 0, BORROWER, BORROWER);
-        vm.stopPrank();
-    }
-
     function testWithdrawSeveralMarketsWithLessLiquidity(uint128 cap, uint256 toWithdraw, uint256 borrowed) public {
         cap = uint128(bound(cap, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT));
         uint256 amount = 3 * cap;
