@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import {IrmMock as Irm} from "contracts/mocks/IrmMock.sol";
+import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {ERC20Mock as ERC20} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock as Oracle} from "contracts/mocks/OracleMock.sol";
 
@@ -15,7 +16,7 @@ contract BaseTest is Test {
     using MarketParamsLib for MarketParams;
 
     uint256 internal constant HIGH_COLLATERAL_AMOUNT = 1e35;
-    uint256 internal constant MIN_TEST_AMOUNT = 100;
+    uint256 internal constant MIN_TEST_AMOUNT = 1e8;
     uint256 internal constant MAX_TEST_AMOUNT = 1e28;
     uint256 internal constant MIN_TEST_SHARES = MIN_TEST_AMOUNT * SharesMathLib.VIRTUAL_SHARES;
     uint256 internal constant MAX_TEST_SHARES = MAX_TEST_AMOUNT * SharesMathLib.VIRTUAL_SHARES;
@@ -103,6 +104,13 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         vm.warp(block.timestamp + 1);
+
+        deal(address(borrowableToken), SUPPLIER, type(uint256).max);
+        vm.prank(SUPPLIER);
+        borrowableToken.approve(address(vault), type(uint256).max);
+        deal(address(borrowableToken), RECEIVER, type(uint256).max);
+        vm.prank(RECEIVER);
+        borrowableToken.approve(address(vault), type(uint256).max);
     }
 
     function _addrFromHashedString(string memory str) internal pure returns (address) {

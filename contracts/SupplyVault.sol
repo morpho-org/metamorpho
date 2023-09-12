@@ -367,7 +367,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         for (uint256 i; i < length; ++i) {
             Id id = supplyAllocationOrder[i];
 
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank);
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
             uint256 cap = marketCap(id);
             uint256 toDeposit = assets;
 
@@ -438,9 +438,9 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         view
         returns (MarketParams memory marketParams, uint256 withdrawable)
     {
-        marketParams = _config.at(_config.getMarket(id).rank);
+        marketParams = _config.at(_config.getMarket(id).rank - 1);
         (uint256 totalSupply,, uint256 totalBorrow,) = MORPHO.expectedMarketBalances(marketParams);
-        uint256 available = totalBorrow - totalSupply;
+        uint256 available = totalSupply - totalBorrow;
         withdrawable = UtilsLib.min(available, assets);
     }
 
