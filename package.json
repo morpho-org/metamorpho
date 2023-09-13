@@ -18,10 +18,10 @@
     "test:forge": "yarn build:blue && FOUNDRY_PROFILE=test forge test",
     "test:hardhat": "yarn build:blue && npx hardhat test",
     "lint": "yarn lint:forge && yarn lint:ts",
-    "lint:ts": "prettier --check src test/hardhat",
+    "lint:ts": "prettier --check test/hardhat",
     "lint:forge": "forge fmt --check",
     "lint:fix": "yarn lint:forge:fix && yarn lint:ts:fix",
-    "lint:ts:fix": "prettier --write src test/hardhat",
+    "lint:ts:fix": "prettier --write test/hardhat",
     "lint:forge:fix": "forge fmt",
     "clean": "npx hardhat clean && forge clean"
   },
