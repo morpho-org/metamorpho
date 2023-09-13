@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {MarketAllocation, Pending, ISupplyVault} from "./interfaces/ISupplyVault.sol";
+import {MarketAllocation, Pending, IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
@@ -23,7 +23,7 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
+contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
@@ -100,19 +100,19 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* ONLY OWNER FUNCTIONS */
 
-    function submitPendingTimelock(uint256 newTimelock) external onlyOwner {
+    function submitTimelock(uint256 newTimelock) external onlyOwner {
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
         pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
 
-        emit EventsLib.SubmitPendingTimelock(newTimelock);
+        emit EventsLib.SubmitTimelock(newTimelock);
     }
 
-    function setTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
+    function acceptTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
         timelock = pendingTimelock.value;
 
-        emit EventsLib.SetTimelock(pendingTimelock.value);
+        emit EventsLib.AcceptTimelock(pendingTimelock.value);
 
         delete pendingTimelock;
     }
@@ -129,23 +129,23 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    function submitPendingFee(uint256 newFee) external onlyOwner {
+    function submitFee(uint256 newFee) external onlyOwner {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
 
         // Safe "unchecked" cast because newFee <= WAD.
         pendingFee = Pending(uint128(newFee), uint128(block.timestamp));
 
-        emit EventsLib.SubmitPendingFee(newFee);
+        emit EventsLib.SubmitFee(newFee);
     }
 
-    function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
+    function acceptFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
         fee = uint96(pendingFee.value);
 
-        emit EventsLib.SetFee(pendingFee.value);
+        emit EventsLib.AcceptFee(pendingFee.value);
 
         delete pendingFee;
     }
@@ -163,7 +163,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* ONLY RISK MANAGER FUNCTIONS */
 
-    function submitPendingMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
+    function submitMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
         (,,,, uint128 lastUpdate,) = MORPHO.market(marketParams.id());
         require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
@@ -172,7 +172,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
 
-        emit EventsLib.SubmitPendingMarket(id);
+        emit EventsLib.SubmitMarket(id);
     }
 
     function enableMarket(Id id) external timelockElapsed(pendingMarket[id].timestamp) onlyRiskManager {
