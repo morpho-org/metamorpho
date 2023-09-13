@@ -1,34 +1,20 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./BaseTest.sol";
+import "./helpers/BaseTest.sol";
 
 contract FeeTest is BaseTest {
     using Math for uint256;
     using MarketParamsLib for MarketParams;
 
-    uint256 internal constant FEE = 0.1 ether; // 10%
-
     function setUp() public override {
         super.setUp();
 
         _submitAndEnableMarket(allMarkets[0], CAP);
-
-        irm.setRate(0.1 ether); // 10% APY.
-    }
-
-    function _setFee() internal {
-        vm.startPrank(OWNER);
-        vault.submitPendingFee(FEE);
-        vault.setFee();
-        vault.setFeeRecipient(FEE_RECIPIENT);
-        vm.stopPrank();
     }
 
     function testShouldNotUpdateLastTotalAssetsMoreThanOnce(uint256 amount) public {
-        amount = bound(amount, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT);
-
-        _setFee();
+        amount = bound(amount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         uint256 lastTotalAssets = vault.lastTotalAssets();
 
@@ -43,9 +29,7 @@ contract FeeTest is BaseTest {
     }
 
     function testShouldNotIncreaseFeeRecipientBalanceWithingABlock() public {
-        uint256 amount = MAX_TEST_AMOUNT;
-
-        _setFee();
+        uint256 amount = MAX_TEST_ASSETS;
 
         uint256 feeRecipientBalance = vault.balanceOf(FEE_RECIPIENT);
 
@@ -60,9 +44,7 @@ contract FeeTest is BaseTest {
     }
 
     function testShouldMintSharesToFeeRecipient(uint256 amount) public {
-        amount = bound(amount, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT);
-
-        _setFee();
+        amount = bound(amount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(amount, SUPPLIER);
@@ -91,45 +73,39 @@ contract FeeTest is BaseTest {
     }
 
     function testDepositShouldAccrueFee() public {
-        _setFee();
-
         // Deposit to generate fees.
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
         vm.warp(block.timestamp + 1);
 
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
     }
 
     function testMintShouldAccrueFee() public {
-        _setFee();
-
         // Deposit to generate fees.
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
         vm.warp(block.timestamp + 1);
 
         vm.prank(SUPPLIER);
-        vault.mint(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.mint(MAX_TEST_ASSETS, SUPPLIER);
 
         assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
     }
 
     function testRedeemShouldAccrueFee() public {
-        _setFee();
-
         // Deposit to generate fees.
         vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        uint256 shares = vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
@@ -142,28 +118,24 @@ contract FeeTest is BaseTest {
     }
 
     function testWithdrawShouldAccrueFee() public {
-        _setFee();
-
         // Deposit to generate fees.
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
         vm.warp(block.timestamp + 1);
 
         vm.prank(SUPPLIER);
-        vault.redeem(MAX_TEST_AMOUNT / 10, SUPPLIER, SUPPLIER);
+        vault.redeem(MAX_TEST_ASSETS / 10, SUPPLIER, SUPPLIER);
 
         assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
     }
 
     function testSetFeeShouldAccrueFee() public {
-        _setFee();
-
         // Deposit to generate fees.
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
@@ -178,11 +150,9 @@ contract FeeTest is BaseTest {
     }
 
     function testSetFeeRecipientShouldAccrueFee() public {
-        _setFee();
-
         // Deposit to generate fees.
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_AMOUNT, SUPPLIER);
+        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 

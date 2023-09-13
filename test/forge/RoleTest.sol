@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./BaseTest.sol";
+import "./helpers/BaseTest.sol";
 
 contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
