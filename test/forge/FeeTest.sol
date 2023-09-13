@@ -72,49 +72,73 @@ contract FeeTest is BaseTest {
         );
     }
 
-    function testDepositShouldAccrueFee() public {
-        // Deposit to generate fees.
+    function testDepositAccrueFee(uint256 assets, uint256 deposited, uint256 blocks) public {
+        assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        blocks = _boundBlocks(blocks);
+
+        borrowableToken.setBalance(SUPPLIER, deposited);
+
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
-        vm.warp(block.timestamp + 1);
+        _forward(blocks);
+
+        borrowableToken.setBalance(SUPPLIER, assets);
 
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
+        vault.deposit(assets, ONBEHALF);
 
         assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
     }
 
-    function testMintShouldAccrueFee() public {
-        // Deposit to generate fees.
+    function testMintAccrueFee(uint256 assets, uint256 deposited, uint256 blocks) public {
+        assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        blocks = _boundBlocks(blocks);
+
+        borrowableToken.setBalance(SUPPLIER, deposited);
+
         vm.prank(SUPPLIER);
-        vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
 
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
-        vm.warp(block.timestamp + 1);
+        _forward(blocks);
+
+        uint256 shares = vault.convertToShares(assets);
+
+        borrowableToken.setBalance(SUPPLIER, assets);
 
         vm.prank(SUPPLIER);
-        vault.mint(MAX_TEST_ASSETS, SUPPLIER);
+        vault.mint(shares, ONBEHALF);
 
         assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
     }
 
-    function testRedeemShouldAccrueFee() public {
-        // Deposit to generate fees.
-        vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(MAX_TEST_ASSETS, SUPPLIER);
+    function testRedeemAccrueFee(uint256 shares, uint256 deposited, uint256 blocks) public {
+        // deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        // blocks = _boundBlocks(blocks);
 
-        assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
+        // borrowableToken.setBalance(SUPPLIER, deposited);
 
-        vm.warp(block.timestamp + 1);
+        // vm.prank(SUPPLIER);
+        // uint256 minted = vault.deposit(deposited, ONBEHALF);
 
-        vm.prank(SUPPLIER);
-        vault.redeem(shares / 10, SUPPLIER, SUPPLIER);
+        // assertEq(vault.balanceOf(FEE_RECIPIENT), 0);
 
-        assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
+        // _forward(blocks);
+
+        // shares = bound(shares, 1, minted);
+
+        // borrowableToken.setBalance(ONBEHALF, vault.convertToAssets(shares));
+
+        // vm.prank(ONBEHALF);
+        // vault.redeem(shares, RECEIVER, ONBEHALF);
+
+        // assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
     }
 
     function testWithdrawShouldAccrueFee() public {

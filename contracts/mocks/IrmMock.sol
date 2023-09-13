@@ -15,11 +15,8 @@ contract IrmMock is IIrm {
         apr = newApr;
     }
 
-    function borrowRateView(MarketParams memory, Market memory market) public view returns (uint256) {
-        uint256 utilization = market.totalBorrowAssets.wDivDown(market.totalSupplyAssets);
-
-        // When apr is zero, x% utilization corresponds to x% APR.
-        return apr == 0 ? utilization / 365 days : apr / 365 days;
+    function borrowRateView(MarketParams memory, Market memory) public view returns (uint256) {
+        return apr / 365 days;
     }
 
     function borrowRate(MarketParams memory marketParams, Market memory market) external view returns (uint256) {
