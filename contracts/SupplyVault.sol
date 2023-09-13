@@ -62,8 +62,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* CONSTRUCTOR */
 
-    constructor(address morpho, uint256 initialTimelock, IERC20 _asset, string memory _name, string memory _symbol)
-        ERC4626(_asset)
+    constructor(address morpho, uint256 initialTimelock, address _asset, string memory _name, string memory _symbol)
+        ERC4626(IERC20(_asset))
         ERC20(_name, _symbol)
     {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
@@ -71,7 +71,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         MORPHO = IMorpho(morpho);
         timelock = initialTimelock;
 
-        SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
+        SafeERC20.safeApprove(IERC20(_asset), morpho, type(uint256).max);
     }
 
     /* MODIFIERS */

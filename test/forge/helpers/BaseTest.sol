@@ -89,7 +89,7 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         vm.startPrank(OWNER);
-        vault = new SupplyVault(address(morpho), TIMELOCK, IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
+        vault = new SupplyVault(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
