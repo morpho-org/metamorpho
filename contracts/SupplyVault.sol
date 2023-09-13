@@ -480,4 +480,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
             );
         }
     }
+
+    function _decimalsOffset() internal pure override returns (uint8) {
+        return 6;
+    }
 }

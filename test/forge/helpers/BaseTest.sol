@@ -26,6 +26,7 @@ contract BaseTest is Test {
     using stdJson for string;
 
     uint256 internal constant BLOCK_TIME = 12;
+    uint256 internal constant DECIMALS_OFFSET = 6;
     uint256 internal constant MIN_TEST_ASSETS = 100;
     uint256 internal constant MAX_TEST_ASSETS = 1e28;
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;

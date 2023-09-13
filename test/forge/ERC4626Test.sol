@@ -23,8 +23,6 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         uint256 deposited = vault.mint(shares, ONBEHALF);
 
-        uint256 totalBalanceAfter = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
-
         assertGt(deposited, 0, "deposited");
         assertEq(vault.balanceOf(ONBEHALF), shares, "balanceOf(ONBEHALF)");
         assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), assets, "expectedSupplyBalance(vault)");
@@ -43,19 +41,17 @@ contract ERC4626Test is BaseTest {
         assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), assets, "expectedSupplyBalance(vault)");
     }
 
-    function testRedeemTooMuch(uint256 deposited, uint256 shares) public {
+    function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
-        uint256 minted = vault.deposit(deposited, ONBEHALF);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
 
-        shares = bound(shares, minted + 1, type(uint256).max);
-
-        vm.prank(SUPPLIER);
-        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_ORDER_FAILED));
-        vault.redeem(shares, RECEIVER, ONBEHALF);
+        vm.prank(ONBEHALF);
+        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vault.redeem(shares + 1, RECEIVER, ONBEHALF);
     }
 
     function testWithdrawAll(uint256 assets) public {
@@ -135,7 +131,7 @@ contract ERC4626Test is BaseTest {
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
-    function testTransferFrom(uint256 deposited, uint256 amount) public {
+    function testTransferFrom(uint256 deposited, uint256 toTransfer) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -143,16 +139,16 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
-        amount = bound(amount, 0, shares);
+        toTransfer = bound(toTransfer, 0, shares);
 
         vm.prank(ONBEHALF);
-        vault.approve(SUPPLIER, amount);
+        vault.approve(SUPPLIER, toTransfer);
 
         vm.prank(SUPPLIER);
-        vault.transferFrom(ONBEHALF, RECEIVER, amount);
+        vault.transferFrom(ONBEHALF, RECEIVER, toTransfer);
 
-        assertEq(vault.balanceOf(ONBEHALF), deposited - amount, "balanceOf(ONBEHALF)");
-        assertEq(vault.balanceOf(RECEIVER), amount, "balanceOf(RECEIVER)");
+        assertEq(vault.balanceOf(ONBEHALF), shares - toTransfer, "balanceOf(ONBEHALF)");
+        assertEq(vault.balanceOf(RECEIVER), toTransfer, "balanceOf(RECEIVER)");
         assertEq(vault.balanceOf(SUPPLIER), 0, "balanceOf(SUPPLIER)");
     }
 
@@ -171,7 +167,7 @@ contract ERC4626Test is BaseTest {
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
-    function testWithdrawTooMuch(uint256 deposited, uint256 assets) public {
+    function testWithdrawTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -179,14 +175,12 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        assets = bound(assets, deposited + 1, type(uint256).max);
-
         vm.prank(SUPPLIER);
         vm.expectRevert(bytes(ErrorsLib.WITHDRAW_ORDER_FAILED));
-        vault.withdraw(assets, RECEIVER, ONBEHALF);
+        vault.withdraw(deposited + 1, RECEIVER, ONBEHALF);
     }
 
-    function testTransfer(uint256 deposited, uint256 amount) public {
+    function testTransfer(uint256 deposited, uint256 toTransfer) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -194,13 +188,13 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
-        amount = bound(amount, 0, shares);
+        toTransfer = bound(toTransfer, 0, shares);
 
         vm.prank(ONBEHALF);
-        vault.transfer(RECEIVER, amount);
+        vault.transfer(RECEIVER, toTransfer);
 
         assertEq(vault.balanceOf(SUPPLIER), 0, "balanceOf(SUPPLIER)");
-        assertEq(vault.balanceOf(ONBEHALF), deposited - amount, "balanceOf(ONBEHALF)");
-        assertEq(vault.balanceOf(RECEIVER), amount, "balanceOf(RECEIVER)");
+        assertEq(vault.balanceOf(ONBEHALF), shares - toTransfer, "balanceOf(ONBEHALF)");
+        assertEq(vault.balanceOf(RECEIVER), toTransfer, "balanceOf(RECEIVER)");
     }
 }
