@@ -34,7 +34,7 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + vault.timelock());
 
-        vault.setTimelock();
+        vault.acceptTimelock();
         vm.stopPrank();
 
         assertEq(vault.timelock(), timelock);
@@ -42,6 +42,6 @@ contract TimelockTest is BaseTest {
 
     function testSetTimelockShouldRevertWhenNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setTimelock();
+        vault.acceptTimelock();
     }
 }

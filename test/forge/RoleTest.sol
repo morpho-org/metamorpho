@@ -14,7 +14,7 @@ contract RoleTest is BaseTest {
         vault.submitTimelock(TIMELOCK);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setTimelock();
+        vault.acceptTimelock();
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setIsRiskManager(caller, true);
@@ -26,7 +26,7 @@ contract RoleTest is BaseTest {
         vault.submitFee(1);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setFee();
+        vault.acceptFee();
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setFeeRecipient(caller);

@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {MarketAllocation, Pending, ISupplyVault} from "./interfaces/ISupplyVault.sol";
+import {MarketAllocation, Pending, IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
@@ -23,7 +23,7 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
+contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
@@ -108,10 +108,10 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SubmitTimelock(newTimelock);
     }
 
-    function setTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
+    function acceptTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
         timelock = pendingTimelock.value;
 
-        emit EventsLib.SetTimelock(pendingTimelock.value);
+        emit EventsLib.AcceptTimelock(pendingTimelock.value);
 
         delete pendingTimelock;
     }
@@ -138,13 +138,13 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SubmitFee(newFee);
     }
 
-    function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
+    function acceptFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
         fee = uint96(pendingFee.value);
 
-        emit EventsLib.SetFee(pendingFee.value);
+        emit EventsLib.AcceptFee(pendingFee.value);
 
         delete pendingFee;
     }
