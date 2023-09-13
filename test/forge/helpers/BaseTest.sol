@@ -220,7 +220,7 @@ contract BaseTest is Test {
 
     function _submitAndSetTimelock(uint128 timelock) internal {
         vm.startPrank(OWNER);
-        vault.submitPendingTimelock(timelock);
+        vault.submitTimelock(timelock);
         vm.warp(block.timestamp + vault.timelock());
         vault.setTimelock();
         vm.stopPrank();
@@ -228,7 +228,7 @@ contract BaseTest is Test {
 
     function _submitAndEnableMarket(MarketParams memory params, uint128 cap) internal {
         vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(params, cap);
+        vault.submitMarket(params, cap);
         vm.warp(block.timestamp + vault.timelock());
         vault.enableMarket(params.id());
         vm.stopPrank();
