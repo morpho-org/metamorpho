@@ -34,6 +34,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     uint256 public constant TIMELOCK_EXPIRATION = 2 days;
     uint256 public constant MAX_TIMELOCK = 2 weeks;
+    uint256 public constant DECIMALS_OFFSET = 6;
 
     /* IMMUTABMES */
 
@@ -530,5 +531,9 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
+    }
+
+    function _decimalsOffset() internal pure override returns (uint8) {
+        return 6;
     }
 }
