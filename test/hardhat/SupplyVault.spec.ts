@@ -31,9 +31,13 @@ const identifier = (marketParams: MarketParamsStruct) => {
   return Buffer.from(keccak256(encodedMarket).slice(2), "hex");
 };
 
-const forwardTimestamp = async () => {
+const logProgress = (name: string, i: number, max: number) => {
+  if (i % 10 == 0) console.log("[" + name + "]", Math.floor((100 * i) / max), "%");
+};
+
+const randomForwardTimestamp = async () => {
   const block = await hre.ethers.provider.getBlock("latest");
-  const elapsed = (1 + Math.floor(random() * 100)) * 12;
+  const elapsed = random() < 1 / 2 ? 0 : (1 + Math.floor(random() * 100)) * 12; // 50% of the time, don't go forward in time.
 
   await setNextBlockTimestamp(block!.timestamp + elapsed);
 };
@@ -110,7 +114,7 @@ describe("SupplyVault", () => {
 
     const SupplyVaultFactory = await hre.ethers.getContractFactory("SupplyVault", admin);
 
-    supplyVault = await SupplyVaultFactory.deploy(morphoAddress, borrowableAddress, "SupplyVault", "mB");
+    supplyVault = await SupplyVaultFactory.deploy(morphoAddress, 0, borrowableAddress, "SupplyVault", "mB");
 
     const supplyVaultAddress = await supplyVault.getAddress();
 
@@ -124,12 +128,22 @@ describe("SupplyVault", () => {
     await supplyVault.setIsRiskManager(riskManager.address, true);
     await supplyVault.setIsAllocator(allocator.address, true);
 
-    await supplyVault.setFee(BigInt.WAD / 5n);
     await supplyVault.setFeeRecipient(admin.address);
+    await supplyVault.submitPendingFee(BigInt.WAD / 5n);
+    await supplyVault.setFee();
 
     for (const marketParams of allMarketParams) {
-      await supplyVault.connect(riskManager).setConfig(marketParams, { cap: MaxUint256 });
+      await supplyVault
+        .connect(riskManager)
+        .submitPendingMarket(
+          marketParams,
+          (BigInt.WAD * 100n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length),
+        );
+      await supplyVault.connect(riskManager).enableMarket(identifier(marketParams));
     }
+
+    await supplyVault.connect(riskManager).setSupplyAllocationOrder(allMarketParams.map(identifier));
+    await supplyVault.connect(riskManager).setWithdrawAllocationOrder(allMarketParams.map(identifier));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
@@ -141,19 +155,24 @@ describe("SupplyVault", () => {
 
   it("should simulate gas cost [main]", async () => {
     for (let i = 0; i < suppliers.length; ++i) {
-      if (i % 20 == 0) console.log("[main]", Math.floor((100 * i) / suppliers.length), "%");
-
-      if (random() < 1 / 2) await forwardTimestamp();
+      logProgress("main", i, suppliers.length);
 
       const supplier = suppliers[i];
 
       let assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
 
+      await randomForwardTimestamp();
+
       await supplyVault.connect(supplier).deposit(assets, supplier.address);
+
+      await randomForwardTimestamp();
+
       await supplyVault.connect(supplier).withdraw(assets / 2n, supplier.address, supplier.address);
 
+      await randomForwardTimestamp();
+
       await supplyVault.connect(allocator).reallocate(
-        [],
+        [{ marketParams: allMarketParams[0], assets: assets / 2n }],
         allMarketParams.map((marketParams) => ({ marketParams, assets: assets / toBigInt(nbMarkets + 1) / 2n })),
       );
 
@@ -165,7 +184,12 @@ describe("SupplyVault", () => {
 
         assets = liquidity / 2n;
 
+        await randomForwardTimestamp();
+
         await morpho.connect(borrower).supplyCollateral(marketParams, assets, borrower.address, "0x");
+
+        await randomForwardTimestamp();
+
         await morpho.connect(borrower).borrow(marketParams, assets / 3n, 0, borrower.address, borrower.address);
       }
     }
