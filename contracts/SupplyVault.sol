@@ -34,6 +34,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     uint256 public constant TIMELOCK_EXPIRATION = 2 days;
     uint256 public constant MAX_TIMELOCK = 2 weeks;
+    uint256 public constant DECIMALS_OFFSET = 6;
 
     /* IMMUTABMES */
 
