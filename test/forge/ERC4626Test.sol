@@ -167,7 +167,7 @@ contract ERC4626Test is BaseTest {
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
-    function testWithdrawTooMuch(uint256 deposited) public {
+    function testWithdrawTooMuch(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -175,9 +175,11 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        vm.prank(SUPPLIER);
-        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_ORDER_FAILED));
-        vault.withdraw(deposited + 1, RECEIVER, ONBEHALF);
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
+
+        vm.prank(ONBEHALF);
+        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
     function testTransfer(uint256 deposited, uint256 toTransfer) public {

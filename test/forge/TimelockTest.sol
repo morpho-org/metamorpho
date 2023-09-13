@@ -5,7 +5,7 @@ import "./helpers/BaseTest.sol";
 
 contract TimelockTest is BaseTest {
     function testSubmitPendingTimelock(uint256 timelock) public {
-        timelock = bound(timelock, 0, vault.MAX_TIMELOCK());
+        timelock = bound(timelock, 0, MAX_TIMELOCK);
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
@@ -20,7 +20,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testSubmitPendingTimelockShouldRevertWhenMaxTimelockExceeded(uint256 timelock) public {
-        timelock = bound(timelock, vault.MAX_TIMELOCK() + 1, type(uint256).max);
+        timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(bytes(ErrorsLib.MAX_TIMELOCK_EXCEEDED));
@@ -28,7 +28,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testSetTimelock(uint256 timelock) public {
-        timelock = bound(timelock, 0, vault.MAX_TIMELOCK());
+        timelock = bound(timelock, 0, MAX_TIMELOCK);
         vm.startPrank(OWNER);
         vault.submitTimelock(timelock);
 
