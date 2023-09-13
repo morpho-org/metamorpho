@@ -140,7 +140,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function acceptFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
-        _accrueFee();
+        _updateLastTotalAssets(_accrueFee());
 
         fee = uint96(pendingFee.value);
 
@@ -153,7 +153,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
 
         // Accrue interest to the previous fee recipient set before changing it.
-        _accrueFee();
+        _updateLastTotalAssets(_accrueFee());
 
         feeRecipient = newFeeRecipient;
 
@@ -242,16 +242,22 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
     }
 
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
-        _accrueFee();
+    function deposit(uint256 assets, address receiver) public virtual override returns (uint256 shares) {
+        uint256 newTotalAssets = _accrueFee();
 
-        return super.deposit(assets, receiver);
+        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets + assets);
     }
 
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256) {
-        _accrueFee();
+    function mint(uint256 shares, address receiver) public virtual override returns (uint256 assets) {
+        uint256 newTotalAssets = _accrueFee();
 
-        return super.mint(shares, receiver);
+        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Up);
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets + assets);
     }
 
     function withdraw(uint256 assets, address receiver, address owner)
@@ -260,21 +266,25 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         override
         returns (uint256 shares)
     {
-        _accrueFee();
+        uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
-        shares = previewWithdraw(assets);
+        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Up);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets - assets);
     }
 
     function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256 assets) {
-        _accrueFee();
+        uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
-        assets = previewRedeem(shares);
+        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Down);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets - assets);
     }
 
     function totalAssets() public view override returns (uint256 assets) {
@@ -304,6 +314,46 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
 
         super._withdraw(caller, receiver, owner, assets, shares);
+    }
+
+    function _convertToShares(uint256 assets, Math.Rounding rounding)
+        internal
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return assets.mulDiv(totalSupply() + feeShares + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    }
+
+    function _convertToAssets(uint256 shares, Math.Rounding rounding)
+        internal
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return shares.mulDiv(newTotalAssets + 1, totalSupply() + feeShares + 10 ** _decimalsOffset(), rounding);
+    }
+
+    function _convertToSharesWithFeeAccrued(uint256 assets, uint256 newTotalAssets, Math.Rounding rounding)
+        internal
+        view
+        returns (uint256)
+    {
+        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    }
+
+    function _convertToAssetsWithFeeAccrued(uint256 shares, uint256 newTotalAssets, Math.Rounding rounding)
+        internal
+        view
+        returns (uint256)
+    {
+        return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
     }
 
     /* INTERNAL */
@@ -455,28 +505,29 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
     }
 
-    function _accrueFee() internal {
-        if (fee == 0 || feeRecipient == address(0)) return;
-
-        (uint256 newTotalAssets, uint256 feeShares) = _accruedFeeShares();
-
+    function _updateLastTotalAssets(uint256 newTotalAssets) internal {
         lastTotalAssets = newTotalAssets;
 
-        if (feeShares != 0) _mint(feeRecipient, feeShares);
-
-        emit EventsLib.AccrueFee(newTotalAssets, feeShares);
+        emit EventsLib.UpdateLastTotalAssets(newTotalAssets);
     }
 
-    function _accruedFeeShares() internal view returns (uint256 newTotalAssets, uint256 feeShares) {
-        newTotalAssets = totalAssets();
-        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
+    function _accrueFee() internal returns (uint256 newTotalAssets) {
+        uint256 feeShares;
+        (feeShares, newTotalAssets) = _accruedFeeShares();
 
-        if (totalInterest != 0) {
-            uint256 feeAmount = totalInterest.mulDiv(fee, WAD);
-            // The fee amount is subtracted from the total assets in this calculation to compensate for the fact
-            // that total assets is already increased by the total interest (including the fee amount).
-            feeShares = feeAmount.mulDiv(
-                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAmount + 1, Math.Rounding.Down
+        if (feeShares != 0 && feeRecipient != address(0)) _mint(feeRecipient, feeShares);
+    }
+
+    function _accruedFeeShares() internal view returns (uint256 feeShares, uint256 newTotalAssets) {
+        newTotalAssets = totalAssets();
+
+        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
+        if (totalInterest != 0 && fee != 0) {
+            uint256 feeAssets = totalInterest.mulDiv(fee, WAD);
+            // The fee assets is subtracted from the total assets in this calculation to compensate for the fact
+            // that total assets is already increased by the total interest (including the fee assets).
+            feeShares = feeAssets.mulDiv(
+                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
     }

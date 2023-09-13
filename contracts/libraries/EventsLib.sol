@@ -30,8 +30,7 @@ library EventsLib {
 
     event DisableMarket(Id id);
 
-    /// @notice Emitted when the vault's performance fee is accrued.
+    /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.
-    /// @param feeShares The shares minted corresponding to the fee accrued.
-    event AccrueFee(uint256 totalAssets, uint256 feeShares);
+    event UpdateLastTotalAssets(uint256 totalAssets);
 }
