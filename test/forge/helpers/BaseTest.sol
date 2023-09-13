@@ -14,7 +14,7 @@ import {IrmMock} from "contracts/mocks/IrmMock.sol";
 import {ERC20Mock} from "contracts/mocks/ERC20Mock.sol";
 import {OracleMock} from "contracts/mocks/OracleMock.sol";
 
-import {SupplyVault, IERC20, ErrorsLib, Pending, MarketAllocation} from "contracts/SupplyVault.sol";
+import {MetaMorpho, IERC20, ErrorsLib, Pending, MarketAllocation} from "contracts/MetaMorpho.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
@@ -51,7 +51,7 @@ contract BaseTest is Test {
     OracleMock internal oracle;
     IrmMock internal irm;
 
-    SupplyVault internal vault;
+    MetaMorpho internal vault;
 
     MarketParams[] internal allMarkets;
 
@@ -89,7 +89,7 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         vm.startPrank(OWNER);
-        vault = new SupplyVault(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
+        vault = new MetaMorpho(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
@@ -220,15 +220,15 @@ contract BaseTest is Test {
 
     function _submitAndSetTimelock(uint128 timelock) internal {
         vm.startPrank(OWNER);
-        vault.submitPendingTimelock(timelock);
+        vault.submitTimelock(timelock);
         vm.warp(block.timestamp + vault.timelock());
-        vault.setTimelock();
+        vault.acceptTimelock();
         vm.stopPrank();
     }
 
     function _submitAndEnableMarket(MarketParams memory params, uint128 cap) internal {
         vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(params, cap);
+        vault.submitMarket(params, cap);
         vm.warp(block.timestamp + vault.timelock());
         vault.enableMarket(params.id());
         vm.stopPrank();

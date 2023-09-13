@@ -23,8 +23,6 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         uint256 deposited = vault.mint(shares, ONBEHALF);
 
-        uint256 totalBalanceAfter = morpho.expectedSupplyBalance(allMarkets[0], address(vault));
-
         assertGt(deposited, 0, "deposited");
         assertEq(vault.balanceOf(ONBEHALF), shares, "balanceOf(ONBEHALF)");
         assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), assets, "expectedSupplyBalance(vault)");

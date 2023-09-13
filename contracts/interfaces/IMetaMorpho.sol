@@ -13,4 +13,4 @@ struct Pending {
     uint128 timestamp;
 }
 
-interface ISupplyVault {}
+interface IMetaMorpho {}
