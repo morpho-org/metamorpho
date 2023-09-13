@@ -186,15 +186,15 @@ contract ERC4626Test is BaseTest {
         borrowableToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(deposited, ONBEHALF);
+        uint256 minted = vault.deposit(deposited, ONBEHALF);
 
-        toTransfer = bound(toTransfer, 0, shares);
+        toTransfer = bound(toTransfer, 0, minted);
 
         vm.prank(ONBEHALF);
         vault.transfer(RECEIVER, toTransfer);
 
         assertEq(vault.balanceOf(SUPPLIER), 0, "balanceOf(SUPPLIER)");
-        assertEq(vault.balanceOf(ONBEHALF), shares - toTransfer, "balanceOf(ONBEHALF)");
+        assertEq(vault.balanceOf(ONBEHALF), minted - toTransfer, "balanceOf(ONBEHALF)");
         assertEq(vault.balanceOf(RECEIVER), toTransfer, "balanceOf(RECEIVER)");
     }
 }
