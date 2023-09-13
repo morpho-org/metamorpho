@@ -1,8 +1,5 @@
-contracts/=contracts/
+src/=src/
 test/=test/
-
-solmate/=lib/solmate/
-openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 
 @morpho-blue/=lib/morpho-blue/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/

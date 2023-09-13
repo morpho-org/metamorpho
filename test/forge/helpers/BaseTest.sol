@@ -10,11 +10,11 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 
 import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
 
-import {IrmMock} from "contracts/mocks/IrmMock.sol";
-import {ERC20Mock} from "contracts/mocks/ERC20Mock.sol";
-import {OracleMock} from "contracts/mocks/OracleMock.sol";
+import {IrmMock} from "src/mocks/IrmMock.sol";
+import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
+import {OracleMock} from "src/mocks/OracleMock.sol";
 
-import {MetaMorpho, IERC20, ErrorsLib, Pending, MarketAllocation} from "contracts/MetaMorpho.sol";
+import {MetaMorpho, IERC20, ErrorsLib, Pending, MarketAllocation} from "src/MetaMorpho.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";

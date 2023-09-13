@@ -31,9 +31,13 @@ const identifier = (marketParams: MarketParamsStruct) => {
   return Buffer.from(keccak256(encodedMarket).slice(2), "hex");
 };
 
-const forwardTimestamp = async () => {
+const logProgress = (name: string, i: number, max: number) => {
+  if (i % 10 == 0) console.log("[" + name + "]", Math.floor((100 * i) / max), "%");
+};
+
+const randomForwardTimestamp = async () => {
   const block = await hre.ethers.provider.getBlock("latest");
-  const elapsed = (1 + Math.floor(random() * 100)) * 12;
+  const elapsed = random() < 1 / 2 ? 0 : (1 + Math.floor(random() * 100)) * 12; // 50% of the time, don't go forward in time.
 
   await setNextBlockTimestamp(block!.timestamp + elapsed);
 };
@@ -110,7 +114,7 @@ describe("MetaMorpho", () => {
 
     const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
 
-    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, borrowableAddress, "MetaMorpho", "mB");
+    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 0, borrowableAddress, "MetaMorpho", "mB");
 
     const metaMorphoAddress = await metaMorpho.getAddress();
 
@@ -124,12 +128,22 @@ describe("MetaMorpho", () => {
     await metaMorpho.setIsRiskManager(riskManager.address, true);
     await metaMorpho.setIsAllocator(allocator.address, true);
 
-    await metaMorpho.acceptFee(BigInt.WAD / 5n);
     await metaMorpho.setFeeRecipient(admin.address);
+    await metaMorpho.submitFee(BigInt.WAD / 5n);
+    await metaMorpho.acceptFee();
 
     for (const marketParams of allMarketParams) {
-      await metaMorpho.connect(riskManager).setConfig(marketParams, { cap: MaxUint256 });
+      await metaMorpho
+        .connect(riskManager)
+        .submitMarket(
+          marketParams,
+          (BigInt.WAD * 100n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length),
+        );
+      await metaMorpho.connect(riskManager).enableMarket(identifier(marketParams));
     }
+
+    await metaMorpho.connect(riskManager).setSupplyAllocationOrder(allMarketParams.map(identifier));
+    await metaMorpho.connect(riskManager).setWithdrawAllocationOrder(allMarketParams.map(identifier));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
@@ -141,19 +155,24 @@ describe("MetaMorpho", () => {
 
   it("should simulate gas cost [main]", async () => {
     for (let i = 0; i < suppliers.length; ++i) {
-      if (i % 20 == 0) console.log("[main]", Math.floor((100 * i) / suppliers.length), "%");
-
-      if (random() < 1 / 2) await forwardTimestamp();
+      logProgress("main", i, suppliers.length);
 
       const supplier = suppliers[i];
 
       let assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
 
+      await randomForwardTimestamp();
+
       await metaMorpho.connect(supplier).deposit(assets, supplier.address);
+
+      await randomForwardTimestamp();
+
       await metaMorpho.connect(supplier).withdraw(assets / 2n, supplier.address, supplier.address);
 
+      await randomForwardTimestamp();
+
       await metaMorpho.connect(allocator).reallocate(
-        [],
+        [{ marketParams: allMarketParams[0], assets: assets / 2n }],
         allMarketParams.map((marketParams) => ({ marketParams, assets: assets / toBigInt(nbMarkets + 1) / 2n })),
       );
 
@@ -165,7 +184,12 @@ describe("MetaMorpho", () => {
 
         assets = liquidity / 2n;
 
+        await randomForwardTimestamp();
+
         await morpho.connect(borrower).supplyCollateral(marketParams, assets, borrower.address, "0x");
+
+        await randomForwardTimestamp();
+
         await morpho.connect(borrower).borrow(marketParams, assets / 3n, 0, borrower.address, borrower.address);
       }
     }
