@@ -108,15 +108,15 @@ describe("MetaMorpho", () => {
       await morpho.createMarket(marketParams);
     }
 
-    const SupplyVaultFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
+    const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
 
-    metaMorpho = await SupplyVaultFactory.deploy(morphoAddress, borrowableAddress, "MetaMorpho", "mB");
+    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, borrowableAddress, "MetaMorpho", "mB");
 
-    const supplyVaultAddress = await metaMorpho.getAddress();
+    const metaMorphoAddress = await metaMorpho.getAddress();
 
     for (const user of users) {
       await borrowable.setBalance(user.address, initBalance);
-      await borrowable.connect(user).approve(supplyVaultAddress, MaxUint256);
+      await borrowable.connect(user).approve(metaMorphoAddress, MaxUint256);
       await collateral.setBalance(user.address, initBalance);
       await collateral.connect(user).approve(morphoAddress, MaxUint256);
     }
@@ -136,7 +136,7 @@ describe("MetaMorpho", () => {
     hre.tracer.nameTags[borrowableAddress] = "Borrowable";
     hre.tracer.nameTags[oracleAddress] = "Oracle";
     hre.tracer.nameTags[irmAddress] = "IRM";
-    hre.tracer.nameTags[supplyVaultAddress] = "MetaMorpho";
+    hre.tracer.nameTags[metaMorphoAddress] = "MetaMorpho";
   });
 
   it("should simulate gas cost [main]", async () => {
