@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {MarketAllocation, Pending, ISupplyVault} from "./interfaces/ISupplyVault.sol";
+import {MarketAllocation, Pending, IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
@@ -23,7 +23,7 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
+contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using ConfigSetLib for ConfigSet;
@@ -114,19 +114,19 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* ONLY OWNER FUNCTIONS */
 
-    function submitPendingTimelock(uint256 newTimelock) external onlyOwner {
+    function submitTimelock(uint256 newTimelock) external onlyOwner {
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
         pendingTimelock = Pending(uint128(newTimelock), uint128(block.timestamp));
 
-        emit EventsLib.SubmitPendingTimelock(newTimelock);
+        emit EventsLib.SubmitTimelock(newTimelock);
     }
 
-    function setTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
+    function acceptTimelock() external timelockElapsed(pendingTimelock.timestamp) onlyOwner {
         timelock = pendingTimelock.value;
 
-        emit EventsLib.SetTimelock(pendingTimelock.value);
+        emit EventsLib.AcceptTimelock(pendingTimelock.value);
 
         delete pendingTimelock;
     }
@@ -143,23 +143,23 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    function submitPendingFee(uint256 newFee) external onlyOwner {
+    function submitFee(uint256 newFee) external onlyOwner {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
 
         // Safe "unchecked" cast because newFee <= WAD.
         pendingFee = Pending(uint128(newFee), uint128(block.timestamp));
 
-        emit EventsLib.SubmitPendingFee(newFee);
+        emit EventsLib.SubmitFee(newFee);
     }
 
-    function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
+    function acceptFee() external timelockElapsed(pendingFee.timestamp) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
-        _accrueFee();
+        _updateLastTotalAssets(_accrueFee());
 
         fee = uint96(pendingFee.value);
 
-        emit EventsLib.SetFee(pendingFee.value);
+        emit EventsLib.AcceptFee(pendingFee.value);
 
         delete pendingFee;
     }
@@ -168,7 +168,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
 
         // Accrue interest to the previous fee recipient set before changing it.
-        _accrueFee();
+        _updateLastTotalAssets(_accrueFee());
 
         feeRecipient = newFeeRecipient;
 
@@ -177,7 +177,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     /* ONLY RISK MANAGER FUNCTIONS */
 
-    function submitPendingMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
+    function submitMarket(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
         (,,,, uint128 lastUpdate,) = MORPHO.market(marketParams.id());
         require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
@@ -186,7 +186,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
         pendingMarket[id] = Pending(cap, uint128(block.timestamp));
 
-        emit EventsLib.SubmitPendingMarket(id);
+        emit EventsLib.SubmitMarket(id);
     }
 
     function enableMarket(Id id) external timelockElapsed(pendingMarket[id].timestamp) onlyRiskManager {
@@ -259,16 +259,22 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
     }
 
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
-        _accrueFee();
+    function deposit(uint256 assets, address receiver) public virtual override returns (uint256 shares) {
+        uint256 newTotalAssets = _accrueFee();
 
-        return super.deposit(assets, receiver);
+        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets + assets);
     }
 
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256) {
-        _accrueFee();
+    function mint(uint256 shares, address receiver) public virtual override returns (uint256 assets) {
+        uint256 newTotalAssets = _accrueFee();
 
-        return super.mint(shares, receiver);
+        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Up);
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets + assets);
     }
 
     function withdraw(uint256 assets, address receiver, address owner)
@@ -277,21 +283,25 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         override
         returns (uint256 shares)
     {
-        _accrueFee();
+        uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
-        shares = previewWithdraw(assets);
+        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Up);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets - assets);
     }
 
     function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256 assets) {
-        _accrueFee();
+        uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
-        assets = previewRedeem(shares);
+        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Down);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
+
+        _updateLastTotalAssets(newTotalAssets - assets);
     }
 
     function totalAssets() public view override returns (uint256 assets) {
@@ -321,6 +331,46 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
 
         super._withdraw(caller, receiver, owner, assets, shares);
+    }
+
+    function _convertToShares(uint256 assets, Math.Rounding rounding)
+        internal
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return assets.mulDiv(totalSupply() + feeShares + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    }
+
+    function _convertToAssets(uint256 shares, Math.Rounding rounding)
+        internal
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return shares.mulDiv(newTotalAssets + 1, totalSupply() + feeShares + 10 ** _decimalsOffset(), rounding);
+    }
+
+    function _convertToSharesWithFeeAccrued(uint256 assets, uint256 newTotalAssets, Math.Rounding rounding)
+        internal
+        view
+        returns (uint256)
+    {
+        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    }
+
+    function _convertToAssetsWithFeeAccrued(uint256 shares, uint256 newTotalAssets, Math.Rounding rounding)
+        internal
+        view
+        returns (uint256)
+    {
+        return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
     }
 
     /* INTERNAL */
@@ -498,28 +548,29 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
         }
     }
 
-    function _accrueFee() internal {
-        if (fee == 0 || feeRecipient == address(0)) return;
-
-        (uint256 newTotalAssets, uint256 feeShares) = _accruedFeeShares();
-
+    function _updateLastTotalAssets(uint256 newTotalAssets) internal {
         lastTotalAssets = newTotalAssets;
 
-        if (feeShares != 0) _mint(feeRecipient, feeShares);
-
-        emit EventsLib.AccrueFee(newTotalAssets, feeShares);
+        emit EventsLib.UpdateLastTotalAssets(newTotalAssets);
     }
 
-    function _accruedFeeShares() internal view returns (uint256 newTotalAssets, uint256 feeShares) {
-        newTotalAssets = totalAssets();
-        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
+    function _accrueFee() internal returns (uint256 newTotalAssets) {
+        uint256 feeShares;
+        (feeShares, newTotalAssets) = _accruedFeeShares();
 
-        if (totalInterest != 0) {
-            uint256 feeAmount = totalInterest.mulDiv(fee, WAD);
-            // The fee amount is subtracted from the total assets in this calculation to compensate for the fact
-            // that total assets is already increased by the total interest (including the fee amount).
-            feeShares = feeAmount.mulDiv(
-                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAmount + 1, Math.Rounding.Down
+        if (feeShares != 0 && feeRecipient != address(0)) _mint(feeRecipient, feeShares);
+    }
+
+    function _accruedFeeShares() internal view returns (uint256 feeShares, uint256 newTotalAssets) {
+        newTotalAssets = totalAssets();
+
+        uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
+        if (totalInterest != 0 && fee != 0) {
+            uint256 feeAssets = totalInterest.mulDiv(fee, WAD);
+            // The fee assets is subtracted from the total assets in this calculation to compensate for the fact
+            // that total assets is already increased by the total interest (including the fee assets).
+            feeShares = feeAssets.mulDiv(
+                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
     }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./BaseTest.sol";
+import "./helpers/BaseTest.sol";
 
 contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
@@ -10,7 +10,7 @@ contract MarketTest is BaseTest {
         MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
 
         vm.prank(RISK_MANAGER);
-        vault.submitPendingMarket(marketParamsFuzz, cap);
+        vault.submitMarket(marketParamsFuzz, cap);
 
         (uint128 value, uint128 timestamp) = vault.pendingMarket(marketParamsFuzz.id());
         assertEq(value, cap);
@@ -44,7 +44,7 @@ contract MarketTest is BaseTest {
         timeElapsed = bound(timeElapsed, 0, timelock - 1);
 
         vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(allMarkets[0], CAP);
+        vault.submitMarket(allMarkets[0], CAP);
 
         vm.warp(block.timestamp + timeElapsed);
 
@@ -59,7 +59,7 @@ contract MarketTest is BaseTest {
         timeElapsed = bound(timeElapsed, timelock + vault.TIMELOCK_EXPIRATION() + 1, type(uint128).max);
 
         vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(allMarkets[0], CAP);
+        vault.submitMarket(allMarkets[0], CAP);
 
         vm.warp(block.timestamp + timeElapsed);
 
@@ -72,7 +72,7 @@ contract MarketTest is BaseTest {
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.INCONSISTENT_ASSET));
-        vault.submitPendingMarket(marketParamsFuzz, 0);
+        vault.submitMarket(marketParamsFuzz, 0);
     }
 
     function testSubmitPendingMarketShouldRevertWhenMarketNotCreated(MarketParams memory marketParamsFuzz) public {
@@ -82,7 +82,7 @@ contract MarketTest is BaseTest {
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));
-        vault.submitPendingMarket(marketParamsFuzz, 0);
+        vault.submitMarket(marketParamsFuzz, 0);
     }
 
     function testDisableMarket() public {
@@ -141,7 +141,7 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
     }
 
-    function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
+    function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarketInTheAllocationList() public {
         _submitAndEnableMarket(allMarkets[0], CAP);
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
@@ -201,7 +201,7 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
     }
 
-    function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
+    function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarketInTheAllocationList() public {
         _submitAndEnableMarket(allMarkets[0], CAP);
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
