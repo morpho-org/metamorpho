@@ -145,6 +145,8 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function setFee() external timelockElapsed(pendingFee.timestamp) onlyOwner updateLastTotalAssets {
+        require(pendingFee.value == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
+
         // Accrue interest using the previous fee set before changing it.
         _accrueFee();
 
@@ -157,6 +159,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner updateLastTotalAssets {
         require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
+        require(newFeeRecipient != address(0) || fee == 0, ErrorsLib.ZERO_FEE_RECIPIENT);
 
         // Accrue interest to the previous fee recipient set before changing it.
         _accrueFee();
@@ -493,7 +496,7 @@ contract SupplyVault is ERC4626, Ownable2Step, ISupplyVault {
     }
 
     function _accrueFee() internal {
-        if (fee == 0 || feeRecipient == address(0)) return;
+        if (fee == 0) return;
 
         uint256 feeShares = _accruedFeeShares();
 

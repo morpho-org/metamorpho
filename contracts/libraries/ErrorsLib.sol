@@ -37,4 +37,6 @@ library ErrorsLib {
     string internal constant TIMELOCK_NOT_ELAPSED = "timelock not elapsed";
 
     string internal constant TIMELOCK_EXPIRATION_EXCEEDED = "timelock expiration exceeded";
+
+    string internal constant ZERO_FEE_RECIPIENT = "no fee recipient set";
 }
