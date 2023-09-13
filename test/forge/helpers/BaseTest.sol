@@ -59,6 +59,8 @@ contract BaseTest is Test {
 
     MarketParams[] internal allMarkets;
 
+    MarketParams internal idleMarket;
+
     function setUp() public virtual {
         OWNER = _addrFromHashedString("Owner");
         SUPPLIER = _addrFromHashedString("Supplier");
