@@ -1,7 +1,7 @@
 import { AbiCoder, MaxUint256, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, IrmMock, OracleMock, SupplyVault } from "types";
+import { ERC20Mock, IrmMock, OracleMock, MetaMorpho } from "types";
 import { IMorpho, MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -42,7 +42,7 @@ const randomForwardTimestamp = async () => {
   await setNextBlockTimestamp(block!.timestamp + elapsed);
 };
 
-describe("SupplyVault", () => {
+describe("MetaMorpho", () => {
   let admin: SignerWithAddress;
   let riskManager: SignerWithAddress;
   let allocator: SignerWithAddress;
@@ -55,7 +55,7 @@ describe("SupplyVault", () => {
   let oracle: OracleMock;
   let irm: IrmMock;
 
-  let supplyVault: SupplyVault;
+  let metaMorpho: MetaMorpho;
 
   let allMarketParams: MarketParamsStruct[];
 
@@ -112,45 +112,45 @@ describe("SupplyVault", () => {
       await morpho.createMarket(marketParams);
     }
 
-    const SupplyVaultFactory = await hre.ethers.getContractFactory("SupplyVault", admin);
+    const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
 
-    supplyVault = await SupplyVaultFactory.deploy(morphoAddress, 0, borrowableAddress, "SupplyVault", "mB");
+    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 0, borrowableAddress, "MetaMorpho", "mB");
 
-    const supplyVaultAddress = await supplyVault.getAddress();
+    const metaMorphoAddress = await metaMorpho.getAddress();
 
     for (const user of users) {
       await borrowable.setBalance(user.address, initBalance);
-      await borrowable.connect(user).approve(supplyVaultAddress, MaxUint256);
+      await borrowable.connect(user).approve(metaMorphoAddress, MaxUint256);
       await collateral.setBalance(user.address, initBalance);
       await collateral.connect(user).approve(morphoAddress, MaxUint256);
     }
 
-    await supplyVault.setIsRiskManager(riskManager.address, true);
-    await supplyVault.setIsAllocator(allocator.address, true);
+    await metaMorpho.setIsRiskManager(riskManager.address, true);
+    await metaMorpho.setIsAllocator(allocator.address, true);
 
-    await supplyVault.setFeeRecipient(admin.address);
-    await supplyVault.submitPendingFee(BigInt.WAD / 5n);
-    await supplyVault.setFee();
+    await metaMorpho.setFeeRecipient(admin.address);
+    await metaMorpho.submitFee(BigInt.WAD / 5n);
+    await metaMorpho.acceptFee();
 
     for (const marketParams of allMarketParams) {
-      await supplyVault
+      await metaMorpho
         .connect(riskManager)
-        .submitPendingMarket(
+        .submitMarket(
           marketParams,
           (BigInt.WAD * 100n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length),
         );
-      await supplyVault.connect(riskManager).enableMarket(identifier(marketParams));
+      await metaMorpho.connect(riskManager).enableMarket(identifier(marketParams));
     }
 
-    await supplyVault.connect(riskManager).setSupplyAllocationOrder(allMarketParams.map(identifier));
-    await supplyVault.connect(riskManager).setWithdrawAllocationOrder(allMarketParams.map(identifier));
+    await metaMorpho.connect(riskManager).setSupplyAllocationOrder(allMarketParams.map(identifier));
+    await metaMorpho.connect(riskManager).setWithdrawAllocationOrder(allMarketParams.map(identifier));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
     hre.tracer.nameTags[borrowableAddress] = "Borrowable";
     hre.tracer.nameTags[oracleAddress] = "Oracle";
     hre.tracer.nameTags[irmAddress] = "IRM";
-    hre.tracer.nameTags[supplyVaultAddress] = "SupplyVault";
+    hre.tracer.nameTags[metaMorphoAddress] = "MetaMorpho";
   });
 
   it("should simulate gas cost [main]", async () => {
@@ -163,15 +163,15 @@ describe("SupplyVault", () => {
 
       await randomForwardTimestamp();
 
-      await supplyVault.connect(supplier).deposit(assets, supplier.address);
+      await metaMorpho.connect(supplier).deposit(assets, supplier.address);
 
       await randomForwardTimestamp();
 
-      await supplyVault.connect(supplier).withdraw(assets / 2n, supplier.address, supplier.address);
+      await metaMorpho.connect(supplier).withdraw(assets / 2n, supplier.address, supplier.address);
 
       await randomForwardTimestamp();
 
-      await supplyVault.connect(allocator).reallocate(
+      await metaMorpho.connect(allocator).reallocate(
         [{ marketParams: allMarketParams[0], assets: assets / 2n }],
         allMarketParams.map((marketParams) => ({ marketParams, assets: assets / toBigInt(nbMarkets + 1) / 2n })),
       );

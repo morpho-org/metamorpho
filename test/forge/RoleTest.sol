@@ -11,10 +11,10 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.submitPendingTimelock(TIMELOCK);
+        vault.submitTimelock(TIMELOCK);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setTimelock();
+        vault.acceptTimelock();
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setIsRiskManager(caller, true);
@@ -23,10 +23,10 @@ contract RoleTest is BaseTest {
         vault.setIsAllocator(caller, true);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.submitPendingFee(1);
+        vault.submitFee(1);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setFee();
+        vault.acceptFee();
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setFeeRecipient(caller);
@@ -39,7 +39,7 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.submitPendingMarket(allMarkets[0], CAP);
+        vault.submitMarket(allMarkets[0], CAP);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
         vault.enableMarket(allMarkets[0].id());
@@ -74,14 +74,14 @@ contract RoleTest is BaseTest {
 
     function testRiskManagerOrOwnerShouldTriggerRiskManagerFunctions() public {
         vm.startPrank(OWNER);
-        vault.submitPendingMarket(allMarkets[0], CAP);
+        vault.submitMarket(allMarkets[0], CAP);
         vault.enableMarket(allMarkets[0].id());
         vault.setCap(allMarkets[0], CAP);
         vault.disableMarket(allMarkets[0].id());
         vm.stopPrank();
 
         vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(allMarkets[1], CAP);
+        vault.submitMarket(allMarkets[1], CAP);
         vault.enableMarket(allMarkets[1].id());
         vault.setCap(allMarkets[1], CAP);
         vault.disableMarket(allMarkets[1].id());
