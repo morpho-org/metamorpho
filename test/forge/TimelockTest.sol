@@ -7,7 +7,7 @@ contract TimelockTest is BaseTest {
     function testSubmitPendingTimelock(uint256 timelock) public {
         timelock = bound(timelock, 0, vault.MAX_TIMELOCK());
         vm.prank(OWNER);
-        vault.submitPendingTimelock(timelock);
+        vault.submitTimelock(timelock);
 
         (uint128 value, uint128 timestamp) = vault.pendingTimelock();
         assertEq(value, timelock);
@@ -16,7 +16,7 @@ contract TimelockTest is BaseTest {
 
     function testSubmitPendingTimelockShouldRevertWhenNotOwner(uint256 timelock) public {
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.submitPendingTimelock(timelock);
+        vault.submitTimelock(timelock);
     }
 
     function testSubmitPendingTimelockShouldRevertWhenMaxTimelockExceeded(uint256 timelock) public {
@@ -24,17 +24,17 @@ contract TimelockTest is BaseTest {
 
         vm.prank(OWNER);
         vm.expectRevert(bytes(ErrorsLib.MAX_TIMELOCK_EXCEEDED));
-        vault.submitPendingTimelock(timelock);
+        vault.submitTimelock(timelock);
     }
 
     function testSetTimelock(uint256 timelock) public {
         timelock = bound(timelock, 0, vault.MAX_TIMELOCK());
         vm.startPrank(OWNER);
-        vault.submitPendingTimelock(timelock);
+        vault.submitTimelock(timelock);
 
         vm.warp(block.timestamp + vault.timelock());
 
-        vault.setTimelock();
+        vault.acceptTimelock();
         vm.stopPrank();
 
         assertEq(vault.timelock(), timelock);
@@ -42,6 +42,6 @@ contract TimelockTest is BaseTest {
 
     function testSetTimelockShouldRevertWhenNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setTimelock();
+        vault.acceptTimelock();
     }
 }
