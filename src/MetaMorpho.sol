@@ -226,7 +226,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return _market(id).cap;
     }
 
-    /* ERC4626 */
+    /* ERC4626 (PUBLIC) */
 
     function maxWithdraw(address owner) public view override returns (uint256) {
         _accruedFeeShares();
@@ -290,6 +290,40 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         assets += ERC20(asset()).balanceOf(address(this));
     }
 
+    /* ERC4626 (INTERNAL) */
+
+    function _decimalsOffset() internal pure override returns (uint8) {
+        return 6;
+    }
+
+    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return assets.mulDiv(totalSupply() + feeShares + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    }
+
+    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return shares.mulDiv(newTotalAssets + 1, totalSupply() + feeShares + 10 ** _decimalsOffset(), rounding);
+    }
+
+    function _convertToSharesWithFeeAccrued(uint256 assets, uint256 newTotalAssets, Math.Rounding rounding)
+        internal
+        view
+        returns (uint256)
+    {
+        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    }
+
+    function _convertToAssetsWithFeeAccrued(uint256 shares, uint256 newTotalAssets, Math.Rounding rounding)
+        internal
+        view
+        returns (uint256)
+    {
+        return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+    }
+
     /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
         // If asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
@@ -330,34 +364,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
 
         emit Withdraw(caller, receiver, owner, assets, shares);
-    }
-
-    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
-        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
-
-        return assets.mulDiv(totalSupply() + feeShares + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
-    }
-
-    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
-        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
-
-        return shares.mulDiv(newTotalAssets + 1, totalSupply() + feeShares + 10 ** _decimalsOffset(), rounding);
-    }
-
-    function _convertToSharesWithFeeAccrued(uint256 assets, uint256 newTotalAssets, Math.Rounding rounding)
-        internal
-        view
-        returns (uint256)
-    {
-        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
-    }
-
-    function _convertToAssetsWithFeeAccrued(uint256 shares, uint256 newTotalAssets, Math.Rounding rounding)
-        internal
-        view
-        returns (uint256)
-    {
-        return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
     }
 
     /* INTERNAL */
@@ -534,9 +540,5 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
-    }
-
-    function _decimalsOffset() internal pure override returns (uint8) {
-        return 6;
     }
 }
