@@ -8,7 +8,8 @@ import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
-import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
+import "src/libraries/ConstantsLib.sol";
+import "@morpho-blue/libraries/ConstantsLib.sol";
 
 import {IrmMock} from "src/mocks/IrmMock.sol";
 import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
@@ -93,8 +94,7 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         vm.startPrank(OWNER);
-        vault =
-            new MetaMorpho(address(morpho), TIMELOCK, CAP, IERC20(address(borrowableToken)), "MetaMorpho Vault", "MMV");
+        vault = new MetaMorpho(address(morpho), TIMELOCK, CAP, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
