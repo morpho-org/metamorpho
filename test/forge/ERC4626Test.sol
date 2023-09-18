@@ -11,19 +11,6 @@ contract ERC4626Test is BaseTest {
         super.setUp();
 
         _submitAndEnableMarket(allMarkets[0], CAP);
-
-        Id[] memory supplyAllocationOrder = new Id[](2);
-        supplyAllocationOrder[0] = allMarkets[0].id();
-        supplyAllocationOrder[1] = idleMarket.id();
-
-        Id[] memory withdrawAllocationOrder = new Id[](2);
-        withdrawAllocationOrder[0] = idleMarket.id();
-        withdrawAllocationOrder[1] = allMarkets[0].id();
-
-        vm.startPrank(ALLOCATOR);
-        vault.setSupplyAllocationOrder(supplyAllocationOrder);
-        vault.setWithdrawAllocationOrder(withdrawAllocationOrder);
-        vm.stopPrank();
     }
 
     function testMint(uint256 assets) public {

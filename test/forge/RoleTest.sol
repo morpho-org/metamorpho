@@ -89,9 +89,8 @@ contract RoleTest is BaseTest {
     }
 
     function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {
-        Id[] memory order = new Id[](2);
-        order[0] = idleMarket.id();
-        order[1] = allMarkets[0].id();
+        Id[] memory order = new Id[](1);
+        order[0] = allMarkets[0].id();
         MarketAllocation[] memory allocation;
 
         _submitAndEnableMarket(allMarkets[0], CAP);

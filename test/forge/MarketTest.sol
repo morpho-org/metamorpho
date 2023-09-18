@@ -25,10 +25,8 @@ contract MarketTest is BaseTest {
         Id id = marketParamsFuzz.id();
 
         assertEq(vault.marketCap(id), cap);
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(idleMarket.id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(idleMarket.id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(id));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(id));
+        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(id));
+        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(id));
     }
 
     function testEnableMarketShouldRevertWhenAlreadyEnabled() public {
@@ -100,9 +98,8 @@ contract MarketTest is BaseTest {
         vm.expectRevert(bytes(ErrorsLib.UNAUTHORIZED_MARKET));
         vault.marketCap(id);
 
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(idleMarket.id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[2].id()));
+        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
+        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
     }
 
     function testDisableMarketShouldRevertWhenAlreadyDisabled() public {
@@ -127,16 +124,14 @@ contract MarketTest is BaseTest {
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
 
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(idleMarket.id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[1].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(3)), Id.unwrap(allMarkets[2].id()));
+        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
+        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[2].id()));
 
-        Id[] memory supplyAllocationOrder = new Id[](4);
+        Id[] memory supplyAllocationOrder = new Id[](3);
         supplyAllocationOrder[0] = allMarkets[1].id();
         supplyAllocationOrder[1] = allMarkets[2].id();
         supplyAllocationOrder[2] = allMarkets[0].id();
-        supplyAllocationOrder[3] = idleMarket.id();
 
         vm.prank(ALLOCATOR);
         vault.setSupplyAllocationOrder(supplyAllocationOrder);
@@ -144,7 +139,6 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[1].id()));
         assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
         assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(3)), Id.unwrap(idleMarket.id()));
     }
 
     function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarketInTheAllocationList() public {
@@ -152,10 +146,9 @@ contract MarketTest is BaseTest {
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
 
-        Id[] memory supplyAllocationOrder = new Id[](4);
+        Id[] memory supplyAllocationOrder = new Id[](3);
         supplyAllocationOrder[0] = allMarkets[0].id();
         supplyAllocationOrder[1] = allMarkets[1].id();
-        supplyAllocationOrder[2] = allMarkets[2].id();
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
@@ -175,7 +168,7 @@ contract MarketTest is BaseTest {
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setSupplyAllocationOrder(supplyAllocationOrder1);
 
-        Id[] memory supplyAllocationOrder2 = new Id[](6);
+        Id[] memory supplyAllocationOrder2 = new Id[](4);
         supplyAllocationOrder2[0] = allMarkets[0].id();
         supplyAllocationOrder2[1] = allMarkets[1].id();
         supplyAllocationOrder2[2] = allMarkets[2].id();
@@ -191,16 +184,14 @@ contract MarketTest is BaseTest {
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
 
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(idleMarket.id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[1].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(3)), Id.unwrap(allMarkets[2].id()));
+        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
+        assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[2].id()));
 
-        Id[] memory withdrawAllocationOrder = new Id[](4);
+        Id[] memory withdrawAllocationOrder = new Id[](3);
         withdrawAllocationOrder[0] = allMarkets[1].id();
         withdrawAllocationOrder[1] = allMarkets[2].id();
         withdrawAllocationOrder[2] = allMarkets[0].id();
-        withdrawAllocationOrder[3] = idleMarket.id();
 
         vm.prank(ALLOCATOR);
         vault.setWithdrawAllocationOrder(withdrawAllocationOrder);
@@ -208,7 +199,6 @@ contract MarketTest is BaseTest {
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(allMarkets[1].id()));
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
         assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(3)), Id.unwrap(idleMarket.id()));
     }
 
     function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarketInTheAllocationList() public {
@@ -216,10 +206,9 @@ contract MarketTest is BaseTest {
         _submitAndEnableMarket(allMarkets[1], CAP);
         _submitAndEnableMarket(allMarkets[2], CAP);
 
-        Id[] memory withdrawAllocationOrder = new Id[](4);
-        withdrawAllocationOrder[0] = idleMarket.id();
-        withdrawAllocationOrder[1] = allMarkets[0].id();
-        withdrawAllocationOrder[2] = allMarkets[1].id();
+        Id[] memory withdrawAllocationOrder = new Id[](3);
+        withdrawAllocationOrder[0] = allMarkets[0].id();
+        withdrawAllocationOrder[1] = allMarkets[1].id();
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
@@ -239,12 +228,11 @@ contract MarketTest is BaseTest {
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
         vault.setWithdrawAllocationOrder(withdrawAllocationOrder1);
 
-        Id[] memory withdrawAllocationOrder2 = new Id[](5);
-        withdrawAllocationOrder2[0] = idleMarket.id();
-        withdrawAllocationOrder2[1] = allMarkets[0].id();
-        withdrawAllocationOrder2[2] = allMarkets[1].id();
-        withdrawAllocationOrder2[3] = allMarkets[2].id();
-        withdrawAllocationOrder2[4] = allMarkets[3].id();
+        Id[] memory withdrawAllocationOrder2 = new Id[](4);
+        withdrawAllocationOrder2[0] = allMarkets[0].id();
+        withdrawAllocationOrder2[1] = allMarkets[1].id();
+        withdrawAllocationOrder2[2] = allMarkets[2].id();
+        withdrawAllocationOrder2[3] = allMarkets[3].id();
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
