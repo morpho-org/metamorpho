@@ -26,8 +26,6 @@ library ErrorsLib {
 
     string internal constant MARKET_NOT_ENABLED = "market not enabled";
 
-    string internal constant DEPOSIT_ORDER_FAILED = "deposit order failed";
-
     string internal constant WITHDRAW_ORDER_FAILED = "withdraw order failed";
 
     string internal constant MARKET_NOT_CREATED = "market not created";

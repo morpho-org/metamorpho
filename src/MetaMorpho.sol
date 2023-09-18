@@ -52,7 +52,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     uint256 public timelock;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
-    uint256 lastTotalAssets;
+    uint256 public lastTotalAssets;
+    uint256 public idle;
 
     ConfigSet private _config;
 
@@ -335,7 +336,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         // slither-disable-next-line reentrancy-no-eth
         SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
 
-        require(_depositOrder(assets) == 0, ErrorsLib.DEPOSIT_ORDER_FAILED);
+        _depositOrder(assets);
 
         _mint(owner, shares);
 
@@ -408,14 +409,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     /// @dev MUST NOT revert on a market.
-    function _depositOrder(uint256 assets) internal returns (uint256) {
+    function _depositOrder(uint256 assets) internal {
         uint256 length = supplyAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
             Id id = supplyAllocationOrder[i];
-
-            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
             uint256 cap = marketCap(id);
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
             uint256 toDeposit = assets;
 
             if (cap > 0) {
@@ -432,18 +432,23 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 if (success) assets -= toDeposit;
             }
 
-            if (assets == 0) break;
+            if (assets == 0) return;
         }
 
-        return assets;
+        idle += assets;
     }
 
     /// @dev MUST NOT revert on a market.
     function _staticWithdrawOrder(uint256 assets) internal view returns (uint256) {
+        (assets,) = _withdrawIdle(assets);
+
+        if (assets == 0) return 0;
+
         uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
+            Id id = withdrawAllocationOrder[i];
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
             if (toWithdraw > 0) {
                 bytes memory encodedCall =
@@ -453,7 +458,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 if (success) assets -= toWithdraw;
             }
 
-            if (assets == 0) break;
+            if (assets == 0) return 0;
         }
 
         return assets;
@@ -461,10 +466,15 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /// @dev MUST NOT revert on a market.
     function _withdrawOrder(uint256 assets) internal returns (uint256) {
+        (assets, idle) = _withdrawIdle(assets);
+
+        if (assets == 0) return 0;
+
         uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
-            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, withdrawAllocationOrder[i]);
+            Id id = withdrawAllocationOrder[i];
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
             if (toWithdraw > 0) {
                 bytes memory encodedCall =
@@ -474,10 +484,15 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 if (success) assets -= toWithdraw;
             }
 
-            if (assets == 0) break;
+            if (assets == 0) return 0;
         }
 
         return assets;
+    }
+
+    function _withdrawIdle(uint256 assets) internal view returns (uint256 remaining, uint256 newIdle) {
+        if (assets > idle) return (assets - idle, 0);
+        return (0, idle - assets);
     }
 
     function _withdrawable(uint256 assets, Id id)
