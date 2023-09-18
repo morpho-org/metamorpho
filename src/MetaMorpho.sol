@@ -409,7 +409,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     /// @dev MUST NOT revert on a market.
-    function _depositOrder(uint256 assets) internal returns (uint256) {
+    function _depositOrder(uint256 assets) internal {
         uint256 length = supplyAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
@@ -432,12 +432,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 if (success) assets -= toDeposit;
             }
 
-            if (assets == 0) return 0;
+            if (assets == 0) return;
         }
 
         idle += assets;
-
-        return 0;
     }
 
     /// @dev MUST NOT revert on a market.
