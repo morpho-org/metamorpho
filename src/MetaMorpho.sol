@@ -13,6 +13,7 @@ import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {
@@ -27,6 +28,7 @@ import {
 contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
+    using SafeCast for uint256;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
     using MorphoLib for IMorpho;
@@ -105,13 +107,12 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY OWNER FUNCTIONS */
 
-    // TODO: check it reverts if > type(uint192).max
-    function submitTimelock(uint192 newTimelock) external onlyOwner {
+    function submitTimelock(uint256 newTimelock) external onlyOwner {
         require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-        pendingTimelock = PendingParameter(newTimelock, uint64(block.timestamp));
+        pendingTimelock = PendingParameter(uint192(newTimelock), uint64(block.timestamp));
 
         emit EventsLib.SubmitTimelock(newTimelock);
     }
@@ -136,12 +137,12 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    function submitFee(uint192 newFee) external onlyOwner {
+    function submitFee(uint256 newFee) external onlyOwner {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
 
         // Safe "unchecked" cast because newFee <= WAD.
-        pendingFee = PendingParameter(newFee, uint64(block.timestamp));
+        pendingFee = PendingParameter(newFee.toUint192(), uint64(block.timestamp));
 
         emit EventsLib.SubmitFee(newFee);
     }
@@ -170,14 +171,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY RISK MANAGER FUNCTIONS */
 
-    function submitCap(MarketParams memory marketParams, uint192 marketCap) external onlyRiskManager {
+    function submitCap(MarketParams memory marketParams, uint256 marketCap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
 
         Id id = marketParams.id();
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
 
         // TODO: bypass timelock if marketCap == 0
-        pendingCap[id] = PendingParameter(marketCap, uint64(block.timestamp));
+        pendingCap[id] = PendingParameter(marketCap.toUint192(), uint64(block.timestamp));
 
         emit EventsLib.SubmitCap(id, marketCap);
     }

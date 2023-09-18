@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
 
 library EventsLib {
-    event SubmitTimelock(uint192 timelock);
+    event SubmitTimelock(uint256 timelock);
 
     event AcceptTimelock(uint256 timelock);
 
@@ -12,7 +12,7 @@ library EventsLib {
 
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
-    event SubmitFee(uint192 fee);
+    event SubmitFee(uint256 fee);
 
     /// @notice Emitted when setting a new fee.
     /// @param fee The new fee.
@@ -22,9 +22,9 @@ library EventsLib {
     /// @param feeRecipient The new fee recipient.
     event SetFeeRecipient(address indexed feeRecipient);
 
-    event SubmitCap(Id id, uint192 cap);
+    event SubmitCap(Id id, uint256 cap);
 
-    event AcceptCap(Id id, uint192 cap);
+    event AcceptCap(Id id, uint256 cap);
 
     /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.

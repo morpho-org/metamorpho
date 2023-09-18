@@ -8,49 +8,69 @@ import "./helpers/BaseTest.sol";
 contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
-    function testSubmitCap(uint256 seed, uint192 cap) public {
-        MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
+    function testSubmitCap(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
+        cap = bound(cap, 0, type(uint192).max);
 
         vm.prank(RISK_MANAGER);
-        vault.submitCap(marketParamsFuzz, cap);
+        vault.submitCap(marketParams, cap);
 
-        (uint192 value, uint64 timestamp) = vault.pendingCap(marketParamsFuzz.id());
+        (uint192 value, uint64 timestamp) = vault.pendingCap(marketParams.id());
+
         assertEq(value, cap);
         assertEq(timestamp, block.timestamp);
     }
 
-    function testAcceptCap(uint256 seed, uint128 cap) public {
-        MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
+    function testSubmitCapOverflow(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
 
-        _setCap(marketParamsFuzz, cap);
+        cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
 
-        Id id = marketParamsFuzz.id();
+        vm.prank(RISK_MANAGER);
+        vm.expectRevert("SafeCast: value doesn't fit in 192 bits");
+        vault.submitCap(marketParams, cap);
+    }
+
+    function testAcceptCap(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
+        cap = bound(cap, 0, type(uint192).max);
+
+        _setCap(marketParams, cap);
+
+        Id id = marketParams.id();
 
         assertEq(vault.cap(id), cap);
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id));
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id));
     }
 
-    function testAcceptCapShouldRevertWhenTimelockNotElapsed(uint128 timelock, uint256 timeElapsed) public {
-        timelock = uint128(bound(timelock, 1, MAX_TIMELOCK));
+    function testAcceptCapTimelockNotElapsed(uint256 timelock, uint256 timeElapsed) public {
+        timelock = bound(timelock, 1, MAX_TIMELOCK);
+
+        vm.assume(timelock != vault.timelock());
+
         _setTimelock(timelock);
 
         timeElapsed = bound(timeElapsed, 0, timelock - 1);
 
-        vm.startPrank(RISK_MANAGER);
+        vm.prank(RISK_MANAGER);
         vault.submitCap(allMarkets[0], CAP);
 
         vm.warp(block.timestamp + timeElapsed);
 
+        vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
         vault.acceptCap(allMarkets[0].id());
     }
 
-    function testAcceptCapShouldRevertWhenTimelockExpirationExceeded(uint128 timelock, uint256 timeElapsed) public {
-        timelock = uint128(bound(timelock, 1, MAX_TIMELOCK));
+    function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 timeElapsed) public {
+        timelock = bound(timelock, 1, MAX_TIMELOCK);
+
+        vm.assume(timelock != vault.timelock());
+
         _setTimelock(timelock);
 
-        timeElapsed = bound(timeElapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint128).max);
+        timeElapsed = bound(timeElapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.startPrank(RISK_MANAGER);
         vault.submitCap(allMarkets[0], CAP);
@@ -61,22 +81,22 @@ contract MarketTest is BaseTest {
         vault.acceptCap(allMarkets[0].id());
     }
 
-    function testSubmitCapRevertInconsistentAsset(MarketParams memory marketParamsFuzz) public {
-        vm.assume(marketParamsFuzz.borrowableToken != address(borrowableToken));
+    function testSubmitCapInconsistentAsset(MarketParams memory marketParams) public {
+        vm.assume(marketParams.borrowableToken != address(borrowableToken));
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.INCONSISTENT_ASSET));
-        vault.submitCap(marketParamsFuzz, 0);
+        vault.submitCap(marketParams, 0);
     }
 
-    function testSubmitCapRevertMarketNotCreated(MarketParams memory marketParamsFuzz) public {
-        marketParamsFuzz.borrowableToken = address(borrowableToken);
-        (,,,, uint128 lastUpdate,) = morpho.market(marketParamsFuzz.id());
+    function testSubmitCapMarketNotCreated(MarketParams memory marketParams) public {
+        marketParams.borrowableToken = address(borrowableToken);
+        (,,,, uint256 lastUpdate,) = morpho.market(marketParams.id());
         vm.assume(lastUpdate == 0);
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));
-        vault.submitCap(marketParamsFuzz, 0);
+        vault.submitCap(marketParams, 0);
     }
 
     function testSetSupplyQueue() public {

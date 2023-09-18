@@ -32,7 +32,7 @@ contract BaseTest is Test {
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
-    uint192 internal constant TIMELOCK = 0;
+    uint256 internal constant TIMELOCK = 0;
     uint128 internal constant CAP = type(uint128).max;
 
     address internal OWNER;
@@ -219,7 +219,7 @@ contract BaseTest is Test {
         require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
-    function _setTimelock(uint192 timelock) internal {
+    function _setTimelock(uint256 timelock) internal {
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
@@ -229,7 +229,7 @@ contract BaseTest is Test {
         vault.acceptTimelock();
     }
 
-    function _setCap(MarketParams memory params, uint192 cap) internal {
+    function _setCap(MarketParams memory params, uint256 cap) internal {
         vm.prank(RISK_MANAGER);
         vault.submitCap(params, cap);
 
