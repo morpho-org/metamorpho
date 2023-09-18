@@ -61,10 +61,10 @@ contract RoleTest is BaseTest {
         MarketAllocation[] memory allocation;
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
-        vault.setSupplyAllocationOrder(order);
+        vault.setSupplyQueue(order);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
-        vault.setWithdrawAllocationOrder(order);
+        vault.setWithdrawQueue(order);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
         vault.reallocate(allocation, allocation);
@@ -96,20 +96,20 @@ contract RoleTest is BaseTest {
         _submitAndEnableMarket(allMarkets[0], CAP);
 
         vm.startPrank(OWNER);
-        vault.setSupplyAllocationOrder(order);
-        vault.setWithdrawAllocationOrder(order);
+        vault.setSupplyQueue(order);
+        vault.setWithdrawQueue(order);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
 
         vm.startPrank(RISK_MANAGER);
-        vault.setSupplyAllocationOrder(order);
-        vault.setWithdrawAllocationOrder(order);
+        vault.setSupplyQueue(order);
+        vault.setWithdrawQueue(order);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
 
         vm.startPrank(ALLOCATOR);
-        vault.setSupplyAllocationOrder(order);
-        vault.setWithdrawAllocationOrder(order);
+        vault.setSupplyQueue(order);
+        vault.setWithdrawQueue(order);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
     }

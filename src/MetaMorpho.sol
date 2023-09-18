@@ -41,8 +41,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     mapping(address => bool) public isAllocator;
     mapping(Id => Pending) public pendingMarket;
 
-    Id[] public supplyAllocationOrder;
-    Id[] public withdrawAllocationOrder;
+    Id[] public supplyQueue;
+    Id[] public withdrawQueue;
 
     Pending public pendingFee;
     uint96 public fee;
@@ -172,8 +172,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function enableMarket(Id id) external timelockElapsed(pendingMarket[id].timestamp) onlyRiskManager {
-        supplyAllocationOrder.push(id);
-        withdrawAllocationOrder.push(id);
+        supplyQueue.push(id);
+        withdrawQueue.push(id);
 
         MarketParams memory marketParams = IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
         uint128 cap = pendingMarket[id].value;
@@ -192,8 +192,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function disableMarket(Id id) external onlyRiskManager {
-        _removeFromAllocationOrder(supplyAllocationOrder, id);
-        _removeFromAllocationOrder(withdrawAllocationOrder, id);
+        _removeFromQueue(supplyQueue, id);
+        _removeFromQueue(withdrawQueue, id);
 
         require(_config.remove(id), ErrorsLib.DISABLE_MARKET_FAILED);
 
@@ -202,16 +202,16 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY ALLOCATOR FUNCTIONS */
 
-    function setSupplyAllocationOrder(Id[] calldata newSupplyAllocationOrder) external onlyAllocator {
-        _checkAllocationOrder(supplyAllocationOrder, newSupplyAllocationOrder);
+    function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
+        _checkQueue(supplyQueue, newSupplyQueue);
 
-        supplyAllocationOrder = newSupplyAllocationOrder;
+        supplyQueue = newSupplyQueue;
     }
 
-    function setWithdrawAllocationOrder(Id[] calldata newWithdrawAllocationOrder) external onlyAllocator {
-        _checkAllocationOrder(withdrawAllocationOrder, newWithdrawAllocationOrder);
+    function setWithdrawQueue(Id[] calldata newWithdrawQueue) external onlyAllocator {
+        _checkQueue(withdrawQueue, newWithdrawQueue);
 
-        withdrawAllocationOrder = newWithdrawAllocationOrder;
+        withdrawQueue = newWithdrawQueue;
     }
 
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
@@ -410,10 +410,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /// @dev MUST NOT revert on a market.
     function _depositOrder(uint256 assets) internal {
-        uint256 length = supplyAllocationOrder.length;
+        uint256 length = supplyQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            Id id = supplyAllocationOrder[i];
+            Id id = supplyQueue[i];
             uint256 cap = marketCap(id);
             MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
             uint256 toDeposit = assets;
@@ -444,10 +444,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         if (assets == 0) return 0;
 
-        uint256 length = withdrawAllocationOrder.length;
+        uint256 length = withdrawQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            Id id = withdrawAllocationOrder[i];
+            Id id = withdrawQueue[i];
             (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
             if (toWithdraw > 0) {
@@ -470,10 +470,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         if (assets == 0) return 0;
 
-        uint256 length = withdrawAllocationOrder.length;
+        uint256 length = withdrawQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            Id id = withdrawAllocationOrder[i];
+            Id id = withdrawQueue[i];
             (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
             if (toWithdraw > 0) {
@@ -506,7 +506,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         withdrawable = UtilsLib.min(available, assets);
     }
 
-    function _removeFromAllocationOrder(Id[] storage order, Id id) internal {
+    function _removeFromQueue(Id[] storage order, Id id) internal {
         uint256 length = _config.length();
 
         for (uint256 i; i < length; ++i) {
@@ -520,7 +520,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
     }
 
-    function _checkAllocationOrder(Id[] storage oldOrder, Id[] calldata newOrder) internal view {
+    function _checkQueue(Id[] storage oldOrder, Id[] calldata newOrder) internal view {
         uint256 length = newOrder.length;
 
         require(length == oldOrder.length, ErrorsLib.INVALID_LENGTH);
