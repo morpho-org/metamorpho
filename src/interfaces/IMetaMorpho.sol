@@ -3,14 +3,14 @@ pragma solidity >=0.6.2;
 
 import {MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 
+struct PendingParameter {
+    uint192 value;
+    uint64 submittedAt;
+}
+
 struct MarketAllocation {
     MarketParams marketParams;
     uint256 assets;
-}
-
-struct Pending {
-    uint128 value;
-    uint128 timestamp;
 }
 
 interface IMetaMorpho {}

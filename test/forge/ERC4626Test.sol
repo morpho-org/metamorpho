@@ -10,7 +10,7 @@ contract ERC4626Test is BaseTest {
     function setUp() public override {
         super.setUp();
 
-        _submitAndEnableMarket(allMarkets[0], CAP);
+        _submitAndAcceptCap(allMarkets[0], CAP);
     }
 
     function testMint(uint256 assets) public {

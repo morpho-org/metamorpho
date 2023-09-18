@@ -15,7 +15,7 @@ import {IrmMock} from "src/mocks/IrmMock.sol";
 import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
-import {MetaMorpho, IERC20, ErrorsLib, Pending, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorpho, IERC20, ErrorsLib, PendingParameter, MarketAllocation} from "src/MetaMorpho.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
@@ -32,7 +32,7 @@ contract BaseTest is Test {
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
-    uint256 internal constant TIMELOCK = 0;
+    uint192 internal constant TIMELOCK = 0;
     uint128 internal constant CAP = type(uint128).max;
 
     address internal OWNER;
@@ -227,11 +227,11 @@ contract BaseTest is Test {
         vm.stopPrank();
     }
 
-    function _submitAndEnableMarket(MarketParams memory params, uint128 cap) internal {
+    function _submitAndAcceptCap(MarketParams memory params, uint128 cap) internal {
         vm.startPrank(RISK_MANAGER);
-        vault.submitMarket(params, cap);
+        vault.submitCap(params, cap);
         vm.warp(block.timestamp + vault.timelock());
-        vault.enableMarket(params.id());
+        vault.acceptCap(params.id());
         vm.stopPrank();
     }
 }

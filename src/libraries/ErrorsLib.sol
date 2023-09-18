@@ -18,9 +18,9 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
 
-    string internal constant ENABLE_MARKET_FAILED = "enable market failed";
+    string internal constant DUPLICATE_MARKET = "duplicate market";
 
-    string internal constant DISABLE_MARKET_FAILED = "disable market failed";
+    string internal constant MISSING_MARKET = "missing market";
 
     string internal constant INVALID_LENGTH = "invalid length";
 
