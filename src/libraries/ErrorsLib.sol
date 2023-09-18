@@ -31,4 +31,6 @@ library ErrorsLib {
     string internal constant TIMELOCK_NOT_ELAPSED = "timelock not elapsed";
 
     string internal constant TIMELOCK_EXPIRATION_EXCEEDED = "timelock expiration exceeded";
+
+    string internal constant MAX_QUEUE_SIZE_EXCEEDED = "max queue size exceeded";
 }

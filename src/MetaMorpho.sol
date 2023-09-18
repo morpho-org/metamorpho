@@ -194,6 +194,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         supplyQueue.push(id);
         withdrawQueue.push(id);
 
+        require(withdrawQueue.length <= MAX_QUEUE_SIZE, ErrorsLib.MAX_QUEUE_SIZE_EXCEEDED);
+
         uint192 marketCap = pendingCap[id].value;
 
         _setCap(id, marketCap);
@@ -203,6 +205,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY ALLOCATOR FUNCTIONS */
 
+    /// @dev The supply queue can be set containing duplicate markets, but it would only increase the cost of depositing
+    /// to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
         uint256 length = newSupplyQueue.length;
 
