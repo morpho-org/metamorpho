@@ -10,6 +10,7 @@ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
+import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
@@ -29,6 +30,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
+    using SharesMathLib for uint256;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
     using MorphoLib for IMorpho;
@@ -475,7 +477,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams), assets);
+            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), assets);
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
@@ -501,7 +503,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams), assets);
+            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), assets);
 
             if (toWithdraw > 0) {
                 // Don't require success to skip markets that revert.
@@ -529,11 +531,15 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return cap[id].zeroFloorSub(_supplyBalance(marketParams));
     }
 
-    function _withdrawable(MarketParams memory marketParams) internal view returns (uint256) {
-        // TODO: expectedMarketBalances called inside _supplyBalance too
-        (uint256 totalSupplyAssets,, uint256 totalBorrowAssets,) = MORPHO.expectedMarketBalances(marketParams);
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
+        uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+        (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
+            MORPHO.expectedMarketBalances(marketParams);
 
-        return UtilsLib.min(_supplyBalance(marketParams), totalSupplyAssets - totalBorrowAssets);
+        return UtilsLib.min(
+            supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), totalSupplyAssets - totalBorrowAssets
+        );
     }
 
     /* FEE MANAGEMENT */
