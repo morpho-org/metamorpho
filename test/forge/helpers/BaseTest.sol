@@ -32,7 +32,7 @@ contract BaseTest is Test {
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
-    uint256 internal constant TIMELOCK = 0;
+    uint256 internal constant TIMELOCK = 2;
     uint128 internal constant CAP = type(uint128).max;
 
     address internal OWNER;
@@ -96,7 +96,8 @@ contract BaseTest is Test {
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
-        _setTimelock(1);
+        // block.timestamp defaults to 1 which is an unrealistic state.
+        vm.warp(block.timestamp + TIMELOCK);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);

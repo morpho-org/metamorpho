@@ -45,7 +45,7 @@ contract MarketTest is BaseTest {
 
     function testAcceptCap(uint256 seed, uint256 cap) public {
         MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 0, type(uint192).max);
+        cap = bound(cap, 1, type(uint192).max);
 
         _setCap(marketParams, cap);
 

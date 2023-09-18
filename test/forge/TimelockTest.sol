@@ -7,7 +7,7 @@ contract TimelockTest is BaseTest {
     function testSubmitTimelock(uint256 timelock) public {
         timelock = bound(timelock, 0, MAX_TIMELOCK);
 
-        vm.assume(timelock != vault.timelock());
+        vm.assume(timelock != TIMELOCK);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
@@ -34,12 +34,12 @@ contract TimelockTest is BaseTest {
     function testAcceptTimelock(uint256 timelock) public {
         timelock = bound(timelock, 0, MAX_TIMELOCK);
 
-        vm.assume(timelock != vault.timelock());
+        vm.assume(timelock != TIMELOCK);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
-        vm.warp(block.timestamp + vault.timelock());
+        vm.warp(block.timestamp + TIMELOCK);
 
         vm.prank(OWNER);
         vault.acceptTimelock();
@@ -52,18 +52,14 @@ contract TimelockTest is BaseTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockNotElapsed(uint256 currTimelock, uint256 newTimelock, uint256 elapsed) public {
-        currTimelock = bound(currTimelock, 2, MAX_TIMELOCK);
-        newTimelock = bound(newTimelock, 0, MAX_TIMELOCK);
-        elapsed = bound(elapsed, 1, currTimelock - 1);
+    function testAcceptTimelockNotElapsed(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, 0, MAX_TIMELOCK);
+        elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
-        vm.assume(currTimelock != vault.timelock());
-        vm.assume(newTimelock != currTimelock);
-
-        _setTimelock(currTimelock);
+        vm.assume(timelock != TIMELOCK);
 
         vm.prank(OWNER);
-        vault.submitTimelock(newTimelock);
+        vault.submitTimelock(timelock);
 
         vm.warp(block.timestamp + elapsed);
 
@@ -72,18 +68,14 @@ contract TimelockTest is BaseTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockExpirationExceeded(uint256 currTimelock, uint256 newTimelock, uint256 elapsed) public {
-        currTimelock = bound(currTimelock, 1, MAX_TIMELOCK);
-        newTimelock = bound(newTimelock, 0, MAX_TIMELOCK);
-        elapsed = bound(elapsed, currTimelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+    function testAcceptTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, 0, MAX_TIMELOCK);
+        elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
-        vm.assume(currTimelock != vault.timelock());
-        vm.assume(newTimelock != currTimelock);
-
-        _setTimelock(currTimelock);
+        vm.assume(timelock != TIMELOCK);
 
         vm.prank(OWNER);
-        vault.submitTimelock(newTimelock);
+        vault.submitTimelock(timelock);
 
         vm.warp(block.timestamp + elapsed);
 

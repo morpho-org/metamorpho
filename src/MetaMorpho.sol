@@ -77,7 +77,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         MORPHO = IMorpho(morpho);
-        timelock = initialTimelock;
+
+        _setTimelock(initialTimelock);
 
         SafeERC20.safeApprove(IERC20(_asset), morpho, type(uint256).max);
     }
