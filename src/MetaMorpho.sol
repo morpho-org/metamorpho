@@ -141,19 +141,23 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
 
-        // Safe "unchecked" cast because newFee <= WAD.
-        pendingFee = PendingParameter(newFee.toUint192(), uint64(block.timestamp));
+        if (newFee == 0) {
+            _setFee(newFee);
+        } else {
+            // Safe "unchecked" cast because newFee <= WAD.
+            pendingFee = PendingParameter(uint192(newFee), uint64(block.timestamp));
 
-        emit EventsLib.SubmitFee(newFee);
+            emit EventsLib.SubmitFee(newFee);
+        }
     }
 
     function acceptFee() external timelockElapsed(pendingFee) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
-        fee = uint96(pendingFee.value);
+        uint256 newFee = pendingFee.value;
 
-        emit EventsLib.AcceptFee(pendingFee.value);
+        _setFee(newFee);
 
         delete pendingFee;
     }
@@ -393,6 +397,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         cap[id] = marketCap;
 
         emit EventsLib.SetCap(id, marketCap);
+    }
+
+    function _setFee(uint256 newFee) internal {
+        // Safe "unchecked" cast because newFee <= WAD.
+        fee = uint96(newFee);
+
+        emit EventsLib.SetFee(newFee);
     }
 
     /* LIQUIDITY ALLOCATION */

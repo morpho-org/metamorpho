@@ -16,7 +16,7 @@ library EventsLib {
 
     /// @notice Emitted when setting a new fee.
     /// @param fee The new fee.
-    event AcceptFee(uint256 fee);
+    event SetFee(uint256 fee);
 
     /// @notice Emitted when setting a new fee recipient.
     /// @param feeRecipient The new fee recipient.
