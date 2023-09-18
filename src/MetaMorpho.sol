@@ -54,27 +54,19 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
     uint256 public idle;
-    uint256 public idleCap;
 
     ConfigSet private _config;
 
     /* CONSTRUCTOR */
 
-    constructor(
-        address morpho,
-        uint256 initialTimelock,
-        uint128 initialIdleCap,
-        address _asset,
-        string memory _name,
-        string memory _symbol
-    ) ERC4626(IERC20(_asset)) ERC20(_name, _symbol) {
+    constructor(address morpho, uint256 initialTimelock, address _asset, string memory _name, string memory _symbol)
+        ERC4626(IERC20(_asset))
+        ERC20(_name, _symbol)
+    {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         MORPHO = IMorpho(morpho);
         timelock = initialTimelock;
-        idleCap = initialIdleCap;
-
-        emit EventsLib.SetIdleCap(initialIdleCap);
 
         SafeERC20.safeApprove(IERC20(_asset), morpho, type(uint256).max);
     }
@@ -189,10 +181,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(_config.update(marketParams, uint256(cap)), ErrorsLib.ENABLE_MARKET_FAILED);
 
         emit EventsLib.EnableMarket(id, cap);
-    }
-
-    function setIdleCap(uint256 cap) external onlyRiskManager {
-        idleCap = cap;
     }
 
     function setCap(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
@@ -447,9 +435,9 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             if (assets == 0) return 0;
         }
 
-        (assets, idle) = _depositIdle(assets);
+        idle += assets;
 
-        return assets;
+        return 0;
     }
 
     /// @dev MUST NOT revert on a market.
@@ -502,13 +490,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
 
         return assets;
-    }
-
-    function _depositIdle(uint256 assets) internal view returns (uint256 newAssets, uint256 newIdle) {
-        uint256 cap = idleCap;
-
-        if (assets + idle > cap) return (assets - (cap - idle), cap);
-        return (0, idle + assets);
     }
 
     function _withdrawIdle(uint256 assets) internal view returns (uint256 newAssets, uint256 newIdle) {
