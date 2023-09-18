@@ -33,11 +33,7 @@ contract BaseTest is Test {
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
     uint256 internal constant TIMELOCK = 0;
-    uint256 internal constant LLTV = 0.8 ether;
     uint128 internal constant CAP = type(uint128).max;
-    uint256 internal constant MAX_COLLATERAL_PRICE = 1e40;
-    uint256 internal constant MAX_COLLATERAL_ASSETS = type(uint128).max;
-    uint256 internal constant NB_OF_MARKETS = 10;
 
     address internal OWNER;
     address internal SUPPLIER;

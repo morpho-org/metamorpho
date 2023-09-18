@@ -336,7 +336,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         // slither-disable-next-line reentrancy-no-eth
         SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
 
-        require(_depositOrder(assets) == 0, ErrorsLib.DEPOSIT_ORDER_FAILED);
+        _depositOrder(assets);
 
         _mint(owner, shares);
 
@@ -492,7 +492,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return assets;
     }
 
-    function _withdrawIdle(uint256 assets) internal view returns (uint256 newAssets, uint256 newIdle) {
+    function _withdrawIdle(uint256 assets) internal view returns (uint256 remaining, uint256 newIdle) {
         if (assets > idle) return (assets - idle, 0);
         return (0, idle - assets);
     }
