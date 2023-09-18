@@ -10,7 +10,7 @@ contract MarketTest is BaseTest {
 
     function testSubmitCap(uint256 seed, uint256 cap) public {
         MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 0, type(uint192).max);
+        cap = bound(cap, 1, type(uint192).max);
 
         vm.prank(RISK_MANAGER);
         vault.submitCap(marketParams, cap);
@@ -29,6 +29,18 @@ contract MarketTest is BaseTest {
         vm.prank(RISK_MANAGER);
         vm.expectRevert("SafeCast: value doesn't fit in 192 bits");
         vault.submitCap(marketParams, cap);
+    }
+
+    function testSubmitCapZeroNoTimelock(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
+        cap = bound(cap, 1, type(uint192).max);
+
+        _setCap(marketParams, cap);
+
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(marketParams, 0);
+
+        assertEq(vault.cap(marketParams.id()), 0);
     }
 
     function testAcceptCap(uint256 seed, uint256 cap) public {

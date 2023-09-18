@@ -24,7 +24,7 @@ library EventsLib {
 
     event SubmitCap(Id id, uint256 cap);
 
-    event AcceptCap(Id id, uint256 cap);
+    event SetCap(Id id, uint256 cap);
 
     /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.

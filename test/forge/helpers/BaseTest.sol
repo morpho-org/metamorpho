@@ -96,6 +96,8 @@ contract BaseTest is Test {
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
+        _setTimelock(1);
+
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
 

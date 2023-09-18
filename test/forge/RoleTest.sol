@@ -68,15 +68,21 @@ contract RoleTest is BaseTest {
     }
 
     function testRiskManagerOrOwnerShouldTriggerRiskManagerFunctions() public {
-        vm.startPrank(OWNER);
+        vm.prank(OWNER);
         vault.submitCap(allMarkets[0], CAP);
-        vault.acceptCap(allMarkets[0].id());
-        vm.stopPrank();
 
-        vm.startPrank(RISK_MANAGER);
+        vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(OWNER);
+        vault.acceptCap(allMarkets[0].id());
+
+        vm.prank(RISK_MANAGER);
         vault.submitCap(allMarkets[1], CAP);
+
+        vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(RISK_MANAGER);
         vault.acceptCap(allMarkets[1].id());
-        vm.stopPrank();
     }
 
     function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {

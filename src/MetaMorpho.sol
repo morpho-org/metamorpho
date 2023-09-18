@@ -177,10 +177,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         Id id = marketParams.id();
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
 
-        // TODO: bypass timelock if marketCap == 0
-        pendingCap[id] = PendingParameter(marketCap.toUint192(), uint64(block.timestamp));
+        if (marketCap == 0) {
+            _setCap(id, marketCap);
+        } else {
+            pendingCap[id] = PendingParameter(marketCap.toUint192(), uint64(block.timestamp));
 
-        emit EventsLib.SubmitCap(id, marketCap);
+            emit EventsLib.SubmitCap(id, marketCap);
+        }
     }
 
     function acceptCap(Id id) external timelockElapsed(pendingCap[id]) onlyRiskManager {
@@ -189,9 +192,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         uint192 marketCap = pendingCap[id].value;
 
-        cap[id] = marketCap;
-
-        emit EventsLib.AcceptCap(id, marketCap);
+        _setCap(id, marketCap);
 
         delete pendingCap[id];
     }
@@ -388,6 +389,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
 
+    function _setCap(Id id, uint256 marketCap) internal {
+        cap[id] = marketCap;
+
+        emit EventsLib.SetCap(id, marketCap);
+    }
+
+    /* LIQUIDITY ALLOCATION */
+
     function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
         uint256 nbWithdrawn = withdrawn.length;
 
@@ -504,6 +513,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         return UtilsLib.min(_supplyBalance(marketParams), totalSupplyAssets - totalBorrowAssets);
     }
+
+    /* FEE MANAGEMENT */
 
     function _updateLastTotalAssets(uint256 newTotalAssets) internal {
         lastTotalAssets = newTotalAssets;
