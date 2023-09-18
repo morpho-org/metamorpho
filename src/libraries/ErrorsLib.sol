@@ -20,8 +20,6 @@ library ErrorsLib {
 
     string internal constant ENABLE_MARKET_FAILED = "enable market failed";
 
-    string internal constant IDLE_MARKET = "cannot disable the idle market";
-
     string internal constant DISABLE_MARKET_FAILED = "disable market failed";
 
     string internal constant INVALID_LENGTH = "invalid length";

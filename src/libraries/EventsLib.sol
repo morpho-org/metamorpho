@@ -26,6 +26,8 @@ library EventsLib {
 
     event EnableMarket(Id id, uint128 cap);
 
+    event SetIdleCap(uint256 cap);
+
     event SetCap(uint128 cap);
 
     event DisableMarket(Id id);

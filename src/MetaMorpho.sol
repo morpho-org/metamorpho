@@ -47,7 +47,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     Id[] public supplyAllocationOrder;
     Id[] public withdrawAllocationOrder;
-    Id public immutable idleMarketId;
 
     Pending public pendingFee;
     uint96 public fee;
@@ -59,6 +58,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
     uint256 public idle;
+    uint256 public idleCap;
 
     ConfigSet private _config;
 
@@ -67,7 +67,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     constructor(
         address morpho,
         uint256 initialTimelock,
-        uint128 idleCap,
+        uint128 initialIdleCap,
         IERC20 _asset,
         string memory _name,
         string memory _symbol
@@ -76,17 +76,11 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         MORPHO = IMorpho(morpho);
         timelock = initialTimelock;
+        idleCap = initialIdleCap;
+
+        emit EventsLib.SetIdleCap(initialIdleCap);
 
         SafeERC20.safeApprove(_asset, morpho, type(uint256).max);
-
-        MarketParams memory idleMarket;
-        idleMarketId = idleMarket.id();
-        supplyAllocationOrder.push(idleMarketId);
-        withdrawAllocationOrder.push(idleMarketId);
-
-        require(_config.update(idleMarket, uint256(idleCap)), ErrorsLib.ENABLE_MARKET_FAILED);
-
-        emit EventsLib.EnableMarket(idleMarketId, idleCap);
     }
 
     /* MODIFIERS */
@@ -201,6 +195,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         emit EventsLib.EnableMarket(id, cap);
     }
 
+    function setIdleCap(uint256 cap) external onlyRiskManager {
+        idleCap = cap;
+    }
+
     function setCap(MarketParams memory marketParams, uint128 cap) external onlyRiskManager {
         require(_config.contains(marketParams.id()), ErrorsLib.MARKET_NOT_ENABLED);
 
@@ -210,8 +208,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function disableMarket(Id id) external onlyRiskManager {
-        require(Id.unwrap(id) != Id.unwrap(idleMarketId), ErrorsLib.IDLE_MARKET);
-
         _removeFromAllocationOrder(supplyAllocationOrder, id);
         _removeFromAllocationOrder(withdrawAllocationOrder, id);
 
@@ -421,56 +417,52 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         for (uint256 i; i < length; ++i) {
             Id id = supplyAllocationOrder[i];
             uint256 cap = marketCap(id);
+            MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
+            uint256 toDeposit = assets;
 
-            if (Id.unwrap(id) == Id.unwrap(idleMarketId)) {
-                (assets, idle) = _depositIdle(assets, cap);
-            } else {
-                MarketParams memory marketParams = _config.at(_config.getMarket(id).rank - 1);
-                uint256 toDeposit = assets;
+            if (cap > 0) {
+                uint256 currentSupply = _supplyBalance(marketParams);
 
-                if (cap > 0) {
-                    uint256 currentSupply = _supplyBalance(marketParams);
-
-                    toDeposit = UtilsLib.min(cap.zeroFloorSub(currentSupply), assets);
-                }
-
-                if (toDeposit > 0) {
-                    bytes memory encodedCall =
-                        abi.encodeCall(MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
-                    (bool success,) = address(MORPHO).call(encodedCall);
-
-                    if (success) assets -= toDeposit;
-                }
+                toDeposit = UtilsLib.min(cap.zeroFloorSub(currentSupply), assets);
             }
 
-            if (assets == 0) break;
+            if (toDeposit > 0) {
+                bytes memory encodedCall =
+                    abi.encodeCall(MORPHO.supply, (marketParams, toDeposit, 0, address(this), hex""));
+                (bool success,) = address(MORPHO).call(encodedCall);
+
+                if (success) assets -= toDeposit;
+            }
+
+            if (assets == 0) return 0;
         }
+
+        (assets, idle) = _depositIdle(assets);
 
         return assets;
     }
 
     /// @dev MUST NOT revert on a market.
     function _staticWithdrawOrder(uint256 assets) internal view returns (uint256) {
+        (assets,) = _withdrawIdle(assets);
+
+        if (assets == 0) return 0;
+
         uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
             Id id = withdrawAllocationOrder[i];
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
-            if (Id.unwrap(id) == Id.unwrap(idleMarketId)) {
-                (assets,) = _withdrawIdle(assets);
-            } else {
-                (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
+            if (toWithdraw > 0) {
+                bytes memory encodedCall =
+                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(MORPHO).staticcall(encodedCall);
 
-                if (toWithdraw > 0) {
-                    bytes memory encodedCall =
-                        abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                    (bool success,) = address(MORPHO).staticcall(encodedCall);
-
-                    if (success) assets -= toWithdraw;
-                }
+                if (success) assets -= toWithdraw;
             }
 
-            if (assets == 0) break;
+            if (assets == 0) return 0;
         }
 
         return assets;
@@ -478,32 +470,33 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /// @dev MUST NOT revert on a market.
     function _withdrawOrder(uint256 assets) internal returns (uint256) {
+        (assets, idle) = _withdrawIdle(assets);
+
+        if (assets == 0) return 0;
+
         uint256 length = withdrawAllocationOrder.length;
 
         for (uint256 i; i < length; ++i) {
             Id id = withdrawAllocationOrder[i];
+            (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
 
-            if (Id.unwrap(id) == Id.unwrap(idleMarketId)) {
-                (assets, idle) = _withdrawIdle(assets);
-            } else {
-                (MarketParams memory marketParams, uint256 toWithdraw) = _withdrawable(assets, id);
+            if (toWithdraw > 0) {
+                bytes memory encodedCall =
+                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
+                (bool success,) = address(MORPHO).call(encodedCall);
 
-                if (toWithdraw > 0) {
-                    bytes memory encodedCall =
-                        abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)));
-                    (bool success,) = address(MORPHO).call(encodedCall);
-
-                    if (success) assets -= toWithdraw;
-                }
+                if (success) assets -= toWithdraw;
             }
 
-            if (assets == 0) break;
+            if (assets == 0) return 0;
         }
 
         return assets;
     }
 
-    function _depositIdle(uint256 assets, uint256 cap) internal view returns (uint256 newAssets, uint256 newIdle) {
+    function _depositIdle(uint256 assets) internal view returns (uint256 newAssets, uint256 newIdle) {
+        uint256 cap = idleCap;
+
         if (assets + idle > cap) return (assets - (cap - idle), cap);
         return (0, idle + assets);
     }
