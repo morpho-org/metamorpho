@@ -107,24 +107,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY OWNER FUNCTIONS */
 
-    function submitTimelock(uint256 newTimelock) external onlyOwner {
-        require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
-        require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
-
-        // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-        pendingTimelock = PendingParameter(uint192(newTimelock), uint64(block.timestamp));
-
-        emit EventsLib.SubmitTimelock(newTimelock);
-    }
-
-    function acceptTimelock() external timelockElapsed(pendingTimelock) onlyOwner {
-        timelock = pendingTimelock.value;
-
-        emit EventsLib.AcceptTimelock(pendingTimelock.value);
-
-        delete pendingTimelock;
-    }
-
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
         isRiskManager[newRiskManager] = newIsRiskManager;
 
@@ -137,11 +119,31 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
+    function submitTimelock(uint256 newTimelock) external onlyOwner {
+        require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
+        require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
+
+        if (timelock == 0) {
+            _setTimelock(newTimelock);
+        } else {
+            // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
+            pendingTimelock = PendingParameter(uint192(newTimelock), uint64(block.timestamp));
+
+            emit EventsLib.SubmitTimelock(newTimelock);
+        }
+    }
+
+    function acceptTimelock() external timelockElapsed(pendingTimelock) onlyOwner {
+        _setTimelock(pendingTimelock.value);
+
+        delete pendingTimelock;
+    }
+
     function submitFee(uint256 newFee) external onlyOwner {
         require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
 
-        if (newFee == 0) {
+        if (newFee == 0 || timelock == 0) {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= WAD.
@@ -155,9 +157,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         // Accrue interest using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
-        uint256 newFee = pendingFee.value;
-
-        _setFee(newFee);
+        _setFee(pendingFee.value);
 
         delete pendingFee;
     }
@@ -181,7 +181,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         Id id = marketParams.id();
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
 
-        if (marketCap == 0) {
+        if (marketCap == 0 || timelock == 0) {
             _setCap(id, marketCap);
         } else {
             pendingCap[id] = PendingParameter(marketCap.toUint192(), uint64(block.timestamp));
@@ -191,14 +191,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function acceptCap(Id id) external timelockElapsed(pendingCap[id]) onlyRiskManager {
-        supplyQueue.push(id);
-        withdrawQueue.push(id);
-
-        require(withdrawQueue.length <= MAX_QUEUE_SIZE, ErrorsLib.MAX_QUEUE_SIZE_EXCEEDED);
-
-        uint192 marketCap = pendingCap[id].value;
-
-        _setCap(id, marketCap);
+        _setCap(id, pendingCap[id].value);
 
         delete pendingCap[id];
     }
@@ -397,7 +390,21 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
 
+    function _setTimelock(uint256 newTimelock) internal {
+        // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
+        timelock = newTimelock;
+
+        emit EventsLib.SetTimelock(newTimelock);
+    }
+
     function _setCap(Id id, uint256 marketCap) internal {
+        if (marketCap > 0) {
+            supplyQueue.push(id);
+            withdrawQueue.push(id);
+
+            require(withdrawQueue.length <= MAX_QUEUE_SIZE, ErrorsLib.MAX_QUEUE_SIZE_EXCEEDED);
+        }
+
         cap[id] = marketCap;
 
         emit EventsLib.SetCap(id, marketCap);
