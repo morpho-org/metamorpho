@@ -38,7 +38,7 @@ contract MarketTest is BaseTest {
     }
 
     function testEnableMarketShouldRevertWhenTimelockNotElapsed(uint128 timelock, uint256 timeElapsed) public {
-        timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
+        timelock = uint128(bound(timelock, 1, MAX_TIMELOCK));
         _submitAndSetTimelock(timelock);
 
         timeElapsed = bound(timeElapsed, 0, timelock - 1);
@@ -53,10 +53,10 @@ contract MarketTest is BaseTest {
     }
 
     function testEnableMarketShouldRevertWhenTimelockExpirationExceeded(uint128 timelock, uint256 timeElapsed) public {
-        timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
+        timelock = uint128(bound(timelock, 1, MAX_TIMELOCK));
         _submitAndSetTimelock(timelock);
 
-        timeElapsed = bound(timeElapsed, timelock + vault.TIMELOCK_EXPIRATION() + 1, type(uint128).max);
+        timeElapsed = bound(timeElapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint128).max);
 
         vm.startPrank(RISK_MANAGER);
         vault.submitMarket(allMarkets[0], CAP);

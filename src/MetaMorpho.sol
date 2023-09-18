@@ -5,6 +5,7 @@ import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
 import {MarketAllocation, Pending, IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
+import "src/libraries/ConstantsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
@@ -29,11 +30,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using ConfigSetLib for ConfigSet;
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
-
-    /* CONSTANTS */
-
-    uint256 public constant TIMELOCK_EXPIRATION = 2 days;
-    uint256 public constant MAX_TIMELOCK = 2 weeks;
 
     /* IMMUTABMES */
 
@@ -230,9 +226,9 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return _market(id).cap;
     }
 
-    /* ERC4626 */
+    /* ERC4626 (PUBLIC) */
 
-    function maxWithdraw(address owner) public view virtual override returns (uint256) {
+    function maxWithdraw(address owner) public view override returns (uint256) {
         _accruedFeeShares();
 
         return _staticWithdrawOrder(super.maxWithdraw(owner));
@@ -242,7 +238,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
     }
 
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256 shares) {
+    function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
         shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
@@ -251,7 +247,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets + assets);
     }
 
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256 assets) {
+    function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
         assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Up);
@@ -260,12 +256,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets + assets);
     }
 
-    function withdraw(uint256 assets, address receiver, address owner)
-        public
-        virtual
-        override
-        returns (uint256 shares)
-    {
+    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
@@ -276,7 +267,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets - assets);
     }
 
-    function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256 assets) {
+    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
@@ -299,42 +290,19 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         assets += ERC20(asset()).balanceOf(address(this));
     }
 
-    /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
-    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
-        super._deposit(caller, owner, assets, shares);
+    /* ERC4626 (INTERNAL) */
 
-        require(_depositOrder(assets) == 0, ErrorsLib.DEPOSIT_ORDER_FAILED);
+    function _decimalsOffset() internal pure override returns (uint8) {
+        return 6;
     }
 
-    /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
-    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
-        internal
-        override
-    {
-        require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
-
-        super._withdraw(caller, receiver, owner, assets, shares);
-    }
-
-    function _convertToShares(uint256 assets, Math.Rounding rounding)
-        internal
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
         return assets.mulDiv(totalSupply() + feeShares + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
 
-    function _convertToAssets(uint256 shares, Math.Rounding rounding)
-        internal
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
         return shares.mulDiv(newTotalAssets + 1, totalSupply() + feeShares + 10 ** _decimalsOffset(), rounding);
@@ -354,6 +322,48 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         returns (uint256)
     {
         return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+    }
+
+    /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
+    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
+        // If asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
+        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
+        // calls the vault, which is assumed not malicious.
+        //
+        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
+        // assets are transferred and before the shares are minted, which is a valid state.
+        // slither-disable-next-line reentrancy-no-eth
+        SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
+
+        require(_depositOrder(assets) == 0, ErrorsLib.DEPOSIT_ORDER_FAILED);
+
+        _mint(owner, shares);
+
+        emit Deposit(caller, owner, assets, shares);
+    }
+
+    /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
+    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
+        internal
+        override
+    {
+        if (caller != owner) {
+            _spendAllowance(owner, caller, shares);
+        }
+
+        // If asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
+        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
+        // calls the vault, which is assumed not malicious.
+        //
+        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
+        // shares are burned and after the assets are transferred, which is a valid state.
+        _burn(owner, shares);
+
+        require(_withdrawOrder(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
+
+        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
+
+        emit Withdraw(caller, receiver, owner, assets, shares);
     }
 
     /* INTERNAL */
