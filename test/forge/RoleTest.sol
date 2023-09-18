@@ -51,14 +51,15 @@ contract RoleTest is BaseTest {
         vm.assume(caller != vault.owner() && !vault.isRiskManager(caller) && !vault.isAllocator(caller));
         vm.startPrank(caller);
 
-        Id[] memory order;
+        Id[] memory supplyQueue;
         MarketAllocation[] memory allocation;
+        uint256[] memory withdrawQueueFromRanks;
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
-        vault.setSupplyQueue(order);
+        vault.setSupplyQueue(supplyQueue);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
-        vault.setWithdrawQueue(order);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
         vault.reallocate(allocation, allocation);
@@ -79,27 +80,31 @@ contract RoleTest is BaseTest {
     }
 
     function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {
-        Id[] memory order = new Id[](1);
-        order[0] = allMarkets[0].id();
+        _setCap(allMarkets[0], CAP);
+
+        Id[] memory supplyQueue = new Id[](1);
+        supplyQueue[0] = allMarkets[0].id();
+
+        uint256[] memory withdrawQueueFromRanks = new uint256[](1);
+        withdrawQueueFromRanks[0] = 0;
+
         MarketAllocation[] memory allocation;
 
-        _submitAndAcceptCap(allMarkets[0], CAP);
-
         vm.startPrank(OWNER);
-        vault.setSupplyQueue(order);
-        vault.setWithdrawQueue(order);
+        vault.setSupplyQueue(supplyQueue);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
 
         vm.startPrank(RISK_MANAGER);
-        vault.setSupplyQueue(order);
-        vault.setWithdrawQueue(order);
+        vault.setSupplyQueue(supplyQueue);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
 
         vm.startPrank(ALLOCATOR);
-        vault.setSupplyQueue(order);
-        vault.setWithdrawQueue(order);
+        vault.setSupplyQueue(supplyQueue);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
     }

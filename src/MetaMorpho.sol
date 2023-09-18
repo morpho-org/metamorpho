@@ -101,6 +101,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     // TODO: check it reverts if > type(uint192).max
     function submitTimelock(uint192 newTimelock) external onlyOwner {
+        require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
         // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
@@ -167,8 +168,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
 
         Id id = marketParams.id();
-        uint256 lastUpdate = MORPHO.lastUpdate(id);
-        require(lastUpdate != 0, ErrorsLib.MARKET_NOT_CREATED);
+        require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
 
         // TODO: bypass timelock if marketCap == 0
         pendingCap[id] = PendingParameter(marketCap, uint64(block.timestamp));
@@ -195,30 +195,30 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         uint256 length = newSupplyQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            require(cap[newSupplyQueue[i]] > 0, ErrorsLib.MARKET_NOT_ENABLED);
+            require(cap[newSupplyQueue[i]] > 0, ErrorsLib.UNAUTHORIZED_MARKET);
         }
 
         supplyQueue = newSupplyQueue;
     }
 
-    function setWithdrawQueue(uint256[] calldata newWithdrawQueueFromRanks) external onlyAllocator {
-        uint256 newLength = newWithdrawQueueFromRanks.length;
+    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
+        uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
         bool[] memory seen = new bool[](currLength); // TODO: could be a bitflag
         Id[] memory newWithdrawQueue = new Id[](newLength);
 
         for (uint256 i; i < newLength; ++i) {
-            uint256 prevRank = newWithdrawQueueFromRanks[i];
+            uint256 prevIndex = indexes[i];
 
-            require(!seen[prevRank], ErrorsLib.DUPLICATE_MARKET);
+            // If prevIndex >= currLength, reverts with native "Index out of bounds".
+            require(!seen[prevIndex], ErrorsLib.DUPLICATE_MARKET);
 
-            newWithdrawQueue[i] = withdrawQueue[prevRank];
+            newWithdrawQueue[i] = withdrawQueue[prevIndex];
 
-            seen[prevRank] = true;
+            seen[prevIndex] = true;
         }
 
-        // No duplicate was found so length <= withdrawQueue.length.
         for (uint256 i; i < currLength; ++i) {
             require(seen[i] || MORPHO.supplyShares(withdrawQueue[i], address(this)) == 0, ErrorsLib.MISSING_MARKET);
         }
@@ -364,7 +364,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         // shares are burned and after the assets are transferred, which is a valid state.
         _burn(owner, shares);
 
-        require(_withdrawMorpho(assets) == 0, ErrorsLib.WITHDRAW_ORDER_FAILED);
+        require(_withdrawMorpho(assets) == 0, ErrorsLib.WITHDRAW_FAILED_MORPHO);
 
         SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
 

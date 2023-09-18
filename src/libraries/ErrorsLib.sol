@@ -22,11 +22,7 @@ library ErrorsLib {
 
     string internal constant MISSING_MARKET = "missing market";
 
-    string internal constant INVALID_LENGTH = "invalid length";
-
-    string internal constant MARKET_NOT_ENABLED = "market not enabled";
-
-    string internal constant WITHDRAW_ORDER_FAILED = "withdraw order failed";
+    string internal constant WITHDRAW_FAILED_MORPHO = "withdraw failed on Morpho";
 
     string internal constant MARKET_NOT_CREATED = "market not created";
 

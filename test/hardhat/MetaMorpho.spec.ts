@@ -143,7 +143,7 @@ describe("MetaMorpho", () => {
     }
 
     await metaMorpho.connect(riskManager).setSupplyQueue(allMarketParams.map(identifier));
-    await metaMorpho.connect(riskManager).setWithdrawQueue(allMarketParams.map(identifier));
+    await metaMorpho.connect(riskManager).sortWithdrawQueue(allMarketParams.map(identifier));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";

@@ -17,8 +17,8 @@ import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {MetaMorpho, IERC20, ErrorsLib, PendingParameter, MarketAllocation} from "src/MetaMorpho.sol";
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+import "@forge-std/Test.sol";
+import "@forge-std/console2.sol";
 
 contract BaseTest is Test {
     using MorphoLib for IMorpho;
@@ -219,19 +219,23 @@ contract BaseTest is Test {
         require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
-    function _submitAndSetTimelock(uint128 timelock) internal {
-        vm.startPrank(OWNER);
+    function _setTimelock(uint192 timelock) internal {
+        vm.prank(OWNER);
         vault.submitTimelock(timelock);
+
         vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(OWNER);
         vault.acceptTimelock();
-        vm.stopPrank();
     }
 
-    function _submitAndAcceptCap(MarketParams memory params, uint128 cap) internal {
-        vm.startPrank(RISK_MANAGER);
+    function _setCap(MarketParams memory params, uint192 cap) internal {
+        vm.prank(RISK_MANAGER);
         vault.submitCap(params, cap);
+
         vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(RISK_MANAGER);
         vault.acceptCap(params.id());
-        vm.stopPrank();
     }
 }

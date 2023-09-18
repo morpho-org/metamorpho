@@ -1,5 +1,6 @@
 src/=src/
 test/=test/
 
+@forge-std/=lib/forge-std/src/
 @morpho-blue/=lib/morpho-blue/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/

@@ -4,22 +4,26 @@ pragma solidity ^0.8.0;
 import "./helpers/BaseTest.sol";
 
 contract TimelockTest is BaseTest {
-    function testSubmitPendingTimelock(uint192 timelock) public {
+    function testSubmitTimelock(uint192 timelock) public {
         timelock = uint192(bound(timelock, 0, MAX_TIMELOCK));
+
+        vm.assume(timelock != vault.timelock());
+
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
         (uint192 value, uint64 timestamp) = vault.pendingTimelock();
+
         assertEq(value, timelock);
         assertEq(timestamp, block.timestamp);
     }
 
-    function testSubmitPendingTimelockRevertNotOwner(uint192 timelock) public {
+    function testSubmitTimelockNotOwner(uint192 timelock) public {
         vm.expectRevert("Ownable: caller is not the owner");
         vault.submitTimelock(timelock);
     }
 
-    function testSubmitPendingTimelockRevertMaxTimelockExceeded(uint192 timelock) public {
+    function testSubmitTimelockMaxTimelockExceeded(uint192 timelock) public {
         timelock = uint192(bound(timelock, MAX_TIMELOCK + 1, type(uint192).max));
 
         vm.prank(OWNER);
@@ -27,22 +31,62 @@ contract TimelockTest is BaseTest {
         vault.submitTimelock(timelock);
     }
 
-    function testSetTimelock(uint192 timelock) public {
+    function testAcceptTimelock(uint192 timelock) public {
         timelock = uint192(bound(timelock, 0, MAX_TIMELOCK));
 
-        vm.startPrank(OWNER);
+        vm.assume(timelock != vault.timelock());
+
+        vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
         vm.warp(block.timestamp + vault.timelock());
 
+        vm.prank(OWNER);
         vault.acceptTimelock();
-        vm.stopPrank();
 
         assertEq(vault.timelock(), timelock);
     }
 
-    function testSetTimelockRevertNotOwner() public {
+    function testAcceptTimelockNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
+        vault.acceptTimelock();
+    }
+
+    function testAcceptTimelockNotElapsed(uint192 currTimelock, uint192 newTimelock, uint256 elapsed) public {
+        currTimelock = uint192(bound(currTimelock, 2, MAX_TIMELOCK));
+        newTimelock = uint192(bound(newTimelock, 0, MAX_TIMELOCK));
+        elapsed = bound(elapsed, 1, currTimelock - 1);
+
+        vm.assume(currTimelock != vault.timelock());
+
+        _setTimelock(currTimelock);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(newTimelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
+        vault.acceptTimelock();
+    }
+
+    function testAcceptTimelockExpirationExceeded(uint192 currTimelock, uint192 newTimelock, uint256 elapsed) public {
+        currTimelock = uint192(bound(currTimelock, 1, MAX_TIMELOCK));
+        newTimelock = uint192(bound(newTimelock, 0, MAX_TIMELOCK));
+        elapsed = bound(elapsed, currTimelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+
+        vm.assume(currTimelock != vault.timelock());
+
+        _setTimelock(currTimelock);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(newTimelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
         vault.acceptTimelock();
     }
 }
