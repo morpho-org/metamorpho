@@ -43,7 +43,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     mapping(Id => uint256) public cap;
     mapping(Id => PendingParameter) public pendingCap;
 
+    /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
+    /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
     Id[] public supplyQueue;
+
+    /// @dev Stores the order of markets from which liquidity is withdrawn upon withdrawal.
+    /// @dev Can only contain non-zero cap markets or markets on which the vault supplies liquidity.
+    /// Always contains all such markets.
     Id[] public withdrawQueue;
 
     PendingParameter public pendingFee;
