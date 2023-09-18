@@ -221,7 +221,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
-        bool[] memory seen = new bool[](currLength); // TODO: could be a bitflag
+        bool[] memory seen = new bool[](currLength);
         Id[] memory newWithdrawQueue = new Id[](newLength);
 
         for (uint256 i; i < newLength; ++i) {
@@ -457,6 +457,32 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         idle += assets;
     }
 
+    function _withdrawMorpho(uint256 assets) internal returns (uint256) {
+        (assets, idle) = _withdrawIdle(assets);
+
+        if (assets == 0) return 0;
+
+        uint256 nbMarkets = withdrawQueue.length;
+
+        for (uint256 i; i < nbMarkets; ++i) {
+            Id id = withdrawQueue[i];
+            MarketParams memory marketParams = _marketParams(id);
+
+            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams), assets);
+
+            if (toWithdraw > 0) {
+                // Using try/catch to skip markets that revert.
+                try MORPHO.withdraw(marketParams, toWithdraw, 0, address(this), address(this)) {
+                    assets -= toWithdraw;
+                } catch {}
+            }
+
+            if (assets == 0) return 0;
+        }
+
+        return assets;
+    }
+
     function _staticWithdrawMorpho(uint256 assets) internal view returns (uint256) {
         (assets,) = _withdrawIdle(assets);
 
@@ -477,32 +503,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 );
 
                 if (success) assets -= toWithdraw;
-            }
-
-            if (assets == 0) return 0;
-        }
-
-        return assets;
-    }
-
-    function _withdrawMorpho(uint256 assets) internal returns (uint256) {
-        (assets, idle) = _withdrawIdle(assets);
-
-        if (assets == 0) return 0;
-
-        uint256 nbMarkets = withdrawQueue.length;
-
-        for (uint256 i; i < nbMarkets; ++i) {
-            Id id = withdrawQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
-
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams), assets);
-
-            if (toWithdraw > 0) {
-                // Using try/catch to skip markets that revert.
-                try MORPHO.withdraw(marketParams, toWithdraw, 0, address(this), address(this)) {
-                    assets -= toWithdraw;
-                } catch {}
             }
 
             if (assets == 0) return 0;
