@@ -102,7 +102,7 @@ contract BaseTest is Test {
 
         urdFactory = new UrdFactory();
         rewardsDistributor =
-            UniversalRewardsDistributor(urdFactory.createUrd(vault.owner(), 0, bytes32(0), bytes32(0), bytes32(0)));
+            UniversalRewardsDistributor(urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0)));
 
         vm.stopPrank();
 
