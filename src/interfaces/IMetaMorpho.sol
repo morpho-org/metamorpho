@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2;
 
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
 
 struct Pending {
     uint192 value;

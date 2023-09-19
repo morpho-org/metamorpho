@@ -14,19 +14,12 @@ import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 
 import "@forge-std/console2.sol";
 
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {
-    IERC20,
-    IERC4626,
-    ERC20,
-    ERC4626,
-    Math,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
+import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 
 contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using Math for uint256;
