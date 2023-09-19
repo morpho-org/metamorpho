@@ -96,9 +96,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _;
     }
 
-    modifier timelockElapsed(PendingParameter memory pendingParameter) {
-        uint64 submittedAt = pendingParameter.submittedAt;
-
+    modifier timelockElapsed(uint64 submittedAt) {
         require(block.timestamp >= submittedAt + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
         require(block.timestamp <= submittedAt + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
 
@@ -129,7 +127,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
     }
 
-    function acceptTimelock() external timelockElapsed(pendingTimelock) onlyOwner {
+    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
         _setTimelock(pendingTimelock.value);
 
         delete pendingTimelock;
@@ -149,7 +147,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
     }
 
-    function acceptFee() external timelockElapsed(pendingFee) onlyOwner {
+    function acceptFee() external timelockElapsed(pendingFee.submittedAt) onlyOwner {
         // Accrue interest using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
@@ -184,7 +182,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
     }
 
-    function acceptCap(Id id) external timelockElapsed(pendingCap[id]) onlyRiskManager {
+    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) onlyRiskManager {
         _setCap(id, pendingCap[id].value);
 
         delete pendingCap[id];
@@ -253,16 +251,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ERC4626 (PUBLIC) */
 
-    function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
-        _accruedFeeShares();
-
-        uint256 assets = super.maxWithdraw(owner);
-
-        return assets - _staticWithdrawMorpho(assets);
+    function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
+        (assets,) = _maxWithdraw(owner);
     }
 
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
-        return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
+        (uint256 assets, uint256 newTotalAssets) = _maxWithdraw(owner);
+
+        return _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
     }
 
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
@@ -326,7 +322,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /* ERC4626 (INTERNAL) */
 
     function _decimalsOffset() internal pure override returns (uint8) {
-        return 6;
+        return DECIMALS_OFFSET;
+    }
+
+    function _maxWithdraw(address owner) internal view returns (uint256 assets, uint256 newTotalAssets) {
+        (, newTotalAssets) = _accruedFeeShares();
+
+        assets = super.maxWithdraw(owner);
+        assets -= _staticWithdrawMorpho(assets);
     }
 
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
