@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {IMetaMorpho, MarketConfig, PendingParameter, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
+import {IMetaMorpho, MarketConfig, Pending, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import "src/libraries/ConstantsLib.sol";
@@ -44,7 +44,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     mapping(address => uint256) internal _roleOf;
 
     mapping(Id => MarketConfig) public config;
-    mapping(Id => PendingParameter) public pendingCap;
+    mapping(Id => Pending) public pendingCap;
 
     /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
     /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
@@ -55,8 +55,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /// duplicate.
     Id[] public withdrawQueue;
 
-    PendingParameter public pendingFee;
-    PendingParameter public pendingTimelock;
+    Pending public pendingFee;
+    Pending public pendingTimelock;
 
     uint96 public fee;
     address public feeRecipient;
@@ -121,7 +121,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             _setTimelock(newTimelock);
         } else {
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-            pendingTimelock = PendingParameter(uint192(newTimelock), uint64(block.timestamp));
+            pendingTimelock = Pending(uint192(newTimelock), uint64(block.timestamp));
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -141,7 +141,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= WAD.
-            pendingFee = PendingParameter(uint192(newFee), uint64(block.timestamp));
+            pendingFee = Pending(uint192(newFee), uint64(block.timestamp));
 
             emit EventsLib.SubmitFee(newFee);
         }
@@ -176,7 +176,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         if (marketCap == 0 || timelock == 0) {
             _setCap(id, marketCap.toUint192());
         } else {
-            pendingCap[id] = PendingParameter(marketCap.toUint192(), uint64(block.timestamp));
+            pendingCap[id] = Pending(marketCap.toUint192(), uint64(block.timestamp));
 
             emit EventsLib.SubmitCap(id, marketCap);
         }

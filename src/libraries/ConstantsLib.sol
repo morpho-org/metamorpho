@@ -9,7 +9,7 @@ uint256 constant TIMELOCK_EXPIRATION = 3 days;
 uint256 constant MAX_TIMELOCK = 2 weeks;
 
 /// @dev OpenZeppelin's decimals offset used in MetaMorpho's ERC4626 implementation.
-uint256 constant DECIMALS_OFFSET = 6;
+uint8 constant DECIMALS_OFFSET = 6;
 
 /// @dev The role assigned to risk managers. Must be greater than the allocator role.
 uint256 constant RISK_MANAGER_ROLE = 2;
