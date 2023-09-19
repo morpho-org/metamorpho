@@ -16,6 +16,8 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import "@forge-std/console2.sol";
+
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {
     IERC20,
@@ -534,16 +536,11 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), assets);
-
-            if (toWithdraw > 0) {
-                // Don't require success to skip markets that revert.
-                (bool success,) = address(MORPHO).staticcall(
-                    abi.encodeCall(MORPHO.withdraw, (marketParams, toWithdraw, 0, address(this), address(this)))
-                );
-
-                if (success) assets -= toWithdraw;
-            }
+            // The vault withdrawing from Morpho cannot fail because:
+            // 1. oracle.price() is never called (the vault doesn't borrow)
+            // 2. `_withdrawable` caps to the liquidity available on Morpho
+            // 3. virtually accruing interest didn't fail in `_withdrawable`
+            assets = assets.zeroFloorSub(_withdrawable(marketParams, id));
 
             if (assets == 0) return 0;
         }
