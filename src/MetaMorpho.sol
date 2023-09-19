@@ -19,9 +19,9 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {
     IERC20,
+    IERC4626,
     ERC20,
     ERC4626,
-    Context,
     Math,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
@@ -51,8 +51,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     Id[] public supplyQueue;
 
     /// @dev Stores the order of markets from which liquidity is withdrawn upon withdrawal.
-    /// @dev Can only contain non-zero cap markets or markets on which the vault supplies liquidity.
-    /// Always contains all such markets.
+    /// @dev Always contain all non-zero cap markets or markets on which the vault supplies liquidity, without
+    /// duplicate.
     Id[] public withdrawQueue;
 
     PendingParameter public pendingFee;
@@ -154,8 +154,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(_accrueFee());
 
         _setFee(pendingFee.value);
-
-        delete pendingFee;
     }
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
@@ -255,17 +253,17 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ERC4626 (PUBLIC) */
 
-    function maxWithdraw(address owner) public view override returns (uint256) {
+    function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         _accruedFeeShares();
 
         return _staticWithdrawMorpho(super.maxWithdraw(owner));
     }
 
-    function maxRedeem(address owner) public view override returns (uint256) {
+    function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         return _convertToShares(maxWithdraw(owner), Math.Rounding.Down);
     }
 
-    function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
+    function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
         shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
@@ -274,7 +272,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets + assets);
     }
 
-    function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
+    function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
         assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Up);
@@ -283,7 +281,11 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets + assets);
     }
 
-    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
+    function withdraw(uint256 assets, address receiver, address owner)
+        public
+        override(IERC4626, ERC4626)
+        returns (uint256 shares)
+    {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
@@ -294,7 +296,11 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets - assets);
     }
 
-    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
+    function redeem(uint256 shares, address receiver, address owner)
+        public
+        override(IERC4626, ERC4626)
+        returns (uint256 assets)
+    {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
@@ -305,7 +311,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _updateLastTotalAssets(newTotalAssets - assets);
     }
 
-    function totalAssets() public view override returns (uint256 assets) {
+    function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 nbMarkets = withdrawQueue.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
@@ -406,6 +412,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         timelock = newTimelock;
 
         emit EventsLib.SetTimelock(newTimelock);
+
+        delete pendingTimelock;
     }
 
     function _setCap(Id id, uint192 marketCap) internal {
@@ -424,6 +432,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         marketConfig.cap = marketCap;
 
         emit EventsLib.SetCap(id, marketCap);
+
+        delete pendingCap;
     }
 
     function _setFee(uint256 newFee) internal {
@@ -431,6 +441,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         fee = uint96(newFee);
 
         emit EventsLib.SetFee(newFee);
+
+        delete pendingFee;
     }
 
     /* LIQUIDITY ALLOCATION */
