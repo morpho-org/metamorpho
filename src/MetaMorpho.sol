@@ -16,8 +16,6 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import "@forge-std/console2.sol";
-
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {
     IERC20,
