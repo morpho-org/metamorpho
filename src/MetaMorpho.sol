@@ -226,7 +226,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
 
         for (uint256 i; i < currLength; ++i) {
-            require(seen[i] || MORPHO.supplyShares(withdrawQueue[i], address(this)) == 0, ErrorsLib.MISSING_MARKET);
+            if (!seen[i]) {
+                Id id = withdrawQueue[i];
+
+                require(MORPHO.supplyShares(id, address(this)) == 0, ErrorsLib.MISSING_MARKET);
+
+                delete config[id].withdrawRank;
+            }
         }
 
         withdrawQueue = newWithdrawQueue;
