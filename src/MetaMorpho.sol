@@ -256,7 +256,9 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         _accruedFeeShares();
 
-        return _staticWithdrawMorpho(super.maxWithdraw(owner));
+        uint256 assets = super.maxWithdraw(owner);
+
+        return assets - _staticWithdrawMorpho(assets);
     }
 
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
@@ -433,7 +435,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         emit EventsLib.SetCap(id, marketCap);
 
-        delete pendingCap;
+        delete pendingCap[id];
     }
 
     function _setFee(uint256 newFee) internal {
