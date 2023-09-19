@@ -27,12 +27,16 @@ contract UrdTest is BaseTest {
         vault.setRewardsDistributor(address(rewardsDistributor));
 
         deal(address(collateralToken), address(vault), amount);
-        assertEq(collateralToken.balanceOf(address(vault)), amount);
+        assertEq(collateralToken.balanceOf(address(vault)), amount, "collateralToken.balanceOf(address(vault)) 0");
 
         vault.transferRewards(address(collateralToken));
 
-        assertEq(collateralToken.balanceOf(address(vault)), 0);
-        assertEq(collateralToken.balanceOf(address(rewardsDistributor)), amount);
+        assertEq(collateralToken.balanceOf(address(vault)), 0, "collateralToken.balanceOf(address(vault)) 1");
+        assertEq(
+            collateralToken.balanceOf(address(rewardsDistributor)),
+            amount,
+            "collateralToken.balanceOf(address(rewardsDistributor))"
+        );
     }
 
     function testTransferRewardsBorrowableToken(uint256 amount, uint256 idle) public {
@@ -42,7 +46,7 @@ contract UrdTest is BaseTest {
         vault.setRewardsDistributor(address(rewardsDistributor));
 
         deal(address(borrowableToken), address(vault), amount);
-        assertEq(borrowableToken.balanceOf(address(vault)), amount);
+        assertEq(borrowableToken.balanceOf(address(vault)), amount, "borrowableToken.balanceOf(address(vault)) 0");
 
         // Override idle.
         stdstore.target(address(vault)).sig("idle()").checked_write(idle);
@@ -53,7 +57,7 @@ contract UrdTest is BaseTest {
         assertEq(
             borrowableToken.balanceOf(address(vault)),
             amount - amount.zeroFloorSub(idle),
-            "borrowableToken.balanceOf(address(vault))"
+            "borrowableToken.balanceOf(address(vault)) 1"
         );
         assertEq(
             borrowableToken.balanceOf(address(rewardsDistributor)),
