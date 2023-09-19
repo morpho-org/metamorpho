@@ -25,8 +25,9 @@ import {
     Math,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {IERC20Metadata, ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
@@ -71,6 +72,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     constructor(address morpho, uint256 initialTimelock, address _asset, string memory _name, string memory _symbol)
         ERC4626(IERC20(_asset))
+        ERC20Permit("MetaMorpho Vault V1")
         ERC20(_name, _symbol)
     {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
@@ -253,6 +255,12 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function isAllocator(address target) public view returns (bool) {
         return _hasRole(target, ALLOCATOR_ROLE);
+    }
+
+    /* ERC20 (PUBLIC) */
+
+    function decimals() public view override(IERC20Metadata, ERC20, ERC4626) returns (uint8) {
+        return ERC4626.decimals();
     }
 
     /* ERC4626 (PUBLIC) */
