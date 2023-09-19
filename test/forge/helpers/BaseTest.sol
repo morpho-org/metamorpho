@@ -16,6 +16,8 @@ import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {MetaMorpho, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
+import {UrdFactory} from "@universal-rewards-distributor/UrdFactory.sol";
+import {UniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
@@ -53,6 +55,9 @@ contract BaseTest is Test {
     IrmMock internal irm;
 
     MetaMorpho internal vault;
+
+    UrdFactory internal urdFactory;
+    UniversalRewardsDistributor internal rewardsDistributor;
 
     MarketParams[] internal allMarkets;
 
@@ -94,6 +99,11 @@ contract BaseTest is Test {
 
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
+
+        urdFactory = new UrdFactory();
+        rewardsDistributor =
+            UniversalRewardsDistributor(urdFactory.createUrd(vault.owner(), 0, bytes32(0), bytes32(0), bytes32(0)));
+
         vm.stopPrank();
 
         // block.timestamp defaults to 1 which is an unrealistic state.
