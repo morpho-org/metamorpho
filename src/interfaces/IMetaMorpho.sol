@@ -8,6 +8,11 @@ struct PendingParameter {
     uint64 submittedAt;
 }
 
+struct MarketConfig {
+    uint192 cap;
+    uint64 withdrawRank;
+}
+
 struct MarketAllocation {
     MarketParams marketParams;
     uint256 assets;

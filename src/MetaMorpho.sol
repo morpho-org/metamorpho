@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {IMetaMorpho, PendingParameter, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
+import {IMetaMorpho, MarketConfig, PendingParameter, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import "src/libraries/ConstantsLib.sol";
@@ -43,7 +43,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     mapping(address => uint256) internal _roleOf;
 
-    mapping(Id => uint256) public cap;
+    mapping(Id => MarketConfig) public config;
     mapping(Id => PendingParameter) public pendingCap;
 
     /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
@@ -178,7 +178,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
 
         if (marketCap == 0 || timelock == 0) {
-            _setCap(id, marketCap);
+            _setCap(id, marketCap.toUint192());
         } else {
             pendingCap[id] = PendingParameter(marketCap.toUint192(), uint64(block.timestamp));
 
@@ -200,7 +200,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         uint256 length = newSupplyQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            require(cap[newSupplyQueue[i]] > 0, ErrorsLib.UNAUTHORIZED_MARKET);
+            require(config[newSupplyQueue[i]].cap > 0, ErrorsLib.UNAUTHORIZED_MARKET);
         }
 
         supplyQueue = newSupplyQueue;
@@ -219,9 +219,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             // If prevIndex >= currLength, reverts with native "Index out of bounds".
             require(!seen[prevIndex], ErrorsLib.DUPLICATE_MARKET);
 
-            newWithdrawQueue[i] = withdrawQueue[prevIndex];
-
             seen[prevIndex] = true;
+
+            Id id = withdrawQueue[prevIndex];
+
+            newWithdrawQueue[i] = id;
+
+            // Safe "unchecked" cast because i < currLength.
+            config[id].withdrawRank = uint64(i + 1);
         }
 
         for (uint256 i; i < currLength; ++i) {
@@ -403,15 +408,20 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         emit EventsLib.SetTimelock(newTimelock);
     }
 
-    function _setCap(Id id, uint256 marketCap) internal {
-        if (marketCap > 0 && cap[id] == 0) {
+    function _setCap(Id id, uint192 marketCap) internal {
+        MarketConfig storage marketConfig = config[id];
+
+        if (marketCap > 0 && marketConfig.withdrawRank == 0) {
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
             require(withdrawQueue.length <= MAX_QUEUE_SIZE, ErrorsLib.MAX_QUEUE_SIZE_EXCEEDED);
+
+            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
+            marketConfig.withdrawRank = uint64(withdrawQueue.length);
         }
 
-        cap[id] = marketCap;
+        marketConfig.cap = marketCap;
 
         emit EventsLib.SetCap(id, marketCap);
     }
@@ -530,9 +540,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /// @dev Assumes that the inputs `marketParams` and `id` match.
     function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        if (cap[id] == 0) return 0;
+        uint256 marketCap = config[id].cap;
+        if (marketCap == 0) return 0;
 
-        return cap[id].zeroFloorSub(_supplyBalance(marketParams));
+        return marketCap.zeroFloorSub(_supplyBalance(marketParams));
     }
 
     /// @dev Assumes that the inputs `marketParams` and `id` match.

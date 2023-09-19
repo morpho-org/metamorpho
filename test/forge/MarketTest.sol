@@ -40,7 +40,10 @@ contract MarketTest is BaseTest {
         vm.prank(RISK_MANAGER);
         vault.submitCap(marketParams, 0);
 
-        assertEq(vault.cap(marketParams.id()), 0);
+        (uint192 newCap, uint64 withdrawRank) = vault.config(marketParams.id());
+
+        assertEq(newCap, 0, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
     }
 
     function testAcceptCap(uint256 seed, uint256 cap) public {
@@ -50,10 +53,12 @@ contract MarketTest is BaseTest {
         _setCap(marketParams, cap);
 
         Id id = marketParams.id();
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
 
-        assertEq(vault.cap(id), cap);
-        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id));
-        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id));
+        assertEq(newCap, cap, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
     }
 
     function testAcceptCapTimelockNotElapsed(uint256 timelock, uint256 timeElapsed) public {
