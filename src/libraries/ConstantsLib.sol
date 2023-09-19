@@ -11,6 +11,12 @@ uint256 constant MAX_TIMELOCK = 2 weeks;
 /// @dev OpenZeppelin's decimals offset used in MetaMorpho's ERC4626 implementation.
 uint256 constant DECIMALS_OFFSET = 6;
 
+/// @dev The role assigned to risk managers. Must be greater than the allocator role.
+uint256 constant RISK_MANAGER_ROLE = 2;
+
+/// @dev The role assigned to allocators.
+uint256 constant ALLOCATOR_ROLE = 1;
+
 /// @dev The maximum supply/withdraw queue size ensuring the cost of depositing/withdrawing from the vault fits in a
 /// block.
 uint256 constant MAX_QUEUE_SIZE = 64;

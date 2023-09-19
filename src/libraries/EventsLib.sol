@@ -8,9 +8,7 @@ library EventsLib {
 
     event SetTimelock(uint256 timelock);
 
-    event SetIsRiskManager(address indexed riskManager, bool isRiskManager);
-
-    event SetIsAllocator(address indexed allocator, bool isAllocator);
+    event SetRole(address indexed target, uint256 role);
 
     event SubmitFee(uint256 fee);
 
