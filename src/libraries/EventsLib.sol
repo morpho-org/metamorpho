@@ -30,5 +30,7 @@ library EventsLib {
     /// @param totalAssets The total amount of assets this vault manages.
     event UpdateLastTotalAssets(uint256 totalAssets);
 
-    event TransferRewards(address indexed token, uint256 amount);
+    event TransferRewards(
+        address indexed caller, address indexed rewardsDistributor, address indexed token, uint256 amount
+    );
 }

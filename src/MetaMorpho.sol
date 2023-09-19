@@ -252,7 +252,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         SafeERC20.safeTransfer(IERC20(token), rewardsDistributor, amount);
 
-        emit EventsLib.TransferRewards(token, amount);
+        emit EventsLib.TransferRewards(msg.sender, rewardsDistributor, token, amount);
     }
 
     /* PUBLIC */
