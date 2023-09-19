@@ -8,6 +8,8 @@ library EventsLib {
 
     event SetTimelock(uint256 timelock);
 
+    event SetRewardsDistributor(address indexed rewardsDistributor);
+
     event SetRole(address indexed target, uint256 role);
 
     event SubmitFee(uint256 fee);
@@ -27,4 +29,6 @@ library EventsLib {
     /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.
     event UpdateLastTotalAssets(uint256 totalAssets);
+
+    event TransferRewards(address indexed token, uint256 amount);
 }

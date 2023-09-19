@@ -65,6 +65,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     uint256 public timelock;
 
+    address public rewardsDistributor;
+
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
     uint256 public idle;
@@ -127,6 +129,12 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
+    }
+
+    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
+        rewardsDistributor = newRewardsDistributor;
+
+        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
     }
 
     function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
@@ -239,6 +247,19 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         onlyAllocator
     {
         _reallocate(withdrawn, supplied);
+    }
+
+    /* EXTERNAL */
+
+    function transferRewards(address token) external {
+        require(rewardsDistributor != address(0), ErrorsLib.ZERO_ADDRESS);
+
+        uint256 amount = IERC20(token).balanceOf(address(this));
+        if (token == asset()) amount -= idle;
+
+        SafeERC20.safeTransfer(IERC20(token), rewardsDistributor, amount);
+
+        emit EventsLib.TransferRewards(token, amount);
     }
 
     /* PUBLIC */
