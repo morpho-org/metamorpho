@@ -16,8 +16,6 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 
-import "@forge-std/console2.sol";
-
 import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
 import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 
@@ -229,7 +227,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         }
 
         for (uint256 i; i < currLength; ++i) {
-            require(seen[i] || MORPHO.supplyShares(withdrawQueue[i], address(this)) == 0, ErrorsLib.MISSING_MARKET);
+            if (!seen[i]) {
+                Id id = withdrawQueue[i];
+
+                require(MORPHO.supplyShares(id, address(this)) == 0, ErrorsLib.MISSING_MARKET);
+
+                delete config[id].withdrawRank;
+            }
         }
 
         withdrawQueue = newWithdrawQueue;
