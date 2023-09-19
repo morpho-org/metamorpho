@@ -2,7 +2,9 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {IMetaMorpho, MarketConfig, Pending, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
+import {
+    IMetaMorpho, MarketConfig, PendingUint192, PendingAddress, MarketAllocation
+} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import "src/libraries/ConstantsLib.sol";
@@ -44,7 +46,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     mapping(address => uint256) internal _roleOf;
 
     mapping(Id => MarketConfig) public config;
-    mapping(Id => Pending) public pendingCap;
+    mapping(Id => PendingUint192) public pendingCap;
 
     /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
     /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
@@ -55,13 +57,15 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /// duplicate.
     Id[] public withdrawQueue;
 
-    Pending public pendingFee;
-    Pending public pendingTimelock;
+    PendingUint192 public pendingFee;
+    PendingUint192 public pendingTimelock;
+    PendingAddress public pendingRevocator;
 
     uint96 public fee;
     address public feeRecipient;
 
-    uint256 public timelock;
+    uint96 public timelock;
+    address public revocator;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
@@ -96,7 +100,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _;
     }
 
-    modifier timelockElapsed(uint64 submittedAt) {
+    modifier onlyRevocator() {
+        require(_msgSender() == revocator, ErrorsLib.NOT_REVOCATOR);
+
+        _;
+    }
+
+    modifier timelockElapsed(uint256 submittedAt) {
         require(block.timestamp >= submittedAt + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
         require(block.timestamp <= submittedAt + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
 
@@ -121,7 +131,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             _setTimelock(newTimelock);
         } else {
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-            pendingTimelock = Pending(uint192(newTimelock), uint64(block.timestamp));
+            pendingTimelock = PendingUint192(uint192(newTimelock), uint64(block.timestamp));
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -129,8 +139,6 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
         _setTimelock(pendingTimelock.value);
-
-        delete pendingTimelock;
     }
 
     function submitFee(uint256 newFee) external onlyOwner {
@@ -141,7 +149,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= WAD.
-            pendingFee = Pending(uint192(newFee), uint64(block.timestamp));
+            pendingFee = PendingUint192(uint192(newFee), uint64(block.timestamp));
 
             emit EventsLib.SubmitFee(newFee);
         }
@@ -165,6 +173,22 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         emit EventsLib.SetFeeRecipient(newFeeRecipient);
     }
 
+    function submitRevocator(address newRevocator) external onlyOwner {
+        require(newRevocator != revocator, ErrorsLib.ALREADY_SET);
+
+        if (timelock == 0) {
+            _setRevocator(newRevocator);
+        } else {
+            pendingRevocator = PendingAddress(newRevocator, uint64(block.timestamp));
+
+            emit EventsLib.SubmitRevocator(newRevocator);
+        }
+    }
+
+    function acceptRevocator() external timelockElapsed(pendingRevocator.submittedAt) onlyOwner {
+        _setRevocator(pendingRevocator.value);
+    }
+
     /* ONLY RISK MANAGER FUNCTIONS */
 
     function submitCap(MarketParams memory marketParams, uint256 marketCap) external onlyRiskManager {
@@ -176,16 +200,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         if (marketCap == 0 || timelock == 0) {
             _setCap(id, marketCap.toUint192());
         } else {
-            pendingCap[id] = Pending(marketCap.toUint192(), uint64(block.timestamp));
+            pendingCap[id] = PendingUint192(marketCap.toUint192(), uint64(block.timestamp));
 
-            emit EventsLib.SubmitCap(id, marketCap);
+            emit EventsLib.SubmitCap(msg.sender, id, marketCap);
         }
     }
 
     function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) onlyRiskManager {
         _setCap(id, pendingCap[id].value);
-
-        delete pendingCap[id];
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
@@ -243,6 +265,32 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         onlyAllocator
     {
         _reallocate(withdrawn, supplied);
+    }
+
+    /* ONLY REVOCATOR FUNCTIONS */
+
+    function revokeTimelock() external onlyRevocator {
+        emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock.value, pendingTimelock.submittedAt);
+
+        delete pendingTimelock;
+    }
+
+    function revokeFee() external onlyRevocator {
+        emit EventsLib.RevokeFee(msg.sender, pendingFee.value, pendingFee.submittedAt);
+
+        delete pendingFee;
+    }
+
+    function revokeCap(Id id) external onlyRevocator {
+        emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id].value, pendingCap[id].submittedAt);
+
+        delete pendingCap[id];
+    }
+
+    function revokeRevocator() external onlyRevocator {
+        emit EventsLib.RevokeRevocator(msg.sender, pendingRevocator.value, pendingRevocator.submittedAt);
+
+        delete pendingRevocator;
     }
 
     /* PUBLIC */
@@ -420,11 +468,19 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function _setTimelock(uint256 newTimelock) internal {
         // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-        timelock = newTimelock;
+        timelock = uint96(newTimelock);
 
         emit EventsLib.SetTimelock(newTimelock);
 
         delete pendingTimelock;
+    }
+
+    function _setRevocator(address newRevocator) internal {
+        revocator = newRevocator;
+
+        emit EventsLib.SetRevocator(newRevocator);
+
+        delete pendingRevocator;
     }
 
     function _setCap(Id id, uint192 marketCap) internal {
@@ -442,7 +498,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         marketConfig.cap = marketCap;
 
-        emit EventsLib.SetCap(id, marketCap);
+        emit EventsLib.SetCap(msg.sender, id, marketCap);
 
         delete pendingCap[id];
     }

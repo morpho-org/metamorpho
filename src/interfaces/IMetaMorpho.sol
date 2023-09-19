@@ -4,14 +4,19 @@ pragma solidity >=0.6.2;
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
-struct Pending {
+struct MarketConfig {
+    uint192 cap;
+    uint64 withdrawRank;
+}
+
+struct PendingUint192 {
     uint192 value;
     uint64 submittedAt;
 }
 
-struct MarketConfig {
-    uint192 cap;
-    uint64 withdrawRank;
+struct PendingAddress {
+    address value;
+    uint96 submittedAt;
 }
 
 struct MarketAllocation {
@@ -27,7 +32,7 @@ interface IMetaMorpho is IERC4626 {
 
     function fee() external view returns (uint96);
     function feeRecipient() external view returns (address);
-    function timelock() external view returns (uint256);
+    function timelock() external view returns (uint96);
     function supplyQueue(uint256) external view returns (Id);
     function withdrawQueue(uint256) external view returns (Id);
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
@@ -37,15 +42,23 @@ interface IMetaMorpho is IERC4626 {
 
     function submitTimelock(uint256 newTimelock) external;
     function acceptTimelock() external;
+    function revokeTimelock() external;
     function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
 
     function submitCap(MarketParams memory marketParams, uint256 marketCap) external;
     function acceptCap(Id id) external;
+    function revokeCap(Id id) external;
     function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
 
     function submitFee(uint256 newFee) external;
     function acceptFee() external;
+    function revokeFee() external;
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
+
+    function submitRevocator(address newRevocator) external;
+    function acceptRevocator() external;
+    function revokeRevocator() external;
+    function pendingRevocator() external view returns (address revocator, uint96 submittedAt);
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external;

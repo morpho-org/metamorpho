@@ -6,6 +6,8 @@ library ErrorsLib {
 
     string internal constant NOT_ALLOCATOR = "not allocator";
 
+    string internal constant NOT_REVOCATOR = "not revocator";
+
     string internal constant UNAUTHORIZED_MARKET = "unauthorized market";
 
     string internal constant INCONSISTENT_ASSET = "inconsistent asset";
