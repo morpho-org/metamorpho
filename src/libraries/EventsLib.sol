@@ -6,27 +6,23 @@ import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
 library EventsLib {
     event SubmitTimelock(uint256 timelock);
 
-    event AcceptTimelock(uint256 timelock);
+    event SetTimelock(uint256 timelock);
 
     event SetRole(address indexed target, uint256 role);
 
     event SubmitFee(uint256 fee);
 
     /// @notice Emitted when setting a new fee.
-    /// @param newFee The new fee.
-    event AcceptFee(uint256 newFee);
+    /// @param fee The new fee.
+    event SetFee(uint256 fee);
 
     /// @notice Emitted when setting a new fee recipient.
-    /// @param newFeeRecipient The new fee recipient.
-    event SetFeeRecipient(address indexed newFeeRecipient);
+    /// @param feeRecipient The new fee recipient.
+    event SetFeeRecipient(address indexed feeRecipient);
 
-    event SubmitMarket(Id id);
+    event SubmitCap(Id id, uint256 cap);
 
-    event EnableMarket(Id id, uint128 cap);
-
-    event SetCap(uint128 cap);
-
-    event DisableMarket(Id id);
+    event SetCap(Id id, uint256 cap);
 
     /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.

@@ -4,5 +4,5 @@ pragma solidity >=0.6.2;
 import {MarketParams, Id} from "@morpho-blue/interfaces/IMorpho.sol";
 
 interface IMorphoMarketParams {
-    function idToMarketParams(Id id) external returns (MarketParams memory marketParams);
+    function idToMarketParams(Id id) external view returns (MarketParams memory marketParams);
 }

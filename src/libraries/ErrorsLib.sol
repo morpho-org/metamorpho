@@ -18,15 +18,11 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
 
-    string internal constant ENABLE_MARKET_FAILED = "enable market failed";
+    string internal constant DUPLICATE_MARKET = "duplicate market";
 
-    string internal constant DISABLE_MARKET_FAILED = "disable market failed";
+    string internal constant MISSING_MARKET = "missing market";
 
-    string internal constant INVALID_LENGTH = "invalid length";
-
-    string internal constant MARKET_NOT_ENABLED = "market not enabled";
-
-    string internal constant WITHDRAW_ORDER_FAILED = "withdraw order failed";
+    string internal constant WITHDRAW_FAILED_MORPHO = "withdraw failed on Morpho";
 
     string internal constant MARKET_NOT_CREATED = "market not created";
 
@@ -35,4 +31,6 @@ library ErrorsLib {
     string internal constant TIMELOCK_NOT_ELAPSED = "timelock not elapsed";
 
     string internal constant TIMELOCK_EXPIRATION_EXCEEDED = "timelock expiration exceeded";
+
+    string internal constant MAX_QUEUE_SIZE_EXCEEDED = "max queue size exceeded";
 }

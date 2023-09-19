@@ -39,16 +39,10 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.submitMarket(allMarkets[0], CAP);
+        vault.submitCap(allMarkets[0], CAP);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.enableMarket(allMarkets[0].id());
-
-        vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.setCap(allMarkets[0], CAP);
-
-        vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.disableMarket(allMarkets[0].id());
+        vault.acceptCap(allMarkets[0].id());
 
         vm.stopPrank();
     }
@@ -57,14 +51,15 @@ contract RoleTest is BaseTest {
         vm.assume(caller != vault.owner() && !vault.isRiskManager(caller) && !vault.isAllocator(caller));
         vm.startPrank(caller);
 
-        Id[] memory order;
+        Id[] memory supplyQueue;
         MarketAllocation[] memory allocation;
+        uint256[] memory withdrawQueueFromRanks;
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
-        vault.setSupplyAllocationOrder(order);
+        vault.setSupplyQueue(supplyQueue);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
-        vault.setWithdrawAllocationOrder(order);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
         vault.reallocate(allocation, allocation);
@@ -73,43 +68,49 @@ contract RoleTest is BaseTest {
     }
 
     function testRiskManagerOrOwnerShouldTriggerRiskManagerFunctions() public {
-        vm.startPrank(OWNER);
-        vault.submitMarket(allMarkets[0], CAP);
-        vault.enableMarket(allMarkets[0].id());
-        vault.setCap(allMarkets[0], CAP);
-        vault.disableMarket(allMarkets[0].id());
-        vm.stopPrank();
+        vm.prank(OWNER);
+        vault.submitCap(allMarkets[0], CAP);
 
-        vm.startPrank(RISK_MANAGER);
-        vault.submitMarket(allMarkets[1], CAP);
-        vault.enableMarket(allMarkets[1].id());
-        vault.setCap(allMarkets[1], CAP);
-        vault.disableMarket(allMarkets[1].id());
-        vm.stopPrank();
+        vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(OWNER);
+        vault.acceptCap(allMarkets[0].id());
+
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(allMarkets[1], CAP);
+
+        vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(RISK_MANAGER);
+        vault.acceptCap(allMarkets[1].id());
     }
 
     function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {
-        Id[] memory order = new Id[](1);
-        order[0] = allMarkets[0].id();
+        _setCap(allMarkets[0], CAP);
+
+        Id[] memory supplyQueue = new Id[](1);
+        supplyQueue[0] = allMarkets[0].id();
+
+        uint256[] memory withdrawQueueFromRanks = new uint256[](1);
+        withdrawQueueFromRanks[0] = 0;
+
         MarketAllocation[] memory allocation;
 
-        _submitAndEnableMarket(allMarkets[0], CAP);
-
         vm.startPrank(OWNER);
-        vault.setSupplyAllocationOrder(order);
-        vault.setWithdrawAllocationOrder(order);
+        vault.setSupplyQueue(supplyQueue);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
 
         vm.startPrank(RISK_MANAGER);
-        vault.setSupplyAllocationOrder(order);
-        vault.setWithdrawAllocationOrder(order);
+        vault.setSupplyQueue(supplyQueue);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
 
         vm.startPrank(ALLOCATOR);
-        vault.setSupplyAllocationOrder(order);
-        vault.setWithdrawAllocationOrder(order);
+        vault.setSupplyQueue(supplyQueue);
+        vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
         vm.stopPrank();
     }

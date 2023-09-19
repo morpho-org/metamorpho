@@ -15,10 +15,10 @@ import {IrmMock} from "src/mocks/IrmMock.sol";
 import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
-import {MetaMorpho, IERC20, ErrorsLib, Pending, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorpho, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+import "@forge-std/Test.sol";
+import "@forge-std/console2.sol";
 
 contract BaseTest is Test {
     using MorphoLib for IMorpho;
@@ -32,7 +32,7 @@ contract BaseTest is Test {
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
-    uint256 internal constant TIMELOCK = 0;
+    uint256 internal constant TIMELOCK = 2;
     uint128 internal constant CAP = type(uint128).max;
 
     address internal OWNER;
@@ -95,6 +95,9 @@ contract BaseTest is Test {
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
+
+        // block.timestamp defaults to 1 which is an unrealistic state.
+        vm.warp(block.timestamp + TIMELOCK);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
@@ -219,19 +222,23 @@ contract BaseTest is Test {
         require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
-    function _submitAndSetTimelock(uint128 timelock) internal {
-        vm.startPrank(OWNER);
+    function _setTimelock(uint256 timelock) internal {
+        vm.prank(OWNER);
         vault.submitTimelock(timelock);
+
         vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(OWNER);
         vault.acceptTimelock();
-        vm.stopPrank();
     }
 
-    function _submitAndEnableMarket(MarketParams memory params, uint128 cap) internal {
-        vm.startPrank(RISK_MANAGER);
-        vault.submitMarket(params, cap);
+    function _setCap(MarketParams memory params, uint256 cap) internal {
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(params, cap);
+
         vm.warp(block.timestamp + vault.timelock());
-        vault.enableMarket(params.id());
-        vm.stopPrank();
+
+        vm.prank(RISK_MANAGER);
+        vault.acceptCap(params.id());
     }
 }

@@ -114,7 +114,7 @@ describe("MetaMorpho", () => {
 
     const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
 
-    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 0, borrowableAddress, "MetaMorpho", "mB");
+    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 1, borrowableAddress, "MetaMorpho", "mB");
 
     const metaMorphoAddress = await metaMorpho.getAddress();
 
@@ -128,22 +128,24 @@ describe("MetaMorpho", () => {
     await metaMorpho.setIsRiskManager(riskManager.address, true);
     await metaMorpho.setIsAllocator(allocator.address, true);
 
+    await metaMorpho.submitTimelock(0);
+
+    const block = await hre.ethers.provider.getBlock("latest");
+    await setNextBlockTimestamp(block!.timestamp + 1);
+
+    await metaMorpho.acceptTimelock();
+
     await metaMorpho.setFeeRecipient(admin.address);
-    await metaMorpho.submitFee(BigInt.WAD / 5n);
-    await metaMorpho.acceptFee();
+    await metaMorpho.submitFee(BigInt.WAD / 10n);
 
     for (const marketParams of allMarketParams) {
       await metaMorpho
         .connect(riskManager)
-        .submitMarket(
-          marketParams,
-          (BigInt.WAD * 100n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length),
-        );
-      await metaMorpho.connect(riskManager).enableMarket(identifier(marketParams));
+        .submitCap(marketParams, (BigInt.WAD * 100n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length));
     }
 
-    await metaMorpho.connect(riskManager).setSupplyAllocationOrder(allMarketParams.map(identifier));
-    await metaMorpho.connect(riskManager).setWithdrawAllocationOrder(allMarketParams.map(identifier));
+    await metaMorpho.connect(riskManager).setSupplyQueue(allMarketParams.map(identifier));
+    await metaMorpho.connect(riskManager).sortWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
