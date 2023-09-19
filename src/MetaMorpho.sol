@@ -31,14 +31,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
 
-    /* IMMUTABMES */
+    /* IMMUTABLES */
 
-    IMorpho internal immutable MORPHO;
+    IMorpho public immutable MORPHO;
 
     /* STORAGE */
 
-    mapping(address => bool) public isRiskManager;
-    mapping(address => bool) public isAllocator;
+    mapping(address => uint256) internal _roleOf;
     mapping(Id => Pending) public pendingMarket;
 
     Id[] public supplyAllocationOrder;
@@ -74,15 +73,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /* MODIFIERS */
 
     modifier onlyRiskManager() {
-        require(isRiskManager[_msgSender()] || _msgSender() == owner(), ErrorsLib.NOT_RISK_MANAGER);
+        require(isRiskManager(_msgSender()), ErrorsLib.NOT_RISK_MANAGER);
 
         _;
     }
 
     modifier onlyAllocator() {
-        require(
-            isAllocator[_msgSender()] || isRiskManager[_msgSender()] || _msgSender() == owner(), ErrorsLib.NOT_ALLOCATOR
-        );
+        require(isAllocator(_msgSender()), ErrorsLib.NOT_ALLOCATOR);
 
         _;
     }
@@ -114,15 +111,11 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
-        isRiskManager[newRiskManager] = newIsRiskManager;
-
-        emit EventsLib.SetIsRiskManager(newRiskManager, newIsRiskManager);
+        _setRole(newRiskManager, RISK_MANAGER_ROLE, newIsRiskManager);
     }
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        isAllocator[newAllocator] = newIsAllocator;
-
-        emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
+        _setRole(newAllocator, ALLOCATOR_ROLE, newIsAllocator);
     }
 
     function submitFee(uint256 newFee) external onlyOwner {
@@ -222,6 +215,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     /* PUBLIC */
+
+    function isRiskManager(address target) public view returns (bool) {
+        return _hasRole(target, RISK_MANAGER_ROLE);
+    }
+
+    function isAllocator(address target) public view returns (bool) {
+        return _hasRole(target, ALLOCATOR_ROLE);
+    }
 
     function marketCap(Id id) public view returns (uint256) {
         return _market(id).cap;
@@ -555,5 +556,16 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
+    }
+
+    function _hasRole(address target, uint256 role) internal view returns (bool) {
+        return _roleOf[target] >= role || _msgSender() == owner();
+    }
+
+    function _setRole(address target, uint256 role, bool hasRole) internal {
+        if (hasRole) _roleOf[target] = role;
+        else delete _roleOf[target];
+
+        emit EventsLib.SetRole(target, role);
     }
 }
