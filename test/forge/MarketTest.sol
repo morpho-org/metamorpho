@@ -1,256 +1,209 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import {stdError} from "@forge-std/StdError.sol";
+
 import "./helpers/BaseTest.sol";
 
 contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
-    function testSubmitPendingMarket(uint256 seed, uint128 cap) public {
-        MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
+    function testSubmitCap(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
+        cap = bound(cap, 1, type(uint192).max);
 
         vm.prank(RISK_MANAGER);
-        vault.submitPendingMarket(marketParamsFuzz, cap);
+        vault.submitCap(marketParams, cap);
 
-        (uint128 value, uint128 timestamp) = vault.pendingMarket(marketParamsFuzz.id());
+        (uint192 value, uint64 timestamp) = vault.pendingCap(marketParams.id());
+
         assertEq(value, cap);
         assertEq(timestamp, block.timestamp);
     }
 
-    function testEnableMarket(uint256 seed, uint128 cap) public {
-        MarketParams memory marketParamsFuzz = allMarkets[seed % allMarkets.length];
+    function testSubmitCapOverflow(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
 
-        _submitAndEnableMarket(marketParamsFuzz, cap);
-
-        Id id = marketParamsFuzz.id();
-
-        assertEq(vault.marketCap(id), cap);
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(id));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(id));
-    }
-
-    function testEnableMarketShouldRevertWhenAlreadyEnabled() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
+        cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
 
         vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.ENABLE_MARKET_FAILED));
-        vault.enableMarket(allMarkets[0].id());
+        vm.expectRevert("SafeCast: value doesn't fit in 192 bits");
+        vault.submitCap(marketParams, cap);
     }
 
-    function testEnableMarketShouldRevertWhenTimelockNotElapsed(uint128 timelock, uint256 timeElapsed) public {
-        timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
-        _submitAndSetTimelock(timelock);
+    function testSubmitCapZeroNoTimelock(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
+        cap = bound(cap, 1, type(uint192).max);
+
+        _setCap(marketParams, cap);
+
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(marketParams, 0);
+
+        (uint192 newCap, uint64 withdrawRank) = vault.config(marketParams.id());
+
+        assertEq(newCap, 0, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
+    }
+
+    function testAcceptCap(uint256 seed, uint256 cap) public {
+        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
+        cap = bound(cap, 1, type(uint192).max);
+
+        _setCap(marketParams, cap);
+
+        Id id = marketParams.id();
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+
+        assertEq(newCap, cap, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+    }
+
+    function testAcceptCapTimelockNotElapsed(uint256 timelock, uint256 timeElapsed) public {
+        timelock = bound(timelock, 1, MAX_TIMELOCK);
+
+        vm.assume(timelock != vault.timelock());
+
+        _setTimelock(timelock);
 
         timeElapsed = bound(timeElapsed, 0, timelock - 1);
 
-        vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(allMarkets[0], CAP);
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(allMarkets[0], CAP);
 
         vm.warp(block.timestamp + timeElapsed);
 
+        vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
-        vault.enableMarket(allMarkets[0].id());
+        vault.acceptCap(allMarkets[0].id());
     }
 
-    function testEnableMarketShouldRevertWhenTimelockExpirationExceeded(uint128 timelock, uint256 timeElapsed) public {
-        timelock = uint128(bound(timelock, 1, vault.MAX_TIMELOCK()));
-        _submitAndSetTimelock(timelock);
+    function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 timeElapsed) public {
+        timelock = bound(timelock, 1, MAX_TIMELOCK);
 
-        timeElapsed = bound(timeElapsed, timelock + vault.TIMELOCK_EXPIRATION() + 1, type(uint128).max);
+        vm.assume(timelock != vault.timelock());
+
+        _setTimelock(timelock);
+
+        timeElapsed = bound(timeElapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.startPrank(RISK_MANAGER);
-        vault.submitPendingMarket(allMarkets[0], CAP);
+        vault.submitCap(allMarkets[0], CAP);
 
         vm.warp(block.timestamp + timeElapsed);
 
         vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
-        vault.enableMarket(allMarkets[0].id());
+        vault.acceptCap(allMarkets[0].id());
     }
 
-    function testSubmitPendingMarketShouldRevertWhenInconsistenAsset(MarketParams memory marketParamsFuzz) public {
-        vm.assume(marketParamsFuzz.borrowableToken != address(borrowableToken));
+    function testSubmitCapInconsistentAsset(MarketParams memory marketParams) public {
+        vm.assume(marketParams.borrowableToken != address(borrowableToken));
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.INCONSISTENT_ASSET));
-        vault.submitPendingMarket(marketParamsFuzz, 0);
+        vault.submitCap(marketParams, 0);
     }
 
-    function testSubmitPendingMarketShouldRevertWhenMarketNotCreated(MarketParams memory marketParamsFuzz) public {
-        marketParamsFuzz.borrowableToken = address(borrowableToken);
-        (,,,, uint128 lastUpdate,) = morpho.market(marketParamsFuzz.id());
+    function testSubmitCapMarketNotCreated(MarketParams memory marketParams) public {
+        marketParams.borrowableToken = address(borrowableToken);
+        (,,,, uint256 lastUpdate,) = morpho.market(marketParams.id());
         vm.assume(lastUpdate == 0);
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));
-        vault.submitPendingMarket(marketParamsFuzz, 0);
+        vault.submitCap(marketParams, 0);
     }
 
-    function testDisableMarket() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
+    function testSetSupplyQueue() public {
+        _setCap(allMarkets[0], CAP);
+        _setCap(allMarkets[1], CAP);
+        _setCap(allMarkets[2], CAP);
 
-        Id id = allMarkets[1].id();
+        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(allMarkets[0].id()));
+        assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.supplyQueue(2)), Id.unwrap(allMarkets[2].id()));
 
-        vm.prank(RISK_MANAGER);
-        vault.disableMarket(id);
-
-        vm.expectRevert(bytes(ErrorsLib.UNAUTHORIZED_MARKET));
-        vault.marketCap(id);
-
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
-    }
-
-    function testDisableMarketShouldRevertWhenAlreadyDisabled() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-
-        vm.startPrank(RISK_MANAGER);
-        vault.disableMarket(allMarkets[0].id());
-
-        vm.expectRevert(bytes(ErrorsLib.DISABLE_MARKET_FAILED));
-        vault.disableMarket(allMarkets[0].id());
-        vm.stopPrank();
-    }
-
-    function testDisableMarketShouldRevertWhenMarketIsNotEnabled(MarketParams memory marketParamsFuzz) public {
-        vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.DISABLE_MARKET_FAILED));
-        vault.disableMarket(marketParamsFuzz.id());
-    }
-
-    function testSetSupplyAllocationOrder() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
-
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[1].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[2].id()));
-
-        Id[] memory supplyAllocationOrder = new Id[](3);
-        supplyAllocationOrder[0] = allMarkets[1].id();
-        supplyAllocationOrder[1] = allMarkets[2].id();
-        supplyAllocationOrder[2] = allMarkets[0].id();
+        Id[] memory supplyQueue = new Id[](2);
+        supplyQueue[0] = allMarkets[1].id();
+        supplyQueue[1] = allMarkets[2].id();
 
         vm.prank(ALLOCATOR);
-        vault.setSupplyAllocationOrder(supplyAllocationOrder);
+        vault.setSupplyQueue(supplyQueue);
 
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(0)), Id.unwrap(allMarkets[1].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
-        assertEq(Id.unwrap(vault.supplyAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
+        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(allMarkets[2].id()));
     }
 
-    function testSetSupplyAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
+    function testSortWithdrawQueue() public {
+        _setCap(allMarkets[0], CAP);
+        _setCap(allMarkets[1], CAP);
+        _setCap(allMarkets[2], CAP);
 
-        Id[] memory supplyAllocationOrder = new Id[](3);
-        supplyAllocationOrder[0] = allMarkets[0].id();
-        supplyAllocationOrder[1] = allMarkets[1].id();
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[0].id()));
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(allMarkets[2].id()));
+
+        uint256[] memory indexes = new uint256[](3);
+        indexes[0] = 1;
+        indexes[1] = 2;
+        indexes[2] = 0;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
-        vault.setSupplyAllocationOrder(supplyAllocationOrder);
+        vault.sortWithdrawQueue(indexes);
+
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(allMarkets[2].id()));
+        assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(allMarkets[0].id()));
     }
 
-    function testSetSupplyAllocationOrderRevertWhenInvalidLength() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
+    function testSortWithdrawQueueInvalidIndex() public {
+        _setCap(allMarkets[0], CAP);
+        _setCap(allMarkets[1], CAP);
+        _setCap(allMarkets[2], CAP);
 
-        Id[] memory supplyAllocationOrder1 = new Id[](2);
-        supplyAllocationOrder1[0] = allMarkets[0].id();
-        supplyAllocationOrder1[1] = allMarkets[1].id();
-
-        vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
-        vault.setSupplyAllocationOrder(supplyAllocationOrder1);
-
-        Id[] memory supplyAllocationOrder2 = new Id[](4);
-        supplyAllocationOrder2[0] = allMarkets[0].id();
-        supplyAllocationOrder2[1] = allMarkets[1].id();
-        supplyAllocationOrder2[2] = allMarkets[2].id();
-        supplyAllocationOrder2[3] = allMarkets[3].id();
+        uint256[] memory indexes = new uint256[](3);
+        indexes[0] = 1;
+        indexes[1] = 2;
+        indexes[2] = 3;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
-        vault.setSupplyAllocationOrder(supplyAllocationOrder2);
+        vm.expectRevert(stdError.indexOOBError);
+        vault.sortWithdrawQueue(indexes);
     }
 
-    function testSetWithdrawAllocationOrder() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
+    function testSortWithdrawQueueDuplicateMarket() public {
+        _setCap(allMarkets[0], CAP);
+        _setCap(allMarkets[1], CAP);
+        _setCap(allMarkets[2], CAP);
 
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(allMarkets[0].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(allMarkets[1].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[2].id()));
-
-        Id[] memory withdrawAllocationOrder = new Id[](3);
-        withdrawAllocationOrder[0] = allMarkets[1].id();
-        withdrawAllocationOrder[1] = allMarkets[2].id();
-        withdrawAllocationOrder[2] = allMarkets[0].id();
+        uint256[] memory indexes = new uint256[](3);
+        indexes[0] = 1;
+        indexes[1] = 2;
+        indexes[2] = 1;
 
         vm.prank(ALLOCATOR);
-        vault.setWithdrawAllocationOrder(withdrawAllocationOrder);
-
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(0)), Id.unwrap(allMarkets[1].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(1)), Id.unwrap(allMarkets[2].id()));
-        assertEq(Id.unwrap(vault.withdrawAllocationOrder(2)), Id.unwrap(allMarkets[0].id()));
+        vm.expectRevert(bytes(ErrorsLib.DUPLICATE_MARKET));
+        vault.sortWithdrawQueue(indexes);
     }
 
-    function testSetWithdrawAllocationOrderRevertWhenMissingAtLeastOneMarket() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
+    function testSortWithdrawQueueMissingMarket() public {
+        _setCap(allMarkets[0], CAP);
+        _setCap(allMarkets[1], CAP);
+        _setCap(allMarkets[2], CAP);
 
-        Id[] memory withdrawAllocationOrder = new Id[](3);
-        withdrawAllocationOrder[0] = allMarkets[0].id();
-        withdrawAllocationOrder[1] = allMarkets[1].id();
+        borrowableToken.setBalance(SUPPLIER, 1);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(1, RECEIVER);
+
+        uint256[] memory indexes = new uint256[](2);
+        indexes[0] = 1;
+        indexes[1] = 2;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
-        vault.setWithdrawAllocationOrder(withdrawAllocationOrder);
-    }
-
-    function testSetWithdrawAllocationOrderRevertWhenInvalidLength() public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-        _submitAndEnableMarket(allMarkets[1], CAP);
-        _submitAndEnableMarket(allMarkets[2], CAP);
-
-        Id[] memory withdrawAllocationOrder1 = new Id[](2);
-        withdrawAllocationOrder1[0] = allMarkets[0].id();
-        withdrawAllocationOrder1[1] = allMarkets[1].id();
-
-        vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
-        vault.setWithdrawAllocationOrder(withdrawAllocationOrder1);
-
-        Id[] memory withdrawAllocationOrder2 = new Id[](4);
-        withdrawAllocationOrder2[0] = allMarkets[0].id();
-        withdrawAllocationOrder2[1] = allMarkets[1].id();
-        withdrawAllocationOrder2[2] = allMarkets[2].id();
-        withdrawAllocationOrder2[3] = allMarkets[3].id();
-
-        vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.INVALID_LENGTH));
-        vault.setWithdrawAllocationOrder(withdrawAllocationOrder2);
-    }
-
-    function testSetCap(uint128 cap) public {
-        _submitAndEnableMarket(allMarkets[0], CAP);
-
-        vm.prank(RISK_MANAGER);
-        vault.setCap(allMarkets[0], cap);
-
-        assertEq(vault.marketCap(allMarkets[0].id()), cap);
-    }
-
-    function testSetCapShouldRevertWhenMarketIsNotEnabled(MarketParams memory marketParamsFuzz) public {
-        vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_ENABLED));
-        vault.setCap(marketParamsFuzz, CAP);
+        vm.expectRevert(bytes(ErrorsLib.MISSING_MARKET));
+        vault.sortWithdrawQueue(indexes);
     }
 }
