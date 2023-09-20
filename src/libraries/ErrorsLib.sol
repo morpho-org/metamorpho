@@ -6,6 +6,8 @@ library ErrorsLib {
 
     string internal constant NOT_ALLOCATOR = "not allocator";
 
+    string internal constant NOT_GUARDIAN = "not guardian";
+
     string internal constant UNAUTHORIZED_MARKET = "unauthorized market";
 
     string internal constant INCONSISTENT_ASSET = "inconsistent asset";
@@ -17,6 +19,8 @@ library ErrorsLib {
 
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
+
+    string internal constant NO_TIMELOCK = "no timelock";
 
     string internal constant DUPLICATE_MARKET = "duplicate market";
 
