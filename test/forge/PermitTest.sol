@@ -25,8 +25,7 @@ contract PermitTest is BaseTest {
     }
 
     function testPermit() public {
-        SigUtils.Permit memory permit =
-            SigUtils.Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: 1 days});
+        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: 1 days});
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
@@ -39,8 +38,8 @@ contract PermitTest is BaseTest {
     }
 
     function testRevertExpiredPermit() public {
-        SigUtils.Permit memory permit =
-            SigUtils.Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: 1 days});
+        Permit memory permit =
+            Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: 1 days});
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
@@ -53,8 +52,8 @@ contract PermitTest is BaseTest {
     }
 
     function testRevertInvalidSigner() public {
-        SigUtils.Permit memory permit =
-            SigUtils.Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: 1 days});
+        Permit memory permit =
+            Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: 1 days});
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
@@ -65,7 +64,7 @@ contract PermitTest is BaseTest {
     }
 
     function testRevertInvalidNonce() public {
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        Permit memory permit = Permit({
             owner: owner,
             spender: spender,
             value: 1e18,
@@ -82,8 +81,7 @@ contract PermitTest is BaseTest {
     }
 
     function testRevertSignatureReplay() public {
-        SigUtils.Permit memory permit =
-            SigUtils.Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: 1 days});
+        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: 1 days});
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
@@ -96,8 +94,7 @@ contract PermitTest is BaseTest {
     }
 
     function testTransferFromLimitedPermit() public {
-        SigUtils.Permit memory permit =
-            SigUtils.Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: 1 days});
+        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: 1 days});
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
@@ -114,8 +111,8 @@ contract PermitTest is BaseTest {
     }
 
     function testTransferFromMaxPermit() public {
-        SigUtils.Permit memory permit =
-            SigUtils.Permit({owner: owner, spender: spender, value: type(uint256).max, nonce: 0, deadline: 1 days});
+        Permit memory permit =
+            Permit({owner: owner, spender: spender, value: type(uint256).max, nonce: 0, deadline: 1 days});
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
@@ -132,7 +129,7 @@ contract PermitTest is BaseTest {
     }
 
     function testFailInvalidAllowance() public {
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        Permit memory permit = Permit({
             owner: owner,
             spender: spender,
             value: 5e17, // approve only 0.5 tokens
@@ -151,7 +148,7 @@ contract PermitTest is BaseTest {
     }
 
     function testFailInvalidBalance() public {
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        Permit memory permit = Permit({
             owner: owner,
             spender: spender,
             value: 2e18, // approve 2 tokens
