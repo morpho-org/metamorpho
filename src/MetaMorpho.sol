@@ -59,13 +59,13 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     PendingUint192 public pendingFee;
     PendingUint192 public pendingTimelock;
-    PendingAddress public pendingRevocator;
+    PendingAddress public pendingGuardian;
 
     uint96 public fee;
     address public feeRecipient;
 
     uint96 public timelock;
-    address public revocator;
+    address public guardian;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
@@ -100,8 +100,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _;
     }
 
-    modifier onlyRevocator() {
-        require(_msgSender() == revocator, ErrorsLib.NOT_REVOCATOR);
+    modifier onlyGuardian() {
+        require(_msgSender() == guardian, ErrorsLib.NOT_GUARDIAN);
 
         _;
     }
@@ -173,20 +173,20 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         emit EventsLib.SetFeeRecipient(newFeeRecipient);
     }
 
-    function submitRevocator(address newRevocator) external onlyOwner {
-        require(newRevocator != revocator, ErrorsLib.ALREADY_SET);
+    function submitGuardian(address newGuardian) external onlyOwner {
+        require(newGuardian != guardian, ErrorsLib.ALREADY_SET);
 
         if (timelock == 0) {
-            _setRevocator(newRevocator);
+            _setGuardian(newGuardian);
         } else {
-            pendingRevocator = PendingAddress(newRevocator, uint64(block.timestamp));
+            pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
 
-            emit EventsLib.SubmitRevocator(newRevocator);
+            emit EventsLib.SubmitGuardian(newGuardian);
         }
     }
 
-    function acceptRevocator() external timelockElapsed(pendingRevocator.submittedAt) onlyOwner {
-        _setRevocator(pendingRevocator.value);
+    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) onlyOwner {
+        _setGuardian(pendingGuardian.value);
     }
 
     /* ONLY RISK MANAGER FUNCTIONS */
@@ -267,30 +267,30 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         _reallocate(withdrawn, supplied);
     }
 
-    /* ONLY REVOCATOR FUNCTIONS */
+    /* ONLY GUARDIAN FUNCTIONS */
 
-    function revokeTimelock() external onlyRevocator {
+    function revokeTimelock() external onlyGuardian {
         emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock.value, pendingTimelock.submittedAt);
 
         delete pendingTimelock;
     }
 
-    function revokeFee() external onlyRevocator {
+    function revokeFee() external onlyGuardian {
         emit EventsLib.RevokeFee(msg.sender, pendingFee.value, pendingFee.submittedAt);
 
         delete pendingFee;
     }
 
-    function revokeCap(Id id) external onlyRevocator {
+    function revokeCap(Id id) external onlyGuardian {
         emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id].value, pendingCap[id].submittedAt);
 
         delete pendingCap[id];
     }
 
-    function revokeRevocator() external onlyRevocator {
-        emit EventsLib.RevokeRevocator(msg.sender, pendingRevocator.value, pendingRevocator.submittedAt);
+    function revokeGuardian() external onlyGuardian {
+        emit EventsLib.RevokeGuardian(msg.sender, pendingGuardian.value, pendingGuardian.submittedAt);
 
-        delete pendingRevocator;
+        delete pendingGuardian;
     }
 
     /* PUBLIC */
@@ -475,12 +475,12 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         delete pendingTimelock;
     }
 
-    function _setRevocator(address newRevocator) internal {
-        revocator = newRevocator;
+    function _setGuardian(address newGuardian) internal {
+        guardian = newGuardian;
 
-        emit EventsLib.SetRevocator(newRevocator);
+        emit EventsLib.SetGuardian(newGuardian);
 
-        delete pendingRevocator;
+        delete pendingGuardian;
     }
 
     function _setCap(Id id, uint192 marketCap) internal {

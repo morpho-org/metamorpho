@@ -20,11 +20,11 @@ library EventsLib {
     /// @param feeRecipient The new fee recipient.
     event SetFeeRecipient(address indexed feeRecipient);
 
-    event SubmitRevocator(address indexed revocator);
+    event SubmitGuardian(address indexed guardian);
 
-    /// @notice Emitted when setting a new revocator.
-    /// @param revocator The new revocator.
-    event SetRevocator(address indexed revocator);
+    /// @notice Emitted when setting a new guardian.
+    /// @param guardian The new guardian.
+    event SetGuardian(address indexed guardian);
 
     event SubmitCap(address indexed riskManager, Id indexed id, uint256 cap);
 
@@ -34,11 +34,11 @@ library EventsLib {
     /// @param totalAssets The total amount of assets this vault manages.
     event UpdateLastTotalAssets(uint256 totalAssets);
 
-    event RevokeTimelock(address indexed revocator, uint256 pendingTimelock, uint256 submittedAt);
+    event RevokeTimelock(address indexed guardian, uint256 pendingTimelock, uint256 submittedAt);
 
-    event RevokeFee(address indexed revocator, uint256 pendingFee, uint256 submittedAt);
+    event RevokeFee(address indexed guardian, uint256 pendingFee, uint256 submittedAt);
 
-    event RevokeCap(address indexed revocator, Id indexed id, uint256 pendingCap, uint256 submittedAt);
+    event RevokeCap(address indexed guardian, Id indexed id, uint256 pendingCap, uint256 submittedAt);
 
-    event RevokeRevocator(address indexed revocator, address pendingRevocator, uint256 submittedAt);
+    event RevokeGuardian(address indexed guardian, address pendingGuardian, uint256 submittedAt);
 }

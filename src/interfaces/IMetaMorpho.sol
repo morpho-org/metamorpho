@@ -55,10 +55,10 @@ interface IMetaMorpho is IERC4626 {
     function revokeFee() external;
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 
-    function submitRevocator(address newRevocator) external;
-    function acceptRevocator() external;
-    function revokeRevocator() external;
-    function pendingRevocator() external view returns (address revocator, uint96 submittedAt);
+    function submitGuardian(address newGuardian) external;
+    function acceptGuardian() external;
+    function revokeGuardian() external;
+    function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
     function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external;
