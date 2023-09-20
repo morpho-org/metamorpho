@@ -80,9 +80,9 @@ contract FeeTest is BaseTest {
         assertEq(vault.balanceOf(FEE_RECIPIENT), 0, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
-    function testDepositAccrueFee(uint256 deposited, uint256 assets, uint256 blocks) public {
+    function testDepositAccrueFee(uint256 deposited, uint256 newDeposit, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        newDeposit = bound(newDeposit, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -96,18 +96,18 @@ contract FeeTest is BaseTest {
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
 
-        borrowableToken.setBalance(SUPPLIER, assets);
+        borrowableToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
-        vault.deposit(assets, ONBEHALF);
+        vault.deposit(newDeposit, ONBEHALF);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
-    function testMintAccrueFee(uint256 deposited, uint256 assets, uint256 blocks) public {
+    function testMintAccrueFee(uint256 deposited, uint256 newDeposit, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        newDeposit = bound(newDeposit, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -121,9 +121,9 @@ contract FeeTest is BaseTest {
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
 
-        uint256 shares = vault.convertToShares(assets);
+        uint256 shares = vault.convertToShares(newDeposit);
 
-        borrowableToken.setBalance(SUPPLIER, assets);
+        borrowableToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
         vault.mint(shares, ONBEHALF);
