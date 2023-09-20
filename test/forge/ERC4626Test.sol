@@ -167,7 +167,7 @@ contract ERC4626Test is BaseTest {
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
-    function testWithdrawTooMuch(uint256 deposited, uint256 assets) public {
+    function testWithdrawMoreThanBalanceButLessThanTotalAssets(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         borrowableToken.setBalance(SUPPLIER, deposited);
@@ -176,6 +176,50 @@ contract ERC4626Test is BaseTest {
         vault.deposit(deposited, ONBEHALF);
 
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
+
+        uint256 toAdd = assets - deposited + 1;
+        borrowableToken.setBalance(SUPPLIER, toAdd);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(toAdd, SUPPLIER);
+
+        vm.prank(ONBEHALF);
+        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vault.withdraw(assets, RECEIVER, ONBEHALF);
+    }
+
+    function testWithdrawMoreThanTotalAssets(uint256 deposited, uint256 assets) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        borrowableToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
+
+        vm.prank(ONBEHALF);
+        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_FAILED_MORPHO));
+        vault.withdraw(assets, RECEIVER, ONBEHALF);
+    }
+
+    function testWithdrawMoreThanBalanceButLessThanLiquidity(uint256 deposited, uint256 assets) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        borrowableToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
+
+        collateralToken.setBalance(BORROWER, type(uint128).max);
+
+        // Borrow liquidity.
+        vm.startPrank(BORROWER);
+        morpho.supplyCollateral(allMarkets[0], type(uint128).max, BORROWER, hex"");
+        morpho.borrow(allMarkets[0], 1, 0, BORROWER, BORROWER);
+        vm.stopPrank();
 
         vm.prank(ONBEHALF);
         vm.expectRevert(bytes(ErrorsLib.WITHDRAW_FAILED_MORPHO));
