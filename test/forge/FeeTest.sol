@@ -32,11 +32,11 @@ contract FeeTest is BaseTest {
             vm.prank(SUPPLIER);
             morpho.supply(marketParams, 1, 0, ONBEHALF, hex"");
 
-            uint256 borrowed = uint256(1).wDivUp(marketParams.lltv);
-            collateralToken.setBalance(BORROWER, borrowed);
+            uint256 collateral = uint256(1).wDivUp(marketParams.lltv);
+            collateralToken.setBalance(BORROWER, collateral);
 
             vm.startPrank(BORROWER);
-            morpho.supplyCollateral(marketParams, borrowed, BORROWER, hex"");
+            morpho.supplyCollateral(marketParams, collateral, BORROWER, hex"");
             morpho.borrow(marketParams, 1, 0, BORROWER, BORROWER);
             vm.stopPrank();
         }
