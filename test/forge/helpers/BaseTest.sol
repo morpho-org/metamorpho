@@ -22,20 +22,20 @@ import {MetaMorpho, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.so
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
+uint256 constant BLOCK_TIME = 1;
+uint256 constant MIN_TEST_ASSETS = 1e8;
+uint256 constant MAX_TEST_ASSETS = 1e28;
+uint256 constant NB_MARKETS = 10;
+uint256 constant TIMELOCK = 2;
+uint128 constant CAP = type(uint128).max;
+uint256 constant FEE = 0.2 ether; // 20%
+
 contract BaseTest is Test {
     using MathLib for uint256;
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
     using stdJson for string;
-
-    uint256 internal constant BLOCK_TIME = 12;
-    uint256 internal constant MIN_TEST_ASSETS = 1e8;
-    uint256 internal constant MAX_TEST_ASSETS = 1e28;
-    uint256 internal constant NB_MARKETS = 10;
-    uint256 internal constant TIMELOCK = 2;
-    uint128 internal constant CAP = type(uint128).max;
-    uint256 internal constant FEE = 0.2 ether; // 20%
 
     address internal OWNER;
     address internal SUPPLIER;
@@ -102,9 +102,9 @@ contract BaseTest is Test {
         vault.setIsAllocator(ALLOCATOR, true);
 
         vault.setFeeRecipient(FEE_RECIPIENT);
-        vault.submitPendingFee(FEE);
-        vault.setFee();
         vm.stopPrank();
+
+        _setFee(FEE);
 
         borrowableToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
@@ -150,16 +150,17 @@ contract BaseTest is Test {
 
             // Create some debt on the market to accrue interest.
 
-            borrowableToken.setBalance(SUPPLIER, WAD);
+            borrowableToken.setBalance(SUPPLIER, 1);
 
             vm.prank(SUPPLIER);
-            morpho.supply(marketParams, WAD, 0, ONBEHALF, hex"");
+            morpho.supply(marketParams, 1, 0, ONBEHALF, hex"");
 
-            collateralToken.setBalance(BORROWER, WAD);
+            uint256 borrowed = uint256(1).wDivUp(lltv);
+            collateralToken.setBalance(BORROWER, borrowed);
 
             vm.startPrank(BORROWER);
-            morpho.supplyCollateral(marketParams, WAD, BORROWER, hex"");
-            morpho.borrow(marketParams, WAD.wMulDown(lltv), 0, BORROWER, BORROWER);
+            morpho.supplyCollateral(marketParams, borrowed, BORROWER, hex"");
+            morpho.borrow(marketParams, 1, 0, BORROWER, BORROWER);
             vm.stopPrank();
         }
     }
@@ -248,9 +249,23 @@ contract BaseTest is Test {
         vault.acceptTimelock();
     }
 
+    function _setFee(uint256 fee) internal {
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        if (fee == 0) return;
+
+        vm.warp(block.timestamp + vault.timelock());
+
+        vm.prank(OWNER);
+        vault.acceptFee();
+    }
+
     function _setCap(MarketParams memory params, uint256 cap) internal {
         vm.prank(RISK_MANAGER);
         vault.submitCap(params, cap);
+
+        if (cap == 0) return;
 
         vm.warp(block.timestamp + vault.timelock());
 
