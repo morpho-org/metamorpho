@@ -11,6 +11,25 @@ contract FeeTest is BaseTest {
     function setUp() public override {
         super.setUp();
 
+        for (uint256 i; i < NB_MARKETS; ++i) {
+            MarketParams memory marketParams = allMarkets[i];
+
+            // Create some debt on the market to accrue interest.
+
+            borrowableToken.setBalance(SUPPLIER, 1);
+
+            vm.prank(SUPPLIER);
+            morpho.supply(marketParams, 1, 0, ONBEHALF, hex"");
+
+            uint256 borrowed = uint256(1).wDivUp(marketParams.lltv);
+            collateralToken.setBalance(BORROWER, borrowed);
+
+            vm.startPrank(BORROWER);
+            morpho.supplyCollateral(marketParams, borrowed, BORROWER, hex"");
+            morpho.borrow(marketParams, 1, 0, BORROWER, BORROWER);
+            vm.stopPrank();
+        }
+
         _setCap(allMarkets[0], CAP);
     }
 

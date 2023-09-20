@@ -95,6 +95,9 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
         vm.stopPrank();
 
+        // block.timestamp defaults to 1 which is an unrealistic state: block.timestamp < TIMELOCK.
+        vm.warp(block.timestamp + TIMELOCK);
+
         vm.startPrank(OWNER);
         vault = new MetaMorpho(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
@@ -105,6 +108,25 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         _setFee(FEE);
+
+        for (uint256 i; i < NB_MARKETS; ++i) {
+            uint256 lltv = 0.8 ether / (i + 1);
+
+            MarketParams memory marketParams = MarketParams({
+                borrowableToken: address(borrowableToken),
+                collateralToken: address(collateralToken),
+                oracle: address(oracle),
+                irm: address(irm),
+                lltv: lltv
+            });
+
+            vm.startPrank(MORPHO_OWNER);
+            morpho.enableLltv(lltv);
+            morpho.createMarket(marketParams);
+            vm.stopPrank();
+
+            allMarkets.push(marketParams);
+        }
 
         borrowableToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
@@ -126,43 +148,6 @@ contract BaseTest is Test {
         borrowableToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
-
-        // block.timestamp defaults to 1 which is an unrealistic state.
-        vm.warp(block.timestamp + TIMELOCK);
-
-        for (uint256 i; i < NB_MARKETS; ++i) {
-            uint256 lltv = 0.8 ether / (i + 1);
-
-            MarketParams memory marketParams = MarketParams({
-                borrowableToken: address(borrowableToken),
-                collateralToken: address(collateralToken),
-                oracle: address(oracle),
-                irm: address(irm),
-                lltv: lltv
-            });
-
-            vm.startPrank(MORPHO_OWNER);
-            morpho.enableLltv(lltv);
-            morpho.createMarket(marketParams);
-            vm.stopPrank();
-
-            allMarkets.push(marketParams);
-
-            // Create some debt on the market to accrue interest.
-
-            borrowableToken.setBalance(SUPPLIER, 1);
-
-            vm.prank(SUPPLIER);
-            morpho.supply(marketParams, 1, 0, ONBEHALF, hex"");
-
-            uint256 borrowed = uint256(1).wDivUp(lltv);
-            collateralToken.setBalance(BORROWER, borrowed);
-
-            vm.startPrank(BORROWER);
-            morpho.supplyCollateral(marketParams, borrowed, BORROWER, hex"");
-            morpho.borrow(marketParams, 1, 0, BORROWER, BORROWER);
-            vm.stopPrank();
-        }
     }
 
     function _addrFromHashedString(string memory name) internal returns (address addr) {
