@@ -28,7 +28,6 @@ uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = 10;
 uint256 constant TIMELOCK = 2;
 uint128 constant CAP = type(uint128).max;
-uint256 constant FEE = 0.2 ether; // 20%
 
 contract BaseTest is Test {
     using MathLib for uint256;
@@ -45,7 +44,6 @@ contract BaseTest is Test {
     address internal RECEIVER;
     address internal ALLOCATOR;
     address internal RISK_MANAGER;
-    address internal FEE_RECIPIENT;
     address internal MORPHO_OWNER;
     address internal MORPHO_FEE_RECIPIENT;
 
@@ -68,7 +66,6 @@ contract BaseTest is Test {
         RECEIVER = _addrFromHashedString("Receiver");
         ALLOCATOR = _addrFromHashedString("Allocator");
         RISK_MANAGER = _addrFromHashedString("RiskManager");
-        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
         MORPHO_OWNER = _addrFromHashedString("MorphoOwner");
         MORPHO_FEE_RECIPIENT = _addrFromHashedString("MorphoFeeRecipient");
 
@@ -103,11 +100,7 @@ contract BaseTest is Test {
 
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
-
-        vault.setFeeRecipient(FEE_RECIPIENT);
         vm.stopPrank();
-
-        _setFee(FEE);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);

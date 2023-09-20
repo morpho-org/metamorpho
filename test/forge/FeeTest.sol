@@ -3,13 +3,24 @@ pragma solidity ^0.8.0;
 
 import "./helpers/BaseTest.sol";
 
+uint256 constant FEE = 0.2 ether; // 20%
+
 contract FeeTest is BaseTest {
     using Math for uint256;
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
+    address internal FEE_RECIPIENT;
+
     function setUp() public override {
         super.setUp();
+
+        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
+
+        vm.prank(OWNER);
+        vault.setFeeRecipient(FEE_RECIPIENT);
+
+        _setFee(FEE);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             MarketParams memory marketParams = allMarkets[i];
