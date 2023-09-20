@@ -72,7 +72,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
     constructor(address morpho, uint256 initialTimelock, address _asset, string memory _name, string memory _symbol)
         ERC4626(IERC20(_asset))
-        ERC20Permit("MetaMorpho Vault V1")
+        ERC20Permit(_name)
         ERC20(_name, _symbol)
     {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
