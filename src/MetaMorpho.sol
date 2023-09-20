@@ -97,6 +97,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     modifier timelockElapsed(uint64 submittedAt) {
+        require(submittedAt != 0, ErrorsLib.NO_PENDING_VALUE);
         require(block.timestamp >= submittedAt + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
         require(block.timestamp <= submittedAt + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
 

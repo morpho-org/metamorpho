@@ -22,6 +22,8 @@ library ErrorsLib {
 
     string internal constant MISSING_MARKET = "missing market";
 
+    string internal constant NO_PENDING_VALUE = "no pending value";
+
     string internal constant WITHDRAW_FAILED_MORPHO = "withdraw failed on Morpho";
 
     string internal constant MARKET_NOT_CREATED = "market not created";
