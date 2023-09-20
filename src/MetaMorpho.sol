@@ -124,10 +124,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
-        require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
+        require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
 
-        if (timelock == 0) {
+        if (newTimelock > timelock || timelock == 0) {
             _setTimelock(newTimelock);
         } else {
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
@@ -142,10 +142,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function submitFee(uint256 newFee) external onlyOwner {
-        require(newFee != fee, ErrorsLib.ALREADY_SET);
         require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
+        require(newFee != fee, ErrorsLib.ALREADY_SET);
 
-        if (newFee == 0 || timelock == 0) {
+        if (newFee < fee || timelock == 0) {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= WAD.
@@ -174,9 +174,10 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     }
 
     function submitGuardian(address newGuardian) external onlyOwner {
+        require(timelock != 0, ErrorsLib.NO_TIMELOCK);
         require(newGuardian != guardian, ErrorsLib.ALREADY_SET);
 
-        if (timelock == 0) {
+        if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
@@ -191,18 +192,21 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY RISK MANAGER FUNCTIONS */
 
-    function submitCap(MarketParams memory marketParams, uint256 marketCap) external onlyRiskManager {
+    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyRiskManager {
         require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
 
         Id id = marketParams.id();
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
 
-        if (marketCap == 0 || timelock == 0) {
-            _setCap(id, marketCap.toUint192());
-        } else {
-            pendingCap[id] = PendingUint192(marketCap.toUint192(), uint64(block.timestamp));
+        uint256 marketCap = config[id].cap;
+        require(newMarketCap != marketCap, ErrorsLib.ALREADY_SET);
 
-            emit EventsLib.SubmitCap(msg.sender, id, marketCap);
+        if (newMarketCap < marketCap || timelock == 0) {
+            _setCap(id, newMarketCap.toUint192());
+        } else {
+            pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));
+
+            emit EventsLib.SubmitCap(msg.sender, id, newMarketCap);
         }
     }
 

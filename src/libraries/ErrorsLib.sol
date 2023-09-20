@@ -20,6 +20,8 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
 
+    string internal constant NO_TIMELOCK = "no timelock";
+
     string internal constant DUPLICATE_MARKET = "duplicate market";
 
     string internal constant MISSING_MARKET = "missing market";
