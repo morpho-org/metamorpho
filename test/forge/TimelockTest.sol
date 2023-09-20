@@ -77,7 +77,19 @@ contract TimelockTest is BaseTest {
         assertEq(submittedAt, 0, "submittedAt");
     }
 
-    function testAcceptTimelockNotOwner() public {
+    function testAcceptTimelockNoPendingValue() public {
+        vm.expectRevert(bytes(ErrorsLib.NO_PENDING_VALUE));
+        vault.acceptTimelock();
+    }
+
+    function testAcceptTimelockNotOwner(uint256 timelock) public {
+        timelock = bound(timelock, 0, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.warp(block.timestamp + TIMELOCK);
+
         vm.expectRevert("Ownable: caller is not the owner");
         vault.acceptTimelock();
     }
@@ -95,11 +107,9 @@ contract TimelockTest is BaseTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, 0, MAX_TIMELOCK);
+    function testAcceptTimelockDecreasedTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, 0, TIMELOCK - 1);
         elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
-
-        vm.assume(timelock != TIMELOCK);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
@@ -138,6 +148,11 @@ contract TimelockTest is BaseTest {
         assertEq(submittedAtAfter, 0, "submittedAtAfter");
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+    }
+
+    function testAcceptCapNoPendingValue() public {
+        vm.expectRevert(bytes(ErrorsLib.NO_PENDING_VALUE));
+        vault.acceptCap(allMarkets[0].id());
     }
 
     function testAcceptCapTimelockNotElapsed(uint256 alpsed) public {
