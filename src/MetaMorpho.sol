@@ -108,6 +108,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function setRiskManager(address newRiskManager) external onlyOwner {
         riskManager = newRiskManager;
+
+        emit EventsLib.SetRiskManager(newRiskManager);
     }
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
