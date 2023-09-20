@@ -156,6 +156,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
         require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
+        require(newFeeRecipient != address(0) || fee == 0, ErrorsLib.ZERO_FEE_RECIPIENT);
 
         // Accrue interest to the previous fee recipient set before changing it.
         _updateLastTotalAssets(_accrueFee());
