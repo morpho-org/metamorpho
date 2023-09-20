@@ -27,4 +27,8 @@ library EventsLib {
     /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.
     event UpdateLastTotalAssets(uint256 totalAssets);
+
+    event SetSupplyQueue(address indexed allocator, Id[] id);
+
+    event SetWithdrawQueue(address indexed allocator, Id[] id);
 }
