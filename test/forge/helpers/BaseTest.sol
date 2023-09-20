@@ -91,7 +91,7 @@ contract BaseTest is Test {
         vm.startPrank(OWNER);
         vault = new MetaMorpho(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
-        vault.setIsRiskManager(RISK_MANAGER, true);
+        vault.setRiskManager(RISK_MANAGER);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
