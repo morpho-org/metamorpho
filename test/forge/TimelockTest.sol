@@ -155,32 +155,32 @@ contract TimelockTest is BaseTest {
         vault.acceptCap(allMarkets[0].id());
     }
 
-    function testAcceptCapTimelockNotElapsed(uint256 alpsed) public {
-        alpsed = bound(alpsed, 0, TIMELOCK - 1);
+    function testAcceptCapTimelockNotElapsed(uint256 elapsed) public {
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(RISK_MANAGER);
         vault.submitCap(allMarkets[0], CAP);
 
-        vm.warp(block.timestamp + alpsed);
+        vm.warp(block.timestamp + elapsed);
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
         vault.acceptCap(allMarkets[0].id());
     }
 
-    function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 timeElapsed) public {
+    function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
         timelock = bound(timelock, 1, MAX_TIMELOCK);
 
         vm.assume(timelock != vault.timelock());
 
         _setTimelock(timelock);
 
-        timeElapsed = bound(timeElapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+        elapsed = bound(elapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.startPrank(RISK_MANAGER);
         vault.submitCap(allMarkets[0], CAP);
 
-        vm.warp(block.timestamp + timeElapsed);
+        vm.warp(block.timestamp + elapsed);
 
         vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
         vault.acceptCap(allMarkets[0].id());
