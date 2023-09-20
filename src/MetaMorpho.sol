@@ -257,13 +257,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
         return _hasRole(target, ALLOCATOR_ROLE);
     }
 
-    /* ERC20 (PUBLIC) */
+    /* ERC4626 (PUBLIC) */
 
     function decimals() public view override(IERC20Metadata, ERC20, ERC4626) returns (uint8) {
         return ERC4626.decimals();
     }
-
-    /* ERC4626 (PUBLIC) */
 
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
         (assets,) = _maxWithdraw(owner);
