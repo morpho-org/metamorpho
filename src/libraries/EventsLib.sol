@@ -26,13 +26,17 @@ library EventsLib {
     /// @param guardian The new guardian.
     event SetGuardian(address indexed guardian);
 
-    event SubmitCap(address indexed riskManager, Id indexed id, uint256 cap);
+    event SubmitCap(Id indexed id, uint256 cap);
 
-    event SetCap(address indexed riskManager, Id indexed id, uint256 cap);
+    event SetCap(Id indexed id, uint256 cap);
 
     /// @notice Emitted when the vault's last total assets is updated.
     /// @param totalAssets The total amount of assets this vault manages.
     event UpdateLastTotalAssets(uint256 totalAssets);
+
+    event SetRiskManager(address indexed riskManager);
+
+    event SetIsAllocator(address indexed allocator, bool isAllocator);
 
     event RevokeTimelock(address indexed guardian, uint256 pendingTimelock, uint256 submittedAt);
 

@@ -27,8 +27,9 @@ import {
     Math,
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {IERC20Metadata, ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
@@ -43,7 +44,8 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* STORAGE */
 
-    mapping(address => uint256) internal _roleOf;
+    address public riskManager;
+    mapping(address => bool) internal _isAllocator;
 
     mapping(Id => MarketConfig) public config;
     mapping(Id => PendingUint192) public pendingCap;
@@ -75,6 +77,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     constructor(address morpho, uint256 initialTimelock, address _asset, string memory _name, string memory _symbol)
         ERC4626(IERC20(_asset))
+        ERC20Permit(_name)
         ERC20(_name, _symbol)
     {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
@@ -89,7 +92,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
     /* MODIFIERS */
 
     modifier onlyRiskManager() {
-        require(isRiskManager(_msgSender()), ErrorsLib.NOT_RISK_MANAGER);
+        require(_msgSender() == riskManager || _msgSender() == owner(), ErrorsLib.NOT_RISK_MANAGER);
 
         _;
     }
@@ -115,12 +118,16 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* ONLY OWNER FUNCTIONS */
 
-    function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
-        _setRole(newRiskManager, RISK_MANAGER_ROLE, newIsRiskManager);
+    function setRiskManager(address newRiskManager) external onlyOwner {
+        riskManager = newRiskManager;
+
+        emit EventsLib.SetRiskManager(newRiskManager);
     }
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        _setRole(newAllocator, ALLOCATOR_ROLE, newIsAllocator);
+        _isAllocator[newAllocator] = newIsAllocator;
+
+        emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
@@ -164,6 +171,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
         require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
+        require(newFeeRecipient != address(0) || fee == 0, ErrorsLib.ZERO_FEE_RECIPIENT);
 
         // Accrue interest to the previous fee recipient set before changing it.
         _updateLastTotalAssets(_accrueFee());
@@ -206,7 +214,7 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
         } else {
             pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));
 
-            emit EventsLib.SubmitCap(msg.sender, id, newMarketCap);
+            emit EventsLib.SubmitCap(id, newMarketCap);
         }
     }
 
@@ -299,15 +307,15 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /* PUBLIC */
 
-    function isRiskManager(address target) public view returns (bool) {
-        return _hasRole(target, RISK_MANAGER_ROLE);
-    }
-
     function isAllocator(address target) public view returns (bool) {
-        return _hasRole(target, ALLOCATOR_ROLE);
+        return _isAllocator[target] || _msgSender() == riskManager || _msgSender() == owner();
     }
 
     /* ERC4626 (PUBLIC) */
+
+    function decimals() public view override(IERC20Metadata, ERC20, ERC4626) returns (uint8) {
+        return ERC4626.decimals();
+    }
 
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
         (assets,) = _maxWithdraw(owner);
@@ -502,12 +510,14 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
         marketConfig.cap = marketCap;
 
-        emit EventsLib.SetCap(msg.sender, id, marketCap);
+        emit EventsLib.SetCap(id, marketCap);
 
         delete pendingCap[id];
     }
 
     function _setFee(uint256 newFee) internal {
+        require(newFee == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
+
         // Safe "unchecked" cast because newFee <= WAD.
         fee = uint96(newFee);
 
@@ -662,16 +672,5 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
                 totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
-    }
-
-    function _hasRole(address target, uint256 role) internal view returns (bool) {
-        return _roleOf[target] >= role || _msgSender() == owner();
-    }
-
-    function _setRole(address target, uint256 role, bool hasRole) internal {
-        if (hasRole) _roleOf[target] = role;
-        else delete _roleOf[target];
-
-        emit EventsLib.SetRole(target, role);
     }
 }

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@morpho-blue/interfaces/IMorpho.sol";
-import {IOracle} from "@morpho-blue/interfaces/IOracle.sol";
 
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
@@ -91,7 +90,7 @@ contract BaseTest is Test {
         vm.startPrank(OWNER);
         vault = new MetaMorpho(address(morpho), 0, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
-        vault.setIsRiskManager(RISK_MANAGER, true);
+        vault.setRiskManager(RISK_MANAGER);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 

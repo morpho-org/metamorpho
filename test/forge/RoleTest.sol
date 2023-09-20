@@ -8,6 +8,7 @@ contract RoleTest is BaseTest {
 
     function testOwnerFunctionsShouldRevertWhenNotOwner(address caller) public {
         vm.assume(caller != vault.owner());
+
         vm.startPrank(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
@@ -17,7 +18,7 @@ contract RoleTest is BaseTest {
         vault.acceptTimelock();
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.setIsRiskManager(caller, true);
+        vault.setRiskManager(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setIsAllocator(caller, true);
@@ -35,7 +36,8 @@ contract RoleTest is BaseTest {
     }
 
     function testRiskManagerFunctionsShouldRevertWhenNotRiskManagerAndNotOwner(address caller) public {
-        vm.assume(caller != vault.owner() && !vault.isRiskManager(caller));
+        vm.assume(caller != vault.owner() && caller != vault.riskManager());
+
         vm.startPrank(caller);
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
@@ -48,7 +50,8 @@ contract RoleTest is BaseTest {
     }
 
     function testAllocatorFunctionsShouldRevertWhenNotAllocatorAndNotRiskManagerAndNotOwner(address caller) public {
-        vm.assume(caller != vault.owner() && !vault.isRiskManager(caller) && !vault.isAllocator(caller));
+        vm.assume(!vault.isAllocator(caller));
+
         vm.startPrank(caller);
 
         Id[] memory supplyQueue;
