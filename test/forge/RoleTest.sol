@@ -11,7 +11,7 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.submitTimelock(TIMELOCK);
+        vault.submitTimelock(1);
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.acceptTimelock();

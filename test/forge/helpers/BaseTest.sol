@@ -32,7 +32,6 @@ contract BaseTest is Test {
     uint256 internal constant MIN_TEST_LLTV = 0.01 ether;
     uint256 internal constant MAX_TEST_LLTV = 0.99 ether;
     uint256 internal constant NB_MARKETS = 10;
-    uint256 internal constant TIMELOCK = 2;
     uint128 internal constant CAP = type(uint128).max;
 
     address internal OWNER;
@@ -90,14 +89,11 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         vm.startPrank(OWNER);
-        vault = new MetaMorpho(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
+        vault = new MetaMorpho(address(morpho), 0, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
-
-        // block.timestamp defaults to 1 which is an unrealistic state.
-        vm.warp(block.timestamp + TIMELOCK);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
@@ -222,23 +218,35 @@ contract BaseTest is Test {
         require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
-    function _setTimelock(uint256 timelock) internal {
-        vm.prank(OWNER);
-        vault.submitTimelock(timelock);
+    function _setTimelock(uint256 newTimelock) internal {
+        uint256 timelock = vault.timelock();
+        if (newTimelock == timelock) return;
 
-        vm.warp(block.timestamp + vault.timelock());
+        vm.prank(OWNER);
+        vault.submitTimelock(newTimelock);
+
+        if (newTimelock > timelock || timelock == 0) return;
+
+        vm.warp(block.timestamp + timelock);
 
         vm.prank(OWNER);
         vault.acceptTimelock();
     }
 
-    function _setCap(MarketParams memory params, uint256 cap) internal {
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(params, cap);
+    function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
+        Id id = marketParams.id();
+        (uint256 cap,) = vault.config(id);
+        if (newCap == cap) return;
 
-        vm.warp(block.timestamp + vault.timelock());
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(marketParams, newCap);
+
+        uint256 timelock = vault.timelock();
+        if (newCap < cap || timelock == 0) return;
+
+        vm.warp(block.timestamp + timelock);
 
         vm.prank(RISK_MANAGER);
-        vault.acceptCap(params.id());
+        vault.acceptCap(id);
     }
 }
