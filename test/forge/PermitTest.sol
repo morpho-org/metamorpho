@@ -7,8 +7,8 @@ import "./helpers/BaseTest.sol";
 contract PermitTest is BaseTest {
     SigUtils internal sigUtils;
 
-    uint256 internal ownerPrivateKey;
-    uint256 internal spenderPrivateKey;
+    uint256 internal constant OWNER_PK = 0xA11CE;
+    uint256 internal constant SPENDER_PK = 0xB0B;
 
     address internal owner;
     address internal spender;
@@ -18,11 +18,8 @@ contract PermitTest is BaseTest {
 
         sigUtils = new SigUtils(vault.DOMAIN_SEPARATOR());
 
-        ownerPrivateKey = 0xA11CE;
-        spenderPrivateKey = 0xB0B;
-
-        owner = vm.addr(ownerPrivateKey);
-        spender = vm.addr(spenderPrivateKey);
+        owner = vm.addr(OWNER_PK);
+        spender = vm.addr(SPENDER_PK);
 
         deal(address(vault), owner, 1e18);
     }
@@ -33,7 +30,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
@@ -47,7 +44,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vm.warp(1 days + 1 seconds); // fast forward one second past the deadline
 
@@ -61,7 +58,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(spenderPrivateKey, digest); // spender signs owner's approval
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(SPENDER_PK, digest); // spender signs owner's approval
 
         vm.expectRevert("ERC20Permit: invalid signature");
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
@@ -78,7 +75,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vm.expectRevert("ERC20Permit: invalid signature");
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
@@ -90,7 +87,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
@@ -104,7 +101,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
@@ -122,7 +119,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
@@ -145,7 +142,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
@@ -164,7 +161,7 @@ contract PermitTest is BaseTest {
 
         bytes32 digest = sigUtils.getTypedDataHash(permit);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 

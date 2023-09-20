@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@morpho-blue/interfaces/IMorpho.sol";
-import {IOracle} from "@morpho-blue/interfaces/IOracle.sol";
 
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
