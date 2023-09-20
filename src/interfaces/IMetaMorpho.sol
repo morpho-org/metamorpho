@@ -22,8 +22,8 @@ struct MarketAllocation {
 interface IMetaMorpho is IERC4626 {
     function MORPHO() external view returns (IMorpho);
 
+    function riskManager() external view returns (address);
     function isAllocator(address target) external view returns (bool);
-    function isRiskManager(address target) external view returns (bool);
 
     function fee() external view returns (uint96);
     function feeRecipient() external view returns (address);
@@ -48,7 +48,7 @@ interface IMetaMorpho is IERC4626 {
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
-    function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external;
+    function setRiskManager(address newRiskManager) external;
     function setFeeRecipient(address newFeeRecipient) external;
 
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;

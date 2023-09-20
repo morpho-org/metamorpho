@@ -125,7 +125,7 @@ describe("MetaMorpho", () => {
       await collateral.connect(user).approve(morphoAddress, MaxUint256);
     }
 
-    await metaMorpho.setIsRiskManager(riskManager.address, true);
+    await metaMorpho.setRiskManager(riskManager.address);
     await metaMorpho.setIsAllocator(allocator.address, true);
 
     await metaMorpho.submitTimelock(0);

@@ -42,7 +42,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
     /* STORAGE */
 
-    mapping(address => uint256) internal _roleOf;
+    address public riskManager;
+    mapping(address => bool) internal _isAllocator;
 
     mapping(Id => MarketConfig) public config;
     mapping(Id => Pending) public pendingCap;
@@ -87,7 +88,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
     /* MODIFIERS */
 
     modifier onlyRiskManager() {
-        require(isRiskManager(_msgSender()), ErrorsLib.NOT_RISK_MANAGER);
+        require(_msgSender() == riskManager || _msgSender() == owner(), ErrorsLib.NOT_RISK_MANAGER);
 
         _;
     }
@@ -107,12 +108,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
     /* ONLY OWNER FUNCTIONS */
 
-    function setIsRiskManager(address newRiskManager, bool newIsRiskManager) external onlyOwner {
-        _setRole(newRiskManager, RISK_MANAGER_ROLE, newIsRiskManager);
+    function setRiskManager(address newRiskManager) external onlyOwner {
+        riskManager = newRiskManager;
+
+        emit EventsLib.SetRiskManager(newRiskManager);
     }
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        _setRole(newAllocator, ALLOCATOR_ROLE, newIsAllocator);
+        _isAllocator[newAllocator] = newIsAllocator;
+
+        emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
@@ -254,12 +259,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
     /* PUBLIC */
 
-    function isRiskManager(address target) public view returns (bool) {
-        return _hasRole(target, RISK_MANAGER_ROLE);
-    }
-
     function isAllocator(address target) public view returns (bool) {
-        return _hasRole(target, ALLOCATOR_ROLE);
+        return _isAllocator[target] || _msgSender() == riskManager || _msgSender() == owner();
     }
 
     /* ERC4626 (PUBLIC) */
@@ -615,16 +616,5 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
                 totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
             );
         }
-    }
-
-    function _hasRole(address target, uint256 role) internal view returns (bool) {
-        return _roleOf[target] >= role || _msgSender() == owner();
-    }
-
-    function _setRole(address target, uint256 role, bool hasRole) internal {
-        if (hasRole) _roleOf[target] = role;
-        else delete _roleOf[target];
-
-        emit EventsLib.SetRole(target, role);
     }
 }

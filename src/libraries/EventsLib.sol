@@ -28,6 +28,10 @@ library EventsLib {
     /// @param totalAssets The total amount of assets this vault manages.
     event UpdateLastTotalAssets(uint256 totalAssets);
 
+    event SetRiskManager(address indexed riskManager);
+
+    event SetIsAllocator(address indexed allocator, bool isAllocator);
+
     event SetSupplyQueue(address indexed allocator, Id[] id);
 
     event SetWithdrawQueue(address indexed allocator, Id[] id);
