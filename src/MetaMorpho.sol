@@ -313,7 +313,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
     /* PUBLIC */
 
     function isAllocator(address target) public view returns (bool) {
-        return _isAllocator[target] || _msgSender() == riskManager || _msgSender() == owner();
+        return _isAllocator[target] || target == riskManager || target == owner();
     }
 
     /* ERC4626 (PUBLIC) */
