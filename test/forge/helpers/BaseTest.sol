@@ -100,10 +100,6 @@ contract BaseTest is Test {
         vault.setIsRiskManager(RISK_MANAGER, true);
         vault.setIsAllocator(ALLOCATOR, true);
 
-        urdFactory = new UrdFactory();
-        rewardsDistributor =
-            UniversalRewardsDistributor(urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0)));
-
         vm.stopPrank();
 
         // block.timestamp defaults to 1 which is an unrealistic state.

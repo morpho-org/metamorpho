@@ -5,11 +5,17 @@ import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 
 import "./helpers/BaseTest.sol";
 
-import "forge-std/StdStorage.sol";
-
 contract UrdTest is BaseTest {
     using UtilsLib for uint256;
-    using stdStorage for StdStorage;
+
+    function setUp() public override {
+        super.setUp();
+
+        urdFactory = new UrdFactory();
+        vm.prank(OWNER);
+        rewardsDistributor =
+            UniversalRewardsDistributor(urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0)));
+    }
 
     function testSetRewardsDistributor(address newRewardsDistributor) public {
         vm.prank(OWNER);
@@ -39,29 +45,30 @@ contract UrdTest is BaseTest {
         );
     }
 
-    function testTransferRewardsBorrowableToken(uint256 amount, uint256 idle) public {
-        amount = bound(amount, idle, type(uint256).max);
+    function testTransferRewardsBorrowableToken(uint256 rewards, uint256 idle) public {
+        idle = bound(idle, 0, MAX_TEST_ASSETS);
+        rewards = bound(rewards, 0, MAX_TEST_ASSETS);
 
         vm.prank(OWNER);
         vault.setRewardsDistributor(address(rewardsDistributor));
 
-        deal(address(borrowableToken), address(vault), amount);
-        assertEq(borrowableToken.balanceOf(address(vault)), amount, "borrowableToken.balanceOf(address(vault)) 0");
+        deal(address(borrowableToken), address(vault), rewards);
 
-        // Override idle.
-        stdstore.target(address(vault)).sig("idle()").checked_write(idle);
-        assertEq(vault.idle(), idle);
+        borrowableToken.setBalance(address(SUPPLIER), idle);
+        vm.prank(SUPPLIER);
+        vault.deposit(idle, SUPPLIER);
+
+        assertEq(vault.idle(), idle, "vault.idle()");
+        assertEq(
+            borrowableToken.balanceOf(address(vault)), idle + rewards, "borrowableToken.balanceOf(address(vault)) 0"
+        );
 
         vault.transferRewards(address(borrowableToken));
 
-        assertEq(
-            borrowableToken.balanceOf(address(vault)),
-            amount - amount.zeroFloorSub(idle),
-            "borrowableToken.balanceOf(address(vault)) 1"
-        );
+        assertEq(borrowableToken.balanceOf(address(vault)), idle, "borrowableToken.balanceOf(address(vault)) 1");
         assertEq(
             borrowableToken.balanceOf(address(rewardsDistributor)),
-            amount.zeroFloorSub(idle),
+            rewards,
             "borrowableToken.balanceOf(address(rewardsDistributor))"
         );
     }
