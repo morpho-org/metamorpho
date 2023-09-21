@@ -18,7 +18,6 @@ contract UrdTest is BaseTest {
         super.setUp();
 
         urdFactory = new UrdFactory();
-        vm.prank(OWNER);
         rewardsDistributor = urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0));
     }
 
@@ -37,12 +36,14 @@ contract UrdTest is BaseTest {
         vm.prank(OWNER);
         vault.setRewardsDistributor(address(rewardsDistributor));
 
-        deal(address(collateralToken), address(vault), amount);
-        assertEq(collateralToken.balanceOf(address(vault)), amount, "collateralToken.balanceOf(address(vault)) 0");
+        collateralToken.setBalance(address(vault), amount);
+        uint256 vaultBalanceBefore = collateralToken.balanceOf(address(vault));
+        assertEq(vaultBalanceBefore, amount, "vaultBalanceBefore");
 
         vault.transferRewards(address(collateralToken));
+        uint256 vaultBalanceAfter = collateralToken.balanceOf(address(vault));
 
-        assertEq(collateralToken.balanceOf(address(vault)), 0, "collateralToken.balanceOf(address(vault)) 1");
+        assertEq(vaultBalanceAfter, 0, "vaultBalanceAfter");
         assertEq(
             collateralToken.balanceOf(address(rewardsDistributor)),
             amount,
@@ -64,13 +65,13 @@ contract UrdTest is BaseTest {
         vault.deposit(idle, SUPPLIER);
 
         assertEq(vault.idle(), idle, "vault.idle()");
-        assertEq(
-            borrowableToken.balanceOf(address(vault)), idle + rewards, "borrowableToken.balanceOf(address(vault)) 0"
-        );
+        uint256 vaultBalanceBefore = borrowableToken.balanceOf(address(vault));
+        assertEq(vaultBalanceBefore, idle + rewards, "vaultBalanceBefore");
 
         vault.transferRewards(address(borrowableToken));
+        uint256 vaultBalanceAfter = borrowableToken.balanceOf(address(vault));
 
-        assertEq(borrowableToken.balanceOf(address(vault)), idle, "borrowableToken.balanceOf(address(vault)) 1");
+        assertEq(vaultBalanceAfter, idle, "vaultBalanceAfter");
         assertEq(
             borrowableToken.balanceOf(address(rewardsDistributor)),
             rewards,
