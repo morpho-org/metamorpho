@@ -4,11 +4,12 @@ pragma solidity ^0.8.0;
 import "./helpers/BaseTest.sol";
 
 contract MulticallTest is BaseTest {
+    bytes[] internal data;
+
     function testMulticall() public {
-        bytes[] memory data = new bytes[](3);
-        data[0] = abi.encodeCall(MetaMorpho.setRiskManager, (address(1)));
-        data[1] = abi.encodeCall(MetaMorpho.setIsAllocator, (address(1), true));
-        data[2] = abi.encodeCall(MetaMorpho.submitTimelock, (1));
+        data.push(abi.encodeCall(MetaMorpho.setRiskManager, (address(1))));
+        data.push(abi.encodeCall(MetaMorpho.setIsAllocator, (address(1), true)));
+        data.push(abi.encodeCall(MetaMorpho.submitTimelock, (1)));
 
         vm.prank(OWNER);
         vault.multicall(data);
