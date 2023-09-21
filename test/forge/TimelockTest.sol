@@ -3,17 +3,26 @@ pragma solidity ^0.8.0;
 
 import "./helpers/BaseTest.sol";
 
+uint256 constant FEE = 0.1 ether; // 10%
 uint256 constant TIMELOCK = 1 weeks;
 
 contract TimelockTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
+    address internal FEE_RECIPIENT;
+
     function setUp() public override {
         super.setUp();
+
+        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
+
+        vm.prank(OWNER);
+        vault.setFeeRecipient(FEE_RECIPIENT);
 
         // block.timestamp defaults to 1 which is an unrealistic state: block.timestamp < TIMELOCK.
         vm.warp(block.timestamp + TIMELOCK);
 
+        _setFee(FEE);
         _setTimelock(TIMELOCK);
     }
 
@@ -58,7 +67,7 @@ contract TimelockTest is BaseTest {
         vault.submitTimelock(timelock);
     }
 
-    function testAcceptTimelockDecreased(uint256 timelock) public {
+    function testAcceptTimelock(uint256 timelock) public {
         timelock = bound(timelock, 0, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -94,11 +103,12 @@ contract TimelockTest is BaseTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockNotElapsed(uint256 elapsed) public {
+    function testAcceptTimelockTimelockNotElapsed(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, 0, TIMELOCK - 1);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
         vm.prank(OWNER);
-        vault.submitTimelock(0);
+        vault.submitTimelock(timelock);
 
         vm.warp(block.timestamp + elapsed);
 
@@ -107,7 +117,7 @@ contract TimelockTest is BaseTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockDecreasedTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
+    function testAcceptTimelockTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
         timelock = bound(timelock, 0, TIMELOCK - 1);
         elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
@@ -119,6 +129,94 @@ contract TimelockTest is BaseTest {
         vm.prank(OWNER);
         vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
         vault.acceptTimelock();
+    }
+
+    function testSubmitFeeDecreased(uint256 fee) public {
+        fee = bound(fee, 0, FEE - 1);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        uint256 newFee = vault.fee();
+        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+
+        assertEq(newFee, fee, "newFee");
+        assertEq(pendingFee, 0, "pendingFee");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testSubmitFeeIncreased(uint256 fee) public {
+        fee = bound(fee, FEE + 1, WAD);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        uint256 newFee = vault.fee();
+        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+
+        assertEq(newFee, FEE, "newFee");
+        assertEq(pendingFee, fee, "pendingFee");
+        assertEq(submittedAt, block.timestamp, "submittedAt");
+    }
+
+    function testSubmitFeeIncreasedMaxFeeExceeded(uint256 fee) public {
+        fee = bound(fee, WAD + 1, type(uint256).max);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.MAX_FEE_EXCEEDED));
+        vault.submitFee(fee);
+    }
+
+    function testAcceptFee(uint256 fee) public {
+        fee = bound(fee, FEE + 1, WAD);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        vm.warp(block.timestamp + TIMELOCK);
+
+        vm.prank(OWNER);
+        vault.acceptFee();
+
+        uint256 newFee = vault.fee();
+        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+
+        assertEq(newFee, fee, "newFee");
+        assertEq(pendingFee, 0, "pendingFee");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testAcceptFeeNoPendingValue() public {
+        vm.expectRevert(bytes(ErrorsLib.NO_PENDING_VALUE));
+        vault.acceptFee();
+    }
+
+    function testAcceptFeeTimelockNotElapsed(uint256 fee, uint256 elapsed) public {
+        fee = bound(fee, FEE + 1, WAD);
+        elapsed = bound(elapsed, 1, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
+        vault.acceptFee();
+    }
+
+    function testAcceptFeeTimelockExpirationExceeded(uint256 fee, uint256 elapsed) public {
+        fee = bound(fee, FEE + 1, WAD);
+        elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
+        vault.acceptFee();
     }
 
     function testAcceptCap(uint256 seed, uint256 cap) public {
