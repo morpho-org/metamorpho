@@ -7,6 +7,7 @@ import "./helpers/BaseTest.sol";
 
 contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
+    using MorphoLib for IMorpho;
 
     function testSubmitCap(uint256 seed, uint256 cap) public {
         MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
@@ -41,8 +42,8 @@ contract MarketTest is BaseTest {
 
     function testSubmitCapMarketNotCreated(MarketParams memory marketParams) public {
         marketParams.borrowableToken = address(borrowableToken);
-        (,,,, uint256 lastUpdate,) = morpho.market(marketParams.id());
-        vm.assume(lastUpdate == 0);
+
+        vm.assume(morpho.lastUpdate(marketParams.id()) == 0);
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));
