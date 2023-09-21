@@ -18,11 +18,12 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 
+import {Multicall} from "@openzeppelin/utils/Multicall.sol";
 import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
-import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 import {IERC20Metadata, ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
+import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 
-contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
@@ -327,7 +328,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
     /* PUBLIC */
 
     function isAllocator(address target) public view returns (bool) {
-        return _isAllocator[target] || _msgSender() == riskManager || _msgSender() == owner();
+        return _isAllocator[target] || target == riskManager || target == owner();
     }
 
     /* ERC4626 (PUBLIC) */
