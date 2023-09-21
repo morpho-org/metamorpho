@@ -3,18 +3,23 @@ pragma solidity ^0.8.0;
 
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 
+import {UrdFactory} from "@universal-rewards-distributor/UrdFactory.sol";
+import {IUniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
+
 import "./helpers/BaseTest.sol";
 
 contract UrdTest is BaseTest {
     using UtilsLib for uint256;
+
+    UrdFactory internal urdFactory;
+    IUniversalRewardsDistributor internal rewardsDistributor;
 
     function setUp() public override {
         super.setUp();
 
         urdFactory = new UrdFactory();
         vm.prank(OWNER);
-        rewardsDistributor =
-            UniversalRewardsDistributor(urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0)));
+        rewardsDistributor = urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0));
     }
 
     function testSetRewardsDistributor(address newRewardsDistributor) public {

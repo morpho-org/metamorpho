@@ -16,8 +16,6 @@ import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {MetaMorpho, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
-import {UrdFactory} from "@universal-rewards-distributor/UrdFactory.sol";
-import {UniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
@@ -55,9 +53,6 @@ contract BaseTest is Test {
     IrmMock internal irm;
 
     MetaMorpho internal vault;
-
-    UrdFactory internal urdFactory;
-    UniversalRewardsDistributor internal rewardsDistributor;
 
     MarketParams[] internal allMarkets;
 
