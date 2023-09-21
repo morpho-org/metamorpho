@@ -26,10 +26,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
-    using SharesMathLib for uint256;
-    using MarketParamsLib for MarketParams;
-    using MorphoBalancesLib for IMorpho;
     using MorphoLib for IMorpho;
+    using SharesMathLib for uint256;
+    using MorphoBalancesLib for IMorpho;
+    using MarketParamsLib for MarketParams;
 
     /* IMMUTABLES */
 
