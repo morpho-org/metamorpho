@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@morpho-blue/interfaces/IMorpho.sol";
-import {IOracle} from "@morpho-blue/interfaces/IOracle.sol";
 
 import {WAD, MathLib} from "@morpho-blue/libraries/MathLib.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -26,7 +25,6 @@ uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = 10;
-uint256 constant TIMELOCK = 2;
 uint128 constant CAP = type(uint128).max;
 
 contract BaseTest is Test {
@@ -92,13 +90,10 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
         vm.stopPrank();
 
-        // block.timestamp defaults to 1 which is an unrealistic state: block.timestamp < TIMELOCK.
-        vm.warp(block.timestamp + TIMELOCK);
-
         vm.startPrank(OWNER);
-        vault = new MetaMorpho(address(morpho), TIMELOCK, address(borrowableToken), "MetaMorpho Vault", "MMV");
+        vault = new MetaMorpho(address(morpho), 0, address(borrowableToken), "MetaMorpho Vault", "MMV");
 
-        vault.setIsRiskManager(RISK_MANAGER, true);
+        vault.setRiskManager(RISK_MANAGER);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
@@ -217,37 +212,51 @@ contract BaseTest is Test {
         require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
-    function _setTimelock(uint256 timelock) internal {
-        vm.prank(OWNER);
-        vault.submitTimelock(timelock);
+    function _setTimelock(uint256 newTimelock) internal {
+        uint256 timelock = vault.timelock();
+        if (newTimelock == timelock) return;
 
-        vm.warp(block.timestamp + vault.timelock());
+        vm.prank(OWNER);
+        vault.submitTimelock(newTimelock);
+
+        if (newTimelock > timelock || timelock == 0) return;
+
+        vm.warp(block.timestamp + timelock);
 
         vm.prank(OWNER);
         vault.acceptTimelock();
     }
 
-    function _setFee(uint256 fee) internal {
+    function _setFee(uint256 newFee) internal {
+        uint256 fee = vault.fee();
+        if (newFee == fee) return;
+
         vm.prank(OWNER);
-        vault.submitFee(fee);
+        vault.submitFee(newFee);
 
-        if (fee == 0) return;
+        uint256 timelock = vault.timelock();
+        if (newFee < fee || timelock == 0) return;
 
-        vm.warp(block.timestamp + vault.timelock());
+        vm.warp(block.timestamp + timelock);
 
         vm.prank(OWNER);
         vault.acceptFee();
     }
 
-    function _setCap(MarketParams memory params, uint256 cap) internal {
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(params, cap);
-
-        if (cap == 0) return;
-
-        vm.warp(block.timestamp + vault.timelock());
+    function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
+        Id id = marketParams.id();
+        (uint256 cap,) = vault.config(id);
+        if (newCap == cap) return;
 
         vm.prank(RISK_MANAGER);
-        vault.acceptCap(params.id());
+        vault.submitCap(marketParams, newCap);
+
+        uint256 timelock = vault.timelock();
+        if (newCap < cap || timelock == 0) return;
+
+        vm.warp(block.timestamp + timelock);
+
+        vm.prank(RISK_MANAGER);
+        vault.acceptCap(id);
     }
 }

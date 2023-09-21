@@ -6,6 +6,8 @@ library ErrorsLib {
 
     string internal constant NOT_ALLOCATOR = "not allocator";
 
+    string internal constant NOT_GUARDIAN = "not guardian";
+
     string internal constant UNAUTHORIZED_MARKET = "unauthorized market";
 
     string internal constant INCONSISTENT_ASSET = "inconsistent asset";
@@ -18,9 +20,13 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     string internal constant ALREADY_SET = "already set";
 
+    string internal constant NO_TIMELOCK = "no timelock";
+
     string internal constant DUPLICATE_MARKET = "duplicate market";
 
     string internal constant MISSING_MARKET = "missing market";
+
+    string internal constant NO_PENDING_VALUE = "no pending value";
 
     string internal constant WITHDRAW_FAILED_MORPHO = "withdraw failed on Morpho";
 

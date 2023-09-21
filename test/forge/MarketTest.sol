@@ -7,6 +7,7 @@ import "./helpers/BaseTest.sol";
 
 contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
+    using MorphoLib for IMorpho;
 
     function testSubmitCap(uint256 seed, uint256 cap) public {
         MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
@@ -15,10 +16,10 @@ contract MarketTest is BaseTest {
         vm.prank(RISK_MANAGER);
         vault.submitCap(marketParams, cap);
 
-        (uint192 value, uint64 timestamp) = vault.pendingCap(marketParams.id());
+        (uint192 newCap, uint64 withdrawRank) = vault.config(marketParams.id());
 
-        assertEq(value, cap);
-        assertEq(timestamp, block.timestamp);
+        assertEq(newCap, cap, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
     }
 
     function testSubmitCapOverflow(uint256 seed, uint256 cap) public {
@@ -31,73 +32,6 @@ contract MarketTest is BaseTest {
         vault.submitCap(marketParams, cap);
     }
 
-    function testSubmitCapZeroNoTimelock(uint256 seed, uint256 cap) public {
-        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 1, type(uint192).max);
-
-        _setCap(marketParams, cap);
-
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(marketParams, 0);
-
-        (uint192 newCap, uint64 withdrawRank) = vault.config(marketParams.id());
-
-        assertEq(newCap, 0, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
-    }
-
-    function testAcceptCap(uint256 seed, uint256 cap) public {
-        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 1, type(uint192).max);
-
-        _setCap(marketParams, cap);
-
-        Id id = marketParams.id();
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
-
-        assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
-        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
-        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
-    }
-
-    function testAcceptCapTimelockNotElapsed(uint256 timelock, uint256 timeElapsed) public {
-        timelock = bound(timelock, 1, MAX_TIMELOCK);
-
-        vm.assume(timelock != vault.timelock());
-
-        _setTimelock(timelock);
-
-        timeElapsed = bound(timeElapsed, 0, timelock - 1);
-
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(allMarkets[0], CAP);
-
-        vm.warp(block.timestamp + timeElapsed);
-
-        vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
-        vault.acceptCap(allMarkets[0].id());
-    }
-
-    function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 timeElapsed) public {
-        timelock = bound(timelock, 1, MAX_TIMELOCK);
-
-        vm.assume(timelock != vault.timelock());
-
-        _setTimelock(timelock);
-
-        timeElapsed = bound(timeElapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
-
-        vm.startPrank(RISK_MANAGER);
-        vault.submitCap(allMarkets[0], CAP);
-
-        vm.warp(block.timestamp + timeElapsed);
-
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
-        vault.acceptCap(allMarkets[0].id());
-    }
-
     function testSubmitCapInconsistentAsset(MarketParams memory marketParams) public {
         vm.assume(marketParams.borrowableToken != address(borrowableToken));
 
@@ -108,8 +42,8 @@ contract MarketTest is BaseTest {
 
     function testSubmitCapMarketNotCreated(MarketParams memory marketParams) public {
         marketParams.borrowableToken = address(borrowableToken);
-        (,,,, uint256 lastUpdate,) = morpho.market(marketParams.id());
-        vm.assume(lastUpdate == 0);
+
+        vm.assume(morpho.lastUpdate(marketParams.id()) == 0);
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));

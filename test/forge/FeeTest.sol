@@ -226,4 +226,23 @@ contract FeeTest is BaseTest {
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
         assertEq(vault.balanceOf(address(1)), 0, "vault.balanceOf(address(1))");
     }
+
+    function testSubmitFeeNotOwner(uint256 fee) public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vault.submitFee(fee);
+    }
+
+    function testAcceptFeeNotOwner(uint256 fee) public {
+        fee = bound(fee, FEE + 1, WAD);
+
+        _setTimelock(1);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        vm.warp(block.timestamp + 1);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        vault.acceptFee();
+    }
 }
