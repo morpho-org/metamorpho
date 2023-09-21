@@ -45,4 +45,8 @@ library EventsLib {
     event RevokeCap(address indexed guardian, Id indexed id, uint256 pendingCap, uint256 submittedAt);
 
     event RevokeGuardian(address indexed guardian, address pendingGuardian, uint256 submittedAt);
+
+    event SetSupplyQueue(address indexed allocator, Id[] id);
+
+    event SetWithdrawQueue(address indexed allocator, Id[] id);
 }
