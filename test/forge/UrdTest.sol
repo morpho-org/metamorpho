@@ -28,7 +28,7 @@ contract UrdTest is BaseTest {
         assertEq(vault.rewardsDistributor(), newRewardsDistributor);
     }
 
-    function testSetRewardsDistributorShouldRevertWhenNotOwner() public {
+    function testSetRewardsDistributorNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setRewardsDistributor(address(0));
     }
@@ -57,7 +57,7 @@ contract UrdTest is BaseTest {
         vm.prank(OWNER);
         vault.setRewardsDistributor(address(rewardsDistributor));
 
-        deal(address(borrowableToken), address(vault), rewards);
+        borrowableToken.setBalance(address(vault), rewards);
 
         borrowableToken.setBalance(address(SUPPLIER), idle);
         vm.prank(SUPPLIER);
