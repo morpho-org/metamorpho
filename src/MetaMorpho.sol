@@ -18,6 +18,7 @@ import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalances
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import {Multicall} from "@openzeppelin/contracts/utils/Multicall.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {
     IERC20,
@@ -29,7 +30,7 @@ import {
 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {IERC20Metadata, ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
