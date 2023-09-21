@@ -12,22 +12,19 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.submitTimelock(1);
-
-        vm.expectRevert("Ownable: caller is not the owner");
-        vault.acceptTimelock();
-
-        vm.expectRevert("Ownable: caller is not the owner");
         vault.setRiskManager(caller);
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setIsAllocator(caller, true);
 
         vm.expectRevert("Ownable: caller is not the owner");
+        vault.submitTimelock(1);
+
+        vm.expectRevert("Ownable: caller is not the owner");
         vault.submitFee(1);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        vault.acceptFee();
+        vault.submitGuardian(address(1));
 
         vm.expectRevert("Ownable: caller is not the owner");
         vault.setFeeRecipient(caller);
@@ -42,9 +39,6 @@ contract RoleTest is BaseTest {
 
         vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
         vault.submitCap(allMarkets[0], CAP);
-
-        vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
-        vault.acceptCap(allMarkets[0].id());
 
         vm.stopPrank();
     }
@@ -74,18 +68,8 @@ contract RoleTest is BaseTest {
         vm.prank(OWNER);
         vault.submitCap(allMarkets[0], CAP);
 
-        vm.warp(block.timestamp + vault.timelock());
-
-        vm.prank(OWNER);
-        vault.acceptCap(allMarkets[0].id());
-
         vm.prank(RISK_MANAGER);
         vault.submitCap(allMarkets[1], CAP);
-
-        vm.warp(block.timestamp + vault.timelock());
-
-        vm.prank(RISK_MANAGER);
-        vault.acceptCap(allMarkets[1].id());
     }
 
     function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {

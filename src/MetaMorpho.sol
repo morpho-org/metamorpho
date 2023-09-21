@@ -97,19 +97,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
         _;
     }
 
-    modifier onlyAllocator() {
-        require(isAllocator(_msgSender()), ErrorsLib.NOT_ALLOCATOR);
-
-        _;
-    }
-
     modifier onlyGuardian() {
         require(_msgSender() == guardian, ErrorsLib.NOT_GUARDIAN);
 
         _;
     }
 
+    modifier onlyAllocator() {
+        require(isAllocator(_msgSender()), ErrorsLib.NOT_ALLOCATOR);
+
+        _;
+    }
+
     modifier timelockElapsed(uint256 submittedAt) {
+        require(submittedAt != 0, ErrorsLib.NO_PENDING_VALUE);
         require(block.timestamp >= submittedAt + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
         require(block.timestamp <= submittedAt + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
 
