@@ -16,27 +16,21 @@ import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {
-    IERC20,
-    IERC4626,
-    ERC20,
-    ERC4626,
-    Math,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import {IERC20Metadata, ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {Multicall} from "@openzeppelin/utils/Multicall.sol";
+import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
+import {IERC20Metadata, ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
+import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 
-contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
-    using SharesMathLib for uint256;
-    using MarketParamsLib for MarketParams;
-    using MorphoBalancesLib for IMorpho;
     using MorphoLib for IMorpho;
+    using SharesMathLib for uint256;
+    using MorphoBalancesLib for IMorpho;
+    using MarketParamsLib for MarketParams;
 
     /* IMMUTABLES */
 
@@ -68,6 +62,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
     uint96 public timelock;
     address public guardian;
+
+    address public rewardsDistributor;
 
     /// @dev Stores the total assets owned by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
@@ -143,6 +139,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
+    }
+
+    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
+        rewardsDistributor = newRewardsDistributor;
+
+        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
     }
 
     function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
@@ -282,6 +284,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
         onlyAllocator
     {
         _reallocate(withdrawn, supplied);
+    }
+
+    /* EXTERNAL */
+
+    function transferRewards(address token) external {
+        require(rewardsDistributor != address(0), ErrorsLib.ZERO_ADDRESS);
+
+        uint256 amount = IERC20(token).balanceOf(address(this));
+        if (token == asset()) amount -= idle;
+
+        SafeERC20.safeTransfer(IERC20(token), rewardsDistributor, amount);
+
+        emit EventsLib.TransferRewards(msg.sender, rewardsDistributor, token, amount);
     }
 
     /* ONLY GUARDIAN FUNCTIONS */
@@ -433,44 +448,25 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, IMetaMorpho {
 
     /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
     function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
-        // If asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
-        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
-        // calls the vault, which is assumed not malicious.
-        //
-        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
-        // assets are transferred and before the shares are minted, which is a valid state.
-        // slither-disable-next-line reentrancy-no-eth
-        SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
+        super._deposit(caller, owner, assets, shares);
 
         _supplyMorpho(assets);
-
-        _mint(owner, shares);
-
-        emit Deposit(caller, owner, assets, shares);
     }
 
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
+    /// @dev Reverts when withdrawing "too much", depending on 3 cases:
+    /// 1. "ERC20: burn amount exceeds balance" when withdrawing more `owner`'s than balance but less than vault's total
+    /// assets.
+    /// 2. "withdraw failed on Morpho" when withdrawing more than vault's total assets.
+    /// 3. "withdraw failed on Morpho" when withdrawing more than `owner`'s balance but less than the current available
+    /// liquidity.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
     {
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
-        }
-
-        // If asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
-        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
-        // calls the vault, which is assumed not malicious.
-        //
-        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
-        // shares are burned and after the assets are transferred, which is a valid state.
-        _burn(owner, shares);
-
         require(_withdrawMorpho(assets) == 0, ErrorsLib.WITHDRAW_FAILED_MORPHO);
 
-        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
-
-        emit Withdraw(caller, receiver, owner, assets, shares);
+        super._withdraw(caller, receiver, owner, assets, shares);
     }
 
     /* INTERNAL */
