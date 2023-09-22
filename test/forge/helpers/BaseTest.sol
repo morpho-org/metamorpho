@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@morpho-blue/interfaces/IMorpho.sol";
 
 import {WAD, MathLib} from "@morpho-blue/libraries/MathLib.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Math} from "@openzeppelin/utils/math/Math.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
@@ -95,6 +95,7 @@ contract BaseTest is Test {
 
         vault.setRiskManager(RISK_MANAGER);
         vault.setIsAllocator(ALLOCATOR, true);
+
         vm.stopPrank();
 
         for (uint256 i; i < NB_MARKETS; ++i) {

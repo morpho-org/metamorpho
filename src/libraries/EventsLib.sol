@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
 
 library EventsLib {
-    event SetRole(address indexed target, uint256 role);
-
     event SubmitTimelock(uint256 timelock);
 
     event SetTimelock(uint256 timelock);
+
+    event SetRewardsDistributor(address indexed rewardsDistributor);
 
     event SubmitFee(uint256 fee);
 
@@ -49,4 +49,8 @@ library EventsLib {
     event SetSupplyQueue(address indexed allocator, Id[] id);
 
     event SetWithdrawQueue(address indexed allocator, Id[] id);
+
+    event TransferRewards(
+        address indexed caller, address indexed rewardsDistributor, address indexed token, uint256 amount
+    );
 }

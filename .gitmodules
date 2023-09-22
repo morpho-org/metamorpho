@@ -8,3 +8,6 @@
 	path = lib/morpho-blue
 	url = https://github.com/morpho-labs/morpho-blue
 	branch = chore/remove-remapping-context
+[submodule "lib/universal-rewards-distributor"]
+	path = lib/universal-rewards-distributor
+	url = https://github.com/morpho-org/universal-rewards-distributor

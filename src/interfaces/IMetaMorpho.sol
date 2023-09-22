@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2;
 
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
 
 struct MarketConfig {
     uint192 cap;
@@ -29,10 +29,11 @@ interface IMetaMorpho is IERC4626 {
 
     function riskManager() external view returns (address);
     function isAllocator(address target) external view returns (bool);
-    function feeRecipient() external view returns (address);
     function guardian() external view returns (address);
 
     function fee() external view returns (uint96);
+    function feeRecipient() external view returns (address);
+    function rewardsDistributor() external view returns (address);
     function timelock() external view returns (uint96);
     function supplyQueue(uint256) external view returns (Id);
     function withdrawQueue(uint256) external view returns (Id);
