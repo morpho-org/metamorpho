@@ -375,9 +375,11 @@ contract MetaMorpho is ERC4626, Ownable2Step, IMetaMorpho {
 
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Blue markets.
     /// @dev Reverts when withdrawing "too much", depending on 3 cases:
-    /// 1. "ERC20: burn amount exceeds balance" when withdrawing more than balance but less than total assets.
+    /// 1. "ERC20: burn amount exceeds balance" when withdrawing more `owner`'s than balance but less than vault's total
+    /// assets.
     /// 2. "withdraw failed on Morpho" when withdrawing more than vault's total assets.
-    /// 3. "withdraw failed on Morpho" when withdrawing more than balance but less than liquidity.
+    /// 3. "withdraw failed on Morpho" when withdrawing more than `owner`'s balance but less than the current available
+    /// liquidity.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
