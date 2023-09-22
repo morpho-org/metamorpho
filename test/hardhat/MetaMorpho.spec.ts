@@ -3,7 +3,6 @@ import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, IrmMock, OracleMock, MetaMorpho } from "types";
 import { IMorpho, MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
-import { MarketAllocationStruct } from "types/src/MetaMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { setNextBlockTimestamp } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
@@ -204,15 +203,15 @@ describe("MetaMorpho", () => {
         const market = await morpho.market(identifier(marketParams));
         const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
 
-        assets = liquidity / 2n;
+        if (liquidity < 2n) break;
 
         await randomForwardTimestamp();
 
-        await morpho.connect(borrower).supplyCollateral(marketParams, assets, borrower.address, "0x");
+        await morpho.connect(borrower).supplyCollateral(marketParams, liquidity, borrower.address, "0x");
 
         await randomForwardTimestamp();
 
-        await morpho.connect(borrower).borrow(marketParams, assets / 3n, 0, borrower.address, borrower.address);
+        await morpho.connect(borrower).borrow(marketParams, liquidity / 2n, 0, borrower.address, borrower.address);
       }
     }
   });
