@@ -283,6 +283,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         external
         onlyAllocator
     {
+        uint256 balanceBefore = ERC20(asset()).balanceOf(address(this));
+
         uint256 nbWithdrawn = withdrawn.length;
 
         for (uint256 i; i < nbWithdrawn; ++i) {
@@ -307,6 +309,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             MORPHO.supply(allocation.marketParams, 0, allocation.shares, address(this), hex"");
         }
+
+        uint256 balanceAfter = ERC20(asset()).balanceOf(address(this));
+
+        if (balanceAfter > balanceBefore) idle += balanceAfter - balanceBefore;
+        else idle -= balanceBefore - balanceAfter;
     }
 
     /* EXTERNAL */
