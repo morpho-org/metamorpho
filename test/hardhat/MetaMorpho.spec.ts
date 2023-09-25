@@ -14,6 +14,8 @@ import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
 const nbMarkets = 5;
+const virtualShares = 100000n;
+const virtualAssets = 1n;
 
 let seed = 42;
 const random = () => {
@@ -156,6 +158,18 @@ describe("MetaMorpho", () => {
   });
 
   it("should simulate gas cost [main]", async () => {
+    const marketToSharesDown = async (marketParams: MarketParamsStruct, assets: bigint) => {
+      const market = await morpho.market(identifier(marketParams));
+      const totalShares = market.totalSupplyShares;
+      const totalAssets = market.totalSupplyAssets;
+
+      return toSharesDown(assets, totalAssets, totalShares);
+    };
+
+    const toSharesDown = (assets: bigint, totalAssets: bigint, totalShares: bigint) => {
+      return (assets * (totalShares + virtualShares)) / (totalAssets + virtualAssets);
+    };
+
     for (let i = 0; i < suppliers.length; ++i) {
       logProgress("main", i, suppliers.length);
 
@@ -173,10 +187,17 @@ describe("MetaMorpho", () => {
 
       await randomForwardTimestamp();
 
-      await metaMorpho.connect(allocator).reallocate(
-        [{ marketParams: allMarketParams[0], assets: assets / 2n }],
-        allMarketParams.map((marketParams) => ({ marketParams, assets: assets / toBigInt(nbMarkets + 1) / 2n })),
+      let withdrawn = [
+        { marketParams: allMarketParams[0], shares: (await marketToSharesDown(allMarketParams[0], assets)) / 2n },
+      ];
+      let supplied = await Promise.all(
+        allMarketParams.map(async (marketParams) => ({
+          marketParams,
+          shares: (await marketToSharesDown(marketParams, assets)) / toBigInt(nbMarkets + 1) / 2n,
+        })),
       );
+
+      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
 
       const borrower = borrowers[i];
 
