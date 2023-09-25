@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
+import {PendingUint192, PendingAddress} from "../interfaces/IMetaMorpho.sol";
 
 library EventsLib {
     event SetRole(address indexed target, uint256 role);
@@ -38,13 +39,13 @@ library EventsLib {
 
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
-    event RevokeTimelock(address indexed guardian, uint256 pendingTimelock, uint256 submittedAt);
+    event RevokeTimelock(address indexed guardian, PendingUint192 pendingTimelock);
 
-    event RevokeFee(address indexed guardian, uint256 pendingFee, uint256 submittedAt);
+    event RevokeFee(address indexed guardian, PendingUint192 pendingFee);
 
-    event RevokeCap(address indexed guardian, Id indexed id, uint256 pendingCap, uint256 submittedAt);
+    event RevokeCap(address indexed guardian, Id indexed id, PendingUint192 pendingCap);
 
-    event RevokeGuardian(address indexed guardian, address pendingGuardian, uint256 submittedAt);
+    event RevokeGuardian(address indexed guardian, PendingAddress pendingGuardian);
 
     event SetSupplyQueue(address indexed allocator, Id[] id);
 
