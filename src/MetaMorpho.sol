@@ -60,7 +60,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     uint96 public fee;
     address public feeRecipient;
 
-    uint96 public timelock;
+    uint256 public timelock;
     address public guardian;
 
     address public rewardsDistributor;
@@ -480,8 +480,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function _setTimelock(uint256 newTimelock) internal {
-        // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-        timelock = uint96(newTimelock);
+        timelock = newTimelock;
 
         emit EventsLib.SetTimelock(newTimelock);
 
