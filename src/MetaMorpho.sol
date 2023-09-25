@@ -507,6 +507,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     function _supplyBalances(MarketParams memory marketParams)
         internal
+        view
         returns (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 supplyBalance)
     {
         (totalSupplyAssets, totalSupplyShares,,) = MORPHO.expectedMarketBalances(marketParams);
