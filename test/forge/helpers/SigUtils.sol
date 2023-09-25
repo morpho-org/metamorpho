@@ -14,19 +14,10 @@ struct Permit {
 bytes32 constant PERMIT_TYPEHASH =
     keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-contract SigUtils {
-    bytes32 internal immutable _DOMAIN_SEPARATOR;
-
-    constructor(bytes32 domainSeparator) {
-        _DOMAIN_SEPARATOR = domainSeparator;
-    }
-
-    function toTypedDataHash(bytes32 digest) public view returns (bytes32) {
-        return ECDSA.toTypedDataHash(_DOMAIN_SEPARATOR, digest);
-    }
-
-    function toTypedDataHash(Permit memory permit) public view returns (bytes32) {
-        return toTypedDataHash(
+library SigUtils {
+    function toTypedDataHash(bytes32 domainSeparator, Permit memory permit) internal pure returns (bytes32) {
+        return ECDSA.toTypedDataHash(
+            domainSeparator,
             keccak256(
                 abi.encode(PERMIT_TYPEHASH, permit.owner, permit.spender, permit.value, permit.nonce, permit.deadline)
             )
