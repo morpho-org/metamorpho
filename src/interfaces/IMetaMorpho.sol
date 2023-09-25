@@ -21,6 +21,7 @@ struct PendingAddress {
 
 struct MarketAllocation {
     MarketParams marketParams;
+    uint256 assets;
     uint256 shares;
 }
 

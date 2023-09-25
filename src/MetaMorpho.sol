@@ -290,7 +290,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < nbWithdrawn; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
 
-            MORPHO.withdraw(allocation.marketParams, 0, allocation.shares, address(this), address(this));
+            MORPHO.withdraw(allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this));
         }
 
         uint256 nbSupplied = supplied.length;
@@ -298,7 +298,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < nbSupplied; ++i) {
             MarketAllocation memory allocation = supplied[i];
 
-            MORPHO.supply(allocation.marketParams, 0, allocation.shares, address(this), hex"");
+            MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
 
             require(
                 _supplyBalance(allocation.marketParams) <= config[allocation.marketParams.id()].cap,

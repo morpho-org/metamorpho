@@ -41,9 +41,9 @@ contract ReallocateTest is BaseTest {
         withdraw2 = bound(withdraw2, 1, sharesBefore2);
 
         MarketAllocation[] memory withdrawn = new MarketAllocation[](3);
-        withdrawn[0] = MarketAllocation(allMarkets[0], withdraw0);
-        withdrawn[1] = MarketAllocation(allMarkets[1], withdraw1);
-        withdrawn[2] = MarketAllocation(allMarkets[2], withdraw2);
+        withdrawn[0] = MarketAllocation(allMarkets[0], 0, withdraw0);
+        withdrawn[1] = MarketAllocation(allMarkets[1], 0, withdraw1);
+        withdrawn[2] = MarketAllocation(allMarkets[2], 0, withdraw2);
 
         MarketAllocation[] memory supplied;
 
@@ -87,9 +87,9 @@ contract ReallocateTest is BaseTest {
         uint256 withdraw2 = morpho.supplyShares(allMarkets[2].id(), address(vault));
 
         MarketAllocation[] memory withdrawn = new MarketAllocation[](3);
-        withdrawn[0] = MarketAllocation(allMarkets[0], withdraw0);
-        withdrawn[1] = MarketAllocation(allMarkets[1], withdraw1);
-        withdrawn[2] = MarketAllocation(allMarkets[2], withdraw2);
+        withdrawn[0] = MarketAllocation(allMarkets[0], 0, withdraw0);
+        withdrawn[1] = MarketAllocation(allMarkets[1], 0, withdraw1);
+        withdrawn[2] = MarketAllocation(allMarkets[2], 0, withdraw2);
 
         MarketAllocation[] memory supplied;
 
@@ -118,9 +118,9 @@ contract ReallocateTest is BaseTest {
         supplied2 = bound(supplied2, VIRTUAL_SHARES, CAP2 * VIRTUAL_SHARES);
 
         MarketAllocation[] memory supplied = new MarketAllocation[](3);
-        supplied[0] = MarketAllocation(allMarkets[0], supplied0);
-        supplied[1] = MarketAllocation(allMarkets[1], supplied1);
-        supplied[2] = MarketAllocation(allMarkets[2], supplied2);
+        supplied[0] = MarketAllocation(allMarkets[0], 0, supplied0);
+        supplied[1] = MarketAllocation(allMarkets[1], 0, supplied1);
+        supplied[2] = MarketAllocation(allMarkets[2], 0, supplied2);
 
         MarketAllocation[] memory withdrawn;
 
@@ -163,17 +163,17 @@ contract ReallocateTest is BaseTest {
         withdraw.val2 = bound(withdraw.val2, VIRTUAL_SHARES, sharesBefore.val2);
 
         MarketAllocation[] memory withdrawn = new MarketAllocation[](3);
-        withdrawn[0] = MarketAllocation(allMarkets[0], withdraw.val0);
-        withdrawn[1] = MarketAllocation(allMarkets[1], withdraw.val1);
-        withdrawn[2] = MarketAllocation(allMarkets[2], withdraw.val2);
+        withdrawn[0] = MarketAllocation(allMarkets[0], 0, withdraw.val0);
+        withdrawn[1] = MarketAllocation(allMarkets[1], 0, withdraw.val1);
+        withdrawn[2] = MarketAllocation(allMarkets[2], 0, withdraw.val2);
 
         uint256 expectedIdle;
         (supply, expectedIdle) = _boundSupply(withdraw, supply);
 
         MarketAllocation[] memory supplied = new MarketAllocation[](3);
-        supplied[0] = MarketAllocation(allMarkets[0], supply.val0);
-        supplied[1] = MarketAllocation(allMarkets[1], supply.val1);
-        supplied[2] = MarketAllocation(allMarkets[2], supply.val2);
+        supplied[0] = MarketAllocation(allMarkets[0], 0, supply.val0);
+        supplied[1] = MarketAllocation(allMarkets[1], 0, supply.val1);
+        supplied[2] = MarketAllocation(allMarkets[2], 0, supply.val2);
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
