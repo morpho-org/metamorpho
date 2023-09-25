@@ -302,25 +302,25 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY GUARDIAN FUNCTIONS */
 
     function revokeTimelock() external onlyGuardian {
-        emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock.value, pendingTimelock.submittedAt);
+        emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock);
 
         delete pendingTimelock;
     }
 
     function revokeFee() external onlyGuardian {
-        emit EventsLib.RevokeFee(msg.sender, pendingFee.value, pendingFee.submittedAt);
+        emit EventsLib.RevokeFee(msg.sender, pendingFee);
 
         delete pendingFee;
     }
 
     function revokeCap(Id id) external onlyGuardian {
-        emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id].value, pendingCap[id].submittedAt);
+        emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id]);
 
         delete pendingCap[id];
     }
 
     function revokeGuardian() external onlyGuardian {
-        emit EventsLib.RevokeGuardian(msg.sender, pendingGuardian.value, pendingGuardian.submittedAt);
+        emit EventsLib.RevokeGuardian(msg.sender, pendingGuardian);
 
         delete pendingGuardian;
     }
