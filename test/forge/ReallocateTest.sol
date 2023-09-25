@@ -15,10 +15,6 @@ contract ReallocateTest is BaseTest {
     uint256 internal constant VIRTUAL_SHARES = 1e6;
     uint256 internal constant CAP2 = 1e20;
 
-    // function setUp() public override {
-    //     super.setUp();
-    // }
-
     function _setCaps() internal {
         _setCap(allMarkets[0], CAP2);
         _setCap(allMarkets[1], CAP2);
@@ -29,12 +25,11 @@ contract ReallocateTest is BaseTest {
         _setCaps();
 
         borrowableToken.setBalance(SUPPLIER, 4 * CAP2);
-
         vm.prank(SUPPLIER);
         vault.deposit(4 * CAP2, SUPPLIER);
 
         uint256 idleBefore = vault.idle();
-        assertEq(vault.idle(), CAP2, "vault.idle() 0");
+        assertEq(idleBefore, CAP2, "vault.idle() 0");
         assertEq(vault.totalAssets(), 4 * CAP2, "vault.totalAssets() 0");
 
         uint256 sharesBefore0 = morpho.supplyShares(allMarkets[0].id(), address(vault));
@@ -81,7 +76,6 @@ contract ReallocateTest is BaseTest {
         _setCaps();
 
         borrowableToken.setBalance(SUPPLIER, 4 * CAP2);
-
         vm.prank(SUPPLIER);
         vault.deposit(4 * CAP2, SUPPLIER);
 
@@ -110,9 +104,8 @@ contract ReallocateTest is BaseTest {
         assertEq(vault.idle(), 4 * CAP2, "vault.idle() 1");
     }
 
-    function testReallocateIdle() public {
+    function testReallocateSupplyIdle(uint256 supplied0, uint256 supplied1, uint256 supplied2) public {
         borrowableToken.setBalance(SUPPLIER, 4 * CAP2);
-
         vm.prank(SUPPLIER);
         vault.deposit(4 * CAP2, SUPPLIER);
 
@@ -120,9 +113,9 @@ contract ReallocateTest is BaseTest {
 
         _setCaps();
 
-        uint256 supplied0 = CAP2 * VIRTUAL_SHARES;
-        uint256 supplied1 = CAP2 * VIRTUAL_SHARES;
-        uint256 supplied2 = CAP2 * VIRTUAL_SHARES;
+        supplied0 = bound(supplied0, VIRTUAL_SHARES, CAP2 * VIRTUAL_SHARES);
+        supplied1 = bound(supplied1, VIRTUAL_SHARES, CAP2 * VIRTUAL_SHARES);
+        supplied2 = bound(supplied2, VIRTUAL_SHARES, CAP2 * VIRTUAL_SHARES);
 
         MarketAllocation[] memory supplied = new MarketAllocation[](3);
         supplied[0] = MarketAllocation(allMarkets[0], supplied0);
@@ -143,10 +136,13 @@ contract ReallocateTest is BaseTest {
         assertEq(
             morpho.supplyShares(allMarkets[2].id(), address(vault)), supplied2, "morpho.supplyShares(allMarkets[2].id()"
         );
-        assertEq(vault.idle(), CAP2, "vault.idle() 1");
+
+        uint256 expectedIdle =
+            4 * CAP2 - supplied0 / VIRTUAL_SHARES - supplied1 / VIRTUAL_SHARES - supplied2 / VIRTUAL_SHARES;
+        assertApproxEqAbs(vault.idle(), expectedIdle, 3, "vault.idle() 1");
     }
 
-    function testReallocateSupplyWithdraw(Vars memory withdraw, Vars memory supply) public {
+    function testReallocateWithdrawSupply(Vars memory withdraw, Vars memory supply) public {
         _setCaps();
 
         borrowableToken.setBalance(SUPPLIER, 4 * CAP2);
@@ -200,12 +196,14 @@ contract ReallocateTest is BaseTest {
         assertEq(vault.idle(), expectedIdle, "vault.idle() 1");
     }
 
+    /// @dev Needed to avoid stack too deep errors.
     struct Vars {
         uint256 val0;
         uint256 val1;
         uint256 val2;
     }
 
+    /// @dev Needed to avoid stack too deep errors.
     function _boundSupply(Vars memory withdraw, Vars memory supply)
         internal
         view
