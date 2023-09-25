@@ -645,7 +645,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
     }
 
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    /// @dev Assumes that that `supplyBalance` corresponds the correct market `id`.
     function _suppliable(uint256 supplyBalance, Id id) internal view returns (uint256) {
         uint256 marketCap = config[id].cap;
         if (marketCap == 0) return 0;
