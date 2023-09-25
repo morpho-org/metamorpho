@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {stdError} from "@forge-std/StdError.sol";
+import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
+import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
 import "./helpers/BaseTest.sol";
 
 contract ReallocateTest is BaseTest {
     using MarketParamsLib for MarketParams;
+    using MorphoBalancesLib for IMorpho;
+    using SharesMathLib for uint256;
     using MorphoLib for IMorpho;
 
     uint256 internal constant VIRTUAL_SHARES = 1e6;
@@ -143,18 +146,121 @@ contract ReallocateTest is BaseTest {
         assertEq(vault.idle(), CAP2, "vault.idle() 1");
     }
 
-    function testReallocateSupplyCapExceeded(uint256 supplied0) public {
-        supplied0 = bound(supplied0, CAP2 * VIRTUAL_SHARES + 1, MAX_TEST_ASSETS);
+    function testReallocateSupplyWithdraw(Vars memory withdraw, Vars memory supply) public {
+        _setCaps();
 
-        _setCap(allMarkets[0], CAP2);
+        borrowableToken.setBalance(SUPPLIER, 4 * CAP2);
+        vm.prank(SUPPLIER);
+        vault.deposit(4 * CAP2, SUPPLIER);
 
-        MarketAllocation[] memory supplied = new MarketAllocation[](1);
-        supplied[0] = MarketAllocation(allMarkets[0], supplied0);
+        assertEq(vault.idle(), CAP2, "vault.idle() 0");
+        assertEq(vault.totalAssets(), 4 * CAP2, "vault.totalAssets()");
 
-        MarketAllocation[] memory withdrawn;
+        Vars memory sharesBefore;
+
+        sharesBefore.val0 = morpho.supplyShares(allMarkets[0].id(), address(vault));
+        sharesBefore.val1 = morpho.supplyShares(allMarkets[1].id(), address(vault));
+        sharesBefore.val2 = morpho.supplyShares(allMarkets[2].id(), address(vault));
+
+        withdraw.val0 = bound(withdraw.val0, VIRTUAL_SHARES, sharesBefore.val0);
+        withdraw.val1 = bound(withdraw.val1, VIRTUAL_SHARES, sharesBefore.val1);
+        withdraw.val2 = bound(withdraw.val2, VIRTUAL_SHARES, sharesBefore.val2);
+
+        MarketAllocation[] memory withdrawn = new MarketAllocation[](3);
+        withdrawn[0] = MarketAllocation(allMarkets[0], withdraw.val0);
+        withdrawn[1] = MarketAllocation(allMarkets[1], withdraw.val1);
+        withdrawn[2] = MarketAllocation(allMarkets[2], withdraw.val2);
+
+        uint256 expectedIdle;
+        (supply, expectedIdle) = _boundSupply(withdraw, supply);
+
+        MarketAllocation[] memory supplied = new MarketAllocation[](3);
+        supplied[0] = MarketAllocation(allMarkets[0], supply.val0);
+        supplied[1] = MarketAllocation(allMarkets[1], supply.val1);
+        supplied[2] = MarketAllocation(allMarkets[2], supply.val2);
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.SUPPLY_CAP_EXCEEDED));
         vault.reallocate(withdrawn, supplied);
+
+        assertEq(
+            morpho.supplyShares(allMarkets[0].id(), address(vault)),
+            sharesBefore.val0 - withdraw.val0 + supply.val0,
+            "morpho.supplyShares(allMarkets[0].id()"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[1].id(), address(vault)),
+            sharesBefore.val1 - withdraw.val1 + supply.val1,
+            "morpho.supplyShares(allMarkets[1].id()"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[2].id(), address(vault)),
+            sharesBefore.val2 - withdraw.val2 + supply.val2,
+            "morpho.supplyShares(allMarkets[2].id()"
+        );
+        assertEq(vault.idle(), expectedIdle, "vault.idle() 1");
+    }
+
+    struct Vars {
+        uint256 val0;
+        uint256 val1;
+        uint256 val2;
+    }
+
+    function _boundSupply(Vars memory withdraw, Vars memory supply)
+        internal
+        view
+        returns (Vars memory, uint256 availableForSupply)
+    {
+        Vars memory totalSupplyAssets;
+        Vars memory totalSupplyShares;
+        (totalSupplyAssets.val0, totalSupplyShares.val0,,) = morpho.expectedMarketBalances(allMarkets[0]);
+        (totalSupplyAssets.val1, totalSupplyShares.val1,,) = morpho.expectedMarketBalances(allMarkets[1]);
+        (totalSupplyAssets.val2, totalSupplyShares.val2,,) = morpho.expectedMarketBalances(allMarkets[2]);
+
+        Vars memory withdrawAssets;
+        withdrawAssets.val0 = withdraw.val0.toAssetsDown(totalSupplyAssets.val0, totalSupplyShares.val0);
+        withdrawAssets.val1 = withdraw.val1.toAssetsDown(totalSupplyAssets.val1, totalSupplyShares.val1);
+        withdrawAssets.val2 = withdraw.val2.toAssetsDown(totalSupplyAssets.val2, totalSupplyShares.val2);
+
+        availableForSupply = withdrawAssets.val0 + withdrawAssets.val1 + withdrawAssets.val2 + vault.idle();
+
+        Vars memory supplyAssetsAfter;
+        supplyAssetsAfter.val0 = totalSupplyAssets.val0 - withdrawAssets.val0;
+        supplyAssetsAfter.val1 = totalSupplyAssets.val1 - withdrawAssets.val1;
+        supplyAssetsAfter.val2 = totalSupplyAssets.val2 - withdrawAssets.val2;
+
+        Vars memory sharesAfter;
+        sharesAfter.val0 = totalSupplyShares.val0 - withdraw.val0;
+        sharesAfter.val1 = totalSupplyShares.val1 - withdraw.val1;
+        sharesAfter.val2 = totalSupplyShares.val2 - withdraw.val2;
+
+        supply.val0 = bound(
+            supply.val0,
+            1,
+            UtilsLib.min(availableForSupply, CAP2 - supplyAssetsAfter.val0).toSharesDown(
+                supplyAssetsAfter.val0, sharesAfter.val0
+            )
+        );
+        availableForSupply -= supply.val0.toAssetsUp(supplyAssetsAfter.val0, sharesAfter.val0);
+
+        supply.val1 = bound(
+            supply.val1,
+            1,
+            UtilsLib.min(availableForSupply, CAP2 - supplyAssetsAfter.val1).toSharesDown(
+                supplyAssetsAfter.val1, sharesAfter.val1
+            )
+        );
+        availableForSupply -= supply.val1.toAssetsUp(supplyAssetsAfter.val1, sharesAfter.val1);
+
+        supply.val2 = bound(
+            supply.val2,
+            1,
+            UtilsLib.min(availableForSupply, CAP2 - supplyAssetsAfter.val2).toSharesDown(
+                supplyAssetsAfter.val2, sharesAfter.val2
+            )
+        );
+        availableForSupply -= supply.val2.toAssetsUp(supplyAssetsAfter.val2, sharesAfter.val2);
+
+        return (supply, availableForSupply);
     }
 }
