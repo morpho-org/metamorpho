@@ -475,6 +475,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
     }
 
+    function _supplyBalances(MarketParams memory marketParams)
+        internal
+        returns (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 supplyBalance)
+    {
+        (totalSupplyAssets, totalSupplyShares,,) = MORPHO.expectedMarketBalances(marketParams);
+
+        uint256 supplyShares = MORPHO.supplyShares(marketParams.id(), address(this));
+        supplyBalance = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+    }
+
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
         return MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
@@ -535,7 +545,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < nbWithdrawn; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
 
-            MORPHO.withdraw(allocation.marketParams, allocation.assets, 0, address(this), address(this));
+            MORPHO.withdraw(allocation.marketParams, 0, allocation.shares, address(this), address(this));
         }
 
         uint256 nbSupplied = supplied.length;
@@ -543,12 +553,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < nbSupplied; ++i) {
             MarketAllocation memory allocation = supplied[i];
 
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 supplyBalance) =
+                _supplyBalances(allocation.marketParams);
+
             require(
-                _suppliable(allocation.marketParams, allocation.marketParams.id()) >= allocation.assets,
+                _suppliable(supplyBalance, allocation.marketParams.id())
+                    >= allocation.shares.toAssetsUp(totalSupplyAssets, totalSupplyShares),
                 ErrorsLib.SUPPLY_CAP_EXCEEDED
             );
 
-            MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
+            MORPHO.supply(allocation.marketParams, 0, allocation.shares, address(this), hex"");
         }
     }
 
@@ -559,7 +573,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = supplyQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
+            uint256 toSupply = UtilsLib.min(_suppliable(_supplyBalance(marketParams), id), assets);
 
             if (toSupply > 0) {
                 // Using try/catch to skip markets that revert.
@@ -628,11 +642,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
+    function _suppliable(uint256 supplyBalance, Id id) internal view returns (uint256) {
         uint256 marketCap = config[id].cap;
         if (marketCap == 0) return 0;
 
-        return marketCap.zeroFloorSub(_supplyBalance(marketParams));
+        return marketCap.zeroFloorSub(supplyBalance);
     }
 
     /// @dev Assumes that the inputs `marketParams` and `id` match.
