@@ -283,22 +283,29 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         external
         onlyAllocator
     {
-        uint256 balanceBefore = ERC20(asset()).balanceOf(address(this));
-
+        uint256 totalWithdrawn;
         uint256 nbWithdrawn = withdrawn.length;
 
         for (uint256 i; i < nbWithdrawn; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
 
-            MORPHO.withdraw(allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this));
+            (uint256 withdrawnAssets,) = MORPHO.withdraw(
+                allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
+            );
+
+            totalWithdrawn += withdrawnAssets;
         }
 
+        uint256 totalSupplied;
         uint256 nbSupplied = supplied.length;
 
         for (uint256 i; i < nbSupplied; ++i) {
             MarketAllocation memory allocation = supplied[i];
 
-            MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
+            (uint256 suppliedAssets,) =
+                MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
+
+            totalSupplied += suppliedAssets;
 
             require(
                 _supplyBalance(allocation.marketParams) <= config[allocation.marketParams.id()].cap,
@@ -306,10 +313,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             );
         }
 
-        uint256 balanceAfter = ERC20(asset()).balanceOf(address(this));
+        if (totalWithdrawn > totalSupplied) {
+            idle += totalWithdrawn - totalSupplied;
+        } else {
+            uint256 idleSupplied = totalSupplied - totalWithdrawn;
+            require(idle >= idleSupplied, ErrorsLib.INSUFFICIENT_IDLE);
 
-        if (balanceAfter > balanceBefore) idle += balanceAfter - balanceBefore;
-        else idle -= balanceBefore - balanceAfter;
+            unchecked {
+                // Underflow not possible: idle >= idleSupplied.
+                idle -= idleSupplied;
+            }
+        }
     }
 
     /* EXTERNAL */
