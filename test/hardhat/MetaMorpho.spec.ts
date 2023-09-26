@@ -13,9 +13,9 @@ import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
-const nbMarkets = 5;
 const virtualShares = 100000n;
 const virtualAssets = 1n;
+const nbMarkets = 5;
 
 let seed = 42;
 const random = () => {
@@ -143,7 +143,7 @@ describe("MetaMorpho", () => {
     for (const marketParams of allMarketParams) {
       await metaMorpho
         .connect(riskManager)
-        .submitCap(marketParams, (BigInt.WAD * 100n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length));
+        .submitCap(marketParams, (BigInt.WAD * 10n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length));
     }
 
     await metaMorpho.connect(riskManager).setSupplyQueue(allMarketParams.map(identifier));
@@ -158,18 +158,6 @@ describe("MetaMorpho", () => {
   });
 
   it("should simulate gas cost [main]", async () => {
-    const marketToSharesDown = async (marketParams: MarketParamsStruct, assets: bigint) => {
-      const market = await morpho.market(identifier(marketParams));
-      const totalShares = market.totalSupplyShares;
-      const totalAssets = market.totalSupplyAssets;
-
-      return toSharesDown(assets, totalAssets, totalShares);
-    };
-
-    const toSharesDown = (assets: bigint, totalAssets: bigint, totalShares: bigint) => {
-      return (assets * (totalShares + virtualShares)) / (totalAssets + virtualAssets);
-    };
-
     for (let i = 0; i < suppliers.length; ++i) {
       logProgress("main", i, suppliers.length);
 
@@ -187,17 +175,47 @@ describe("MetaMorpho", () => {
 
       await randomForwardTimestamp();
 
-      let withdrawn = [
-        { marketParams: allMarketParams[0], shares: (await marketToSharesDown(allMarketParams[0], assets)) / 2n },
-      ];
-      let supplied = await Promise.all(
-        allMarketParams.map(async (marketParams) => ({
-          marketParams,
-          shares: (await marketToSharesDown(marketParams, assets)) / toBigInt(nbMarkets + 1) / 2n,
-        })),
+      const allocation = await Promise.all(
+        allMarketParams.map(async (marketParams) => {
+          const id = identifier(marketParams);
+          const market = await morpho.market(id);
+          const position = await morpho.position(id, await metaMorpho.getAddress());
+
+          const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
+          const liquidShares = liquidity.mulDivDown(
+            market.totalSupplyShares + virtualShares,
+            market.totalSupplyAssets + virtualAssets,
+          );
+
+          return {
+            marketParams,
+            market,
+            shares: position.supplyShares.min(liquidShares),
+          };
+        }),
       );
 
-      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+      await metaMorpho.connect(allocator).reallocate(
+        allocation
+          .map(({ marketParams, shares }) => ({
+            marketParams,
+            assets: 0n,
+            // Always withdraw all, up to the liquidity.
+            shares,
+          }))
+          .filter(({ shares }) => shares > 0n),
+        allocation
+          .map(({ marketParams, market, shares }) => {
+            const assets = shares.mulDivDown(
+              market.totalSupplyAssets + virtualAssets,
+              market.totalSupplyShares + virtualShares,
+            );
+
+            // Always supply 3/4 of what the vault withdrawn.
+            return { marketParams, assets: (assets * 3n) / 4n, shares: 0n };
+          })
+          .filter(({ assets }) => assets > 0n),
+      );
 
       const borrower = borrowers[i];
 
@@ -205,15 +223,15 @@ describe("MetaMorpho", () => {
         const market = await morpho.market(identifier(marketParams));
         const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
 
-        assets = liquidity / 2n;
+        if (liquidity < 2n) break;
 
         await randomForwardTimestamp();
 
-        await morpho.connect(borrower).supplyCollateral(marketParams, assets, borrower.address, "0x");
+        await morpho.connect(borrower).supplyCollateral(marketParams, liquidity, borrower.address, "0x");
 
         await randomForwardTimestamp();
 
-        await morpho.connect(borrower).borrow(marketParams, assets / 3n, 0, borrower.address, borrower.address);
+        await morpho.connect(borrower).borrow(marketParams, liquidity / 2n, 0, borrower.address, borrower.address);
       }
     }
   });
