@@ -182,7 +182,7 @@ contract FeeTest is BaseTest {
 
     function testSetFeeAccrueFee(uint256 deposited, uint256 fee, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        fee = bound(fee, 0, WAD);
+        fee = bound(fee, 0, MAX_FEE);
         blocks = _boundBlocks(blocks);
 
         vm.assume(fee != FEE);
@@ -232,8 +232,22 @@ contract FeeTest is BaseTest {
         vault.submitFee(fee);
     }
 
+    function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
+        fee = bound(fee, MAX_FEE + 1, type(uint256).max);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.MAX_FEE_EXCEEDED));
+        vault.submitFee(fee);
+    }
+
+    function testSubmitFeeAlreadySet() public {
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.ALREADY_SET));
+        vault.submitFee(FEE);
+    }
+
     function testAcceptFeeNotOwner(uint256 fee) public {
-        fee = bound(fee, FEE + 1, WAD);
+        fee = bound(fee, FEE + 1, MAX_FEE);
 
         _setTimelock(1);
 
