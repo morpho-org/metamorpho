@@ -26,6 +26,7 @@ uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = 10;
 uint128 constant CAP = type(uint128).max;
+uint256 constant VIRTUAL_SHARES = 10 ** DECIMALS_OFFSET;
 
 contract BaseTest is Test {
     using MathLib for uint256;
