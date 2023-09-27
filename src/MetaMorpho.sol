@@ -152,13 +152,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitFee(uint256 newFee) external onlyOwner {
-        require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
+        require(newFee <= MAX_FEE, ErrorsLib.MAX_FEE_EXCEEDED);
         require(newFee != fee, ErrorsLib.ALREADY_SET);
 
         if (newFee < fee || timelock == 0) {
             _setFee(newFee);
         } else {
-            // Safe "unchecked" cast because newFee <= WAD.
+            // Safe "unchecked" cast because newFee <= MAX_FEE.
             pendingFee = PendingUint192(uint192(newFee), uint64(block.timestamp));
 
             emit EventsLib.SubmitFee(newFee);
@@ -204,7 +204,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY RISK MANAGER FUNCTIONS */
 
     function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyRiskManager {
-        require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
+        require(marketParams.loanToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
 
         Id id = marketParams.id();
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
@@ -538,7 +538,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setFee(uint256 newFee) internal {
         require(newFee == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
 
-        // Safe "unchecked" cast because newFee <= WAD.
+        // Safe "unchecked" cast because newFee <= MAX_FEE.
         fee = uint96(newFee);
 
         emit EventsLib.SetFee(newFee);

@@ -27,7 +27,7 @@ contract FeeTest is BaseTest {
 
             // Create some debt on the market to accrue interest.
 
-            borrowableToken.setBalance(SUPPLIER, 1);
+            loanToken.setBalance(SUPPLIER, 1);
 
             vm.prank(SUPPLIER);
             morpho.supply(marketParams, 1, 0, ONBEHALF, hex"");
@@ -57,7 +57,7 @@ contract FeeTest is BaseTest {
     function testLastTotalAssets(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -69,7 +69,7 @@ contract FeeTest is BaseTest {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         withdrawn = bound(withdrawn, MIN_TEST_ASSETS, deposited);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -85,7 +85,7 @@ contract FeeTest is BaseTest {
         newDeposit = bound(newDeposit, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -96,7 +96,7 @@ contract FeeTest is BaseTest {
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
 
-        borrowableToken.setBalance(SUPPLIER, newDeposit);
+        loanToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
         vault.deposit(newDeposit, ONBEHALF);
@@ -110,7 +110,7 @@ contract FeeTest is BaseTest {
         newDeposit = bound(newDeposit, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -123,7 +123,7 @@ contract FeeTest is BaseTest {
 
         uint256 shares = vault.convertToShares(newDeposit);
 
-        borrowableToken.setBalance(SUPPLIER, newDeposit);
+        loanToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
         vault.mint(shares, ONBEHALF);
@@ -137,7 +137,7 @@ contract FeeTest is BaseTest {
         withdrawn = bound(withdrawn, MIN_TEST_ASSETS, deposited);
         blocks = _boundBlocks(blocks);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -162,7 +162,7 @@ contract FeeTest is BaseTest {
         withdrawn = bound(withdrawn, MIN_TEST_ASSETS, deposited);
         blocks = _boundBlocks(blocks);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -182,12 +182,12 @@ contract FeeTest is BaseTest {
 
     function testSetFeeAccrueFee(uint256 deposited, uint256 fee, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        fee = bound(fee, 0, WAD);
+        fee = bound(fee, 0, MAX_FEE);
         blocks = _boundBlocks(blocks);
 
         vm.assume(fee != FEE);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -208,7 +208,7 @@ contract FeeTest is BaseTest {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -232,8 +232,22 @@ contract FeeTest is BaseTest {
         vault.submitFee(fee);
     }
 
+    function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
+        fee = bound(fee, MAX_FEE + 1, type(uint256).max);
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.MAX_FEE_EXCEEDED));
+        vault.submitFee(fee);
+    }
+
+    function testSubmitFeeAlreadySet() public {
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.ALREADY_SET));
+        vault.submitFee(FEE);
+    }
+
     function testAcceptFeeNotOwner(uint256 fee) public {
-        fee = bound(fee, FEE + 1, WAD);
+        fee = bound(fee, FEE + 1, MAX_FEE);
 
         _setTimelock(1);
 

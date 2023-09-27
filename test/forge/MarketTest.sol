@@ -33,7 +33,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSubmitCapInconsistentAsset(MarketParams memory marketParams) public {
-        vm.assume(marketParams.borrowableToken != address(borrowableToken));
+        vm.assume(marketParams.loanToken != address(loanToken));
 
         vm.prank(RISK_MANAGER);
         vm.expectRevert(bytes(ErrorsLib.INCONSISTENT_ASSET));
@@ -41,7 +41,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSubmitCapMarketNotCreated(MarketParams memory marketParams) public {
-        marketParams.borrowableToken = address(borrowableToken);
+        marketParams.loanToken = address(loanToken);
 
         vm.assume(morpho.lastUpdate(marketParams.id()) == 0);
 
@@ -127,7 +127,7 @@ contract MarketTest is BaseTest {
         _setCap(allMarkets[1], CAP);
         _setCap(allMarkets[2], CAP);
 
-        borrowableToken.setBalance(SUPPLIER, 1);
+        loanToken.setBalance(SUPPLIER, 1);
 
         vm.prank(SUPPLIER);
         vault.deposit(1, RECEIVER);
