@@ -18,7 +18,7 @@ contract ERC4626Test is BaseTest {
 
         uint256 shares = vault.convertToShares(assets);
 
-        borrowableToken.setBalance(SUPPLIER, assets);
+        loanToken.setBalance(SUPPLIER, assets);
 
         vm.prank(SUPPLIER);
         uint256 deposited = vault.mint(shares, ONBEHALF);
@@ -31,7 +31,7 @@ contract ERC4626Test is BaseTest {
     function testDeposit(uint256 assets) public {
         assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, assets);
+        loanToken.setBalance(SUPPLIER, assets);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(assets, ONBEHALF);
@@ -44,7 +44,7 @@ contract ERC4626Test is BaseTest {
     function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
@@ -57,7 +57,7 @@ contract ERC4626Test is BaseTest {
     function testWithdrawAll(uint256 assets) public {
         assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, assets);
+        loanToken.setBalance(SUPPLIER, assets);
 
         vm.prank(SUPPLIER);
         uint256 minted = vault.deposit(assets, ONBEHALF);
@@ -69,14 +69,14 @@ contract ERC4626Test is BaseTest {
 
         assertEq(shares, minted, "shares");
         assertEq(vault.balanceOf(ONBEHALF), 0, "balanceOf(ONBEHALF)");
-        assertEq(borrowableToken.balanceOf(RECEIVER), assets, "borrowableToken.balanceOf(RECEIVER)");
+        assertEq(loanToken.balanceOf(RECEIVER), assets, "loanToken.balanceOf(RECEIVER)");
         assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), 0, "expectedSupplyBalance(vault)");
     }
 
     function testRedeemAll(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 minted = vault.deposit(deposited, ONBEHALF);
@@ -88,14 +88,14 @@ contract ERC4626Test is BaseTest {
 
         assertEq(assets, deposited, "assets");
         assertEq(vault.balanceOf(ONBEHALF), 0, "balanceOf(ONBEHALF)");
-        assertEq(borrowableToken.balanceOf(RECEIVER), deposited, "borrowableToken.balanceOf(RECEIVER)");
+        assertEq(loanToken.balanceOf(RECEIVER), deposited, "loanToken.balanceOf(RECEIVER)");
         assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), 0, "expectedSupplyBalance(vault)");
     }
 
     function testRedeemNotDeposited(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
@@ -108,7 +108,7 @@ contract ERC4626Test is BaseTest {
     function testRedeemNotApproved(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
@@ -121,7 +121,7 @@ contract ERC4626Test is BaseTest {
     function testWithdrawNotApproved(uint256 assets) public {
         assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, assets);
+        loanToken.setBalance(SUPPLIER, assets);
 
         vm.prank(SUPPLIER);
         vault.deposit(assets, ONBEHALF);
@@ -134,7 +134,7 @@ contract ERC4626Test is BaseTest {
     function testTransferFrom(uint256 deposited, uint256 toTransfer) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
@@ -155,7 +155,7 @@ contract ERC4626Test is BaseTest {
     function testTransferFromNotApproved(uint256 deposited, uint256 amount) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(deposited, ONBEHALF);
@@ -170,7 +170,7 @@ contract ERC4626Test is BaseTest {
     function testWithdrawMoreThanBalanceButLessThanTotalAssets(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -178,7 +178,7 @@ contract ERC4626Test is BaseTest {
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
 
         uint256 toAdd = assets - deposited + 1;
-        borrowableToken.setBalance(SUPPLIER, toAdd);
+        loanToken.setBalance(SUPPLIER, toAdd);
 
         vm.prank(SUPPLIER);
         vault.deposit(toAdd, SUPPLIER);
@@ -191,7 +191,7 @@ contract ERC4626Test is BaseTest {
     function testWithdrawMoreThanTotalAssets(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -206,7 +206,7 @@ contract ERC4626Test is BaseTest {
     function testWithdrawMoreThanBalanceButLessThanLiquidity(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
@@ -229,7 +229,7 @@ contract ERC4626Test is BaseTest {
     function testTransfer(uint256 deposited, uint256 toTransfer) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        borrowableToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
         uint256 minted = vault.deposit(deposited, ONBEHALF);
