@@ -46,7 +46,7 @@ contract BaseTest is Test {
     address internal MORPHO_FEE_RECIPIENT;
 
     IMorpho internal morpho;
-    ERC20Mock internal borrowableToken;
+    ERC20Mock internal loanToken;
     ERC20Mock internal collateralToken;
     OracleMock internal oracle;
     IrmMock internal irm;
@@ -70,8 +70,8 @@ contract BaseTest is Test {
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
         vm.label(address(morpho), "Morpho");
 
-        borrowableToken = new ERC20Mock("borrowable", "B");
-        vm.label(address(borrowableToken), "Borrowable");
+        loanToken = new ERC20Mock("loan", "B");
+        vm.label(address(loanToken), "Loan");
 
         collateralToken = new ERC20Mock("collateral", "C");
         vm.label(address(collateralToken), "Collateral");
@@ -91,7 +91,7 @@ contract BaseTest is Test {
         vm.stopPrank();
 
         vm.startPrank(OWNER);
-        vault = new MetaMorpho(address(morpho), 0, address(borrowableToken), "MetaMorpho Vault", "MMV");
+        vault = new MetaMorpho(address(morpho), 0, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vault.setRiskManager(RISK_MANAGER);
         vault.setIsAllocator(ALLOCATOR, true);
@@ -102,7 +102,7 @@ contract BaseTest is Test {
             uint256 lltv = 0.8 ether / (i + 1);
 
             MarketParams memory marketParams = MarketParams({
-                borrowableToken: address(borrowableToken),
+                loanToken: address(loanToken),
                 collateralToken: address(collateralToken),
                 oracle: address(oracle),
                 irm: address(irm),
@@ -117,13 +117,13 @@ contract BaseTest is Test {
             allMarkets.push(marketParams);
         }
 
-        borrowableToken.approve(address(vault), type(uint256).max);
+        loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
 
         vm.startPrank(SUPPLIER);
-        borrowableToken.approve(address(vault), type(uint256).max);
+        loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
-        borrowableToken.approve(address(morpho), type(uint256).max);
+        loanToken.approve(address(morpho), type(uint256).max);
         collateralToken.approve(address(morpho), type(uint256).max);
         vm.stopPrank();
 
@@ -131,10 +131,10 @@ contract BaseTest is Test {
         collateralToken.approve(address(morpho), type(uint256).max);
 
         vm.prank(REPAYER);
-        borrowableToken.approve(address(morpho), type(uint256).max);
+        loanToken.approve(address(morpho), type(uint256).max);
 
         vm.startPrank(ONBEHALF);
-        borrowableToken.approve(address(vault), type(uint256).max);
+        loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
     }
