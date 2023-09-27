@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
       initialBaseFeePerGas: 0,
       allowBlocksWithSameTimestamp: true,
       accounts: {
-        count: 153, // must be odd
+        count: 103, // must be odd
       },
     },
   },

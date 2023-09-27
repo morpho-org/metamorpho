@@ -11,6 +11,5 @@ uint256 constant MAX_TIMELOCK = 2 weeks;
 /// @dev OpenZeppelin's decimals offset used in MetaMorpho's ERC4626 implementation.
 uint8 constant DECIMALS_OFFSET = 6;
 
-/// @dev The maximum supply/withdraw queue size ensuring the cost of depositing/withdrawing from the vault fits in a
-/// block.
-uint256 constant MAX_QUEUE_SIZE = 64;
+/// @dev The maximum number of markets in the supply/withdraw queue.
+uint256 constant MAX_QUEUE_SIZE = 30;
