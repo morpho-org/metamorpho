@@ -561,7 +561,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = supplyQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toSupply = UtilsLib.min(_suppliable(_supplyBalance(marketParams), id), assets);
+            uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
 
             if (toSupply > 0) {
                 // Using try/catch to skip markets that revert.
@@ -629,12 +629,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
     }
 
-    /// @dev Assumes that that `supplyBalance` corresponds the correct market `id`.
-    function _suppliable(uint256 supplyBalance, Id id) internal view returns (uint256) {
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
         uint256 marketCap = config[id].cap;
         if (marketCap == 0) return 0;
 
-        return marketCap.zeroFloorSub(supplyBalance);
+        return marketCap.zeroFloorSub(_supplyBalance(marketParams));
     }
 
     /// @dev Assumes that the inputs `marketParams` and `id` match.
