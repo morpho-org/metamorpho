@@ -307,12 +307,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         delete pendingTimelock;
     }
 
-    function revokeFee() external onlyGuardian {
-        emit EventsLib.RevokeFee(msg.sender, pendingFee);
-
-        delete pendingFee;
-    }
-
     function revokeCap(Id id) external onlyGuardian {
         emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id]);
 
