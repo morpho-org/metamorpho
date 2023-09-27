@@ -13,6 +13,8 @@ import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
+const virtualShares = 100000n;
+const virtualAssets = 1n;
 const nbMarkets = 5;
 
 let seed = 42;
@@ -179,21 +181,39 @@ describe("MetaMorpho", () => {
           const market = await morpho.market(id);
           const position = await morpho.position(id, await metaMorpho.getAddress());
 
-          const assets = position.supplyShares
-            .mulDivDown(market.totalSupplyAssets + 1n, market.totalSupplyShares + 10n ** 6n)
-            .min(market.totalSupplyAssets - market.totalBorrowAssets);
+          const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
+          const liquidShares = liquidity.mulDivDown(
+            market.totalSupplyShares + virtualShares,
+            market.totalSupplyAssets + virtualAssets,
+          );
 
           return {
             marketParams,
-            assets,
+            market,
+            shares: position.supplyShares.min(liquidShares),
           };
         }),
       );
 
       await metaMorpho.connect(allocator).reallocate(
-        allocation.filter(({ assets }) => assets > 0n),
         allocation
-          .map(({ marketParams, assets }) => ({ marketParams, assets: (assets * 3n) / 4n }))
+          .map(({ marketParams, shares }) => ({
+            marketParams,
+            assets: 0n,
+            // Always withdraw all, up to the liquidity.
+            shares,
+          }))
+          .filter(({ shares }) => shares > 0n),
+        allocation
+          .map(({ marketParams, market, shares }) => {
+            const assets = shares.mulDivDown(
+              market.totalSupplyAssets + virtualAssets,
+              market.totalSupplyShares + virtualShares,
+            );
+
+            // Always supply 3/4 of what the vault withdrawn.
+            return { marketParams, assets: (assets * 3n) / 4n, shares: 0n };
+          })
           .filter(({ assets }) => assets > 0n),
       );
 

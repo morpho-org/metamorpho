@@ -283,7 +283,33 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         external
         onlyAllocator
     {
-        _reallocate(withdrawn, supplied);
+        uint256 balanceBefore = ERC20(asset()).balanceOf(address(this));
+
+        uint256 nbWithdrawn = withdrawn.length;
+
+        for (uint256 i; i < nbWithdrawn; ++i) {
+            MarketAllocation memory allocation = withdrawn[i];
+
+            MORPHO.withdraw(allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this));
+        }
+
+        uint256 nbSupplied = supplied.length;
+
+        for (uint256 i; i < nbSupplied; ++i) {
+            MarketAllocation memory allocation = supplied[i];
+
+            MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
+
+            require(
+                _supplyBalance(allocation.marketParams) <= config[allocation.marketParams.id()].cap,
+                ErrorsLib.SUPPLY_CAP_EXCEEDED
+            );
+        }
+
+        uint256 balanceAfter = ERC20(asset()).balanceOf(address(this));
+
+        if (balanceAfter > balanceBefore) idle += balanceAfter - balanceBefore;
+        else idle -= balanceBefore - balanceAfter;
     }
 
     /* EXTERNAL */
@@ -521,29 +547,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /* LIQUIDITY ALLOCATION */
-
-    function _reallocate(MarketAllocation[] memory withdrawn, MarketAllocation[] memory supplied) internal {
-        uint256 nbWithdrawn = withdrawn.length;
-
-        for (uint256 i; i < nbWithdrawn; ++i) {
-            MarketAllocation memory allocation = withdrawn[i];
-
-            MORPHO.withdraw(allocation.marketParams, allocation.assets, 0, address(this), address(this));
-        }
-
-        uint256 nbSupplied = supplied.length;
-
-        for (uint256 i; i < nbSupplied; ++i) {
-            MarketAllocation memory allocation = supplied[i];
-
-            require(
-                _suppliable(allocation.marketParams, allocation.marketParams.id()) >= allocation.assets,
-                ErrorsLib.SUPPLY_CAP_EXCEEDED
-            );
-
-            MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
-        }
-    }
 
     function _supplyMorpho(uint256 assets) internal {
         uint256 nbMarkets = supplyQueue.length;
