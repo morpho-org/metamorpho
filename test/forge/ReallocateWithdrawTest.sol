@@ -26,7 +26,7 @@ contract ReallocateWithdrawTest is BaseTest {
         _setCap(allMarkets[1], CAP2);
         _setCap(allMarkets[2], CAP2);
 
-        borrowableToken.setBalance(SUPPLIER, INITIAL_DEPOSIT);
+        loanToken.setBalance(SUPPLIER, INITIAL_DEPOSIT);
 
         vm.prank(SUPPLIER);
         vault.deposit(INITIAL_DEPOSIT, ONBEHALF);

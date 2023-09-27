@@ -25,7 +25,7 @@ contract ReallocateTest is BaseTest {
         vm.prank(ALLOCATOR);
         vault.setSupplyQueue(new Id[](0));
 
-        borrowableToken.setBalance(SUPPLIER, INITIAL_DEPOSIT);
+        loanToken.setBalance(SUPPLIER, INITIAL_DEPOSIT);
 
         vm.prank(SUPPLIER);
         vault.deposit(INITIAL_DEPOSIT, ONBEHALF);
