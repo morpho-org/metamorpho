@@ -319,10 +319,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             uint256 idleSupplied = totalSupplied - totalWithdrawn;
             require(idle >= idleSupplied, ErrorsLib.INSUFFICIENT_IDLE);
 
-            unchecked {
-                // Underflow not possible: idle >= idleSupplied.
-                idle -= idleSupplied;
-            }
+            idle -= idleSupplied;
         }
     }
 
