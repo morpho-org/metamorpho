@@ -32,7 +32,7 @@ contract UrdTest is BaseTest {
         vault.setRewardsDistributor(address(0));
     }
 
-    function testTransferRewardsNotBorrowableToken(uint256 amount) public {
+    function testTransferRewardsNotLoanToken(uint256 amount) public {
         vm.prank(OWNER);
         vault.setRewardsDistributor(address(rewardsDistributor));
 
@@ -51,31 +51,31 @@ contract UrdTest is BaseTest {
         );
     }
 
-    function testTransferRewardsBorrowableToken(uint256 rewards, uint256 idle) public {
+    function testTransferRewardsLoanToken(uint256 rewards, uint256 idle) public {
         idle = bound(idle, 0, MAX_TEST_ASSETS);
         rewards = bound(rewards, 0, MAX_TEST_ASSETS);
 
         vm.prank(OWNER);
         vault.setRewardsDistributor(address(rewardsDistributor));
 
-        borrowableToken.setBalance(address(vault), rewards);
+        loanToken.setBalance(address(vault), rewards);
 
-        borrowableToken.setBalance(address(SUPPLIER), idle);
+        loanToken.setBalance(address(SUPPLIER), idle);
         vm.prank(SUPPLIER);
         vault.deposit(idle, SUPPLIER);
 
         assertEq(vault.idle(), idle, "vault.idle()");
-        uint256 vaultBalanceBefore = borrowableToken.balanceOf(address(vault));
+        uint256 vaultBalanceBefore = loanToken.balanceOf(address(vault));
         assertEq(vaultBalanceBefore, idle + rewards, "vaultBalanceBefore");
 
-        vault.transferRewards(address(borrowableToken));
-        uint256 vaultBalanceAfter = borrowableToken.balanceOf(address(vault));
+        vault.transferRewards(address(loanToken));
+        uint256 vaultBalanceAfter = loanToken.balanceOf(address(vault));
 
         assertEq(vaultBalanceAfter, idle, "vaultBalanceAfter");
         assertEq(
-            borrowableToken.balanceOf(address(rewardsDistributor)),
+            loanToken.balanceOf(address(rewardsDistributor)),
             rewards,
-            "borrowableToken.balanceOf(address(rewardsDistributor))"
+            "loanToken.balanceOf(address(rewardsDistributor))"
         );
     }
 }

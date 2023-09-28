@@ -52,7 +52,7 @@ describe("MetaMorpho", () => {
   let borrowers: SignerWithAddress[];
 
   let morpho: IMorpho;
-  let borrowable: ERC20Mock;
+  let loan: ERC20Mock;
   let collateral: ERC20Mock;
   let oracle: OracleMock;
   let irm: IrmMock;
@@ -72,7 +72,7 @@ describe("MetaMorpho", () => {
 
     const ERC20MockFactory = await hre.ethers.getContractFactory("ERC20Mock", admin);
 
-    borrowable = await ERC20MockFactory.deploy("DAI", "DAI");
+    loan = await ERC20MockFactory.deploy("DAI", "DAI");
     collateral = await ERC20MockFactory.deploy("Wrapped BTC", "WBTC");
 
     const OracleMockFactory = await hre.ethers.getContractFactory("OracleMock", admin);
@@ -94,13 +94,13 @@ describe("MetaMorpho", () => {
     irm = await IrmMockFactory.deploy();
 
     const morphoAddress = await morpho.getAddress();
-    const borrowableAddress = await borrowable.getAddress();
+    const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
     const oracleAddress = await oracle.getAddress();
     const irmAddress = await irm.getAddress();
 
     allMarketParams = _range(1, 1 + nbMarkets).map((i) => ({
-      borrowableToken: borrowableAddress,
+      loanToken: loanAddress,
       collateralToken: collateralAddress,
       oracle: oracleAddress,
       irm: irmAddress,
@@ -116,13 +116,13 @@ describe("MetaMorpho", () => {
 
     const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
 
-    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 1, borrowableAddress, "MetaMorpho", "mB");
+    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 1, loanAddress, "MetaMorpho", "mB");
 
     const metaMorphoAddress = await metaMorpho.getAddress();
 
     for (const user of users) {
-      await borrowable.setBalance(user.address, initBalance);
-      await borrowable.connect(user).approve(metaMorphoAddress, MaxUint256);
+      await loan.setBalance(user.address, initBalance);
+      await loan.connect(user).approve(metaMorphoAddress, MaxUint256);
       await collateral.setBalance(user.address, initBalance);
       await collateral.connect(user).approve(morphoAddress, MaxUint256);
     }
@@ -151,7 +151,7 @@ describe("MetaMorpho", () => {
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
-    hre.tracer.nameTags[borrowableAddress] = "Borrowable";
+    hre.tracer.nameTags[loanAddress] = "Loan";
     hre.tracer.nameTags[oracleAddress] = "Oracle";
     hre.tracer.nameTags[irmAddress] = "IRM";
     hre.tracer.nameTags[metaMorphoAddress] = "MetaMorpho";

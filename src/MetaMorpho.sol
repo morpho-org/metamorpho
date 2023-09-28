@@ -152,13 +152,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitFee(uint256 newFee) external onlyOwner {
-        require(newFee <= WAD, ErrorsLib.MAX_FEE_EXCEEDED);
+        require(newFee <= MAX_FEE, ErrorsLib.MAX_FEE_EXCEEDED);
         require(newFee != fee, ErrorsLib.ALREADY_SET);
 
         if (newFee < fee || timelock == 0) {
             _setFee(newFee);
         } else {
-            // Safe "unchecked" cast because newFee <= WAD.
+            // Safe "unchecked" cast because newFee <= MAX_FEE.
             pendingFee = PendingUint192(uint192(newFee), uint64(block.timestamp));
 
             emit EventsLib.SubmitFee(newFee);
@@ -204,7 +204,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY RISK MANAGER FUNCTIONS */
 
     function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyRiskManager {
-        require(marketParams.borrowableToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
+        require(marketParams.loanToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
 
         Id id = marketParams.id();
         require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
@@ -345,12 +345,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock);
 
         delete pendingTimelock;
-    }
-
-    function revokeFee() external onlyGuardian {
-        emit EventsLib.RevokeFee(msg.sender, pendingFee);
-
-        delete pendingFee;
     }
 
     function revokeCap(Id id) external onlyGuardian {
@@ -558,7 +552,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setFee(uint256 newFee) internal {
         require(newFee == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
 
-        // Safe "unchecked" cast because newFee <= WAD.
+        // Safe "unchecked" cast because newFee <= MAX_FEE.
         fee = uint96(newFee);
 
         emit EventsLib.SetFee(newFee);
@@ -575,7 +569,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = supplyQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toSupply = UtilsLib.min(_suppliable(_supplyBalance(marketParams), id), assets);
+            uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
 
             if (toSupply > 0) {
                 // Using try/catch to skip markets that revert.
@@ -643,12 +637,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
     }
 
-    /// @dev Assumes that that `supplyBalance` corresponds the correct market `id`.
-    function _suppliable(uint256 supplyBalance, Id id) internal view returns (uint256) {
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
         uint256 marketCap = config[id].cap;
         if (marketCap == 0) return 0;
 
-        return marketCap.zeroFloorSub(supplyBalance);
+        return marketCap.zeroFloorSub(_supplyBalance(marketParams));
     }
 
     /// @dev Assumes that the inputs `marketParams` and `id` match.

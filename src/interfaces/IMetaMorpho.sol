@@ -55,7 +55,6 @@ interface IMetaMorpho is IERC4626 {
 
     function submitFee(uint256 newFee) external;
     function acceptFee() external;
-    function revokeFee() external;
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 
     function submitGuardian(address newGuardian) external;

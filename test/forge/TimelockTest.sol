@@ -146,7 +146,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testSubmitFeeIncreased(uint256 fee) public {
-        fee = bound(fee, FEE + 1, WAD);
+        fee = bound(fee, FEE + 1, MAX_FEE);
 
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -159,16 +159,8 @@ contract TimelockTest is BaseTest {
         assertEq(submittedAt, block.timestamp, "submittedAt");
     }
 
-    function testSubmitFeeIncreasedMaxFeeExceeded(uint256 fee) public {
-        fee = bound(fee, WAD + 1, type(uint256).max);
-
-        vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.MAX_FEE_EXCEEDED));
-        vault.submitFee(fee);
-    }
-
     function testAcceptFee(uint256 fee) public {
-        fee = bound(fee, FEE + 1, WAD);
+        fee = bound(fee, FEE + 1, MAX_FEE);
 
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -192,7 +184,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptFeeTimelockNotElapsed(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, WAD);
+        fee = bound(fee, FEE + 1, MAX_FEE);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -206,7 +198,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptFeeTimelockExpirationExceeded(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, WAD);
+        fee = bound(fee, FEE + 1, MAX_FEE);
         elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.prank(OWNER);
