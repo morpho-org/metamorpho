@@ -13,3 +13,6 @@ uint8 constant DECIMALS_OFFSET = 6;
 
 /// @dev The maximum number of markets in the supply/withdraw queue.
 uint256 constant MAX_QUEUE_SIZE = 30;
+
+/// @dev The maximum fee the vault can have (50%).
+uint256 constant MAX_FEE = 0.5e18;
