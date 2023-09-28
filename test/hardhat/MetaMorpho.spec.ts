@@ -1,13 +1,14 @@
 import { AbiCoder, MaxUint256, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, IrmMock, OracleMock, MetaMorpho } from "types";
-import { IMorpho, MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
+import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho } from "types";
+import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { setNextBlockTimestamp } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
+import SpeedJumpIrmArtifact from "../../lib/morpho-blue-irm/out/SpeedJumpIrm.sol/SpeedJumpIrm.json";
 import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 
 // Without the division it overflows.
@@ -16,6 +17,11 @@ const oraclePriceScale = 1000000000000000000000000000000000000n;
 const virtualShares = 100000n;
 const virtualAssets = 1n;
 const nbMarkets = 5;
+
+const ln2 = 693147180559945309n;
+const targetUtilization = 800000000000000000n;
+const speedFactor = 277777777777n;
+const initialRate = 317097920n;
 
 let seed = 42;
 const random = () => {
@@ -55,7 +61,7 @@ describe("MetaMorpho", () => {
   let loan: ERC20Mock;
   let collateral: ERC20Mock;
   let oracle: OracleMock;
-  let irm: IrmMock;
+  let irm: IIrm;
 
   let metaMorpho: MetaMorpho;
 
@@ -89,11 +95,16 @@ describe("MetaMorpho", () => {
 
     morpho = (await MorphoFactory.deploy(admin.address)) as IMorpho;
 
-    const IrmMockFactory = await hre.ethers.getContractFactory("IrmMock", admin);
-
-    irm = await IrmMockFactory.deploy();
-
     const morphoAddress = await morpho.getAddress();
+
+    const SpeedJumpIrmFactory = await hre.ethers.getContractFactory(
+      SpeedJumpIrmArtifact.abi,
+      SpeedJumpIrmArtifact.bytecode.object,
+      admin,
+    );
+
+    irm = (await SpeedJumpIrmFactory.deploy(morphoAddress, ln2, speedFactor, targetUtilization, initialRate)) as IIrm;
+
     const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
     const oracleAddress = await oracle.getAddress();
