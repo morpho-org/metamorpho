@@ -14,6 +14,11 @@ contract MetaMorphoFactoryTest is BaseTest {
         factory = new MetaMorphoFactory(address(morpho));
     }
 
+    function testFactoryAddresssZero() public {
+        vm.expectRevert(bytes(ErrorsLib.ZERO_ADDRESS));
+        new MetaMorphoFactory(address(0));
+    }
+
     function testCreateMetaMorpho(
         address initialOwner,
         uint256 initialTimelock,
