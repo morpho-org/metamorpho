@@ -19,8 +19,6 @@ import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
-const virtualShares = 100000n;
-const virtualAssets = 1n;
 const nbMarkets = 5;
 
 const ln2 = 693147180559945309n;
@@ -100,17 +98,14 @@ describe("MetaMorpho", () => {
 
     if (elapsed > 0n && market.totalBorrowAssets > 0n) {
       const borrowRate = await irm.borrowRateView(marketParams, market);
-      const interest = market.totalBorrowAssets.wadMulDown(borrowRate.wadExp3(elapsed) - BigInt.WAD);
+      const interest = market.totalBorrowAssets.wadMulDown((borrowRate * elapsed).wadExpN(3) - BigInt.WAD);
 
       market.totalBorrowAssets += interest;
       market.totalSupplyAssets += interest;
 
       if (market.fee > 0n) {
         const feeAmount = interest.wadMulDown(market.fee);
-        const feeShares = feeAmount.mulDivDown(
-          market.totalSupplyShares + virtualShares,
-          market.totalSupplyAssets + virtualAssets - feeAmount,
-        );
+        const feeShares = feeAmount.toSharesDown(market.totalSupplyAssets - feeAmount, market.totalSupplyShares);
 
         market.totalSupplyShares += feeShares;
       }
@@ -243,10 +238,7 @@ describe("MetaMorpho", () => {
           const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
 
           const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-          const liquidityShares = liquidity.mulDivDown(
-            market.totalSupplyShares + virtualShares,
-            market.totalSupplyAssets + virtualAssets,
-          );
+          const liquidityShares = liquidity.toSharesDown(market.totalSupplyAssets, market.totalSupplyShares);
 
           return {
             marketParams,
@@ -267,8 +259,7 @@ describe("MetaMorpho", () => {
 
       const withdrawnAssets = allocation.reduce(
         (total, { market, liquidShares }) =>
-          total +
-          liquidShares.mulDivDown(market.totalSupplyAssets + virtualAssets, market.totalSupplyShares + virtualShares),
+          total + liquidShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
         0n,
       );
 

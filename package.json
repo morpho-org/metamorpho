@@ -41,7 +41,7 @@
   "homepage": "https://github.com/morpho-labs/morpho-stack#readme",
   "dependencies": {
     "ethers": "^6.7.1",
-    "ethers-maths": "^4.2.0",
+    "ethers-maths": "^5.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

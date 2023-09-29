@@ -2628,10 +2628,10 @@ ethereumjs-util@^7.1.4:
     ethereum-cryptography "^0.1.3"
     rlp "^2.2.4"
 
-ethers-maths@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/ethers-maths/-/ethers-maths-4.2.0.tgz#21ad8291c6f0e189883713604c2c1feb012ea803"
-  integrity sha512-laLdZyL2yAbIshua7ulgRNUBfhKlNr7pap0YLkdPYHmYQnUlB/kSVYogaa8PbT4F3GeWhLdD1tvwYv2HVwnGtw==
+ethers-maths@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/ethers-maths/-/ethers-maths-5.0.0.tgz#cbb5b65b559701fe1850094580668c5d8e25da7e"
+  integrity sha512-3/u8ADceu5wsk+FJ+nIEXtTf0hwT/I4cAzH0oTAmChssF5atS+20pIVQV06igzCZ4Er2jcd1U3MpcuWz3TsIYg==
   dependencies:
     ethers "^6.0.0"
 
