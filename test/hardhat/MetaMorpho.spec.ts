@@ -5,7 +5,12 @@ import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho } from "types";
 import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { setNextBlockTimestamp } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import {
+  increaseTo,
+  latest,
+  setNextBlockTimestamp,
+} from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
 import SpeedJumpIrmArtifact from "../../lib/morpho-blue-irm/out/SpeedJumpIrm.sol/SpeedJumpIrm.json";
@@ -43,11 +48,18 @@ const logProgress = (name: string, i: number, max: number) => {
   if (i % 10 == 0) console.log("[" + name + "]", Math.floor((100 * i) / max), "%");
 };
 
+const forwardTimestamp = async (elapsed: number) => {
+  const timestamp = await latest();
+  const newTimestamp = timestamp + elapsed;
+
+  await increaseTo(newTimestamp);
+  await setNextBlockTimestamp(newTimestamp);
+};
+
 const randomForwardTimestamp = async () => {
-  const block = await hre.ethers.provider.getBlock("latest");
   const elapsed = random() < 1 / 2 ? 0 : (1 + Math.floor(random() * 100)) * 12; // 50% of the time, don't go forward in time.
 
-  await setNextBlockTimestamp(block!.timestamp + elapsed);
+  await forwardTimestamp(elapsed);
 };
 
 describe("MetaMorpho", () => {
@@ -64,8 +76,50 @@ describe("MetaMorpho", () => {
   let irm: IIrm;
 
   let metaMorpho: MetaMorpho;
+  let metaMorphoAddress: string;
 
+  let marketCap: bigint;
   let allMarketParams: MarketParamsStruct[];
+
+  const expectedMarket = async (marketParams: MarketParamsStruct) => {
+    const id = identifier(marketParams);
+    const rawMarket = await morpho.market(id);
+
+    const market = {
+      totalSupplyAssets: rawMarket.totalSupplyAssets,
+      totalBorrowAssets: rawMarket.totalBorrowAssets,
+      totalSupplyShares: rawMarket.totalSupplyShares,
+      totalBorrowShares: rawMarket.totalBorrowShares,
+      lastUpdate: rawMarket.lastUpdate,
+      fee: rawMarket.fee,
+    };
+
+    // Cannot use another timestamp because `borrowRateView` relies on `block.timestamp`.
+    const timestamp = toBigInt(await latest());
+    const elapsed = timestamp - market.lastUpdate;
+
+    if (elapsed > 0n && market.totalBorrowAssets > 0n) {
+      const borrowRate = await irm.borrowRateView(marketParams, market);
+      const interest = market.totalBorrowAssets.wadMulDown(borrowRate.wadExp3(elapsed) - BigInt.WAD);
+
+      market.totalBorrowAssets += interest;
+      market.totalSupplyAssets += interest;
+
+      if (market.fee > 0n) {
+        const feeAmount = interest.wadMulDown(market.fee);
+        const feeShares = feeAmount.mulDivDown(
+          market.totalSupplyShares + virtualShares,
+          market.totalSupplyAssets + virtualAssets - feeAmount,
+        );
+
+        market.totalSupplyShares += feeShares;
+      }
+    }
+
+    market.lastUpdate = timestamp;
+
+    return market;
+  };
 
   beforeEach(async () => {
     const allSigners = await hre.ethers.getSigners();
@@ -129,7 +183,7 @@ describe("MetaMorpho", () => {
 
     metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 1, loanAddress, "MetaMorpho", "mB");
 
-    const metaMorphoAddress = await metaMorpho.getAddress();
+    metaMorphoAddress = await metaMorpho.getAddress();
 
     for (const user of users) {
       await loan.setBalance(user.address, initBalance);
@@ -143,18 +197,16 @@ describe("MetaMorpho", () => {
 
     await metaMorpho.submitTimelock(0);
 
-    const block = await hre.ethers.provider.getBlock("latest");
-    await setNextBlockTimestamp(block!.timestamp + 1);
+    await forwardTimestamp(1);
 
     await metaMorpho.acceptTimelock();
 
     await metaMorpho.setFeeRecipient(admin.address);
     await metaMorpho.submitFee(BigInt.WAD / 10n);
 
+    marketCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
-      await metaMorpho
-        .connect(riskManager)
-        .submitCap(marketParams, (BigInt.WAD * 10n * toBigInt(suppliers.length)) / toBigInt(allMarketParams.length));
+      await metaMorpho.connect(riskManager).submitCap(marketParams, marketCap);
     }
 
     await metaMorpho.connect(riskManager).setSupplyQueue(allMarketParams.map(identifier));
@@ -173,8 +225,7 @@ describe("MetaMorpho", () => {
       logProgress("main", i, suppliers.length);
 
       const supplier = suppliers[i];
-
-      let assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
+      const assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
 
       await randomForwardTimestamp();
 
@@ -188,12 +239,11 @@ describe("MetaMorpho", () => {
 
       const allocation = await Promise.all(
         allMarketParams.map(async (marketParams) => {
-          const id = identifier(marketParams);
-          const market = await morpho.market(id);
-          const position = await morpho.position(id, await metaMorpho.getAddress());
+          const market = await expectedMarket(marketParams);
+          const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
 
           const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-          const liquidShares = liquidity.mulDivDown(
+          const liquidityShares = liquidity.mulDivDown(
             market.totalSupplyShares + virtualShares,
             market.totalSupplyAssets + virtualAssets,
           );
@@ -201,49 +251,63 @@ describe("MetaMorpho", () => {
           return {
             marketParams,
             market,
-            shares: position.supplyShares.min(liquidShares),
+            liquidShares: position.supplyShares.min(liquidityShares),
           };
         }),
       );
 
-      await metaMorpho.connect(allocator).reallocate(
-        allocation
-          .map(({ marketParams, shares }) => ({
-            marketParams,
-            assets: 0n,
-            // Always withdraw all, up to the liquidity.
-            shares,
-          }))
-          .filter(({ shares }) => shares > 0n),
-        allocation
-          .map(({ marketParams, market, shares }) => {
-            const assets = shares.mulDivDown(
-              market.totalSupplyAssets + virtualAssets,
-              market.totalSupplyShares + virtualShares,
-            );
+      const withdrawn = allocation
+        .map(({ marketParams, liquidShares }) => ({
+          marketParams,
+          assets: 0n,
+          // Always withdraw all, up to the liquidity.
+          shares: liquidShares,
+        }))
+        .filter(({ shares }) => shares > 0n);
 
-            // Always supply 3/4 of what the vault withdrawn.
-            return { marketParams, assets: (assets * 3n) / 4n, shares: 0n };
-          })
-          .filter(({ assets }) => assets > 0n),
+      const withdrawnAssets = allocation.reduce(
+        (total, { market, liquidShares }) =>
+          total +
+          liquidShares.mulDivDown(market.totalSupplyAssets + virtualAssets, market.totalSupplyShares + virtualShares),
+        0n,
       );
+
+      // Always consider 90% of withdrawn assets because rates go brrrr.
+      const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
+
+      const supplied = allocation
+        .map(({ marketParams }) => ({
+          marketParams,
+          // Always supply evenly on each market 90% of what the vault withdrawn in total.
+          assets: marketAssets,
+          shares: 0n,
+        }))
+        .filter(({ assets }) => assets > 0n);
+
+      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+
+      // Borrow liquidity to generate interest.
+
+      await hre.network.provider.send("evm_setAutomine", [false]);
 
       const borrower = borrowers[i];
 
       for (const marketParams of allMarketParams) {
-        const market = await morpho.market(identifier(marketParams));
-        const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-
-        if (liquidity < 2n) break;
-
         await randomForwardTimestamp();
+
+        const market = await expectedMarket(marketParams);
+
+        const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
+        const borrowed = liquidity / 3n;
+        if (borrowed === 0n) break;
 
         await morpho.connect(borrower).supplyCollateral(marketParams, liquidity, borrower.address, "0x");
+        await morpho.connect(borrower).borrow(marketParams, borrowed, 0, borrower.address, borrower.address);
 
-        await randomForwardTimestamp();
-
-        await morpho.connect(borrower).borrow(marketParams, liquidity / 2n, 0, borrower.address, borrower.address);
+        await mine(); // Include supplyCollateral + borrow in a single block.
       }
+
+      await hre.network.provider.send("evm_setAutomine", [true]);
     }
   });
 });

@@ -24,6 +24,11 @@ const config: HardhatUserConfig = {
       accounts: {
         count: 153, // must be odd
       },
+      mining: {
+        mempool: {
+          order: "fifo",
+        },
+      },
     },
   },
   solidity: {
