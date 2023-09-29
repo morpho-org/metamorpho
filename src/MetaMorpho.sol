@@ -7,7 +7,7 @@ import {
 } from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
-import "src/libraries/ConstantsLib.sol";
+import "./libraries/ConstantsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
