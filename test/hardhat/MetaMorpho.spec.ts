@@ -114,7 +114,7 @@ describe("MetaMorpho", () => {
 
     const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
 
-    metaMorpho = await IMetaMorphoFactory.deploy(morphoAddress, 1, loanAddress, "MetaMorpho", "mB");
+    metaMorpho = await IMetaMorphoFactory.deploy(admin.address, morphoAddress, 1, loanAddress, "MetaMorpho", "mB");
 
     const metaMorphoAddress = await metaMorpho.getAddress();
 
