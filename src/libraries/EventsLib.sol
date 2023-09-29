@@ -55,7 +55,7 @@ library EventsLib {
         address indexed caller, address indexed rewardsDistributor, address indexed token, uint256 amount
     );
 
-    event Deployed(
+    event CreateMetaMorpho(
         address indexed metaMorpho,
         address indexed caller,
         address owner,
