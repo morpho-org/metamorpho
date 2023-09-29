@@ -195,6 +195,12 @@ describe("MetaMorpho", () => {
         }),
       );
 
+      const withdrawnAssets = allocation.reduce(
+        (total, { market, shares }) =>
+          total + shares.mulDivDown(market.totalSupplyAssets + virtualAssets, market.totalSupplyShares + virtualShares),
+        0n,
+      );
+
       await metaMorpho.connect(allocator).reallocate(
         allocation
           .map(({ marketParams, shares }) => ({
@@ -204,17 +210,12 @@ describe("MetaMorpho", () => {
             shares,
           }))
           .filter(({ shares }) => shares > 0n),
-        allocation
-          .map(({ marketParams, market, shares }) => {
-            const assets = shares.mulDivDown(
-              market.totalSupplyAssets + virtualAssets,
-              market.totalSupplyShares + virtualShares,
-            );
-
-            // Always supply 3/4 of what the vault withdrawn.
-            return { marketParams, assets: (assets * 3n) / 4n, shares: 0n };
-          })
-          .filter(({ assets }) => assets > 0n),
+        allocation.map(({ marketParams }) => ({
+          marketParams,
+          // Always supply evenly between markets + idle.
+          assets: withdrawnAssets / toBigInt(nbMarkets + 1),
+          shares: 0n,
+        })),
       );
 
       const borrower = borrowers[i];
