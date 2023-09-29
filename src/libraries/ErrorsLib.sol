@@ -43,4 +43,6 @@ library ErrorsLib {
     string internal constant MAX_QUEUE_SIZE_EXCEEDED = "max queue size exceeded";
 
     string internal constant ZERO_FEE_RECIPIENT = "fee recipient is zero";
+
+    string internal constant INSUFFICIENT_IDLE = "insufficient idle liquidity";
 }
