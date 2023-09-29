@@ -5,17 +5,6 @@ import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
 import {PendingUint192, PendingAddress} from "../interfaces/IMetaMorpho.sol";
 
 library EventsLib {
-    event Deployed(
-        address indexed metaMorpho,
-        address indexed caller,
-        address morpho,
-        uint256 initialTimelock,
-        address indexed asset,
-        string name,
-        string symbol,
-        bytes32 salt
-    );
-
     event SubmitTimelock(uint256 timelock);
 
     event SetTimelock(uint256 timelock);
@@ -64,5 +53,17 @@ library EventsLib {
 
     event TransferRewards(
         address indexed caller, address indexed rewardsDistributor, address indexed token, uint256 amount
+    );
+
+    event Deployed(
+        address indexed metaMorpho,
+        address indexed caller,
+        address owner,
+        address morpho,
+        uint256 initialTimelock,
+        address indexed asset,
+        string name,
+        string symbol,
+        bytes32 salt
     );
 }

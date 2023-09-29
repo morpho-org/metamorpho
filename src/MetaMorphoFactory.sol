@@ -13,6 +13,7 @@ contract MetaMorphoFactory {
     /* EXTERNAL */
 
     function deploy(
+        address owner,
         address morpho,
         uint256 initialTimelock,
         address asset,
@@ -20,10 +21,12 @@ contract MetaMorphoFactory {
         string memory symbol,
         bytes32 salt
     ) external returns (MetaMorpho metaMorpho) {
-        metaMorpho = new MetaMorpho{salt: salt}(morpho, initialTimelock, asset, name, symbol);
+        metaMorpho = new MetaMorpho{salt: salt}(owner, morpho, initialTimelock, asset, name, symbol);
 
         isMetaMorpho[address(metaMorpho)] = true;
 
-        emit EventsLib.Deployed(address(metaMorpho), msg.sender, morpho, initialTimelock, asset, name, symbol, salt);
+        emit EventsLib.Deployed(
+            address(metaMorpho), msg.sender, owner, morpho, initialTimelock, asset, name, symbol, salt
+        );
     }
 }

@@ -71,15 +71,18 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* CONSTRUCTOR */
 
-    constructor(address morpho, uint256 initialTimelock, address _asset, string memory _name, string memory _symbol)
-        ERC4626(IERC20(_asset))
-        ERC20Permit(_name)
-        ERC20(_name, _symbol)
-    {
+    constructor(
+        address owner,
+        address morpho,
+        uint256 initialTimelock,
+        address _asset,
+        string memory _name,
+        string memory _symbol
+    ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) {
         require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
 
+        _transferOwnership(owner);
         MORPHO = IMorpho(morpho);
-
         _setTimelock(initialTimelock);
 
         SafeERC20.safeApprove(IERC20(_asset), morpho, type(uint256).max);
