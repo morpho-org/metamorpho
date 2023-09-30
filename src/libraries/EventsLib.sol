@@ -59,7 +59,6 @@ library EventsLib {
         address indexed metaMorpho,
         address indexed caller,
         address owner,
-        address morpho,
         uint256 initialTimelock,
         address indexed asset,
         string name,

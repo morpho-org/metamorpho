@@ -38,7 +38,7 @@ contract MetaMorphoFactory {
         isMetaMorpho[address(metaMorpho)] = true;
 
         emit EventsLib.CreateMetaMorpho(
-            address(metaMorpho), msg.sender, initialOwner, MORPHO, initialTimelock, asset, name, symbol, salt
+            address(metaMorpho), msg.sender, initialOwner, initialTimelock, asset, name, symbol, salt
         );
     }
 }

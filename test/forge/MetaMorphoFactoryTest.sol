@@ -37,15 +37,7 @@ contract MetaMorphoFactoryTest is BaseTest {
 
         vm.expectEmit(address(factory));
         emit EventsLib.CreateMetaMorpho(
-            expectedAddress,
-            address(this),
-            initialOwner,
-            address(morpho),
-            initialTimelock,
-            address(loanToken),
-            name,
-            symbol,
-            salt
+            expectedAddress, address(this), initialOwner, initialTimelock, address(loanToken), name, symbol, salt
         );
 
         MetaMorpho metaMorpho =
