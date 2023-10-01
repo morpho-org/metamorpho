@@ -13,7 +13,7 @@ contract MetaMorphoFactory {
 
     /* STORAGE */
 
-    mapping(address => bool) public isMetaMorpho;
+    mapping(address => address) public metaMorphoDeployer;
 
     /* CONSTRCUTOR */
 
@@ -35,10 +35,14 @@ contract MetaMorphoFactory {
     ) external returns (MetaMorpho metaMorpho) {
         metaMorpho = new MetaMorpho{salt: salt}(initialOwner, MORPHO, initialTimelock, asset, name, symbol);
 
-        isMetaMorpho[address(metaMorpho)] = true;
+        metaMorphoDeployer[address(metaMorpho)] = msg.sender;
 
         emit EventsLib.CreateMetaMorpho(
             address(metaMorpho), msg.sender, initialOwner, initialTimelock, asset, name, symbol, salt
         );
+    }
+
+    function isMetaMorpho(address metaMorpho) public view returns (bool) {
+        return metaMorphoDeployer[metaMorpho] != address(0);
     }
 }
