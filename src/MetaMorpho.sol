@@ -49,8 +49,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     Id[] public supplyQueue;
 
     /// @dev Stores the order of markets from which liquidity is withdrawn upon withdrawal.
-    /// @dev Always contain all non-zero cap markets or markets on which the vault supplies liquidity, without
-    /// duplicate.
+    /// @dev Always contain all non-zero cap markets as well as all markets on which the vault supplies liquidity,
+    /// without duplicate.
     Id[] public withdrawQueue;
 
     PendingUint192 public pendingFee;
@@ -121,12 +121,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY OWNER FUNCTIONS */
 
     function setRiskManager(address newRiskManager) external onlyOwner {
+        require(newRiskManager != riskManager, ErrorsLib.ALREADY_SET);
+
         riskManager = newRiskManager;
 
         emit EventsLib.SetRiskManager(newRiskManager);
     }
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
+        require(_isAllocator[newAllocator] != newIsAllocator, ErrorsLib.ALREADY_SET);
+
         _isAllocator[newAllocator] = newIsAllocator;
 
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
@@ -147,6 +151,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
+        require(newRewardsDistributor != rewardsDistributor, ErrorsLib.ALREADY_SET);
+
         rewardsDistributor = newRewardsDistributor;
 
         emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
@@ -246,6 +252,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetSupplyQueue(msg.sender, newSupplyQueue);
     }
 
+    /// @dev Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
+    /// vault's supply can be removed.
     function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
@@ -273,7 +281,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                require(MORPHO.supplyShares(id, address(this)) == 0, ErrorsLib.MISSING_MARKET);
+                require(MORPHO.supplyShares(id, address(this)) == 0 && config[id].cap == 0, ErrorsLib.MISSING_MARKET);
 
                 delete config[id].withdrawRank;
             }
@@ -652,10 +660,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
             MORPHO.expectedMarketBalances(marketParams);
+        uint256 availableLiquidity = totalSupplyAssets - totalBorrowAssets;
 
-        return UtilsLib.min(
-            supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), totalSupplyAssets - totalBorrowAssets
-        );
+        return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
     }
 
     /* FEE MANAGEMENT */
