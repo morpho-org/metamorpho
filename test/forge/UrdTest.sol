@@ -22,9 +22,19 @@ contract UrdTest is BaseTest {
     }
 
     function testSetRewardsDistributor(address newRewardsDistributor) public {
+        vm.assume(newRewardsDistributor != vault.rewardsDistributor());
+
         vm.prank(OWNER);
         vault.setRewardsDistributor(newRewardsDistributor);
         assertEq(vault.rewardsDistributor(), newRewardsDistributor);
+    }
+
+    function testAlreadySetRewardsDistributor() public {
+        address currentRewardsDistributor = vault.rewardsDistributor();
+
+        vm.prank(OWNER);
+        vm.expectRevert(bytes(ErrorsLib.ALREADY_SET));
+        vault.setRewardsDistributor(currentRewardsDistributor);
     }
 
     function testSetRewardsDistributorNotOwner() public {
