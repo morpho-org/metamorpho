@@ -45,7 +45,6 @@ contract MetaMorphoFactoryTest is BaseTest {
 
         assertEq(expectedAddress, address(metaMorpho), "computeCreate2Address");
 
-        assertEq(factory.metaMorphoDeployer(address(metaMorpho)), address(this), "metaMorphoDeployer");
         assertTrue(factory.isMetaMorpho(address(metaMorpho)), "isMetaMorpho");
 
         assertEq(metaMorpho.owner(), initialOwner, "owner");
