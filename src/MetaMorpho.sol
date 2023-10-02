@@ -49,8 +49,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     Id[] public supplyQueue;
 
     /// @dev Stores the order of markets from which liquidity is withdrawn upon withdrawal.
-    /// @dev Always contain all non-zero cap markets and markets on which the vault supplies liquidity, without
-    /// duplicate.
+    /// @dev Always contain all non-zero cap markets as well as all markets on which the vault supplies liquidity,
+    /// without duplicate.
     Id[] public withdrawQueue;
 
     PendingUint192 public pendingFee;
