@@ -382,19 +382,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
-        (assets,) = _maxWithdraw(owner);
+        (assets,,) = _maxWithdraw(owner);
     }
 
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
-        (uint256 assets, uint256 newTotalAssets) = _maxWithdraw(owner);
+        (uint256 assets, uint256 feeShares, uint256 newTotalAssets) = _maxWithdraw(owner);
 
-        return _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
+        return _convertToSharesWithFeeAccrued(assets, totalSupply() + feeShares, newTotalAssets, Math.Rounding.Down);
     }
 
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
-        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Down);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -403,7 +403,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
-        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Up);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Up);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -418,7 +418,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
-        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Up);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Up);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -433,7 +433,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
-        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Down);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Down);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -455,27 +455,33 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return DECIMALS_OFFSET;
     }
 
-    function _maxWithdraw(address owner) internal view returns (uint256 assets, uint256 newTotalAssets) {
-        (, newTotalAssets) = _accruedFeeShares();
+    function _maxWithdraw(address owner)
+        internal
+        view
+        returns (uint256 assets, uint256 feeShares, uint256 newTotalAssets)
+    {
+        (feeShares, newTotalAssets) = _accruedFeeShares();
 
         assets = super.maxWithdraw(owner);
         assets -= _staticWithdrawMorpho(assets);
     }
 
-    function _convertToSharesWithFeeAccrued(uint256 assets, uint256 newTotalAssets, Math.Rounding rounding)
-        internal
-        view
-        returns (uint256)
-    {
-        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    function _convertToSharesWithFeeAccrued(
+        uint256 assets,
+        uint256 newTotalSupply,
+        uint256 newTotalAssets,
+        Math.Rounding rounding
+    ) internal view returns (uint256) {
+        return assets.mulDiv(newTotalSupply + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
 
-    function _convertToAssetsWithFeeAccrued(uint256 shares, uint256 newTotalAssets, Math.Rounding rounding)
-        internal
-        view
-        returns (uint256)
-    {
-        return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+    function _convertToAssetsWithFeeAccrued(
+        uint256 shares,
+        uint256 newTotalSupply,
+        uint256 newTotalAssets,
+        Math.Rounding rounding
+    ) internal view returns (uint256) {
+        return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
 
     /// @dev Used in mint or deposit to deposit the underlying asset to Blue markets.
