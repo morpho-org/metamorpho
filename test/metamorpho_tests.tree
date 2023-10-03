@@ -1,0 +1,67 @@
+.
+└── setRiskManager(address newRiskManager) external onlyOwner
+    ├── when when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when newRiskManager == riskManager
+        │   └── revert with ALREADY_SET
+        └── when newRiskManager != riskManager
+            ├── it should set riskManager to newRiskManager
+            └── it should emit SetRiskManager(newRiskManager)
+
+.
+└── setIsAllocator(address newAllocator, bool newIsAllocator) external
+    ├── when when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when _isAllocator[newAllocator] == newIsAllocator
+        │   └── revert with ALREADY_SET
+        └── when _isAllocator[newAllocator] != newIsAllocator
+            ├── it should set _isAllocator[newAllocator] to newIsAllocator
+            └── it should emit SetIsAllocator(newAllocator, newIsAllocator)
+
+
+.
+└── submitTimelock(uint256 newTimelock) external
+    ├── when when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when newTimelock > MAX_TIMELOCK
+        │   └── revert with MAX_TIMELOCK_EXCEEDED
+        └── when newTimelock <= MAX_TIMELOCK
+            ├── when newTimelock == timelock
+            │   └── revert with ALREADY_SET
+            └── when newTimelock != timelock
+                ├── when newTimelock > timelock
+                │   ├── it should set timelock to newTimelock
+                │   ├── it should emit SetTimelock(newTimelock)
+                │   └── it should delete pendingTimelock
+                ├── when timelock == 0
+                │   ├── it should set timelock to newIsAllocator
+                │   └── it should emit SetTimelock(newTimelock)
+                └── when newTimelock < timelock and timelock != 0
+                    ├── it should set pendingTimelock to PendingUint192(uint192(newTimelock), uint64(block.timestamp))
+                    └── it should emit SubmitTimelock(newTimelock)
+
+
+.
+└── submitFee(uint256 newFee) external
+    ├── when when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when newFee > MAX_FEE
+        │   └── revert with MAX_FEE_EXCEEDED
+        └── when newFee <= MAX_FEE
+            ├── when newFee == fee
+            │   └── revert with ALREADY_SET
+            └── when newFee != fee
+                ├── when newFee < fee
+                │   ├── it should set fee to newFee
+                │   ├── it should emit SetFee(newFee)
+                │   └── it should delete pendingFee
+                ├── when timelock == 0
+                │   ├── it should set fee to newFee
+                │   └── it should emit SetFee(newFee)
+                └── when newFee > fee and timelock != 0
+                    ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
+                    └── it should emit SubmitFee(newFee)
