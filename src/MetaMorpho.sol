@@ -595,10 +595,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Withdraws `assets` from the idle liquidity and Morpho.
-    function _withdrawMorpho(uint256 assets) internal returns (uint256) {
-        (assets, idle) = _withdrawIdle(assets);
+    function _withdrawMorpho(uint256 assets) internal returns (uint256 remaining) {
+        (remaining, idle) = _withdrawIdle(assets);
 
-        if (assets == 0) return 0;
+        if (remaining == 0) return 0;
 
         uint256 nbMarkets = withdrawQueue.length;
 
@@ -606,19 +606,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), assets);
+            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining);
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
                 try MORPHO.withdraw(marketParams, toWithdraw, 0, address(this), address(this)) {
-                    assets -= toWithdraw;
+                    remaining -= toWithdraw;
                 } catch {}
             }
 
-            if (assets == 0) return 0;
+            if (remaining == 0) return 0;
         }
 
-        return assets;
+        return remaining;
     }
 
     /// @dev Fakes a withdraw of `assets` from the idle liquidity and Morpho.
