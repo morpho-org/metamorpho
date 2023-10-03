@@ -617,8 +617,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (remaining == 0) return 0;
         }
-
-        return remaining;
     }
 
     /// @dev Fakes a withdraw of `assets` from the idle liquidity and Morpho.
@@ -642,8 +640,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (remaining == 0) return 0;
         }
-
-        return remaining;
     }
 
     function _withdrawIdle(uint256 assets) internal view returns (uint256, uint256) {
