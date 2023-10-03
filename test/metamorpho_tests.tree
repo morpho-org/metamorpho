@@ -1,6 +1,6 @@
 .
 └── setRiskManager(address newRiskManager) external onlyOwner
-    ├── when when msg.sender not owner
+    ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newRiskManager == riskManager
@@ -11,7 +11,7 @@
 
 .
 └── setIsAllocator(address newAllocator, bool newIsAllocator) external
-    ├── when when msg.sender not owner
+    ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when _isAllocator[newAllocator] == newIsAllocator
@@ -20,10 +20,9 @@
             ├── it should set _isAllocator[newAllocator] to newIsAllocator
             └── it should emit SetIsAllocator(newAllocator, newIsAllocator)
 
-
 .
 └── submitTimelock(uint256 newTimelock) external
-    ├── when when msg.sender not owner
+    ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newTimelock > MAX_TIMELOCK
@@ -32,21 +31,35 @@
             ├── when newTimelock == timelock
             │   └── revert with ALREADY_SET
             └── when newTimelock != timelock
-                ├── when newTimelock > timelock
+                ├── when newTimelock > timelock or timelock == 0
                 │   ├── it should set timelock to newTimelock
                 │   ├── it should emit SetTimelock(newTimelock)
                 │   └── it should delete pendingTimelock
-                ├── when timelock == 0
-                │   ├── it should set timelock to newIsAllocator
-                │   └── it should emit SetTimelock(newTimelock)
                 └── when newTimelock < timelock and timelock != 0
                     ├── it should set pendingTimelock to PendingUint192(uint192(newTimelock), uint64(block.timestamp))
                     └── it should emit SubmitTimelock(newTimelock)
 
+.
+└── acceptTimelock() external
+    ├── when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when pendingTimelock.submittedAt == 0
+        │   └── revert with NO_PENDING_VALUE
+        └── when pendingTimelock.submittedAt != 0
+            ├── when block.timestamp < pendingTimelock.submittedAt + timelock
+            │   └── revert with TIMELOCK_NOT_ELAPSED
+            └── when block.timestamp >= pendingTimelock.submittedAt + timelock
+                ├── when block.timestamp > pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
+                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+                └── whenblock.timestamp <= pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
+                    ├── it should set timelock to pendingTimelock.value
+                    ├── it should emit SetTimelock(pendingTimelock.value)
+                    └── it should delete pendingTimelock
 
 .
 └── submitFee(uint256 newFee) external
-    ├── when when msg.sender not owner
+    ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newFee > MAX_FEE
@@ -55,13 +68,94 @@
             ├── when newFee == fee
             │   └── revert with ALREADY_SET
             └── when newFee != fee
-                ├── when newFee < fee
+                ├── when newFee < fee or timelock == 0
                 │   ├── it should set fee to newFee
                 │   ├── it should emit SetFee(newFee)
                 │   └── it should delete pendingFee
-                ├── when timelock == 0
-                │   ├── it should set fee to newFee
-                │   └── it should emit SetFee(newFee)
                 └── when newFee > fee and timelock != 0
                     ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
                     └── it should emit SubmitFee(newFee)
+
+.
+└── acceptFee() external
+    ├── when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when pendingFee.submittedAt == 0
+        │   └── revert with NO_PENDING_VALUE
+        └── when pendingFee.submittedAt != 0
+            ├── when block.timestamp < pendingFee.submittedAt + timelock
+            │   └── revert with TIMELOCK_NOT_ELAPSED
+            └── when block.timestamp >= pendingFee.submittedAt + timelock
+                ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
+                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+                └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
+                    ├── it should set fee to pendingFee.value
+                    ├── it should emit SetFee(pendingFee.value)
+                    └── it should delete pendingFee
+
+.
+└── submitGuardian(address newGuardian) external
+    ├── when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner
+        ├── when timelock == 0
+        │   └── revert with NO_TIMELOCK
+        └── when timelock != 0
+            ├── when newGuardian == guardian
+            │   └── revert with ALREADY_SET
+            └── when newGuardian != guardian
+                ├── when guardian == address(0)
+                │   ├── it should set guardian to newGuardian
+                │   ├── it should emit SetGuardian(newGuardian)
+                │   └── it should delete pendingGuardian
+                └── when guardian != address(0)
+                    ├── it should it should set pendingGuardian to PendingAddress(newGuardian, uint64(block.timestamp))
+                    └── it should emit SubmitGuardian(newGuardian)
+
+.
+└── acceptGuardian() external
+    ├── when msg.sender not owner
+    │   └── revert with NOT_OWNER
+    └── when msg.sender is owner/
+        ├── when pendingFee.submittedAt == 0
+        │   └── revert with NO_PENDING_VALUE
+        └── when pendingFee.submittedAt != 0
+            ├── when block.timestamp < pendingGuardian.submittedAt + timelock
+            │   └── revert with TIMELOCK_NOT_ELAPSED
+            └── when block.timestamp >= pendingGuardian.submittedAt + timelock
+                ├── when block.timestamp > pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
+                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+                └── whenblock.timestamp <= pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
+                    ├── it should set guardian to pendingGuardian
+                    ├── it should emit SetGuardian(pendingGuardian)
+                    └── it should delete pendingGuardian
+
+.
+└── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external/
+    ├── when msg.sender not owner or RiskManager
+    │   └── revert with NOT_RISK_MANAGER
+    └── when msg.sender is owner or RiskManager
+        ├── when marketParams.loanToken != asset()
+        │   └── revert with INCONSISTENT_ASSET
+        ├── when marketParams.loanToken == asset()
+        └── it should compute id = marketParams.id()
+            ├── when MORPHO.lastUpdate(id) == 0
+            │   └── revert with MARKET_NOT_CREATED
+            └── when MORPHO.lastUpdate(id) != 0
+                ├── when newMarketCap == marketCap
+                │   └── revert with ALREADY_SET
+                └── when newMarketCap != marketCap
+                    ├── when newMarketCap < marketCap or timelock == 0
+                    │   ├── when marketCap > 0 and marketConfig.withdrawRank == 0
+                    │   │   ├── it should push id to supplyQueue.push
+                    │   │   ├── it should push id to withdrawQueue.push
+                    │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
+                    │   │       └── revert with MAX_QUEUE_SIZE_EXCEEDED
+                    │   ├── it should set config[id] to marketCap
+                    │   ├── it should emit SetCap(id, marketCap)
+                    │   └── it should delete pendingCap[id]
+                    └── when newMarketCap > marketCap and timelock != 0
+                        ├── it should it should set pendingCap[id] to PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp))
+                        └── it should emit EventsLib.SubmitCap(id, newMarketCap)
+
