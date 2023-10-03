@@ -386,9 +386,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
-        (uint256 assets, uint256 feeShares, uint256 newTotalAssets) = _maxWithdraw(owner);
+        (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
-        return _convertToSharesWithFeeAccrued(assets, totalSupply() + feeShares, newTotalAssets, Math.Rounding.Down);
+        return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Down);
     }
 
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
@@ -458,11 +458,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _maxWithdraw(address owner)
         internal
         view
-        returns (uint256 assets, uint256 feeShares, uint256 newTotalAssets)
+        returns (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets)
     {
+        uint256 feeShares;
         (feeShares, newTotalAssets) = _accruedFeeShares();
+        newTotalSupply = totalSupply() + feeShares;
 
-        assets = super.maxWithdraw(owner);
+        assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Down);
         assets -= _staticWithdrawMorpho(assets);
     }
 
