@@ -118,9 +118,9 @@
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner/
-        ├── when pendingFee.submittedAt == 0
+        ├── when pendingGuardian.submittedAt == 0
         │   └── revert with NO_PENDING_VALUE
-        └── when pendingFee.submittedAt != 0
+        └── when pendingGuardian.submittedAt != 0
             ├── when block.timestamp < pendingGuardian.submittedAt + timelock
             │   └── revert with TIMELOCK_NOT_ELAPSED
             └── when block.timestamp >= pendingGuardian.submittedAt + timelock
@@ -147,15 +147,37 @@
                 │   └── revert with ALREADY_SET
                 └── when newMarketCap != marketCap
                     ├── when newMarketCap < marketCap or timelock == 0
-                    │   ├── when marketCap > 0 and marketConfig.withdrawRank == 0
+                    │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue.push
                     │   │   ├── it should push id to withdrawQueue.push
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                     │   │       └── revert with MAX_QUEUE_SIZE_EXCEEDED
-                    │   ├── it should set config[id] to marketCap
-                    │   ├── it should emit SetCap(id, marketCap)
+                    │   ├── it should set config[id] to newMarketCap
+                    │   ├── it should emit SetCap(id, newMarketCap)
                     │   └── it should delete pendingCap[id]
                     └── when newMarketCap > marketCap and timelock != 0
                         ├── it should it should set pendingCap[id] to PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp))
                         └── it should emit EventsLib.SubmitCap(id, newMarketCap)
 
+.
+└── acceptCap(Id id) external
+    ├── when msg.sender not owner or RiskManager
+    │   └── revert with NOT_RISK_MANAGER
+    └── when msg.sender is owner or RiskManager
+        ├── when pendingCap[id].submittedAt == 0
+        │   └── revert with NO_PENDING_VALUE
+        └── when pendingCap[id].submittedAt != 0
+            ├── when block.timestamp < pendingCap[id].submittedAt + timelock
+            │   └── revert with TIMELOCK_NOT_ELAPSED
+            └── when block.timestamp >= pendingCap[id].submittedAt + timelock
+                ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
+                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+                └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
+                    ├── when marketCap > 0 and marketConfig.withdrawRank == 0
+                    │   ├── it should push id to supplyQueue.push
+                    │   ├── it should push id to withdrawQueue.push
+                    │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
+                    │       └── revert with MAX_QUEUE_SIZE_EXCEEDED
+                    ├── it should set config[id] to pendingCap[id].value
+                    ├── it should emit SetCap(id, pendingCap[id].value)
+                    └── it should delete pendingCap[id]
