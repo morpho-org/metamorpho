@@ -136,6 +136,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
+    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
+        require(newRewardsDistributor != rewardsDistributor, ErrorsLib.ALREADY_SET);
+
+        rewardsDistributor = newRewardsDistributor;
+
+        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
+    }
+
     function submitTimelock(uint256 newTimelock) external onlyOwner {
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
         require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
@@ -148,14 +156,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
-    }
-
-    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
-        require(newRewardsDistributor != rewardsDistributor, ErrorsLib.ALREADY_SET);
-
-        rewardsDistributor = newRewardsDistributor;
-
-        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
     }
 
     function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
