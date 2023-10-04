@@ -177,9 +177,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function acceptFee() external timelockElapsed(pendingFee.submittedAt) onlyOwner {
-        // Accrue interest using the previous fee set before changing it.
-        _updateLastTotalAssets(_accrueFee());
-
         _setFee(pendingFee.value);
     }
 
@@ -569,6 +566,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     function _setFee(uint256 newFee) internal {
         require(newFee == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
+
+        // Accrue interest using the previous fee set before changing it.
+        _updateLastTotalAssets(_accrueFee());
 
         // Safe "unchecked" cast because newFee <= MAX_FEE.
         fee = uint96(newFee);
