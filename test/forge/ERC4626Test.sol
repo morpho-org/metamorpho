@@ -199,7 +199,7 @@ contract ERC4626Test is BaseTest {
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
 
         vm.prank(ONBEHALF);
-        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_FAILED_MORPHO));
+        vm.expectRevert(ErrorsLib.WithdrawMorphoFailed.selector);
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
@@ -222,7 +222,7 @@ contract ERC4626Test is BaseTest {
         vm.stopPrank();
 
         vm.prank(ONBEHALF);
-        vm.expectRevert(bytes(ErrorsLib.WITHDRAW_FAILED_MORPHO));
+        vm.expectRevert(ErrorsLib.WithdrawMorphoFailed.selector);
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 

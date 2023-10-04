@@ -8,7 +8,7 @@ import "./helpers/BaseTest.sol";
 uint256 constant CAP2 = 100e18;
 uint256 constant INITIAL_DEPOSIT = 4 * CAP2;
 
-contract ReallocateTest is BaseTest {
+contract ReallocateIdleTest is BaseTest {
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 
