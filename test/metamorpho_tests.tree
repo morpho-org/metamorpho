@@ -90,9 +90,25 @@
                 ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
                 │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
                 └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
+                    ├── it should accrue fees
                     ├── it should set fee to pendingFee.value
                     ├── it should emit SetFee(pendingFee.value)
                     └── it should delete pendingFee
+
+.
+└── setFeeRecipient(address newFeeRecipient) external
+    ├── when msg.sender not owner or RiskManager
+    │   └── revert with NOT_RISK_MANAGER
+    └── when msg.sender is owner or RiskManager
+        ├── when newFeeRecipient == feeRecipient
+        │   └── revert with ALREADY_SET
+        └── when newFeeRecipient != feeRecipient
+            ├── when newFeeRecipient == address(0) and fee != 0
+            │   └── revert with TIMELOCK_NOT_ELAPSED
+            └── when newFeeRecipient != address(0) or fee == 0
+                ├── it should accrue fees
+                ├── it should set feeRecipient to newFeeRecipient
+                └── it shoud emit SetFeeRecipient(newFeeRecipient)
 
 .
 └── submitGuardian(address newGuardian) external
