@@ -332,20 +332,52 @@
 
 
 .
+└── maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets)
+    ├── it should compute (feeShares, newTotalAssets) = _accruedFeeShares()
+    ├── it should compute newTotalSupply = totalSupply() + feeShares
+    ├── it should compute assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Down)
+    ├── when idle >= assets
+    │   └── it should return assets
+    ├── when idle < assets
+    │   ├── it should compute remaining = assets - idle
+    │   └── for each market withdrawQueue[i] in withdrawQueue
+    │       ├── it should compute id = withdrawQueue[i]
+    │       ├── it should remove _withdrawable(_marketParams(id), id) from remaining
+    │       └── if remaining == 0
+    │           └── it should return assets
+    └── it should return assets - remaining
+
+.
+└── maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256)
+    ├── it should compute (feeShares, newTotalAssets) = _accruedFeeShares()
+    ├── it should compute newTotalSupply = totalSupply() + feeShares
+    ├── it should compute assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Down)
+    ├── when idle >= assets
+    │   └── it should return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Down)
+    ├── when idle < assets
+    │   ├── it should compute remaining = assets - idle
+    │   └── for each market withdrawQueue[i] in withdrawQueue
+    │       ├── it should compute id = withdrawQueue[i]
+    │       ├── it should remove _withdrawable(_marketParams(id), id) from remaining
+    │       └── if remaining == 0
+    │           └── it should return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Down)
+    └── it should return _convertToSharesWithFeeAccrued(assets - remaining, newTotalSupply, newTotalAssets, Math.Rounding.Down)
+
+.
 └── deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares)
     ├── it should accrue fees
     ├── it should compute shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Down)
     ├── it should transfer assets of token from the sender to the vault
     ├── it should mint the shares for the receiver
     ├── it should emit Deposit(caller, receiver, assets, shares)
-    │   ├── for each market supplyQueue[i] in supplyQueue
-    │   │   ├── it should compute toSupply = UtilsLib.min(_suppliable(marketParams, id), assets)
-    │   │   ├── when toSupply > 0
-    │   │   │   ├── it should supply toSupply
-    │   │   │   └── it should remove the supplied amount from assets
-    │   │   └── if assets == 0
-    │   │       └── it should return
-    │   └── it should add assets to idle
+    ├── for each market supplyQueue[i] in supplyQueue
+    │   ├── it should compute toSupply = UtilsLib.min(_suppliable(marketParams, id), assets)
+    │   ├── when toSupply > 0
+    │   │   ├── it should supply toSupply
+    │   │   └── it should remove the supplied amount from assets
+    │   └── if assets == 0
+    │       └── it should stop supplying on new markets
+    ├── it should add assets to idle
     ├── it should set lastTotalAssets to newTotalAssets + assets
     ├── it should emit UpdateLastTotalAssets(newTotalAssets + assets)
     └── it should return shares
@@ -357,14 +389,14 @@
     ├── it should transfer assets of token from the sender to the vault
     ├── it should mint the shares for the receiver
     ├── it should emit Deposit(caller, receiver, assets, shares)
-    │   ├── for each market supplyQueue[i] in supplyQueue
-    │   │   ├── it should compute toSupply = UtilsLib.min(_suppliable(marketParams, id), assets)
-    │   │   ├── if toSupply > 0
-    │   │   │   ├── it should supply toSupply
-    │   │   │   └── it should remove the supplied amount from assets
-    │   │   └── if assets == 0
-    │   │       └── it should stop supplying on new markets
-    │   └── it should add assets to idle
+    ├── for each market supplyQueue[i] in supplyQueue
+    │   ├── it should compute toSupply = UtilsLib.min(_suppliable(marketParams, id), assets)
+    │   ├── if toSupply > 0
+    │   │   ├── it should supply toSupply
+    │   │   └── it should remove the supplied amount from assets
+    │   └── if assets == 0
+    │       └── it should stop supplying on new markets
+    ├── it should add assets to idle
     ├── it should set lastTotalAssets to newTotalAssets + assets
     ├── it should emit UpdateLastTotalAssets(newTotalAssets + assets)
     └── it should return assets
@@ -377,15 +409,15 @@
     │   └── it should remove assets from idle
     ├── when idle < assets
     │   ├── it should compute remaining = assets - idle
-    │   └── it should set idle to 0
-    │       └── for each market withdrawQueue[i] in withdrawQueue
-    │           ├── it should compute id = withdrawQueue[i]
-    │           ├── it should compute toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining)
-    │           ├── if toWithdraw > 0
-    │           │   ├── it should withdraw toWithdraw
-    │           │   └── it should remove toWithdraw from remaining
-    │           └── if remaining == 0
-    │               └── it should stop withdrawing on new markets
+    │   ├──  it should set idle to 0
+    │   └── for each market withdrawQueue[i] in withdrawQueue
+    │       ├── it should compute id = withdrawQueue[i]
+    │       ├── it should compute toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining)
+    │       ├── if toWithdraw > 0
+    │       │   ├── it should withdraw toWithdraw
+    │       │   └── it should remove toWithdraw from remaining
+    │       └── if remaining == 0
+    │           └── it should stop withdrawing on new markets
     ├── when remaining != 0
     │   └── revert with WITHDRAW_FAILED_MORPHO
     └── when remaining == 0
@@ -404,15 +436,15 @@
     │   └── it should remove assets from idle
     ├── when idle < assets
     │   ├── it should compute remaining = assets - idle
-    │   └── it should set idle to 0
-    │       └── for each market withdrawQueue[i] in withdrawQueue
-    │           ├── it should compute id = withdrawQueue[i]
-    │           ├── it should compute toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining)
-    │           ├── if toWithdraw > 0
-    │           │   ├── it should withdraw toWithdraw
-    │           │   └── it should remove toWithdraw from remaining
-    │           └── if remaining == 0
-    │               └── it should stop withdrawing on new markets
+    │   ├── it should set idle to 0
+    │   └── for each market withdrawQueue[i] in withdrawQueue
+    │       ├── it should compute id = withdrawQueue[i]
+    │       ├── it should compute toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining)
+    │       ├── if toWithdraw > 0
+    │       │   ├── it should withdraw toWithdraw
+    │       │   └── it should remove toWithdraw from remaining
+    │       └── if remaining == 0
+    │           └── it should stop withdrawing on new markets
     ├── when remaining != 0
     │   └── revert with WITHDRAW_FAILED_MORPHO
     └── when remaining == 0
