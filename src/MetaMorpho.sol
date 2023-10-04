@@ -468,12 +468,24 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         assets -= _staticWithdrawMorpho(assets);
     }
 
+    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return _convertToSharesWithFeeAccrued(assets, totalSupply() + feeShares, newTotalAssets, rounding);
+    }
+
+    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
+        (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
+
+        return _convertToAssetsWithFeeAccrued(shares, totalSupply() + feeShares, newTotalAssets, rounding);
+    }
+
     function _convertToSharesWithFeeAccrued(
         uint256 assets,
         uint256 newTotalSupply,
         uint256 newTotalAssets,
         Math.Rounding rounding
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         return assets.mulDiv(newTotalSupply + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
 
@@ -482,7 +494,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalSupply,
         uint256 newTotalAssets,
         Math.Rounding rounding
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
 
