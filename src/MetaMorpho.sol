@@ -167,6 +167,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         require(newFee != fee, ErrorsLib.ALREADY_SET);
 
         if (newFee < fee || timelock == 0) {
+            _updateLastTotalAssets(_accrueFee());
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= MAX_FEE.
