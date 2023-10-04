@@ -179,7 +179,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    /// @notice Submits a `newTimelock`.
+    /// @notice Sets `rewardsDistributor` to `newRewardsDistributor`.
+    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
+        require(newRewardsDistributor != rewardsDistributor, ErrorsLib.ALREADY_SET);
+
+        rewardsDistributor = newRewardsDistributor;
+
+        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
+    }
+
     function submitTimelock(uint256 newTimelock) external onlyOwner {
         require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
         require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
@@ -192,15 +200,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
-    }
-
-    /// @notice Sets `rewardsDistributor` to `newRewardsDistributor`.
-    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
-        require(newRewardsDistributor != rewardsDistributor, ErrorsLib.ALREADY_SET);
-
-        rewardsDistributor = newRewardsDistributor;
-
-        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
     }
 
     /// @notice Accepts the `pendingTimelock`.
@@ -225,9 +224,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Accepts the `pendingFee`.
     function acceptFee() external timelockElapsed(pendingFee.submittedAt) onlyOwner {
-        // Accrue interest using the previous fee set before changing it.
-        _updateLastTotalAssets(_accrueFee());
-
         _setFee(pendingFee.value);
     }
 
@@ -447,21 +443,21 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IERC4626
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
-        (assets,) = _maxWithdraw(owner);
+        (assets,,) = _maxWithdraw(owner);
     }
 
     /// @inheritdoc IERC4626
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
-        (uint256 assets, uint256 newTotalAssets) = _maxWithdraw(owner);
+        (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
-        return _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
+        return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Down);
     }
 
     /// @inheritdoc IERC4626
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
-        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Down);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Down);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -471,7 +467,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
-        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Up);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Up);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -487,7 +483,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
-        shares = _convertToSharesWithFeeAccrued(assets, newTotalAssets, Math.Rounding.Up);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Up);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -503,7 +499,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
-        assets = _convertToAssetsWithFeeAccrued(shares, newTotalAssets, Math.Rounding.Down);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Down);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -528,11 +524,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Returns the maximum amount of asset (`assets`) that the `owner` can withdraw from the vault, as well as the
-    /// new vault's total assets (`newTotalAssets`).
-    function _maxWithdraw(address owner) internal view returns (uint256 assets, uint256 newTotalAssets) {
-        (, newTotalAssets) = _accruedFeeShares();
+    /// new vault's total supply (`newTotalSupply`) and total assets (`newTotalAssets`).
+    function _maxWithdraw(address owner)
+        internal
+        view
+        returns (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets)
+    {
+        uint256 feeShares;
+        (feeShares, newTotalAssets) = _accruedFeeShares();
+        newTotalSupply = totalSupply() + feeShares;
 
-        assets = super.maxWithdraw(owner);
+        assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Down);
         assets -= _staticWithdrawMorpho(assets);
     }
 
@@ -541,7 +543,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
-        return assets.mulDiv(totalSupply() + feeShares + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+        return _convertToSharesWithFeeAccrued(assets, totalSupply() + feeShares, newTotalAssets, rounding);
     }
 
     /// @inheritdoc ERC4626
@@ -549,29 +551,31 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
-        return shares.mulDiv(newTotalAssets + 1, totalSupply() + feeShares + 10 ** _decimalsOffset(), rounding);
+        return _convertToAssetsWithFeeAccrued(shares, totalSupply() + feeShares, newTotalAssets, rounding);
     }
 
-    /// @dev Returns the amount of shares that the vault would exchange for the amount of assets provided, in an ideal
+    /// @dev Returns the amount of shares that the vault would exchange for the amount of `assets` provided, in an ideal
     /// scenario where all the conditions are met.
-    /// @dev It assumes that fees have been accrued before calling this function.
-    function _convertToSharesWithFeeAccrued(uint256 assets, uint256 newTotalAssets, Math.Rounding rounding)
-        internal
-        view
-        returns (uint256)
-    {
-        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
+    /// @dev It assumes that fees have been accrued and taking into account in `newTotalSupply` and `newTotalAssets`.
+    function _convertToSharesWithFeeAccrued(
+        uint256 assets,
+        uint256 newTotalSupply,
+        uint256 newTotalAssets,
+        Math.Rounding rounding
+    ) internal pure returns (uint256) {
+        return assets.mulDiv(newTotalSupply + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
 
-    /// @dev Returns the amount of assets that the Vault would exchange for the amount of shares provided, in an ideal
+    /// @dev Returns the amount of assets that the Vault would exchange for the amount of `shares` provided, in an ideal
     /// scenario where all the conditions are met.
-    /// @dev It assumes that fees have been accrued before calling this function.
-    function _convertToAssetsWithFeeAccrued(uint256 shares, uint256 newTotalAssets, Math.Rounding rounding)
-        internal
-        view
-        returns (uint256)
-    {
-        return shares.mulDiv(newTotalAssets + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+    /// @dev It assumes that fees have been accrued and taking into account in `newTotalSupply` and `newTotalAssets`.
+    function _convertToAssetsWithFeeAccrued(
+        uint256 shares,
+        uint256 newTotalSupply,
+        uint256 newTotalAssets,
+        Math.Rounding rounding
+    ) internal pure returns (uint256) {
+        return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
 
     /// @inheritdoc ERC4626
@@ -654,6 +658,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setFee(uint256 newFee) internal {
         require(newFee == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
 
+        // Accrue interest using the previous fee set before changing it.
+        _updateLastTotalAssets(_accrueFee());
+
         // Safe "unchecked" cast because newFee <= MAX_FEE.
         fee = uint96(newFee);
 
@@ -688,10 +695,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Withdraws `assets` from the idle liquidity and Morpho if necessary.
-    function _withdrawMorpho(uint256 assets) internal returns (uint256) {
-        (assets, idle) = _withdrawIdle(assets);
+    /// @return remaining The assets left to be withdrawn.
+    function _withdrawMorpho(uint256 assets) internal returns (uint256 remaining) {
+        (remaining, idle) = _withdrawIdle(assets);
 
-        if (assets == 0) return 0;
+        if (remaining == 0) return 0;
 
         uint256 nbMarkets = withdrawQueue.length;
 
@@ -699,19 +707,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), assets);
+            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining);
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
                 try MORPHO.withdraw(marketParams, toWithdraw, 0, address(this), address(this)) {
-                    assets -= toWithdraw;
+                    remaining -= toWithdraw;
                 } catch {}
             }
 
-            if (assets == 0) return 0;
+            if (remaining == 0) return 0;
         }
-
-        return assets;
     }
 
     /// @dev Fakes a withdraw of `assets` from the idle liquidity and Morpho if necessary.
@@ -735,8 +741,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (remaining == 0) return 0;
         }
-
-        return remaining;
     }
 
     /// @dev Withdraws `assets` from the idle liquidity.
