@@ -8,7 +8,7 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newRiskManager == riskManager
-        │   └── revert with ALREADY_SET
+        │   └── revert with AlreadySet()
         └── when newRiskManager != riskManager
             ├── it should set riskManager to newRiskManager
             └── it should emit SetRiskManager(newRiskManager)
@@ -19,7 +19,7 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when _isAllocator[newAllocator] == newIsAllocator
-        │   └── revert with ALREADY_SET
+        │   └── revert with AlreadySet()
         └── when _isAllocator[newAllocator] != newIsAllocator
             ├── it should set _isAllocator[newAllocator] to newIsAllocator
             └── it should emit SetIsAllocator(newAllocator, newIsAllocator)
@@ -30,7 +30,7 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newRewardsDistributor == rewardsDistributor
-        │   └── revert with ALREADY_SET
+        │   └── revert with AlreadySet()
         └── when newRewardsDistributor != rewardsDistributor
             ├── it should set rewardsDistributor to newRewardsDistributor
             └── it shoud emit SetRewardsDistributor(newRewardsDistributor)
@@ -44,7 +44,7 @@
         │   └── revert with MAX_TIMELOCK_EXCEEDED
         └── when newTimelock <= MAX_TIMELOCK
             ├── when newTimelock == timelock
-            │   └── revert with ALREADY_SET
+            │   └── revert with AlreadySet()
             └── when newTimelock != timelock
                 ├── when newTimelock > timelock or timelock == 0
                 │   ├── it should set timelock to newTimelock
@@ -60,10 +60,10 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when pendingTimelock.submittedAt == 0
-        │   └── revert with NO_PENDING_VALUE
+        │   └── revert with NoPendingValue()
         └── when pendingTimelock.submittedAt != 0
             ├── when block.timestamp < pendingTimelock.submittedAt + timelock
-            │   └── revert with TIMELOCK_NOT_ELAPSED
+            │   └── revert with TimelockNotElapsed()
             └── when block.timestamp >= pendingTimelock.submittedAt + timelock
                 ├── when block.timestamp > pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
                 │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
@@ -81,7 +81,7 @@
         │   └── revert with MAX_FEE_EXCEEDED
         └── when newFee <= MAX_FEE
             ├── when newFee == fee
-            │   └── revert with ALREADY_SET
+            │   └── revert with AlreadySet()
             └── when newFee != fee
                 ├── when newFee < fee or timelock == 0
                 │   ├── it should accrue fees
@@ -98,10 +98,10 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when pendingFee.submittedAt == 0
-        │   └── revert with NO_PENDING_VALUE
+        │   └── revert with NoPendingValue()
         └── when pendingFee.submittedAt != 0
             ├── when block.timestamp < pendingFee.submittedAt + timelock
-            │   └── revert with TIMELOCK_NOT_ELAPSED
+            │   └── revert with TimelockNotElapsed()
             └── when block.timestamp >= pendingFee.submittedAt + timelock
                 ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
                 │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
@@ -117,10 +117,10 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newFeeRecipient == feeRecipient
-        │   └── revert with ALREADY_SET
+        │   └── revert with AlreadySet()
         └── when newFeeRecipient != feeRecipient
             ├── when newFeeRecipient == address(0) and fee != 0
-            │   └── revert with ZERO_FEE_RECIPIENT
+            │   └── revert with ZeroFeeRecipient()
             └── when newFeeRecipient != address(0) or fee == 0
                 ├── it should accrue fees
                 ├── it should set feeRecipient to newFeeRecipient
@@ -132,10 +132,10 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when timelock == 0
-        │   └── revert with NO_TIMELOCK
+        │   └── revert with NoTimelock()
         └── when timelock != 0
             ├── when newGuardian == guardian
-            │   └── revert with ALREADY_SET
+            │   └── revert with AlreadySet()
             └── when newGuardian != guardian
                 ├── when guardian == address(0)
                 │   ├── it should set guardian to newGuardian
@@ -151,10 +151,10 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when pendingGuardian.submittedAt == 0
-        │   └── revert with NO_PENDING_VALUE
+        │   └── revert with NoPendingValue()
         └── when pendingGuardian.submittedAt != 0
             ├── when block.timestamp < pendingGuardian.submittedAt + timelock
-            │   └── revert with TIMELOCK_NOT_ELAPSED
+            │   └── revert with TimelockNotElapsed()
             └── when block.timestamp >= pendingGuardian.submittedAt + timelock
                 ├── when block.timestamp > pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
                 │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
@@ -170,24 +170,24 @@
 .
 └── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external/
     ├── when msg.sender not owner or RiskManager
-    │   └── revert with NOT_RISK_MANAGER
+    │   └── revert with NotRiskManager()
     └── when msg.sender is owner or RiskManager
         ├── when marketParams.loanToken != asset()
-        │   └── revert with INCONSISTENT_ASSET
+        │   └── revert with InconsistentAsset()
         ├── when marketParams.loanToken == asset()
         └── it should compute id = marketParams.id()
             ├── when MORPHO.lastUpdate(id) == 0
-            │   └── revert with MARKET_NOT_CREATED
+            │   └── revert with MarketNotCreated()
             └── when MORPHO.lastUpdate(id) != 0
                 ├── when newMarketCap == marketCap
-                │   └── revert with ALREADY_SET
+                │   └── revert with AlreadySet()
                 └── when newMarketCap != marketCap
                     ├── when newMarketCap < marketCap or timelock == 0
                     │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue.push
                     │   │   ├── it should push id to withdrawQueue.push
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                    │   │       └── revert with MAX_QUEUE_SIZE_EXCEEDED
+                    │   │       └── revert with MaxQueueSizeExceeded()
                     │   ├── it should set config[id] to newMarketCap
                     │   ├── it should emit SetCap(id, newMarketCap)
                     │   └── it should delete pendingCap[id]
@@ -198,13 +198,13 @@
 .
 └── acceptCap(Id id) external
     ├── when msg.sender not owner or RiskManager
-    │   └── revert with NOT_RISK_MANAGER
+    │   └── revert with NotRiskManager()
     └── when msg.sender is owner or RiskManager
         ├── when pendingCap[id].submittedAt == 0
-        │   └── revert with NO_PENDING_VALUE
+        │   └── revert with NoPendingValue()
         └── when pendingCap[id].submittedAt != 0
             ├── when block.timestamp < pendingCap[id].submittedAt + timelock
-            │   └── revert with TIMELOCK_NOT_ELAPSED
+            │   └── revert with TimelockNotElapsed()
             └── when block.timestamp >= pendingCap[id].submittedAt + timelock
                 ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
                 │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
@@ -213,7 +213,7 @@
                     │   ├── it should push id to supplyQueue.push
                     │   ├── it should push id to withdrawQueue.push
                     │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                    │       └── revert with MAX_QUEUE_SIZE_EXCEEDED
+                    │       └── revert with MaxQueueSizeExceeded()
                     ├── it should set config[id] to pendingCap[id].value
                     ├── it should emit SetCap(id, pendingCap[id].value)
                     └── it should delete pendingCap[id]
@@ -225,10 +225,10 @@
 .
 └── setSupplyQueue(Id[] calldata newSupplyQueue) external
     ├── when msg.sender not owner or riskManager or allocator
-    │   └── revert with NOT_ALLOCATOR
+    │   └── revert with NotAllocator()
     └── when msg.sender is owner or riskManager or allocator
         ├── when some markets of newSupplyQueue have a zero cap
-        │   └── revert with UNAUTHORIZED_MARKET
+        │   └── revert with UnauthorizedMarket()
         └── when all the markets of newSupplyQueue have non zero cap
             ├── it should set supplyQueue to newSupplyQueue
             └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
@@ -236,15 +236,17 @@
 .
 └── sortWithdrawQueue(uint256[] calldata indexes) external
     ├── when msg.sender not owner or riskManager or allocator
-    │   └── revert with NOT_ALLOCATOR
+    │   └── revert with NotAllocator()
     └── when msg.sender is owner or riskManager or allocator
-        ├── when indexes contains duplicates
-        │   └── revert with DUPLICATE_MARKET
+        ├── when indexes contains a duplicate market
+        │   ├── it should compute the id of the duplicate market
+        │   └── revert with DuplicateMarket(id)
         └── when indexes does not contain duplicates
             ├── it should compute newWithdrawQueue
             ├── when markets of withdrawQueue are missing in newWithdrawQueue
-            │   ├── when some of these markets have non zero cap or vault's supply
-            │   │   └── revert with MISSING_MARKET
+            │   ├── when one of these markets has non zero cap or vault's supply
+            │   │   ├── it should compute the id of this market
+            │   │   └── revert with MissingMarket(id)
             │   └── when all these markets have zero cap and zero vault's supply
             │       └── it should delete the withdrawRank of these markets
             ├── it should set withdrawQueue to newWithdrawQueue
@@ -254,7 +256,7 @@
 └── reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
     ├── external
     ├── when msg.sender not owner or riskManager or allocator
-    │   └── revert with NOT_ALLOCATOR
+    │   └── revert with NotAllocator()
     └── when msg.sender is owner or riskManager or allocator
         ├── for each market withdrawn[i] from withdrawn
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
@@ -263,13 +265,13 @@
         │   ├── it should supply supplied[i].assets or supplied[i].shares
         │   ├── it should add the supplied amount to totalSupplied
         │   └── if supplyBalance(supplied[i].marketParams) > config[supplied[i].marketParams.id()].cap
-        │       └── revert with SUPPLY_CAP_EXCEEDED
+        │       └── revert with SupplyCapExceeded(id)
         ├── when totalWithdrawn > totalSupplied
         │   └── it should add totalWithdrawn - totalSupplied to idle
         └── when totalWithdrawn <= totalSupplied
             └── it should compute idleSupplied = totalSupplied - totalWithdrawn
                 ├── when idle < idleSupplied
-                │   └── revert with INSUFFICIENT_IDLE
+                │   └── revert with InsufficientIdle()
                 └── when idle >= idleSupplied
                     └── it should remove idleSupplied from idle
 
@@ -295,7 +297,7 @@
 .
 └── revokeTimelock() external
     ├── when msg.sender not guardian
-    │   └── revert with NOT_GUARDIAN
+    │   └── revert with NotGuardian()
     └── when msg.sender is guardian
         ├── it should emit RevokeTimelock(msg.sender, pendingTimelock)
         └── it should delete pendingTimelock
@@ -303,7 +305,7 @@
 .
 └── revokeCap(Id id) external
     ├── when msg.sender not guardian
-    │   └── revert with NOT_GUARDIAN
+    │   └── revert with NotGuardian()
     └── when msg.sender is guardian
         ├── it should emit RevokeCap(msg.sender, id, pendingCap[id])
         └── it should delete pendingCap[id]
@@ -311,7 +313,7 @@
 .
 └── revokeGuardian() external
     ├── when msg.sender not guardian
-    │   └── revert with NOT_GUARDIAN
+    │   └── revert with NotGuardian()
     └── when msg.sender is guardian
         ├── it should emit RevokeGuardian(msg.sender, pendingGuardian);
         └── it should delete pendingGuardian
@@ -419,7 +421,7 @@
     │       └── if remaining == 0
     │           └── it should stop withdrawing on new markets
     ├── when remaining != 0
-    │   └── revert with WITHDRAW_FAILED_MORPHO
+    │   └── revert with WithdrawMorphoFailed()
     └── when remaining == 0
         ├── it should transfer assets of token to the receiver
         ├── it should burn the shares of the receiver
@@ -446,7 +448,7 @@
     │       └── if remaining == 0
     │           └── it should stop withdrawing on new markets
     ├── when remaining != 0
-    │   └── revert with WITHDRAW_FAILED_MORPHO
+    │   └── revert with WithdrawMorphoFailed()
     └── when remaining == 0
         ├── it should transfer assets of token to the receiver
         ├── it should burn the shares of the receiver
