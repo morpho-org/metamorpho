@@ -160,7 +160,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
+    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
     }
 
@@ -178,7 +178,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    function acceptFee() external timelockElapsed(pendingFee.submittedAt) onlyOwner {
+    function acceptFee() external timelockElapsed(pendingFee.submittedAt) {
         _setFee(pendingFee.value);
     }
 
@@ -207,7 +207,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) onlyOwner {
+    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) {
         _setGuardian(pendingGuardian.value);
     }
 
@@ -231,7 +231,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) onlyRiskManager {
+    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) {
         _setCap(id, pendingCap[id].value);
     }
 

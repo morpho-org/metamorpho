@@ -245,18 +245,4 @@ contract FeeTest is BaseTest {
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitFee(FEE);
     }
-
-    function testAcceptFeeNotOwner(uint256 fee) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
-
-        _setTimelock(1);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        vm.warp(block.timestamp + 1);
-
-        vm.expectRevert("Ownable: caller is not the owner");
-        vault.acceptFee();
-    }
 }
