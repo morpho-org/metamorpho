@@ -3,7 +3,7 @@
 
 
 .
-└── setRiskManager(address newRiskManager) external onlyOwner
+└── setRiskManager(address newRiskManager) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
