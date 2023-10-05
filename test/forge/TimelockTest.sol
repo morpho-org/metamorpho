@@ -75,7 +75,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
-        vm.prank(OWNER);
         vault.acceptTimelock();
 
         uint256 newTimelock = vault.timelock();
@@ -91,18 +90,6 @@ contract TimelockTest is BaseTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockNotOwner(uint256 timelock) public {
-        timelock = bound(timelock, 0, TIMELOCK - 1);
-
-        vm.prank(OWNER);
-        vault.submitTimelock(timelock);
-
-        vm.warp(block.timestamp + TIMELOCK);
-
-        vm.expectRevert("Ownable: caller is not the owner");
-        vault.acceptTimelock();
-    }
-
     function testAcceptTimelockTimelockNotElapsed(uint256 timelock, uint256 elapsed) public {
         timelock = bound(timelock, 0, TIMELOCK - 1);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
@@ -112,7 +99,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptTimelock();
     }
@@ -126,7 +112,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptTimelock();
     }
@@ -167,7 +152,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
-        vm.prank(OWNER);
         vault.acceptFee();
 
         uint256 newFee = vault.fee();
@@ -192,7 +176,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptFee();
     }
@@ -206,7 +189,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptFee();
     }
@@ -226,7 +208,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
-        vm.prank(RISK_MANAGER);
         vault.acceptCap(id);
 
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
@@ -253,7 +234,6 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.prank(RISK_MANAGER);
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptCap(allMarkets[0].id());
     }

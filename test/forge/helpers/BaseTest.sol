@@ -223,7 +223,6 @@ contract BaseTest is Test {
 
         vm.warp(block.timestamp + timelock);
 
-        vm.prank(OWNER);
         vault.acceptTimelock();
     }
 
@@ -239,7 +238,6 @@ contract BaseTest is Test {
 
         vm.warp(block.timestamp + timelock);
 
-        vm.prank(OWNER);
         vault.acceptFee();
     }
 
@@ -256,7 +254,6 @@ contract BaseTest is Test {
 
         vm.warp(block.timestamp + timelock);
 
-        vm.prank(RISK_MANAGER);
         vault.acceptCap(id);
     }
 }
