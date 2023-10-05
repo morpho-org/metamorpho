@@ -160,7 +160,7 @@
 
 .
 └── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external/
-    ├── when msg.sender not owner or RiskManager
+    ├── when msg.sender not owner or riskManager
     │   └── revert with NotRiskManager()
     └── when msg.sender is owner or RiskManager
         ├── when marketParams.loanToken != asset()
