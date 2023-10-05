@@ -88,4 +88,9 @@ contract UrdTest is BaseTest {
             "loanToken.balanceOf(address(rewardsDistributor))"
         );
     }
+
+    function testTransferRewardsZeroAddress() public {
+        vm.expectRevert(ErrorsLib.ZeroAddress.selector);
+        vault.transferRewards(address(loanToken));
+    }
 }

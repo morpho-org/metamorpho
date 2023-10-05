@@ -6,6 +6,53 @@ import "./helpers/BaseTest.sol";
 contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
+    function testSetRiskManager(address newRiskManager) public {
+        vm.assume(newRiskManager != vault.riskManager());
+
+        vm.prank(OWNER);
+        vault.setRiskManager(newRiskManager);
+
+        assertEq(vault.riskManager(), newRiskManager, "vault.riskManager()");
+    }
+
+    function testSetRiskManagerShouldRevertAlreadySet() public {
+        address riskManager = vault.riskManager();
+
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.setRiskManager(riskManager);
+    }
+
+    function testSetAllocator(address newAllocator) public {
+        vm.assume(!vault.isAllocator(newAllocator));
+
+        vm.prank(OWNER);
+        vault.setIsAllocator(newAllocator, true);
+
+        assertTrue(vault.isAllocator(newAllocator), "vault.isAllocator(newAllocator)");
+    }
+
+    function testUnsetAllocator(address newAllocator) public {
+        vm.assume(!vault.isAllocator(newAllocator));
+
+        vm.startPrank(OWNER);
+        vault.setIsAllocator(newAllocator, true);
+        vault.setIsAllocator(newAllocator, false);
+        vm.stopPrank();
+
+        assertFalse(vault.isAllocator(newAllocator), "vault.isAllocator(newAllocator)");
+    }
+
+    function testSetAllocatorShouldRevertAlreadySet(address newAllocator) public {
+        vm.assume(!vault.isAllocator(newAllocator));
+
+        vm.startPrank(OWNER);
+        vault.setIsAllocator(newAllocator, true);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.setIsAllocator(newAllocator, true);
+        vm.stopPrank();
+    }
+
     function testOwnerFunctionsShouldRevertWhenNotOwner(address caller) public {
         vm.assume(caller != vault.owner());
 

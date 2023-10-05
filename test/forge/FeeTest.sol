@@ -245,4 +245,24 @@ contract FeeTest is BaseTest {
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitFee(FEE);
     }
+
+    function testSetFeeRecipientAlreadySet() public {
+        vm.startPrank(OWNER);
+        vault.setFeeRecipient(MORPHO_FEE_RECIPIENT);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.setFeeRecipient(MORPHO_FEE_RECIPIENT);
+        vm.stopPrank();
+    }
+
+    function testSetZeroFeeRecipientWithFee(uint256 fee) public {
+        fee = bound(fee, 1, MAX_FEE);
+        vm.assume(fee != vault.fee());
+
+        vm.startPrank(OWNER);
+        vault.submitFee(fee);
+
+        vm.expectRevert(ErrorsLib.ZeroFeeRecipient.selector);
+        vault.setFeeRecipient(address(0));
+        vm.stopPrank();
+    }
 }
