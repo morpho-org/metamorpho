@@ -179,7 +179,7 @@
                     │   │   ├── it should push id to withdrawQueue
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                     │   │       └── revert with MaxQueueSizeExceeded()
-                    │   ├── it should set config[id] to newMarketCap
+                    │   ├── it should set config[id].cap to newMarketCap
                     │   ├── it should emit SetCap(id, newMarketCap)
                     │   └── it should delete pendingCap[id]
                     └── when newMarketCap > marketCap and timelock != 0
