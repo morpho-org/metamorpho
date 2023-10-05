@@ -3,7 +3,7 @@
 
 
 .
-└── setRiskManager(address newRiskManager) external onlyOwner
+└── setRiskManager(address newRiskManager) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
@@ -160,9 +160,9 @@
 
 .
 └── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external/
-    ├── when msg.sender not owner or RiskManager
+    ├── when msg.sender not owner or riskManager
     │   └── revert with NotRiskManager()
-    └── when msg.sender is owner or RiskManager
+    └── when msg.sender is owner or riskManager
         ├── when marketParams.loanToken != asset()
         │   └── revert with InconsistentAsset()
         ├── when marketParams.loanToken == asset()
@@ -175,11 +175,11 @@
                 └── when newMarketCap != marketCap
                     ├── when newMarketCap < marketCap or timelock == 0
                     │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
-                    │   │   ├── it should push id to supplyQueue.push
-                    │   │   ├── it should push id to withdrawQueue.push
+                    │   │   ├── it should push id to supplyQueue
+                    │   │   ├── it should push id to withdrawQueue
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                     │   │       └── revert with MaxQueueSizeExceeded()
-                    │   ├── it should set config[id] to newMarketCap
+                    │   ├── it should set config[id].cap to newMarketCap
                     │   ├── it should emit SetCap(id, newMarketCap)
                     │   └── it should delete pendingCap[id]
                     └── when newMarketCap > marketCap and timelock != 0
@@ -198,11 +198,11 @@
             │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
             └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
                 ├── when marketCap > 0 and marketConfig.withdrawRank == 0
-                │   ├── it should push id to supplyQueue.push
-                │   ├── it should push id to withdrawQueue.push
+                │   ├── it should push id to supplyQueue
+                │   ├── it should push id to withdrawQueue
                 │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                 │       └── revert with MaxQueueSizeExceeded()
-                ├── it should set config[id] to pendingCap[id].value
+                ├── it should set config[id].cap to pendingCap[id].value
                 ├── it should emit SetCap(id, pendingCap[id].value)
                 └── it should delete pendingCap[id]
 
