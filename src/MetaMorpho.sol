@@ -195,10 +195,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitGuardian(address newGuardian) external onlyOwner {
-        if (timelock == 0) revert ErrorsLib.NoTimelock();
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
+        if (timelock == 0 && newGuardian != address(0)) revert ErrorsLib.NoTimelock();
 
-        if (guardian == address(0)) {
+        if (guardian == address(0) || timelock == 0) {
             _setGuardian(newGuardian);
         } else {
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
@@ -337,6 +337,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /* EXTERNAL */
+
+    function supplyQueueSize() external view returns (uint256) {
+        return supplyQueue.length;
+    }
+
+    function withdrawQueueSize() external view returns (uint256) {
+        return withdrawQueue.length;
+    }
 
     function transferRewards(address token) external {
         if (rewardsDistributor == address(0)) revert ErrorsLib.ZeroAddress();

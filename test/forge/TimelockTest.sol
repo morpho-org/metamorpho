@@ -9,11 +9,13 @@ uint256 constant TIMELOCK = 1 weeks;
 contract TimelockTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
+    address internal GUARDIAN;
     address internal FEE_RECIPIENT;
 
     function setUp() public override {
         super.setUp();
 
+        GUARDIAN = _addrFromHashedString("Guardian");
         FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
 
         vm.prank(OWNER);
@@ -24,6 +26,9 @@ contract TimelockTest is BaseTest {
 
         _setFee(FEE);
         _setTimelock(TIMELOCK);
+        _setGuardian(GUARDIAN);
+
+        _setCap(allMarkets[0], CAP);
     }
 
     function testSubmitTimelockIncreased(uint256 timelock) public {
@@ -193,21 +198,132 @@ contract TimelockTest is BaseTest {
         vault.acceptFee();
     }
 
-    function testAcceptCap(uint256 seed, uint256 cap) public {
-        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 1, type(uint192).max);
+    function testSubmitGuardianFromZero() public {
+        _setGuardian(address(0));
+
+        vm.prank(OWNER);
+        vault.submitGuardian(GUARDIAN);
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, GUARDIAN, "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testSubmitGuardianZero() public {
+        vm.prank(OWNER);
+        vault.submitGuardian(address(0));
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, GUARDIAN, "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
+        assertEq(submittedAt, block.timestamp, "submittedAt");
+    }
+
+    function testAcceptGuardian() public {
+        address guardian = _addrFromHashedString("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        vm.warp(block.timestamp + TIMELOCK);
+
+        vault.acceptGuardian();
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, guardian, "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testAcceptGuardianNoPendingValue() public {
+        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
+        vault.acceptGuardian();
+    }
+
+    function testAcceptGuardianTimelockNotElapsed(uint256 elapsed) public {
+        elapsed = bound(elapsed, 1, TIMELOCK - 1);
+
+        address guardian = _addrFromHashedString("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
+        vault.acceptGuardian();
+    }
+
+    function testAcceptGuardianTimelockExpirationExceeded(uint256 elapsed) public {
+        elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+
+        address guardian = _addrFromHashedString("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
+        vault.acceptGuardian();
+    }
+
+    function testSubmitCapDecreased(uint256 cap) public {
+        cap = bound(cap, 0, CAP - 1);
+
+        MarketParams memory marketParams = allMarkets[0];
 
         vm.prank(RISK_MANAGER);
         vault.submitCap(marketParams, cap);
 
         Id id = marketParams.id();
-        (uint192 pendingCapBefore, uint64 submittedAtBefore) = vault.pendingCap(id);
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
-        assertEq(pendingCapBefore, cap, "pendingCapBefore");
-        assertEq(submittedAtBefore, block.timestamp, "submittedAtBefore");
+        assertEq(newCap, cap, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(pendingCap, 0, "pendingCap");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testSubmitCapIncreased(uint256 cap) public {
+        cap = bound(cap, 1, type(uint192).max);
+
+        MarketParams memory marketParams = allMarkets[1];
+
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(marketParams, cap);
+
+        Id id = marketParams.id();
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+
+        assertEq(newCap, 0, "newCap");
+        assertEq(withdrawRank, 0, "withdrawRank");
+        assertEq(pendingCap, cap, "pendingCap");
+        assertEq(submittedAt, block.timestamp, "submittedAt");
+        assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
+        assertEq(vault.withdrawQueueSize(), 1, "withdrawQueueSize");
+    }
+
+    function testAcceptCapIncreased(uint256 cap) public {
+        cap = bound(cap, CAP + 1, type(uint192).max);
+
+        MarketParams memory marketParams = allMarkets[0];
+
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(marketParams, cap);
 
         vm.warp(block.timestamp + TIMELOCK);
 
+        Id id = marketParams.id();
         vault.acceptCap(id);
 
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
@@ -230,12 +346,12 @@ contract TimelockTest is BaseTest {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(RISK_MANAGER);
-        vault.submitCap(allMarkets[0], CAP);
+        vault.submitCap(allMarkets[1], CAP);
 
         vm.warp(block.timestamp + elapsed);
 
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
-        vault.acceptCap(allMarkets[0].id());
+        vault.acceptCap(allMarkets[1].id());
     }
 
     function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
@@ -248,27 +364,11 @@ contract TimelockTest is BaseTest {
         elapsed = bound(elapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.startPrank(RISK_MANAGER);
-        vault.submitCap(allMarkets[0], CAP);
+        vault.submitCap(allMarkets[1], CAP);
 
         vm.warp(block.timestamp + elapsed);
 
         vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
-        vault.acceptCap(allMarkets[0].id());
-    }
-
-    function testDecreaseCapNoTimelock(uint256 seed, uint256 cap, uint256 cap2) public {
-        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 1, type(uint192).max);
-        cap2 = bound(cap2, 0, cap - 1);
-
-        _setCap(marketParams, cap);
-
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(marketParams, cap2);
-
-        (uint192 newCap, uint64 withdrawRank) = vault.config(marketParams.id());
-
-        assertEq(newCap, cap2, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
+        vault.acceptCap(allMarkets[1].id());
     }
 }

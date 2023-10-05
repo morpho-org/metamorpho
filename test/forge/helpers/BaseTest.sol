@@ -25,7 +25,7 @@ uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = 10;
-uint128 constant CAP = type(uint128).max;
+uint256 constant CAP = type(uint128).max;
 
 contract BaseTest is Test {
     using MathLib for uint256;
@@ -167,8 +167,8 @@ contract BaseTest is Test {
         morpho.withdrawCollateral(market, 1, address(this), address(10));
     }
 
-    function neq(MarketParams memory a, MarketParams memory b) internal pure returns (bool) {
-        return (Id.unwrap(a.id()) != Id.unwrap(b.id()));
+    function _randomMarketParams(uint256 seed) internal view returns (MarketParams memory) {
+        return allMarkets[seed % allMarkets.length];
     }
 
     function _randomCandidate(address[] memory candidates, uint256 seed) internal pure returns (address) {
@@ -224,6 +224,21 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptTimelock();
+    }
+
+    function _setGuardian(address newGuardian) internal {
+        address guardian = vault.guardian();
+        if (newGuardian == guardian) return;
+
+        vm.prank(OWNER);
+        vault.submitGuardian(newGuardian);
+
+        uint256 timelock = vault.timelock();
+        if (guardian == address(0) || timelock == 0) return;
+
+        vm.warp(block.timestamp + timelock);
+
+        vault.acceptGuardian();
     }
 
     function _setFee(uint256 newFee) internal {

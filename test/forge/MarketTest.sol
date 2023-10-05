@@ -9,22 +9,8 @@ contract MarketTest is BaseTest {
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 
-    function testSubmitCap(uint256 seed, uint256 cap) public {
-        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-        cap = bound(cap, 1, type(uint192).max);
-
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(marketParams, cap);
-
-        (uint192 newCap, uint64 withdrawRank) = vault.config(marketParams.id());
-
-        assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
-    }
-
     function testSubmitCapOverflow(uint256 seed, uint256 cap) public {
-        MarketParams memory marketParams = allMarkets[seed % allMarkets.length];
-
+        MarketParams memory marketParams = _randomMarketParams(seed);
         cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
 
         vm.prank(RISK_MANAGER);
