@@ -5,7 +5,7 @@ import "erc4626-tests/ERC4626.test.sol";
 
 import {BaseTest} from "./helpers/BaseTest.sol";
 
-contract ERC4626StdTest is BaseTest, ERC4626Test {
+contract ERC4626A16zTest is BaseTest, ERC4626Test {
     function setUp() public override(BaseTest, ERC4626Test) {
         super.setUp();
 
