@@ -56,21 +56,18 @@
 
 .
 └── acceptTimelock() external
-    ├── when msg.sender not owner
-    │   └── revert with NOT_OWNER
-    └── when msg.sender is owner
-        ├── when pendingTimelock.submittedAt == 0
-        │   └── revert with NoPendingValue()
-        └── when pendingTimelock.submittedAt != 0
-            ├── when block.timestamp < pendingTimelock.submittedAt + timelock
-            │   └── revert with TimelockNotElapsed()
-            └── when block.timestamp >= pendingTimelock.submittedAt + timelock
-                ├── when block.timestamp > pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
-                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-                └── whenblock.timestamp <= pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
-                    ├── it should set timelock to pendingTimelock.value
-                    ├── it should emit SetTimelock(pendingTimelock.value)
-                    └── it should delete pendingTimelock
+    ├── when pendingTimelock.submittedAt == 0
+    │   └── revert with NoPendingValue()
+    └── when pendingTimelock.submittedAt != 0
+        ├── when block.timestamp < pendingTimelock.submittedAt + timelock
+        │   └── revert with TimelockNotElapsed()
+        └── when block.timestamp >= pendingTimelock.submittedAt + timelock
+            ├── when block.timestamp > pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
+            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+            └── whenblock.timestamp <= pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
+                ├── it should set timelock to pendingTimelock.value
+                ├── it should emit SetTimelock(pendingTimelock.value)
+                └── it should delete pendingTimelock
 
 .
 └── submitFee(uint256 newFee) external
@@ -94,22 +91,19 @@
 
 .
 └── acceptFee() external
-    ├── when msg.sender not owner
-    │   └── revert with NOT_OWNER
-    └── when msg.sender is owner
-        ├── when pendingFee.submittedAt == 0
-        │   └── revert with NoPendingValue()
-        └── when pendingFee.submittedAt != 0
-            ├── when block.timestamp < pendingFee.submittedAt + timelock
-            │   └── revert with TimelockNotElapsed()
-            └── when block.timestamp >= pendingFee.submittedAt + timelock
-                ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-                └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-                    ├── it should accrue fees
-                    ├── it should set fee to pendingFee.value
-                    ├── it should emit SetFee(pendingFee.value)
-                    └── it should delete pendingFee
+    ├── when pendingFee.submittedAt == 0
+    │   └── revert with NoPendingValue()
+    └── when pendingFee.submittedAt != 0
+        ├── when block.timestamp < pendingFee.submittedAt + timelock
+        │   └── revert with TimelockNotElapsed()
+        └── when block.timestamp >= pendingFee.submittedAt + timelock
+            ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
+            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+            └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
+                ├── it should accrue fees
+                ├── it should set fee to pendingFee.value
+                ├── it should emit SetFee(pendingFee.value)
+                └── it should delete pendingFee
 
 .
 └── setFeeRecipient(address newFeeRecipient) external
@@ -147,21 +141,18 @@
 
 .
 └── acceptGuardian() external
-    ├── when msg.sender not owner
-    │   └── revert with NOT_OWNER
-    └── when msg.sender is owner
-        ├── when pendingGuardian.submittedAt == 0
-        │   └── revert with NoPendingValue()
-        └── when pendingGuardian.submittedAt != 0
-            ├── when block.timestamp < pendingGuardian.submittedAt + timelock
-            │   └── revert with TimelockNotElapsed()
-            └── when block.timestamp >= pendingGuardian.submittedAt + timelock
-                ├── when block.timestamp > pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
-                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-                └── whenblock.timestamp <= pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
-                    ├── it should set guardian to pendingGuardian
-                    ├── it should emit SetGuardian(pendingGuardian)
-                    └── it should delete pendingGuardian
+    ├── when pendingGuardian.submittedAt == 0
+    │   └── revert with NoPendingValue()
+    └── when pendingGuardian.submittedAt != 0
+        ├── when block.timestamp < pendingGuardian.submittedAt + timelock
+        │   └── revert with TimelockNotElapsed()
+        └── when block.timestamp >= pendingGuardian.submittedAt + timelock
+            ├── when block.timestamp > pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
+            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+            └── whenblock.timestamp <= pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
+                ├── it should set guardian to pendingGuardian
+                ├── it should emit SetGuardian(pendingGuardian)
+                └── it should delete pendingGuardian
 
 
 /* ONLY RISK MANAGER FUNCTIONS */
@@ -197,26 +188,23 @@
 
 .
 └── acceptCap(Id id) external
-    ├── when msg.sender not owner or RiskManager
-    │   └── revert with NotRiskManager()
-    └── when msg.sender is owner or RiskManager
-        ├── when pendingCap[id].submittedAt == 0
-        │   └── revert with NoPendingValue()
-        └── when pendingCap[id].submittedAt != 0
-            ├── when block.timestamp < pendingCap[id].submittedAt + timelock
-            │   └── revert with TimelockNotElapsed()
-            └── when block.timestamp >= pendingCap[id].submittedAt + timelock
-                ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-                └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                    ├── when marketCap > 0 and marketConfig.withdrawRank == 0
-                    │   ├── it should push id to supplyQueue.push
-                    │   ├── it should push id to withdrawQueue.push
-                    │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                    │       └── revert with MaxQueueSizeExceeded()
-                    ├── it should set config[id] to pendingCap[id].value
-                    ├── it should emit SetCap(id, pendingCap[id].value)
-                    └── it should delete pendingCap[id]
+    ├── when pendingCap[id].submittedAt == 0
+    │   └── revert with NoPendingValue()
+    └── when pendingCap[id].submittedAt != 0
+        ├── when block.timestamp < pendingCap[id].submittedAt + timelock
+        │   └── revert with TimelockNotElapsed()
+        └── when block.timestamp >= pendingCap[id].submittedAt + timelock
+            ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
+            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
+            └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
+                ├── when marketCap > 0 and marketConfig.withdrawRank == 0
+                │   ├── it should push id to supplyQueue.push
+                │   ├── it should push id to withdrawQueue.push
+                │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
+                │       └── revert with MaxQueueSizeExceeded()
+                ├── it should set config[id] to pendingCap[id].value
+                ├── it should emit SetCap(id, pendingCap[id].value)
+                └── it should delete pendingCap[id]
 
 
 /* ONLY ALLOCATOR FUNCTIONS */
