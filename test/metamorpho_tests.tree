@@ -175,8 +175,8 @@
                 └── when newMarketCap != marketCap
                     ├── when newMarketCap < marketCap or timelock == 0
                     │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
-                    │   │   ├── it should push id to supplyQueue.push
-                    │   │   ├── it should push id to withdrawQueue.push
+                    │   │   ├── it should push id to supplyQueue
+                    │   │   ├── it should push id to withdrawQueue
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                     │   │       └── revert with MaxQueueSizeExceeded()
                     │   ├── it should set config[id] to newMarketCap
