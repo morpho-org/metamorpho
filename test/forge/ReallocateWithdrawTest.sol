@@ -46,6 +46,16 @@ contract ReallocateWithdrawTest is BaseTest {
         assertEq(vault.idle(), INITIAL_DEPOSIT, "vault.idle() 1");
     }
 
+    function testReallocateWithdrawInconsistentAsset() public {
+        allMarkets[0].loanToken = address(1);
+
+        withdrawn.push(MarketAllocation(allMarkets[0], 0, 0));
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, allMarkets[0].id()));
+        vault.reallocate(withdrawn, supplied);
+    }
+
     function testReallocateWithdrawSupply(uint256[3] memory withdrawnShares, uint256[3] memory suppliedAssets) public {
         uint256[3] memory sharesBefore = [
             morpho.supplyShares(allMarkets[0].id(), address(vault)),
