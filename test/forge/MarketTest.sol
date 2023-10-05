@@ -36,7 +36,7 @@ contract MarketTest is BaseTest {
         vm.assume(marketParams.loanToken != address(loanToken));
 
         vm.prank(RISK_MANAGER);
-        vm.expectRevert(ErrorsLib.InconsistentAsset.selector);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, marketParams.id()));
         vault.submitCap(marketParams, 0);
     }
 
