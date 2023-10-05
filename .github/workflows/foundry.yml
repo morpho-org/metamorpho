@@ -32,7 +32,7 @@ jobs:
       - uses: ./.github/actions/install
 
       - name: Build contracts via IR & check sizes
-        run: yarn build:forge --force # don't use compilation cache
+        run: yarn build:forge --force --sizes # don't use compilation cache
 
   build-no-ir:
     name: Compilation (without IR)

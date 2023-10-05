@@ -33,7 +33,7 @@ contract UrdTest is BaseTest {
         address currentRewardsDistributor = vault.rewardsDistributor();
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.ALREADY_SET));
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.setRewardsDistributor(currentRewardsDistributor);
     }
 

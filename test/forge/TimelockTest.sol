@@ -63,7 +63,7 @@ contract TimelockTest is BaseTest {
         timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.MAX_TIMELOCK_EXCEEDED));
+        vm.expectRevert(ErrorsLib.MaxTimelockExceeded.selector);
         vault.submitTimelock(timelock);
     }
 
@@ -87,7 +87,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptTimelockNoPendingValue() public {
-        vm.expectRevert(bytes(ErrorsLib.NO_PENDING_VALUE));
+        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
         vault.acceptTimelock();
     }
 
@@ -113,7 +113,7 @@ contract TimelockTest is BaseTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptTimelock();
     }
 
@@ -127,7 +127,7 @@ contract TimelockTest is BaseTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
+        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptTimelock();
     }
 
@@ -179,7 +179,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptFeeNoPendingValue() public {
-        vm.expectRevert(bytes(ErrorsLib.NO_PENDING_VALUE));
+        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
         vault.acceptFee();
     }
 
@@ -193,7 +193,7 @@ contract TimelockTest is BaseTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptFee();
     }
 
@@ -207,7 +207,7 @@ contract TimelockTest is BaseTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
+        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptFee();
     }
 
@@ -241,7 +241,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptCapNoPendingValue() public {
-        vm.expectRevert(bytes(ErrorsLib.NO_PENDING_VALUE));
+        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
         vault.acceptCap(allMarkets[0].id());
     }
 
@@ -254,7 +254,7 @@ contract TimelockTest is BaseTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_NOT_ELAPSED));
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptCap(allMarkets[0].id());
     }
 
@@ -272,7 +272,7 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.expectRevert(bytes(ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED));
+        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptCap(allMarkets[0].id());
     }
 

@@ -1,48 +1,50 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
+
 library ErrorsLib {
-    string internal constant ZERO_ADDRESS = "zero address";
+    error ZeroAddress();
 
-    string internal constant NOT_RISK_MANAGER = "not risk manager";
+    error NotRiskManager();
 
-    string internal constant NOT_ALLOCATOR = "not allocator";
+    error NotAllocator();
 
-    string internal constant NOT_GUARDIAN = "not guardian";
+    error NotGuardian();
 
-    string internal constant UNAUTHORIZED_MARKET = "unauthorized market";
+    error UnauthorizedMarket();
 
-    string internal constant INCONSISTENT_ASSET = "inconsistent asset";
+    error InconsistentAsset();
 
-    string internal constant SUPPLY_CAP_EXCEEDED = "supply cap exceeded";
+    error SupplyCapExceeded(Id id);
 
     /// @notice Thrown when the fee to set exceeds the maximum fee.
-    string internal constant MAX_FEE_EXCEEDED = "max fee exceeded";
+    error MaxFeeExceeded();
 
     /// @notice Thrown when the value is already set.
-    string internal constant ALREADY_SET = "already set";
+    error AlreadySet();
 
-    string internal constant NO_TIMELOCK = "no timelock";
+    error NoTimelock();
 
-    string internal constant DUPLICATE_MARKET = "duplicate market";
+    error DuplicateMarket(Id id);
 
-    string internal constant MISSING_MARKET = "missing market";
+    error MissingMarket(Id id);
 
-    string internal constant NO_PENDING_VALUE = "no pending value";
+    error NoPendingValue();
 
-    string internal constant WITHDRAW_FAILED_MORPHO = "withdraw failed on Morpho";
+    error WithdrawMorphoFailed();
 
-    string internal constant MARKET_NOT_CREATED = "market not created";
+    error MarketNotCreated();
 
-    string internal constant MAX_TIMELOCK_EXCEEDED = "max timelock exceeded";
+    error MaxTimelockExceeded();
 
-    string internal constant TIMELOCK_NOT_ELAPSED = "timelock not elapsed";
+    error TimelockNotElapsed();
 
-    string internal constant TIMELOCK_EXPIRATION_EXCEEDED = "timelock expiration exceeded";
+    error TimelockExpirationExceeded();
 
-    string internal constant MAX_QUEUE_SIZE_EXCEEDED = "max queue size exceeded";
+    error MaxQueueSizeExceeded();
 
-    string internal constant ZERO_FEE_RECIPIENT = "fee recipient is zero";
+    error ZeroFeeRecipient();
 
-    string internal constant INSUFFICIENT_IDLE = "insufficient idle liquidity";
+    error InsufficientIdle();
 }

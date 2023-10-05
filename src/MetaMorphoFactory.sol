@@ -18,7 +18,7 @@ contract MetaMorphoFactory {
     /* CONSTRCUTOR */
 
     constructor(address morpho) {
-        require(morpho != address(0), ErrorsLib.ZERO_ADDRESS);
+        if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
 
         MORPHO = morpho;
     }

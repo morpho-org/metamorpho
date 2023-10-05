@@ -236,13 +236,13 @@ contract FeeTest is BaseTest {
         fee = bound(fee, MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.MAX_FEE_EXCEEDED));
+        vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
         vault.submitFee(fee);
     }
 
     function testSubmitFeeAlreadySet() public {
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.ALREADY_SET));
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitFee(FEE);
     }
 

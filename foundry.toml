@@ -1,7 +1,5 @@
 [profile.default]
-names = true
-sizes = true
-via-ir = false
+src = "src"
 test = "test/forge"
 evm_version = "paris"
 fs_permissions = [
@@ -18,6 +16,7 @@ wrap_comments = true
 
 
 [profile.build]
+via-ir = true
 test = "/dev/null"
 script = "/dev/null"
 
