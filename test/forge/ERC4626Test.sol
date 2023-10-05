@@ -260,13 +260,13 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
+        assertGt(vault.maxWithdraw(ONBEHALF), 0);
+
         loanToken.approve(address(morpho), type(uint256).max);
         morpho.flashLoan(address(loanToken), loanToken.balanceOf(address(morpho)), hex"");
     }
 
     function onMorphoFlashLoan(uint256, bytes memory) external {
-        uint256 maxWithdraw = vault.maxWithdraw(ONBEHALF);
-
-        assertEq(maxWithdraw, 0);
+        assertEq(vault.maxWithdraw(ONBEHALF), 0);
     }
 }
