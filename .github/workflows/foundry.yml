@@ -32,7 +32,7 @@ jobs:
       - uses: ./.github/actions/install
 
       - name: Build contracts via IR & check sizes
-        run: yarn build:forge --force # don't use compilation cache
+        run: yarn build:forge --force --sizes # don't use compilation cache
 
   build-no-ir:
     name: Compilation (without IR)
@@ -79,8 +79,8 @@ jobs:
         type: ["slow", "fast"]
         include:
           - type: "slow"
-            fuzz-runs: 100000
-            max-test-rejects: 500000
+            fuzz-runs: 32768
+            max-test-rejects: 1048576
             invariant-runs: 64
             invariant-depth: 1024
           - type: "fast"

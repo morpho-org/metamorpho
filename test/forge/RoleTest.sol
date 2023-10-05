@@ -37,7 +37,7 @@ contract RoleTest is BaseTest {
 
         vm.startPrank(caller);
 
-        vm.expectRevert(bytes(ErrorsLib.NOT_RISK_MANAGER));
+        vm.expectRevert(ErrorsLib.NotRiskManager.selector);
         vault.submitCap(allMarkets[0], CAP);
 
         vm.stopPrank();
@@ -52,13 +52,13 @@ contract RoleTest is BaseTest {
         MarketAllocation[] memory allocation;
         uint256[] memory withdrawQueueFromRanks;
 
-        vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
+        vm.expectRevert(ErrorsLib.NotAllocator.selector);
         vault.setSupplyQueue(supplyQueue);
 
-        vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
+        vm.expectRevert(ErrorsLib.NotAllocator.selector);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
 
-        vm.expectRevert(bytes(ErrorsLib.NOT_ALLOCATOR));
+        vm.expectRevert(ErrorsLib.NotAllocator.selector);
         vault.reallocate(allocation, allocation);
 
         vm.stopPrank();

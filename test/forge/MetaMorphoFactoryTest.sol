@@ -15,7 +15,7 @@ contract MetaMorphoFactoryTest is BaseTest {
     }
 
     function testFactoryAddresssZero() public {
-        vm.expectRevert(bytes(ErrorsLib.ZERO_ADDRESS));
+        vm.expectRevert(ErrorsLib.ZeroAddress.selector);
         new MetaMorphoFactory(address(0));
     }
 
