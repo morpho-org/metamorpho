@@ -20,11 +20,11 @@ import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 
 import {Multicall} from "@openzeppelin/utils/Multicall.sol";
 import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
-import {ERC20Votes} from "@openzeppelin/token/ERC20/extensions/ERC20Votes.sol";
+import {ERC20Snapshot} from "@openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
 import {IERC20Metadata, ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
 import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 
-contract MetaMorpho is ERC4626, ERC20Permit, ERC20Votes, Ownable2Step, Multicall, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, ERC20Snapshot, Ownable2Step, Multicall, IMetaMorpho {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
@@ -447,18 +447,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, ERC20Votes, Ownable2Step, Multicall
         assets += idle;
     }
 
-    /* ERC20Votes (INTERNAL) */
+    /* ERC20Snapshot (INTERNAL) */
 
-    function _mint(address account, uint256 amount) internal override(ERC20, ERC20Votes) {
-        ERC20Votes._mint(account, amount);
-    }
-
-    function _burn(address account, uint256 amount) internal override(ERC20, ERC20Votes) {
-        ERC20Votes._burn(account, amount);
-    }
-
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
-        ERC20Votes._afterTokenTransfer(from, to, amount);
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
+        ERC20Snapshot._beforeTokenTransfer(from, to, amount);
     }
 
     /* ERC4626 (INTERNAL) */
