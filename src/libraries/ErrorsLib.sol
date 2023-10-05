@@ -24,8 +24,6 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     error AlreadySet();
 
-    error NoTimelock();
-
     error DuplicateMarket(Id id);
 
     error MissingMarket(Id id);

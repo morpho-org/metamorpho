@@ -196,7 +196,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
-        if (timelock == 0 && newGuardian != address(0)) revert ErrorsLib.NoTimelock();
 
         if (guardian == address(0) || timelock == 0) {
             _setGuardian(newGuardian);

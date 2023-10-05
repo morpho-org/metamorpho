@@ -29,28 +29,6 @@ contract GuardianTest is BaseTest {
         vault.submitGuardian(GUARDIAN);
     }
 
-    function testSubmitGuardianNotZeroNoTimelock() public {
-        _setTimelock(0);
-
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.NoTimelock.selector);
-        vault.submitGuardian(_addrFromHashedString("Guardian2"));
-    }
-
-    function testSubmitGuardianZeroNoTimelock() public {
-        _setTimelock(0);
-
-        vm.prank(OWNER);
-        vault.submitGuardian(address(0));
-
-        address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
-
-        assertEq(newGuardian, address(0), "newGuardian");
-        assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
-    }
-
     function testSubmitGuardianAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
@@ -94,6 +72,27 @@ contract GuardianTest is BaseTest {
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
         assertEq(pendingTimelock, 0, "pendingTimelock");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testRevokeGuardian(uint256 elapsed) public {
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        address guardian = _addrFromHashedString("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.prank(GUARDIAN);
+        vault.revokeGuardian();
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, GUARDIAN, "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
         assertEq(submittedAt, 0, "submittedAt");
     }
 }
