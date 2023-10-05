@@ -289,8 +289,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
-    /// depositing
-    /// to the vault.
+    /// depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
         uint256 length = newSupplyQueue.length;
 
@@ -305,7 +304,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
     /// vault's supply can be removed.
-    /// @param indexes The indexes of the markets in the previous withdraw queue.
+    /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
@@ -344,7 +343,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetWithdrawQueue(msg.sender, newWithdrawQueue);
     }
 
-    /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on `supplied`).
+    /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on
+    /// `supplied`).
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
         onlyAllocator
@@ -556,7 +556,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the amount of shares that the vault would exchange for the amount of `assets` provided, in an ideal
     /// scenario where all the conditions are met.
-    /// @dev It assumes the performance fee has been accrued and thus takes into account `newTotalSupply` and `newTotalAssets`.
+    /// @dev It assumes the performance fee has been accrued and thus takes into account `newTotalSupply` and
+    /// `newTotalAssets`.
     function _convertToSharesWithFeeAccrued(
         uint256 assets,
         uint256 newTotalSupply,
@@ -671,7 +672,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* LIQUIDITY ALLOCATION */
 
-    /// @dev Supplies `assets` to Morpho and the idle liquidity if necessary.
+    /// @dev Supplies `assets` to Morpho and increase the idle liquidity if necessary.
     function _supplyMorpho(uint256 assets) internal {
         uint256 nbMarkets = supplyQueue.length;
 

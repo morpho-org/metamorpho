@@ -25,6 +25,7 @@ struct PendingAddress {
     uint96 submittedAt;
 }
 
+/// @dev Either `assets` or `shares` should be zero.
 struct MarketAllocation {
     /// @notice The market to allocate.
     MarketParams marketParams;
