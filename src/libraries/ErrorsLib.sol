@@ -9,10 +9,10 @@ library ErrorsLib {
     /// @notice Thrown when the address passed is the zero address.
     string internal constant ZERO_ADDRESS = "zero address";
 
-    /// @notice Thrown when the caller is not the risk manager.
+    /// @notice Thrown when the caller doesn't have the risk manager's privilege.
     string internal constant NOT_RISK_MANAGER = "not risk manager";
 
-    /// @notice Thrown when the caller is not an allocator.
+    /// @notice Thrown when the caller doesn't have the allocator's privilege.
     string internal constant NOT_ALLOCATOR = "not allocator";
 
     /// @notice Thrown when the caller is not the guardian.

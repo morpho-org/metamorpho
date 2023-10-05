@@ -46,7 +46,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The address of the risk manager.
     address public riskManager;
 
-    /// @notice Stores whether `target` is an allocator or not.
+    /// @notice Stores whether an address is an allocator or not.
     mapping(address => bool) internal _isAllocator;
 
     /// @notice Stores the configuration of each market.
@@ -88,7 +88,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The rewards distributor.
     address public rewardsDistributor;
 
-    /// @notice Stores the total assets owned by this vault when the fee was last accrued.
+    /// @notice Stores the total assets managed by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
 
     /// @notice Stores the idle liquidity.
@@ -125,7 +125,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* MODIFIERS */
 
-    /// @dev Reverts if the caller is not the `riskManager`.
+    /// @dev Reverts if the caller doesn't have the risk manager's privilege.
     modifier onlyRiskManager() {
         require(_msgSender() == riskManager || _msgSender() == owner(), ErrorsLib.NOT_RISK_MANAGER);
 
@@ -139,7 +139,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _;
     }
 
-    /// @dev Reverts if the caller is not an allocator.
+    /// @dev Reverts if the caller doesn't have the allocator's privilege.
     modifier onlyAllocator() {
         require(isAllocator(_msgSender()), ErrorsLib.NOT_ALLOCATOR);
 
@@ -149,8 +149,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Makes sure conditions are met to accept a pending value.
     /// @dev Reverts if:
     /// - there's no pending value;
-    /// - the timelock has not elapsed;
-    /// - the timelock has expired.
+    /// - the timelock has not elapsed since the pending value has been submitted;
+    /// - the timelock has expired since the pending value has been submitted.
     modifier timelockElapsed(uint256 submittedAt) {
         require(submittedAt != 0, ErrorsLib.NO_PENDING_VALUE);
         require(block.timestamp >= submittedAt + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
@@ -344,7 +344,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetWithdrawQueue(msg.sender, newWithdrawQueue);
     }
 
-    /// @notice Reallocates the vault's liquidity to the markets defined by `withdrawn` and `supplied`.
+    /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on `supplied`).
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
         onlyAllocator
@@ -539,7 +539,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc ERC4626
-    /// @dev The accrual of fees is taken into account in the conversion.
+    /// @dev The accrual of performance fees is taken into account in the conversion.
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
@@ -556,7 +556,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the amount of shares that the vault would exchange for the amount of `assets` provided, in an ideal
     /// scenario where all the conditions are met.
-    /// @dev It assumes that fees have been accrued and taking into account in `newTotalSupply` and `newTotalAssets`.
+    /// @dev It assumes the performance fee has been accrued and thus takes into account `newTotalSupply` and `newTotalAssets`.
     function _convertToSharesWithFeeAccrued(
         uint256 assets,
         uint256 newTotalSupply,
