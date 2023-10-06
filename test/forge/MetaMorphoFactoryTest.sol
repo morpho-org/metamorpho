@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+
 import "./helpers/BaseTest.sol";
 
 contract MetaMorphoFactoryTest is BaseTest {
@@ -19,11 +21,7 @@ contract MetaMorphoFactoryTest is BaseTest {
         vm.assume(address(initialOwner) != address(0));
         initialTimelock = bound(initialTimelock, 0, MAX_TIMELOCK);
 
-        bytes32 initCodeHash = hashInitCode(
-            type(MetaMorpho).creationCode,
-            abi.encode(initialOwner, address(morpho), initialTimelock, address(loanToken), name, symbol)
-        );
-        address expectedAddress = computeCreate2Address(salt, initCodeHash, address(factory));
+        address expectedAddress = Clones.predictDeterministicAddress(vaultImpl, salt, address(factory));
 
         vm.expectEmit(address(factory));
         emit EventsLib.CreateMetaMorpho(

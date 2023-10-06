@@ -18,6 +18,7 @@ import {IrmMock} from "src/mocks/IrmMock.sol";
 import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {MetaMorpho, MarketAllocation} from "src/MetaMorpho.sol";
 import {MetaMorphoFactory} from "src/MetaMorphoFactory.sol";
 
@@ -54,6 +55,7 @@ contract BaseTest is Test {
     OracleMock internal oracle;
     IrmMock internal irm;
 
+    address internal vaultImpl;
     MetaMorpho internal vault;
     MetaMorphoFactory internal factory;
 
@@ -94,7 +96,8 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
         vm.stopPrank();
 
-        factory = new MetaMorphoFactory(address(new MetaMorpho(address(morpho))));
+        vaultImpl = address(new MetaMorpho(address(morpho)));
+        factory = new MetaMorphoFactory(vaultImpl);
         vault = factory.createMetaMorpho(OWNER, 0, address(loanToken), "MetaMorpho Vault", "MMV", bytes32(0));
 
         vm.startPrank(OWNER);

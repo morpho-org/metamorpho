@@ -228,7 +228,7 @@ contract FeeTest is BaseTest {
     }
 
     function testSubmitFeeNotOwner(uint256 fee) public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.submitFee(fee);
     }
 
