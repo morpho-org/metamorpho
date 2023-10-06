@@ -25,15 +25,15 @@
             └── it should emit SetIsAllocator(newAllocator, newIsAllocator)
 
 .
-└── setRewardsDistributor(address newRewardsDistributor) external
+└── setRewardsRecipient(address newRewardsRecipient) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
-        ├── when newRewardsDistributor == rewardsDistributor
+        ├── when newRewardsRecipient == rewardsRecipient
         │   └── revert with AlreadySet()
-        └── when newRewardsDistributor != rewardsDistributor
-            ├── it should set rewardsDistributor to newRewardsDistributor
-            └── it shoud emit SetRewardsDistributor(newRewardsDistributor)
+        └── when newRewardsRecipient != rewardsRecipient
+            ├── it should set rewardsRecipient to newRewardsRecipient
+            └── it shoud emit SetRewardsRecipient(newRewardsRecipient)
 
 .
 └── submitTimelock(uint256 newTimelock) external
@@ -269,14 +269,14 @@
 
 .
 └── transferRewards(address token) external
-    ├── when rewardsDistributor == address(0)
+    ├── when rewardsRecipient == address(0)
     │   └── revert with ZERO_ADDRESS
-    └── when rewardsDistributor != address(0)
+    └── when rewardsRecipient != address(0)
         ├── it should compute amount = IERC20(token).balanceOf(address(this))
         ├── when token == asset()
         │   └── it should remove idle from amount
-        ├── it should transfer amount of token from the the vault to rewardsDistributor
-        └── it should emit TransferRewards(msg.sender, rewardsDistributor, token, amount)
+        ├── it should transfer amount of token from the the vault to rewardsRecipient
+        └── it should emit TransferRewards(msg.sender, rewardsRecipient, token, amount)
 
 
 /* ONLY GUARDIAN FUNCTIONS */

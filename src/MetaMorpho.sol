@@ -87,7 +87,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     address public guardian;
 
     /// @notice The rewards distributor.
-    address public rewardsDistributor;
+    address public rewardsRecipient;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
@@ -180,13 +180,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    /// @notice Sets `rewardsDistributor` to `newRewardsDistributor`.
-    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
-        if (newRewardsDistributor == rewardsDistributor) revert ErrorsLib.AlreadySet();
+    /// @notice Sets `rewardsRecipient` to `newRewardsRecipient`.
+    function setRewardsRecipient(address newRewardsRecipient) external onlyOwner {
+        if (newRewardsRecipient == rewardsRecipient) revert ErrorsLib.AlreadySet();
 
-        rewardsDistributor = newRewardsDistributor;
+        rewardsRecipient = newRewardsRecipient;
 
-        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
+        emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
@@ -419,17 +419,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _setCap(id, pendingCap[id].value);
     }
 
-    /// @notice Transfers `token` rewards collected by the vault to the `rewardsDistributor`.
+    /// @notice Transfers `token` rewards collected by the vault to the `rewardsRecipient`.
     /// @dev Can be used to extract any token that would be stuck on the contract as well.
     function transferRewards(address token) external {
-        if (rewardsDistributor == address(0)) revert ErrorsLib.ZeroAddress();
+        if (rewardsRecipient == address(0)) revert ErrorsLib.ZeroAddress();
 
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        SafeERC20.safeTransfer(IERC20(token), rewardsDistributor, amount);
+        SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
 
-        emit EventsLib.TransferRewards(msg.sender, rewardsDistributor, token, amount);
+        emit EventsLib.TransferRewards(msg.sender, rewardsRecipient, token, amount);
     }
 
     /* PUBLIC */
