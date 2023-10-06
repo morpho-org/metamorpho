@@ -38,7 +38,7 @@ contract UrdTest is BaseTest {
     }
 
     function testSetRewardsDistributorNotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.setRewardsDistributor(address(0));
     }
 

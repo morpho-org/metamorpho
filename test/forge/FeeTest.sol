@@ -46,7 +46,7 @@ contract FeeTest is BaseTest {
         uint256 feeAmount = interest.wMulDown(FEE);
 
         return feeAmount.mulDiv(
-            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Down
+            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Floor
         );
     }
 
@@ -224,7 +224,7 @@ contract FeeTest is BaseTest {
     }
 
     function testSubmitFeeNotOwner(uint256 fee) public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.submitFee(fee);
     }
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {stdError} from "@forge-std/StdError.sol";
 
+import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 import "./helpers/BaseTest.sol";
 
 contract MarketTest is BaseTest {
@@ -14,7 +15,7 @@ contract MarketTest is BaseTest {
         cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
 
         vm.prank(RISK_MANAGER);
-        vm.expectRevert("SafeCast: value doesn't fit in 192 bits");
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, uint8(192), cap));
         vault.submitCap(marketParams, cap);
     }
 

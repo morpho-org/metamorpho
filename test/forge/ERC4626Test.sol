@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import {IERC20Errors} from "@openzeppelin/interfaces/draft-IERC6093.sol";
+import {IMorphoFlashLoanCallback} from "@morpho-blue/interfaces/IMorphoCallbacks.sol";
+
 import "./helpers/BaseTest.sol";
 
-contract ERC4626Test is BaseTest {
+contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
 
@@ -50,7 +53,9 @@ contract ERC4626Test is BaseTest {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         vm.prank(ONBEHALF);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, shares + 1)
+        );
         vault.redeem(shares + 1, RECEIVER, ONBEHALF);
     }
 
@@ -101,7 +106,7 @@ contract ERC4626Test is BaseTest {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         vm.prank(SUPPLIER);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, SUPPLIER, 0, shares));
         vault.redeem(shares, SUPPLIER, SUPPLIER);
     }
 
@@ -114,7 +119,7 @@ contract ERC4626Test is BaseTest {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         vm.prank(RECEIVER);
-        vm.expectRevert("ERC20: insufficient allowance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, RECEIVER, 0, shares));
         vault.redeem(shares, RECEIVER, ONBEHALF);
     }
 
@@ -126,8 +131,9 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(assets, ONBEHALF);
 
+        uint256 shares = vault.previewWithdraw(assets);
         vm.prank(RECEIVER);
-        vm.expectRevert("ERC20: insufficient allowance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, RECEIVER, 0, shares));
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
@@ -163,7 +169,7 @@ contract ERC4626Test is BaseTest {
         amount = bound(amount, 0, shares);
 
         vm.prank(SUPPLIER);
-        vm.expectRevert("ERC20: insufficient allowance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, SUPPLIER, 0, shares));
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
@@ -173,7 +179,7 @@ contract ERC4626Test is BaseTest {
         loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
-        vault.deposit(deposited, ONBEHALF);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
 
@@ -183,8 +189,11 @@ contract ERC4626Test is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(toAdd, SUPPLIER);
 
+        uint256 sharesBurnt = vault.previewWithdraw(assets);
         vm.prank(ONBEHALF);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, sharesBurnt)
+        );
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
@@ -242,5 +251,29 @@ contract ERC4626Test is BaseTest {
         assertEq(vault.balanceOf(SUPPLIER), 0, "balanceOf(SUPPLIER)");
         assertEq(vault.balanceOf(ONBEHALF), minted - toTransfer, "balanceOf(ONBEHALF)");
         assertEq(vault.balanceOf(RECEIVER), toTransfer, "balanceOf(RECEIVER)");
+    }
+
+    function testMaxWithdrawFlashLoan(uint256 supplied, uint256 deposited) public {
+        supplied = bound(supplied, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        loanToken.setBalance(SUPPLIER, supplied);
+
+        vm.prank(SUPPLIER);
+        morpho.supply(allMarkets[0], supplied, 0, ONBEHALF, hex"");
+
+        loanToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+
+        assertGt(vault.maxWithdraw(ONBEHALF), 0);
+
+        loanToken.approve(address(morpho), type(uint256).max);
+        morpho.flashLoan(address(loanToken), loanToken.balanceOf(address(morpho)), hex"");
+    }
+
+    function onMorphoFlashLoan(uint256, bytes memory) external {
+        assertEq(vault.maxWithdraw(ONBEHALF), 0);
     }
 }

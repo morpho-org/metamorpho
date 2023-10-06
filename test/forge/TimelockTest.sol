@@ -114,7 +114,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testSubmitTimelockNotOwner(uint256 timelock) public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.submitTimelock(timelock);
     }
 
