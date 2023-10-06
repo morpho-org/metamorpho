@@ -18,7 +18,7 @@ contract GuardianTest is BaseTest {
     }
 
     function testSubmitGuardianNotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.submitGuardian(GUARDIAN);
     }
 
