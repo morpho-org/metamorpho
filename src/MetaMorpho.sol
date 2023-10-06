@@ -48,7 +48,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     address public riskManager;
 
     /// @notice Stores whether an address is an allocator or not.
-    mapping(address => bool) internal _isAllocator;
+    mapping(address => bool) public _isAllocator;
 
     /// @notice Stores the configuration of each market.
     mapping(Id => MarketConfig) public config;
