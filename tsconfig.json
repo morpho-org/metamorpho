@@ -2,6 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "baseUrl": ".",
+    "outDir": "dist",
     "target": "esnext",
     "moduleResolution": "node",
     "strict": true,
