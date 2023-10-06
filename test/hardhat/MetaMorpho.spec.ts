@@ -1,4 +1,4 @@
-import { AbiCoder, MaxUint256, keccak256, toBigInt } from "ethers";
+import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
@@ -181,18 +181,19 @@ describe("MetaMorpho", () => {
     const MetaMorphoFactoryFactory = await hre.ethers.getContractFactory("MetaMorphoFactory", admin);
 
     factory = await MetaMorphoFactoryFactory.deploy(metaMorphoImplAddress);
+
     metaMorphoAddress = await factory.createMetaMorpho.staticCall(
       admin.address,
       1,
       loanAddress,
       "MetaMorpho",
       "mB",
-      "",
+      ZeroHash,
     );
 
     metaMorpho = MetaMorpho__factory.connect(metaMorphoAddress, admin);
 
-    await factory.createMetaMorpho(admin.address, 1, loanAddress, "MetaMorpho", "mB", "");
+    await factory.createMetaMorpho(admin.address, 1, loanAddress, "MetaMorpho", "mB", ZeroHash);
 
     for (const user of users) {
       await loan.setBalance(user.address, initBalance);
