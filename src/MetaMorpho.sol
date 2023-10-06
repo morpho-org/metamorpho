@@ -87,7 +87,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     address public guardian;
 
     /// @notice The rewards distributor.
-    address public rewardsDistributor;
+    address public rewardsRecipient;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
     uint256 public lastTotalAssets;
@@ -131,16 +131,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _;
     }
 
-    /// @dev Reverts if the caller is not the `guardian`.
-    modifier onlyGuardian() {
-        if (_msgSender() != guardian) revert ErrorsLib.NotGuardian();
+    /// @dev Reverts if the caller doesn't have the allocator's privilege.
+    modifier onlyAllocator() {
+        if (!isAllocator(_msgSender())) revert ErrorsLib.NotAllocator();
 
         _;
     }
 
-    /// @dev Reverts if the caller doesn't have the allocator's privilege.
-    modifier onlyAllocator() {
-        if (!isAllocator(_msgSender())) revert ErrorsLib.NotAllocator();
+    /// @dev Reverts if the caller is not the `guardian`.
+    modifier onlyGuardian() {
+        if (_msgSender() != guardian) revert ErrorsLib.NotGuardian();
 
         _;
     }
@@ -150,7 +150,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// - there's no pending value;
     /// - the timelock has not elapsed since the pending value has been submitted;
     /// - the timelock has expired since the pending value has been submitted.
-    modifier timelockElapsed(uint256 submittedAt) {
+    modifier withinTimelockWindow(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
         if (block.timestamp > submittedAt + timelock + TIMELOCK_EXPIRATION) {
@@ -180,13 +180,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    /// @notice Sets `rewardsDistributor` to `newRewardsDistributor`.
-    function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
-        if (newRewardsDistributor == rewardsDistributor) revert ErrorsLib.AlreadySet();
+    /// @notice Sets `rewardsRecipient` to `newRewardsRecipient`.
+    function setRewardsRecipient(address newRewardsRecipient) external onlyOwner {
+        if (newRewardsRecipient == rewardsRecipient) revert ErrorsLib.AlreadySet();
 
-        rewardsDistributor = newRewardsDistributor;
+        rewardsRecipient = newRewardsRecipient;
 
-        emit EventsLib.SetRewardsDistributor(newRewardsDistributor);
+        emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
@@ -203,11 +203,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) {
-        _setTimelock(pendingTimelock.value);
-    }
-
     /// @notice Submits a `newFee`.
     function submitFee(uint256 newFee) external onlyOwner {
         if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
@@ -221,11 +216,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             emit EventsLib.SubmitFee(newFee);
         }
-    }
-
-    /// @notice Accepts the `pendingFee`.
-    function acceptFee() external timelockElapsed(pendingFee.submittedAt) {
-        _setFee(pendingFee.value);
     }
 
     /// @notice Sets `feeRecipient` to `newFeeRecipient`.
@@ -254,11 +244,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) {
-        _setGuardian(pendingGuardian.value);
-    }
-
     /* ONLY RISK MANAGER FUNCTIONS */
 
     /// @notice Submits a `newMarketCap` for the market defined by `marketParams`.
@@ -277,11 +262,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             emit EventsLib.SubmitCap(id, newMarketCap);
         }
-    }
-
-    /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) {
-        _setCap(id, pendingCap[id].value);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
@@ -393,6 +373,29 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
+    /* ONLY GUARDIAN FUNCTIONS */
+
+    /// @notice Revokes the `pendingTimelock`.
+    function revokeTimelock() external onlyGuardian {
+        emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock);
+
+        delete pendingTimelock;
+    }
+
+    /// @notice Revokes the `pendingGuardian`.
+    function revokeGuardian() external onlyGuardian {
+        emit EventsLib.RevokeGuardian(msg.sender, pendingGuardian);
+
+        delete pendingGuardian;
+    }
+
+    /// @notice Revokes the pending cap of the market defined by `id`.
+    function revokeCap(Id id) external onlyGuardian {
+        emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id]);
+
+        delete pendingCap[id];
+    }
+
     /* EXTERNAL */
 
     /// @notice Returns the size of the supply queue.
@@ -405,40 +408,37 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return withdrawQueue.length;
     }
 
-    /// @notice Transfers `token` rewards collected by the vault to the `rewardsDistributor`.
+    /// @notice Accepts the `pendingTimelock`.
+    function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {
+        _setTimelock(pendingTimelock.value);
+    }
+
+    /// @notice Accepts the `pendingFee`.
+    function acceptFee() external withinTimelockWindow(pendingFee.submittedAt) {
+        _setFee(pendingFee.value);
+    }
+
+    /// @notice Accepts the `pendingGuardian`.
+    function acceptGuardian() external withinTimelockWindow(pendingGuardian.submittedAt) {
+        _setGuardian(pendingGuardian.value);
+    }
+
+    /// @notice Accepts the pending cap of the market defined by `id`.
+    function acceptCap(Id id) external withinTimelockWindow(pendingCap[id].submittedAt) {
+        _setCap(id, pendingCap[id].value);
+    }
+
+    /// @notice Transfers `token` rewards collected by the vault to the `rewardsRecipient`.
     /// @dev Can be used to extract any token that would be stuck on the contract as well.
     function transferRewards(address token) external {
-        if (rewardsDistributor == address(0)) revert ErrorsLib.ZeroAddress();
+        if (rewardsRecipient == address(0)) revert ErrorsLib.ZeroAddress();
 
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        SafeERC20.safeTransfer(IERC20(token), rewardsDistributor, amount);
+        SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
 
-        emit EventsLib.TransferRewards(msg.sender, rewardsDistributor, token, amount);
-    }
-
-    /* ONLY GUARDIAN FUNCTIONS */
-
-    /// @notice Revokes the `pendingTimelock`.
-    function revokeTimelock() external onlyGuardian {
-        emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock);
-
-        delete pendingTimelock;
-    }
-
-    /// @notice Revokes the pending cap of the market defined by `id`.
-    function revokeCap(Id id) external onlyGuardian {
-        emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id]);
-
-        delete pendingCap[id];
-    }
-
-    /// @notice Revokes the `pendingGuardian`.
-    function revokeGuardian() external onlyGuardian {
-        emit EventsLib.RevokeGuardian(msg.sender, pendingGuardian);
-
-        delete pendingGuardian;
+        emit EventsLib.TransferRewards(msg.sender, rewardsRecipient, token, amount);
     }
 
     /* PUBLIC */

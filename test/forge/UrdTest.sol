@@ -21,30 +21,30 @@ contract UrdTest is BaseTest {
         rewardsDistributor = urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0));
     }
 
-    function testSetRewardsDistributor(address newRewardsDistributor) public {
-        vm.assume(newRewardsDistributor != vault.rewardsDistributor());
+    function testSetRewardsRecipient(address newRewardsRecipient) public {
+        vm.assume(newRewardsRecipient != vault.rewardsRecipient());
 
         vm.prank(OWNER);
-        vault.setRewardsDistributor(newRewardsDistributor);
-        assertEq(vault.rewardsDistributor(), newRewardsDistributor);
+        vault.setRewardsRecipient(newRewardsRecipient);
+        assertEq(vault.rewardsRecipient(), newRewardsRecipient);
     }
 
-    function testAlreadySetRewardsDistributor() public {
-        address currentRewardsDistributor = vault.rewardsDistributor();
+    function testAlreadySetRewardsRecipient() public {
+        address currentRewardsRecipient = vault.rewardsRecipient();
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setRewardsDistributor(currentRewardsDistributor);
+        vault.setRewardsRecipient(currentRewardsRecipient);
     }
 
-    function testSetRewardsDistributorNotOwner() public {
+    function testSetRewardsRecipientNotOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        vault.setRewardsDistributor(address(0));
+        vault.setRewardsRecipient(address(0));
     }
 
     function testTransferRewardsNotLoanToken(uint256 amount) public {
         vm.prank(OWNER);
-        vault.setRewardsDistributor(address(rewardsDistributor));
+        vault.setRewardsRecipient(address(rewardsDistributor));
 
         collateralToken.setBalance(address(vault), amount);
         uint256 vaultBalanceBefore = collateralToken.balanceOf(address(vault));
@@ -66,7 +66,7 @@ contract UrdTest is BaseTest {
         rewards = bound(rewards, 0, MAX_TEST_ASSETS);
 
         vm.prank(OWNER);
-        vault.setRewardsDistributor(address(rewardsDistributor));
+        vault.setRewardsRecipient(address(rewardsDistributor));
 
         loanToken.setBalance(address(vault), rewards);
 
