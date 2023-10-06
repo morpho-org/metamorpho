@@ -9,14 +9,8 @@ uint256 constant TIMELOCK = 1 weeks;
 contract TimelockTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
-    address internal GUARDIAN;
-    address internal FEE_RECIPIENT;
-
     function setUp() public override {
         super.setUp();
-
-        GUARDIAN = _addrFromHashedString("Guardian");
-        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
 
         vm.prank(OWNER);
         vault.setFeeRecipient(FEE_RECIPIENT);
@@ -212,6 +206,20 @@ contract TimelockTest is BaseTest {
 
         vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptFee();
+    }
+
+    function testSubmitGuardian() public {
+        address guardian = _addrFromHashedString("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, GUARDIAN, "newGuardian");
+        assertEq(pendingGuardian, guardian, "pendingGuardian");
+        assertEq(submittedAt, block.timestamp, "submittedAt");
     }
 
     function testSubmitGuardianFromZero() public {

@@ -10,12 +10,8 @@ contract GuardianTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
-    address internal GUARDIAN;
-
     function setUp() public override {
         super.setUp();
-
-        GUARDIAN = _addrFromHashedString("Guardian");
 
         // block.timestamp defaults to 1 which is an unrealistic state: block.timestamp < TIMELOCK.
         vm.warp(block.timestamp + TIMELOCK);
@@ -55,23 +51,27 @@ contract GuardianTest is BaseTest {
         assertEq(submittedAt, 0, "submittedAt");
     }
 
-    function testRevokeCapIncreased(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, 0, TIMELOCK - 1);
+    function testRevokeCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
+        MarketParams memory marketParams = _randomMarketParams(seed);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
+        cap = bound(cap, 1, type(uint192).max);
 
         vm.prank(OWNER);
-        vault.submitTimelock(timelock);
+        vault.submitCap(marketParams, cap);
 
         vm.warp(block.timestamp + elapsed);
 
+        Id id = marketParams.id();
+
         vm.prank(GUARDIAN);
-        vault.revokeTimelock();
+        vault.revokeCap(id);
 
-        uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint256 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
-        assertEq(newTimelock, TIMELOCK, "newTimelock");
-        assertEq(pendingTimelock, 0, "pendingTimelock");
+        assertEq(newCap, 0, "newCap");
+        assertEq(withdrawRank, 0, "withdrawRank");
+        assertEq(pendingCap, 0, "pendingCap");
         assertEq(submittedAt, 0, "submittedAt");
     }
 

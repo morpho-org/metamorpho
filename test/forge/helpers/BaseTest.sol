@@ -42,6 +42,8 @@ contract BaseTest is Test {
     address internal RECEIVER;
     address internal ALLOCATOR;
     address internal RISK_MANAGER;
+    address internal GUARDIAN;
+    address internal FEE_RECIPIENT;
     address internal MORPHO_OWNER;
     address internal MORPHO_FEE_RECIPIENT;
 
@@ -64,6 +66,8 @@ contract BaseTest is Test {
         RECEIVER = _addrFromHashedString("Receiver");
         ALLOCATOR = _addrFromHashedString("Allocator");
         RISK_MANAGER = _addrFromHashedString("RiskManager");
+        GUARDIAN = _addrFromHashedString("Guardian");
+        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
         MORPHO_OWNER = _addrFromHashedString("MorphoOwner");
         MORPHO_FEE_RECIPIENT = _addrFromHashedString("MorphoFeeRecipient");
 
@@ -224,6 +228,8 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptTimelock();
+
+        assertEq(vault.timelock(), newTimelock, "_setTimelock");
     }
 
     function _setGuardian(address newGuardian) internal {
@@ -239,6 +245,8 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptGuardian();
+
+        assertEq(vault.guardian(), newGuardian, "_setGuardian");
     }
 
     function _setFee(uint256 newFee) internal {
@@ -254,6 +262,8 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptFee();
+
+        assertEq(vault.fee(), newFee, "_setFee");
     }
 
     function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
@@ -270,5 +280,9 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptCap(id);
+
+        (cap,) = vault.config(id);
+
+        assertEq(cap, newCap, "_setCap");
     }
 }
