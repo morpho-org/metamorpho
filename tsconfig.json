@@ -11,5 +11,5 @@
     "declaration": true
   },
   "include": ["types", "test/hardhat"],
-  "files": ["./hardhat.config.ts"]
+  "files": ["hardhat.config.ts"]
 }
