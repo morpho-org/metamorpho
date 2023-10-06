@@ -18,10 +18,12 @@ contract MetaMorphoFactoryTest is BaseTest {
         string memory symbol,
         bytes32 salt
     ) public {
-        vm.assume(address(initialOwner) != address(0));
+        initialOwner = _boundAddressNotZero(initialOwner);
         initialTimelock = bound(initialTimelock, 0, MAX_TIMELOCK);
 
         address expectedAddress = Clones.predictDeterministicAddress(vaultImpl, salt, address(factory));
+
+        vm.assume(expectedAddress != address(vault));
 
         vm.expectEmit(address(factory));
         emit EventsLib.CreateMetaMorpho(
@@ -41,5 +43,18 @@ contract MetaMorphoFactoryTest is BaseTest {
         assertEq(metaMorpho.asset(), address(loanToken), "asset");
         assertEq(metaMorpho.name(), name, "name");
         assertEq(metaMorpho.symbol(), symbol, "symbol");
+    }
+
+    function testCreateMetaMorpho(
+        address initialOwner,
+        uint256 initialTimelock,
+        string memory name,
+        string memory symbol
+    ) public {
+        initialOwner = _boundAddressNotZero(initialOwner);
+        initialTimelock = bound(initialTimelock, 0, MAX_TIMELOCK);
+
+        vm.expectRevert(Clones.ERC1167FailedCreateClone.selector);
+        factory.createMetaMorpho(initialOwner, initialTimelock, address(loanToken), name, symbol, bytes32(0));
     }
 }
