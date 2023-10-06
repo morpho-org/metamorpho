@@ -112,7 +112,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) {
-        require(initialTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
+        if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
 
         _transferOwnership(owner);
 
@@ -127,21 +127,21 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Reverts if the caller doesn't have the risk manager's privilege.
     modifier onlyRiskManager() {
-        require(_msgSender() == riskManager || _msgSender() == owner(), ErrorsLib.NOT_RISK_MANAGER);
+        if (_msgSender() != riskManager && _msgSender() != owner()) revert ErrorsLib.NotRiskManager();
 
         _;
     }
 
     /// @dev Reverts if the caller is not the `guardian`.
     modifier onlyGuardian() {
-        require(_msgSender() == guardian, ErrorsLib.NOT_GUARDIAN);
+        if (_msgSender() != guardian) revert ErrorsLib.NotGuardian();
 
         _;
     }
 
     /// @dev Reverts if the caller doesn't have the allocator's privilege.
     modifier onlyAllocator() {
-        require(isAllocator(_msgSender()), ErrorsLib.NOT_ALLOCATOR);
+        if (!isAllocator(_msgSender())) revert ErrorsLib.NotAllocator();
 
         _;
     }
@@ -152,9 +152,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// - the timelock has not elapsed since the pending value has been submitted;
     /// - the timelock has expired since the pending value has been submitted.
     modifier timelockElapsed(uint256 submittedAt) {
-        require(submittedAt != 0, ErrorsLib.NO_PENDING_VALUE);
-        require(block.timestamp >= submittedAt + timelock, ErrorsLib.TIMELOCK_NOT_ELAPSED);
-        require(block.timestamp <= submittedAt + timelock + TIMELOCK_EXPIRATION, ErrorsLib.TIMELOCK_EXPIRATION_EXCEEDED);
+        if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
+        if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
+        if (block.timestamp > submittedAt + timelock + TIMELOCK_EXPIRATION) {
+            revert ErrorsLib.TimelockExpirationExceeded();
+        }
 
         _;
     }
@@ -163,7 +165,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `riskManager` to `newRiskManager`.
     function setRiskManager(address newRiskManager) external onlyOwner {
-        require(newRiskManager != riskManager, ErrorsLib.ALREADY_SET);
+        if (newRiskManager == riskManager) revert ErrorsLib.AlreadySet();
 
         riskManager = newRiskManager;
 
@@ -172,7 +174,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `newAllocator` as an allocator or not (`newIsAllocator`).
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        require(_isAllocator[newAllocator] != newIsAllocator, ErrorsLib.ALREADY_SET);
+        if (_isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
 
         _isAllocator[newAllocator] = newIsAllocator;
 
@@ -181,7 +183,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `rewardsDistributor` to `newRewardsDistributor`.
     function setRewardsDistributor(address newRewardsDistributor) external onlyOwner {
-        require(newRewardsDistributor != rewardsDistributor, ErrorsLib.ALREADY_SET);
+        if (newRewardsDistributor == rewardsDistributor) revert ErrorsLib.AlreadySet();
 
         rewardsDistributor = newRewardsDistributor;
 
@@ -189,8 +191,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
-        require(newTimelock <= MAX_TIMELOCK, ErrorsLib.MAX_TIMELOCK_EXCEEDED);
-        require(newTimelock != timelock, ErrorsLib.ALREADY_SET);
+        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
+        if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
 
         if (newTimelock > timelock || timelock == 0) {
             _setTimelock(newTimelock);
@@ -203,14 +205,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) onlyOwner {
+    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
     }
 
     /// @notice Submits a `newFee`.
     function submitFee(uint256 newFee) external onlyOwner {
-        require(newFee <= MAX_FEE, ErrorsLib.MAX_FEE_EXCEEDED);
-        require(newFee != fee, ErrorsLib.ALREADY_SET);
+        if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
+        if (newFee == fee) revert ErrorsLib.AlreadySet();
 
         if (newFee < fee || timelock == 0) {
             _setFee(newFee);
@@ -223,14 +225,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the `pendingFee`.
-    function acceptFee() external timelockElapsed(pendingFee.submittedAt) onlyOwner {
+    function acceptFee() external timelockElapsed(pendingFee.submittedAt) {
         _setFee(pendingFee.value);
     }
 
     /// @notice Sets `feeRecipient` to `newFeeRecipient`.
     function setFeeRecipient(address newFeeRecipient) external onlyOwner {
-        require(newFeeRecipient != feeRecipient, ErrorsLib.ALREADY_SET);
-        require(newFeeRecipient != address(0) || fee == 0, ErrorsLib.ZERO_FEE_RECIPIENT);
+        if (newFeeRecipient == feeRecipient) revert ErrorsLib.AlreadySet();
+        if (newFeeRecipient == address(0) && fee != 0) revert ErrorsLib.ZeroFeeRecipient();
 
         // Accrue interest to the previous fee recipient set before changing it.
         _updateLastTotalAssets(_accrueFee());
@@ -242,8 +244,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newGuardian`.
     function submitGuardian(address newGuardian) external onlyOwner {
-        require(timelock != 0, ErrorsLib.NO_TIMELOCK);
-        require(newGuardian != guardian, ErrorsLib.ALREADY_SET);
+        if (timelock == 0) revert ErrorsLib.NoTimelock();
+        if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
         if (guardian == address(0)) {
             _setGuardian(newGuardian);
@@ -255,7 +257,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) onlyOwner {
+    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) {
         _setGuardian(pendingGuardian.value);
     }
 
@@ -263,13 +265,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newMarketCap` for the market defined by `marketParams`.
     function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyRiskManager {
-        require(marketParams.loanToken == asset(), ErrorsLib.INCONSISTENT_ASSET);
-
         Id id = marketParams.id();
-        require(MORPHO.lastUpdate(id) != 0, ErrorsLib.MARKET_NOT_CREATED);
+        if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
+        if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
 
         uint256 marketCap = config[id].cap;
-        require(newMarketCap != marketCap, ErrorsLib.ALREADY_SET);
+        if (newMarketCap == marketCap) revert ErrorsLib.AlreadySet();
 
         if (newMarketCap < marketCap || timelock == 0) {
             _setCap(id, newMarketCap.toUint192());
@@ -281,7 +282,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) onlyRiskManager {
+    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) {
         _setCap(id, pendingCap[id].value);
     }
 
@@ -294,7 +295,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 length = newSupplyQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            require(config[newSupplyQueue[i]].cap > 0, ErrorsLib.UNAUTHORIZED_MARKET);
+            if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
 
         supplyQueue = newSupplyQueue;
@@ -314,13 +315,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         for (uint256 i; i < newLength; ++i) {
             uint256 prevIndex = indexes[i];
+            Id id = withdrawQueue[prevIndex];
 
             // If prevIndex >= currLength, reverts with native "Index out of bounds".
-            require(!seen[prevIndex], ErrorsLib.DUPLICATE_MARKET);
+            if (seen[prevIndex]) revert ErrorsLib.DuplicateMarket(id);
 
             seen[prevIndex] = true;
-
-            Id id = withdrawQueue[prevIndex];
 
             newWithdrawQueue[i] = id;
 
@@ -332,7 +332,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                require(MORPHO.supplyShares(id, address(this)) == 0 && config[id].cap == 0, ErrorsLib.MISSING_MARKET);
+                if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
+                    revert ErrorsLib.MissingMarket(id);
+                }
 
                 delete config[id].withdrawRank;
             }
@@ -355,6 +357,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < nbWithdrawn; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
 
+            if (allocation.marketParams.loanToken != asset()) {
+                revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
+            }
+
             (uint256 withdrawnAssets,) = MORPHO.withdraw(
                 allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
             );
@@ -373,17 +379,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             totalSupplied += suppliedAssets;
 
-            require(
-                _supplyBalance(allocation.marketParams) <= config[allocation.marketParams.id()].cap,
-                ErrorsLib.SUPPLY_CAP_EXCEEDED
-            );
+            Id id = allocation.marketParams.id();
+            if (_supplyBalance(allocation.marketParams) > config[id].cap) {
+                revert ErrorsLib.SupplyCapExceeded(id);
+            }
         }
 
         if (totalWithdrawn > totalSupplied) {
             idle += totalWithdrawn - totalSupplied;
         } else {
             uint256 idleSupplied = totalSupplied - totalWithdrawn;
-            require(idle >= idleSupplied, ErrorsLib.INSUFFICIENT_IDLE);
+            if (idle < idleSupplied) revert ErrorsLib.InsufficientIdle();
 
             idle -= idleSupplied;
         }
@@ -394,7 +400,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Transfers `token` rewards collected by the vault to the `rewardsDistributor`.
     /// @dev Can be used to extract any token that would be stuck on the contract as well.
     function transferRewards(address token) external {
-        require(rewardsDistributor != address(0), ErrorsLib.ZERO_ADDRESS);
+        if (rewardsDistributor == address(0)) revert ErrorsLib.ZeroAddress();
 
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
@@ -599,7 +605,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         internal
         override
     {
-        require(_withdrawMorpho(assets) == 0, ErrorsLib.WITHDRAW_FAILED_MORPHO);
+        if (_withdrawMorpho(assets) != 0) revert ErrorsLib.WithdrawMorphoFailed();
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
@@ -642,7 +648,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            require(withdrawQueue.length <= MAX_QUEUE_SIZE, ErrorsLib.MAX_QUEUE_SIZE_EXCEEDED);
+            if (withdrawQueue.length > MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
 
             // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);
@@ -657,7 +663,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Sets `fee` to `newFee`.
     function _setFee(uint256 newFee) internal {
-        require(newFee == 0 || feeRecipient != address(0), ErrorsLib.ZERO_FEE_RECIPIENT);
+        if (newFee != 0 && feeRecipient == address(0)) revert ErrorsLib.ZeroFeeRecipient();
 
         // Accrue interest using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
@@ -766,7 +772,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
             MORPHO.expectedMarketBalances(marketParams);
-        uint256 availableLiquidity = totalSupplyAssets - totalBorrowAssets;
+
+        uint256 availableLiquidity = UtilsLib.min(
+            totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
+        );
 
         return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
     }

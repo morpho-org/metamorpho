@@ -236,27 +236,13 @@ contract FeeTest is BaseTest {
         fee = bound(fee, MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.MAX_FEE_EXCEEDED));
+        vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
         vault.submitFee(fee);
     }
 
     function testSubmitFeeAlreadySet() public {
         vm.prank(OWNER);
-        vm.expectRevert(bytes(ErrorsLib.ALREADY_SET));
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitFee(FEE);
-    }
-
-    function testAcceptFeeNotOwner(uint256 fee) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
-
-        _setTimelock(1);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        vm.warp(block.timestamp + 1);
-
-        vm.expectRevert("Ownable: caller is not the owner");
-        vault.acceptFee();
     }
 }

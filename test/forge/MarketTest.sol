@@ -36,7 +36,7 @@ contract MarketTest is BaseTest {
         vm.assume(marketParams.loanToken != address(loanToken));
 
         vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.INCONSISTENT_ASSET));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, marketParams.id()));
         vault.submitCap(marketParams, 0);
     }
 
@@ -46,7 +46,7 @@ contract MarketTest is BaseTest {
         vm.assume(morpho.lastUpdate(marketParams.id()) == 0);
 
         vm.prank(RISK_MANAGER);
-        vm.expectRevert(bytes(ErrorsLib.MARKET_NOT_CREATED));
+        vm.expectRevert(ErrorsLib.MarketNotCreated.selector);
         vault.submitCap(marketParams, 0);
     }
 
@@ -118,7 +118,7 @@ contract MarketTest is BaseTest {
         indexes[2] = 1;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.DUPLICATE_MARKET));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.DuplicateMarket.selector, allMarkets[1].id()));
         vault.sortWithdrawQueue(indexes);
     }
 
@@ -137,7 +137,7 @@ contract MarketTest is BaseTest {
         indexes[1] = 2;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(bytes(ErrorsLib.MISSING_MARKET));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MissingMarket.selector, allMarkets[0].id()));
         vault.sortWithdrawQueue(indexes);
     }
 }
