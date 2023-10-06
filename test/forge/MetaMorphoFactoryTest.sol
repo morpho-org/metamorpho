@@ -3,20 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./helpers/BaseTest.sol";
 
-import "src/MetaMorphoFactory.sol";
-
 contract MetaMorphoFactoryTest is BaseTest {
-    MetaMorphoFactory factory;
-
-    function setUp() public override {
-        super.setUp();
-
-        factory = new MetaMorphoFactory(address(morpho));
-    }
-
-    function testFactoryAddresssZero() public {
+    function testMetaMorphoFactoryAddressZero() public {
         vm.expectRevert(ErrorsLib.ZeroAddress.selector);
-        new MetaMorphoFactory(address(0));
+        new MetaMorphoFactory(address(0), address(1));
+
+        vm.expectRevert(ErrorsLib.ZeroAddress.selector);
+        new MetaMorphoFactory(address(1), address(0));
     }
 
     function testCreateMetaMorpho(

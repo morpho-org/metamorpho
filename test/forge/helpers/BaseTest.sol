@@ -10,13 +10,16 @@ import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
 import "src/libraries/ConstantsLib.sol";
+import {ErrorsLib} from "src/libraries/ErrorsLib.sol";
+import {EventsLib} from "src/libraries/EventsLib.sol";
 import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
 
 import {IrmMock} from "src/mocks/IrmMock.sol";
 import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
-import {MetaMorpho, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorpho, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorphoFactory} from "src/MetaMorphoFactory.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
@@ -52,6 +55,7 @@ contract BaseTest is Test {
     IrmMock internal irm;
 
     MetaMorpho internal vault;
+    MetaMorphoFactory internal factory;
 
     MarketParams[] internal allMarkets;
 
@@ -90,7 +94,8 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
         vm.stopPrank();
 
-        vault = new MetaMorpho(OWNER, address(morpho), 0, address(loanToken), "MetaMorpho Vault", "MMV");
+        factory = new MetaMorphoFactory(address(morpho), address(new MetaMorpho()));
+        vault = factory.createMetaMorpho(OWNER, 0, address(loanToken), "MetaMorpho Vault", "MMV", bytes32(0));
 
         vm.startPrank(OWNER);
         vault.setRiskManager(RISK_MANAGER);

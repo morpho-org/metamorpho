@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
+import {IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
+
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
+import {Clones} from "@openzeppelin/proxy/Clones.sol";
 
 import {MetaMorpho} from "./MetaMorpho.sol";
 
@@ -10,6 +13,7 @@ contract MetaMorphoFactory {
     /* IMMUTABLES */
 
     address public immutable MORPHO;
+    address public immutable METAMORPHO_IMPL;
 
     /* STORAGE */
 
@@ -17,10 +21,11 @@ contract MetaMorphoFactory {
 
     /* CONSTRCUTOR */
 
-    constructor(address morpho) {
-        if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
+    constructor(address morpho, address implementation) {
+        if (morpho == address(0) || implementation == address(0)) revert ErrorsLib.ZeroAddress();
 
         MORPHO = morpho;
+        METAMORPHO_IMPL = implementation;
     }
 
     /* EXTERNAL */
@@ -33,7 +38,9 @@ contract MetaMorphoFactory {
         string memory symbol,
         bytes32 salt
     ) external returns (MetaMorpho metaMorpho) {
-        metaMorpho = new MetaMorpho{salt: salt}(initialOwner, MORPHO, initialTimelock, asset, name, symbol);
+        metaMorpho = MetaMorpho(Clones.cloneDeterministic(METAMORPHO_IMPL, salt));
+
+        metaMorpho.initialize(initialOwner, MORPHO, initialTimelock, asset, name, symbol);
 
         isMetaMorpho[address(metaMorpho)] = true;
 

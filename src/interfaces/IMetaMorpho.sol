@@ -28,6 +28,15 @@ struct MarketAllocation {
 interface IMetaMorpho is IERC4626 {
     function MORPHO() external view returns (IMorpho);
 
+    function initialize(
+        address owner,
+        address morpho,
+        uint256 initialTimelock,
+        address _asset,
+        string memory _name,
+        string memory _symbol
+    ) external;
+
     function riskManager() external view returns (address);
     function isAllocator(address target) external view returns (bool);
     function guardian() external view returns (address);
