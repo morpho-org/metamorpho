@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import {IERC20Errors} from "@openzeppelin/interfaces/draft-IERC6093.sol";
 import {IMorphoFlashLoanCallback} from "@morpho-blue/interfaces/IMorphoCallbacks.sol";
 
 import "./helpers/BaseTest.sol";
@@ -52,7 +53,9 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         vm.prank(ONBEHALF);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, shares + 1)
+        );
         vault.redeem(shares + 1, RECEIVER, ONBEHALF);
     }
 
@@ -103,7 +106,7 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         vm.prank(SUPPLIER);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, SUPPLIER, 0, shares));
         vault.redeem(shares, SUPPLIER, SUPPLIER);
     }
 
@@ -116,7 +119,7 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         vm.prank(RECEIVER);
-        vm.expectRevert("ERC20: insufficient allowance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, RECEIVER, 0, shares));
         vault.redeem(shares, RECEIVER, ONBEHALF);
     }
 
@@ -128,8 +131,9 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(assets, ONBEHALF);
 
+        uint256 shares = vault.previewWithdraw(assets);
         vm.prank(RECEIVER);
-        vm.expectRevert("ERC20: insufficient allowance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, RECEIVER, 0, shares));
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
@@ -165,7 +169,7 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         amount = bound(amount, 0, shares);
 
         vm.prank(SUPPLIER);
-        vm.expectRevert("ERC20: insufficient allowance");
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, SUPPLIER, 0, shares));
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
@@ -175,7 +179,7 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         loanToken.setBalance(SUPPLIER, deposited);
 
         vm.prank(SUPPLIER);
-        vault.deposit(deposited, ONBEHALF);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** DECIMALS_OFFSET));
 
@@ -185,8 +189,11 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(toAdd, SUPPLIER);
 
+        uint256 sharesBurnt = vault.previewWithdraw(assets);
         vm.prank(ONBEHALF);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, sharesBurnt)
+        );
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
