@@ -83,10 +83,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The timelock.
     uint256 public timelock;
 
-    /// @notice The guardian.
+    /// @notice The guardian. Can be set even without the timelock set.
     address public guardian;
 
-    /// @notice The rewards distributor.
+    /// @notice The rewards recipient.
     address public rewardsRecipient;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
