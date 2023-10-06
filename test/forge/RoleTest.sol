@@ -6,45 +6,43 @@ import "./helpers/BaseTest.sol";
 contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
-    function testSetRiskManager(address newRiskManager) public {
-        vm.assume(newRiskManager != vault.riskManager());
+    function testSetRiskManager() public {
+        address newRiskManager = _addrFromHashedString("FeeRecipient2");
 
         vm.prank(OWNER);
         vault.setRiskManager(newRiskManager);
 
-        assertEq(vault.riskManager(), newRiskManager, "vault.riskManager()");
+        assertEq(vault.riskManager(), newRiskManager, "riskManager");
     }
 
     function testSetRiskManagerShouldRevertAlreadySet() public {
-        address riskManager = vault.riskManager();
-
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setRiskManager(riskManager);
+        vault.setRiskManager(RISK_MANAGER);
     }
 
-    function testSetAllocator(address newAllocator) public {
-        vm.assume(!vault.isAllocator(newAllocator));
+    function testSetAllocator() public {
+        address newAllocator = _addrFromHashedString("Allocator2");
 
         vm.prank(OWNER);
         vault.setIsAllocator(newAllocator, true);
 
-        assertTrue(vault.isAllocator(newAllocator), "vault.isAllocator(newAllocator)");
+        assertTrue(vault.isAllocator(newAllocator), "isAllocator");
     }
 
-    function testUnsetAllocator(address newAllocator) public {
-        vm.assume(!vault.isAllocator(newAllocator));
+    function testUnsetAllocator() public {
+        address newAllocator = _addrFromHashedString("Allocator2");
 
         vm.startPrank(OWNER);
         vault.setIsAllocator(newAllocator, true);
         vault.setIsAllocator(newAllocator, false);
         vm.stopPrank();
 
-        assertFalse(vault.isAllocator(newAllocator), "vault.isAllocator(newAllocator)");
+        assertFalse(vault.isAllocator(newAllocator), "isAllocator");
     }
 
-    function testSetAllocatorShouldRevertAlreadySet(address newAllocator) public {
-        vm.assume(!vault.isAllocator(newAllocator));
+    function testSetAllocatorShouldRevertAlreadySet() public {
+        address newAllocator = _addrFromHashedString("Allocator2");
 
         vm.startPrank(OWNER);
         vault.setIsAllocator(newAllocator, true);
