@@ -13,9 +13,6 @@ contract GuardianTest is BaseTest {
     function setUp() public override {
         super.setUp();
 
-        // block.timestamp defaults to 1 which is an unrealistic state: block.timestamp < TIMELOCK.
-        vm.warp(block.timestamp + TIMELOCK);
-
         _setTimelock(TIMELOCK);
         _setGuardian(GUARDIAN);
     }

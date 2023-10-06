@@ -220,6 +220,9 @@ contract BaseTest is Test {
         uint256 timelock = vault.timelock();
         if (newTimelock == timelock) return;
 
+        // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
+        if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
+
         vm.prank(OWNER);
         vault.submitTimelock(newTimelock);
 

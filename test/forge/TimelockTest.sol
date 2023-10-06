@@ -4,6 +4,69 @@ pragma solidity ^0.8.0;
 import "./helpers/BaseTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
+
+contract NoTimelockTest is BaseTest {
+    using MarketParamsLib for MarketParams;
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(OWNER);
+        vault.setFeeRecipient(FEE_RECIPIENT);
+
+        _setFee(FEE);
+        _setGuardian(GUARDIAN);
+    }
+
+    function testSubmitFeeNoTimelock(uint256 fee) public {
+        fee = bound(fee, 0, MAX_FEE);
+
+        _setTimelock(0);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        uint256 newFee = vault.fee();
+        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+
+        assertEq(newFee, fee, "newFee");
+        assertEq(pendingFee, 0, "pendingFee");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testSubmitGuardianNoTimelock() public {
+        vm.prank(OWNER);
+        vault.submitGuardian(address(0));
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, address(0), "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
+        assertEq(submittedAt, 0, "submittedAt");
+    }
+
+    function testSubmitCapNoTimelock(uint256 seed, uint256 cap) public {
+        cap = bound(cap, 1, type(uint192).max);
+
+        MarketParams memory marketParams = _randomMarketParams(seed);
+
+        vm.prank(RISK_MANAGER);
+        vault.submitCap(marketParams, cap);
+
+        Id id = marketParams.id();
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+
+        assertEq(newCap, cap, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(pendingCap, 0, "pendingCap");
+        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
+        assertEq(vault.withdrawQueueSize(), 1, "withdrawQueueSize");
+    }
+}
+
 uint256 constant TIMELOCK = 1 weeks;
 
 contract TimelockTest is BaseTest {
@@ -14,9 +77,6 @@ contract TimelockTest is BaseTest {
 
         vm.prank(OWNER);
         vault.setFeeRecipient(FEE_RECIPIENT);
-
-        // block.timestamp defaults to 1 which is an unrealistic state: block.timestamp < TIMELOCK.
-        vm.warp(block.timestamp + TIMELOCK);
 
         _setFee(FEE);
         _setTimelock(TIMELOCK);
@@ -143,22 +203,6 @@ contract TimelockTest is BaseTest {
         assertEq(submittedAt, block.timestamp, "submittedAt");
     }
 
-    function testSubmitFeeNoTimelock(uint256 fee) public {
-        fee = bound(fee, 0, MAX_FEE);
-
-        _setTimelock(0);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        uint256 newFee = vault.fee();
-        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
-
-        assertEq(newFee, fee, "newFee");
-        assertEq(pendingFee, 0, "pendingFee");
-        assertEq(submittedAt, 0, "submittedAt");
-    }
-
     function testAcceptFee(uint256 fee) public {
         fee = bound(fee, FEE + 1, MAX_FEE);
 
@@ -246,20 +290,6 @@ contract TimelockTest is BaseTest {
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian, address(0), "pendingGuardian");
         assertEq(submittedAt, block.timestamp, "submittedAt");
-    }
-
-    function testSubmitGuardianNoTimelock() public {
-        _setTimelock(0);
-
-        vm.prank(OWNER);
-        vault.submitGuardian(address(0));
-
-        address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
-
-        assertEq(newGuardian, address(0), "newGuardian");
-        assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
     }
 
     function testAcceptGuardian() public {
