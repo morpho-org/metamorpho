@@ -2,10 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {IERC20Errors} from "@openzeppelin/interfaces/draft-IERC6093.sol";
+import {IMorphoFlashLoanCallback} from "@morpho-blue/interfaces/IMorphoCallbacks.sol";
 
 import "./helpers/BaseTest.sol";
 
-contract ERC4626Test is BaseTest {
+contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
 
@@ -250,5 +251,29 @@ contract ERC4626Test is BaseTest {
         assertEq(vault.balanceOf(SUPPLIER), 0, "balanceOf(SUPPLIER)");
         assertEq(vault.balanceOf(ONBEHALF), minted - toTransfer, "balanceOf(ONBEHALF)");
         assertEq(vault.balanceOf(RECEIVER), toTransfer, "balanceOf(RECEIVER)");
+    }
+
+    function testMaxWithdrawFlashLoan(uint256 supplied, uint256 deposited) public {
+        supplied = bound(supplied, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        loanToken.setBalance(SUPPLIER, supplied);
+
+        vm.prank(SUPPLIER);
+        morpho.supply(allMarkets[0], supplied, 0, ONBEHALF, hex"");
+
+        loanToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+
+        assertGt(vault.maxWithdraw(ONBEHALF), 0);
+
+        loanToken.approve(address(morpho), type(uint256).max);
+        morpho.flashLoan(address(loanToken), loanToken.balanceOf(address(morpho)), hex"");
+    }
+
+    function onMorphoFlashLoan(uint256, bytes memory) external {
+        assertEq(vault.maxWithdraw(ONBEHALF), 0);
     }
 }

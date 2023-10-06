@@ -12,9 +12,9 @@ library ErrorsLib {
 
     error NotGuardian();
 
-    error UnauthorizedMarket();
+    error UnauthorizedMarket(Id id);
 
-    error InconsistentAsset();
+    error InconsistentAsset(Id id);
 
     error SupplyCapExceeded(Id id);
 

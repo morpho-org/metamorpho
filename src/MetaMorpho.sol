@@ -213,9 +213,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY RISK MANAGER FUNCTIONS */
 
     function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyRiskManager {
-        if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset();
-
         Id id = marketParams.id();
+        if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
 
         uint256 marketCap = config[id].cap;
@@ -242,7 +241,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 length = newSupplyQueue.length;
 
         for (uint256 i; i < length; ++i) {
-            if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket();
+            if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
 
         supplyQueue = newSupplyQueue;
@@ -300,6 +299,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         for (uint256 i; i < nbWithdrawn; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
+
+            if (allocation.marketParams.loanToken != asset()) {
+                revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
+            }
 
             (uint256 withdrawnAssets,) = MORPHO.withdraw(
                 allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
@@ -669,7 +672,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
             MORPHO.expectedMarketBalances(marketParams);
-        uint256 availableLiquidity = totalSupplyAssets - totalBorrowAssets;
+
+        uint256 availableLiquidity = UtilsLib.min(
+            totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
+        );
 
         return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
     }
