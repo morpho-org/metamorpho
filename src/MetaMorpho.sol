@@ -302,8 +302,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetSupplyQueue(msg.sender, newSupplyQueue);
     }
 
-    /// @dev Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
+    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
     /// vault's supply can be removed.
+    /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
+    /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
+    /// simply bundle a reallocation that withdraws from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
         uint256 newLength = indexes.length;
