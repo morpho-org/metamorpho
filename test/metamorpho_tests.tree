@@ -399,7 +399,7 @@
     │   └── it should remove assets from idle
     ├── when idle < assets
     │   ├── it should compute remaining = assets - idle
-    │   ├──  it should set idle to 0
+    │   ├── it should set idle to 0
     │   └── for each market withdrawQueue[i] in withdrawQueue
     │       ├── it should compute id = withdrawQueue[i]
     │       ├── it should compute toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining)
