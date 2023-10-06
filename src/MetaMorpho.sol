@@ -242,6 +242,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a `newGuardian`.
+    /// @notice Warning: the guardian has the power to revoke any pending guardian.
     function submitGuardian(address newGuardian) external onlyOwner {
         if (timelock == 0) revert ErrorsLib.NoTimelock();
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
@@ -361,6 +362,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (allocation.marketParams.loanToken != asset()) {
                 revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
+            }
+
+            if (allocation.shares == type(uint256).max) {
+                allocation.shares = MORPHO.supplyShares(allocation.marketParams.id(), address(this));
             }
 
             (uint256 withdrawnAssets,) = MORPHO.withdraw(
