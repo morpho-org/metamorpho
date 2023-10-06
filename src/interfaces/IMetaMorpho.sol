@@ -31,6 +31,8 @@ struct MarketAllocation {
     MarketParams marketParams;
     /// @notice The amount of assets to allocate.
     uint256 assets;
+    /// @notice The amount of shares to allocate.
+    uint256 shares;
 }
 
 interface IMetaMorpho is IERC4626 {
