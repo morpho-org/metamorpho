@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "strict": true,
-    "esModuleInterop": true,
     "rootDir": ".",
     "baseUrl": ".",
     "outDir": "dist",
+    "target": "esnext",
     "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "declaration": true
   },
   "include": ["types", "test/hardhat"],
-  "files": ["./hardhat.config.ts"]
+  "files": ["hardhat.config.ts"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }
