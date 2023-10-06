@@ -33,9 +33,9 @@ contract ReallocateWithdrawTest is BaseTest {
     }
 
     function testReallocateWithdrawAll() public {
-        withdrawn.push(MarketAllocation(allMarkets[0], 0, morpho.supplyShares(allMarkets[0].id(), address(vault))));
-        withdrawn.push(MarketAllocation(allMarkets[1], 0, morpho.supplyShares(allMarkets[1].id(), address(vault))));
-        withdrawn.push(MarketAllocation(allMarkets[2], 0, morpho.supplyShares(allMarkets[2].id(), address(vault))));
+        withdrawn.push(MarketAllocation(allMarkets[0], type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[1], type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[2], type(uint256).max));
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
@@ -49,47 +49,33 @@ contract ReallocateWithdrawTest is BaseTest {
     function testReallocateWithdrawInconsistentAsset() public {
         allMarkets[0].loanToken = address(1);
 
-        withdrawn.push(MarketAllocation(allMarkets[0], 0, 0));
+        withdrawn.push(MarketAllocation(allMarkets[0], 0));
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, allMarkets[0].id()));
         vault.reallocate(withdrawn, supplied);
     }
 
-    function testReallocateWithdrawSupply(uint256[3] memory withdrawnShares, uint256[3] memory suppliedAssets) public {
-        uint256[3] memory sharesBefore = [
-            morpho.supplyShares(allMarkets[0].id(), address(vault)),
-            morpho.supplyShares(allMarkets[1].id(), address(vault)),
-            morpho.supplyShares(allMarkets[2].id(), address(vault))
-        ];
-
-        withdrawnShares[0] = bound(withdrawnShares[0], 0, sharesBefore[0]);
-        withdrawnShares[1] = bound(withdrawnShares[1], 0, sharesBefore[1]);
-        withdrawnShares[2] = bound(withdrawnShares[2], 0, sharesBefore[2]);
-
+    function testReallocateWithdrawSupply(uint256[3] memory withdrawnAssets, uint256[3] memory suppliedAssets) public {
         uint256[3] memory totalSupplyAssets;
         uint256[3] memory totalSupplyShares;
         (totalSupplyAssets[0], totalSupplyShares[0],,) = morpho.expectedMarketBalances(allMarkets[0]);
         (totalSupplyAssets[1], totalSupplyShares[1],,) = morpho.expectedMarketBalances(allMarkets[1]);
         (totalSupplyAssets[2], totalSupplyShares[2],,) = morpho.expectedMarketBalances(allMarkets[2]);
 
-        uint256[3] memory withdrawnAssets = [
-            withdrawnShares[0].toAssetsDown(totalSupplyAssets[0], totalSupplyShares[0]),
-            withdrawnShares[1].toAssetsDown(totalSupplyAssets[1], totalSupplyShares[1]),
-            withdrawnShares[2].toAssetsDown(totalSupplyAssets[2], totalSupplyShares[2])
+        uint256[3] memory assetsBefore = [
+            morpho.supplyShares(allMarkets[0].id(), address(vault)).toAssetsDown(totalSupplyAssets[0], totalSupplyShares[0]),
+            morpho.supplyShares(allMarkets[1].id(), address(vault)).toAssetsDown(totalSupplyAssets[1], totalSupplyShares[1]),
+            morpho.supplyShares(allMarkets[2].id(), address(vault)).toAssetsDown(totalSupplyAssets[2], totalSupplyShares[2])
         ];
 
-        if (withdrawnShares[0] > 0) withdrawn.push(MarketAllocation(allMarkets[0], 0, withdrawnShares[0]));
-        if (withdrawnAssets[1] > 0) withdrawn.push(MarketAllocation(allMarkets[1], withdrawnAssets[1], 0));
-        if (withdrawnShares[2] > 0) withdrawn.push(MarketAllocation(allMarkets[2], 0, withdrawnShares[2]));
+        withdrawnAssets[0] = bound(withdrawnAssets[0], 0, assetsBefore[0]);
+        withdrawnAssets[1] = bound(withdrawnAssets[1], 0, assetsBefore[1]);
+        withdrawnAssets[2] = bound(withdrawnAssets[2], 0, assetsBefore[2]);
 
-        totalSupplyAssets[0] -= withdrawnAssets[0];
-        totalSupplyAssets[1] -= withdrawnAssets[1];
-        totalSupplyAssets[2] -= withdrawnAssets[2];
-
-        totalSupplyShares[0] -= withdrawnShares[0];
-        totalSupplyShares[1] -= withdrawnShares[1];
-        totalSupplyShares[2] -= withdrawnShares[2];
+        if (withdrawnAssets[0] > 0) withdrawn.push(MarketAllocation(allMarkets[0], withdrawnAssets[0]));
+        if (withdrawnAssets[1] > 0) withdrawn.push(MarketAllocation(allMarkets[1], withdrawnAssets[1]));
+        if (withdrawnAssets[2] > 0) withdrawn.push(MarketAllocation(allMarkets[2], withdrawnAssets[2]));
 
         uint256 expectedIdle = vault.idle() + withdrawnAssets[0] + withdrawnAssets[1] + withdrawnAssets[2];
 
@@ -102,33 +88,26 @@ contract ReallocateWithdrawTest is BaseTest {
         suppliedAssets[2] = bound(suppliedAssets[2], 0, withdrawnAssets[2].zeroFloorSub(CAP2).min(expectedIdle));
         expectedIdle -= suppliedAssets[2];
 
-        uint256[3] memory suppliedShares = [
-            suppliedAssets[0].toSharesDown(totalSupplyAssets[0], totalSupplyShares[0]),
-            suppliedAssets[1].toSharesDown(totalSupplyAssets[1], totalSupplyShares[1]),
-            suppliedAssets[2].toSharesDown(totalSupplyAssets[2], totalSupplyShares[2])
-        ];
-
-        if (suppliedShares[0] > 0) supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0], 0));
-        if (suppliedAssets[1] > 0) supplied.push(MarketAllocation(allMarkets[1], 0, suppliedShares[1]));
-        if (suppliedShares[2] > 0) supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2], 0));
+        if (suppliedAssets[0] > 0) supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
+        if (suppliedAssets[1] > 0) supplied.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
+        if (suppliedAssets[2] > 0) supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
 
         assertEq(
             morpho.supplyShares(allMarkets[0].id(), address(vault)),
-            sharesBefore[0] - withdrawnShares[0] + suppliedShares[0],
+            (assetsBefore[0] - withdrawnAssets[0] + suppliedAssets[0]) * SharesMathLib.VIRTUAL_SHARES,
             "morpho.supplyShares(0)"
         );
-        assertApproxEqAbs(
+        assertEq(
             morpho.supplyShares(allMarkets[1].id(), address(vault)),
-            sharesBefore[1] - withdrawnShares[1] + suppliedShares[1],
-            SharesMathLib.VIRTUAL_SHARES,
+            (assetsBefore[1] - withdrawnAssets[1] + suppliedAssets[1]) * SharesMathLib.VIRTUAL_SHARES,
             "morpho.supplyShares(1)"
         );
         assertEq(
             morpho.supplyShares(allMarkets[2].id(), address(vault)),
-            sharesBefore[2] - withdrawnShares[2] + suppliedShares[2],
+            (assetsBefore[2] - withdrawnAssets[2] + suppliedAssets[2]) * SharesMathLib.VIRTUAL_SHARES,
             "morpho.supplyShares(2)"
         );
         assertApproxEqAbs(vault.idle(), expectedIdle, 1, "vault.idle() 1");
