@@ -159,7 +159,7 @@
 
 
 .
-└── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external/
+└── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external
     ├── when msg.sender not owner or riskManager
     │   └── revert with NotRiskManager()
     └── when msg.sender is owner or riskManager
@@ -241,7 +241,7 @@
             └── it shoud emit SetWithdrawQueue(msg.sender, newWithdrawQueue)
 
 .
-└── reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
+└── reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external
     ├── external
     ├── when msg.sender not owner or riskManager or allocator
     │   └── revert with NotAllocator()
