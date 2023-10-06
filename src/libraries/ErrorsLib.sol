@@ -36,9 +36,6 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     error AlreadySet();
 
-    /// @notice Thrown when there's no timelock.
-    error NoTimelock();
-
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);
 

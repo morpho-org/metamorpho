@@ -83,10 +83,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The timelock.
     uint256 public timelock;
 
-    /// @notice The guardian.
+    /// @notice The guardian. Can be set even without the timelock set.
     address public guardian;
 
-    /// @notice The rewards distributor.
+    /// @notice The rewards recipient.
     address public rewardsRecipient;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
@@ -233,10 +233,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newGuardian`.
     function submitGuardian(address newGuardian) external onlyOwner {
-        if (timelock == 0) revert ErrorsLib.NoTimelock();
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
-        if (guardian == address(0)) {
+        if (guardian == address(0) || timelock == 0) {
             _setGuardian(newGuardian);
         } else {
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
@@ -398,6 +397,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /* EXTERNAL */
+
+    /// @notice Returns the size of the supply queue.
+    function supplyQueueSize() external view returns (uint256) {
+        return supplyQueue.length;
+    }
+
+    /// @notice Returns the size of the withdraw queue.
+    function withdrawQueueSize() external view returns (uint256) {
+        return withdrawQueue.length;
+    }
 
     /// @notice Accepts the `pendingTimelock`.
     function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {

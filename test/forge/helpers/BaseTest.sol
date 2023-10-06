@@ -26,7 +26,7 @@ uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = 10;
-uint128 constant CAP = type(uint128).max;
+uint256 constant CAP = type(uint128).max;
 
 contract BaseTest is Test {
     using MathLib for uint256;
@@ -43,6 +43,8 @@ contract BaseTest is Test {
     address internal RECEIVER;
     address internal ALLOCATOR;
     address internal RISK_MANAGER;
+    address internal GUARDIAN;
+    address internal FEE_RECIPIENT;
     address internal MORPHO_OWNER;
     address internal MORPHO_FEE_RECIPIENT;
 
@@ -65,6 +67,8 @@ contract BaseTest is Test {
         RECEIVER = _addrFromHashedString("Receiver");
         ALLOCATOR = _addrFromHashedString("Allocator");
         RISK_MANAGER = _addrFromHashedString("RiskManager");
+        GUARDIAN = _addrFromHashedString("Guardian");
+        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
         MORPHO_OWNER = _addrFromHashedString("MorphoOwner");
         MORPHO_FEE_RECIPIENT = _addrFromHashedString("MorphoFeeRecipient");
 
@@ -168,8 +172,8 @@ contract BaseTest is Test {
         morpho.withdrawCollateral(market, 1, address(this), address(10));
     }
 
-    function neq(MarketParams memory a, MarketParams memory b) internal pure returns (bool) {
-        return (Id.unwrap(a.id()) != Id.unwrap(b.id()));
+    function _randomMarketParams(uint256 seed) internal view returns (MarketParams memory) {
+        return allMarkets[seed % allMarkets.length];
     }
 
     function _randomCandidate(address[] memory candidates, uint256 seed) internal pure returns (address) {
@@ -217,6 +221,9 @@ contract BaseTest is Test {
         uint256 timelock = vault.timelock();
         if (newTimelock == timelock) return;
 
+        // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
+        if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
+
         vm.prank(OWNER);
         vault.submitTimelock(newTimelock);
 
@@ -225,6 +232,25 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptTimelock();
+
+        assertEq(vault.timelock(), newTimelock, "_setTimelock");
+    }
+
+    function _setGuardian(address newGuardian) internal {
+        address guardian = vault.guardian();
+        if (newGuardian == guardian) return;
+
+        vm.prank(OWNER);
+        vault.submitGuardian(newGuardian);
+
+        uint256 timelock = vault.timelock();
+        if (guardian == address(0) || timelock == 0) return;
+
+        vm.warp(block.timestamp + timelock);
+
+        vault.acceptGuardian();
+
+        assertEq(vault.guardian(), newGuardian, "_setGuardian");
     }
 
     function _setFee(uint256 newFee) internal {
@@ -240,6 +266,8 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptFee();
+
+        assertEq(vault.fee(), newFee, "_setFee");
     }
 
     function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
@@ -256,5 +284,9 @@ contract BaseTest is Test {
         vm.warp(block.timestamp + timelock);
 
         vault.acceptCap(id);
+
+        (cap,) = vault.config(id);
+
+        assertEq(cap, newCap, "_setCap");
     }
 }

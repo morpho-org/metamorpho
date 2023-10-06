@@ -10,12 +10,8 @@ contract FeeTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
-    address internal FEE_RECIPIENT;
-
     function setUp() public override {
         super.setUp();
-
-        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
 
         vm.prank(OWNER);
         vault.setFeeRecipient(FEE_RECIPIENT);
