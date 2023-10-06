@@ -12,15 +12,16 @@ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
+import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
-import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
+import {IERC20Metadata} from "@openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
+import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
 import {Multicall} from "@openzeppelin/utils/Multicall.sol";
-import {Ownable2Step} from "@openzeppelin/access/Ownable2Step.sol";
-import {IERC20Metadata, ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
+import {Ownable2Step, Ownable} from "@openzeppelin/access/Ownable2Step.sol";
+import {ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
 import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
 
 contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorpho {
@@ -78,16 +79,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         address _asset,
         string memory _name,
         string memory _symbol
-    ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) {
+    ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
         if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
-
-        _transferOwnership(owner);
 
         MORPHO = IMorpho(morpho);
 
         _setTimelock(initialTimelock);
 
-        SafeERC20.safeApprove(IERC20(_asset), morpho, type(uint256).max);
+        SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
     }
 
     /* MODIFIERS */
@@ -388,13 +387,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
-        return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Down);
+        return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Floor);
     }
 
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
-        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Down);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -403,7 +402,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
-        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Up);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -418,7 +417,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
-        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Up);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -433,7 +432,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
-        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Down);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -464,7 +463,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         (feeShares, newTotalAssets) = _accruedFeeShares();
         newTotalSupply = totalSupply() + feeShares;
 
-        assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Down);
+        assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Floor);
         assets -= _staticWithdrawMorpho(assets);
     }
 
@@ -699,7 +698,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             // The fee assets is subtracted from the total assets in this calculation to compensate for the fact
             // that total assets is already increased by the total interest (including the fee assets).
             feeShares = feeAssets.mulDiv(
-                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Down
+                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Floor
             );
         }
     }

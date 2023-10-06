@@ -50,7 +50,7 @@ contract FeeTest is BaseTest {
         uint256 feeAmount = interest.wMulDown(FEE);
 
         return feeAmount.mulDiv(
-            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Down
+            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Floor
         );
     }
 
