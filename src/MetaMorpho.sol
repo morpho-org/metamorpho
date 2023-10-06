@@ -6,30 +6,31 @@ import {
     IMetaMorpho, MarketConfig, PendingUint192, PendingAddress, MarketAllocation
 } from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
+import {IERC20Metadata, IERC20, IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 import "./libraries/ConstantsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
-import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
-import {MulticallUpgradeable} from "@openzeppelin-upgradeable/utils/MulticallUpgradeable.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {ERC20PermitUpgradeable} from "@openzeppelin-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {MulticallUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {ERC20PermitUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {
-    IERC20Upgradeable,
-    IERC4626Upgradeable,
     ERC20Upgradeable,
     ERC4626Upgradeable,
-    MathUpgradeable,
-    SafeERC20Upgradeable
-} from "@openzeppelin-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
-import {Initializable} from "@openzeppelin-upgradeable/proxy/utils/Initializable.sol";
+    Math,
+    SafeERC20
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract MetaMorpho is
     Initializable,
@@ -39,7 +40,7 @@ contract MetaMorpho is
     ERC4626Upgradeable,
     IMetaMorpho
 {
-    using MathUpgradeable for uint256;
+    using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
     using MorphoLib for IMorpho;
@@ -86,15 +87,16 @@ contract MetaMorpho is
 
     /* CONSTRUCTOR */
 
-    constructor() {
+    constructor(address morpho) {
         _disableInitializers();
+
+        MORPHO = IMorpho(morpho);
     }
 
     /* INITIALIZER */
 
     function initialize(
         address owner,
-        address morpho,
         uint256 initialTimelock,
         address _asset,
         string memory _name,
@@ -102,18 +104,14 @@ contract MetaMorpho is
     ) external initializer {
         if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
 
-        __Ownable2Step_init();
+        __Ownable_init(owner);
         __ERC20_init(_name, _symbol);
         __ERC20Permit_init(_name);
-        __ERC4626_init_unchained(IERC20Upgradeable(_asset));
-
-        _transferOwnership(owner);
-
-        MORPHO = IMorpho(morpho);
+        __ERC4626_init_unchained(IERC20(_asset));
 
         _setTimelock(initialTimelock);
 
-        SafeERC20Upgradeable.safeApprove(IERC20Upgradeable(_asset), morpho, type(uint256).max);
+        SafeERC20.safeIncreaseAllowance(IERC20(_asset), address(MORPHO), type(uint256).max);
     }
 
     /* MODIFIERS */
@@ -370,10 +368,10 @@ contract MetaMorpho is
     function transferRewards(address token) external {
         if (rewardsDistributor == address(0)) revert ErrorsLib.ZeroAddress();
 
-        uint256 amount = IERC20Upgradeable(token).balanceOf(address(this));
+        uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), rewardsDistributor, amount);
+        SafeERC20.safeTransfer(IERC20(token), rewardsDistributor, amount);
 
         emit EventsLib.TransferRewards(msg.sender, rewardsDistributor, token, amount);
     }
@@ -406,33 +404,28 @@ contract MetaMorpho is
 
     /* ERC4626 (PUBLIC) */
 
-    function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+    function decimals() public view override(IERC20Metadata, ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
         return ERC4626Upgradeable.decimals();
     }
 
-    function maxWithdraw(address owner)
-        public
-        view
-        override(IERC4626Upgradeable, ERC4626Upgradeable)
-        returns (uint256 assets)
-    {
+    function maxWithdraw(address owner) public view override(IERC4626, ERC4626Upgradeable) returns (uint256 assets) {
         (assets,,) = _maxWithdraw(owner);
     }
 
-    function maxRedeem(address owner) public view override(IERC4626Upgradeable, ERC4626Upgradeable) returns (uint256) {
+    function maxRedeem(address owner) public view override(IERC4626, ERC4626Upgradeable) returns (uint256) {
         (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
-        return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, MathUpgradeable.Rounding.Down);
+        return _convertToSharesWithFeeAccrued(assets, newTotalSupply, newTotalAssets, Math.Rounding.Floor);
     }
 
     function deposit(uint256 assets, address receiver)
         public
-        override(IERC4626Upgradeable, ERC4626Upgradeable)
+        override(IERC4626, ERC4626Upgradeable)
         returns (uint256 shares)
     {
         uint256 newTotalAssets = _accrueFee();
 
-        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, MathUpgradeable.Rounding.Down);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -440,12 +433,12 @@ contract MetaMorpho is
 
     function mint(uint256 shares, address receiver)
         public
-        override(IERC4626Upgradeable, ERC4626Upgradeable)
+        override(IERC4626, ERC4626Upgradeable)
         returns (uint256 assets)
     {
         uint256 newTotalAssets = _accrueFee();
 
-        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, MathUpgradeable.Rounding.Up);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _deposit(_msgSender(), receiver, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets + assets);
@@ -453,14 +446,14 @@ contract MetaMorpho is
 
     function withdraw(uint256 assets, address receiver, address owner)
         public
-        override(IERC4626Upgradeable, ERC4626Upgradeable)
+        override(IERC4626, ERC4626Upgradeable)
         returns (uint256 shares)
     {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
-        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, MathUpgradeable.Rounding.Up);
+        shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
@@ -468,20 +461,20 @@ contract MetaMorpho is
 
     function redeem(uint256 shares, address receiver, address owner)
         public
-        override(IERC4626Upgradeable, ERC4626Upgradeable)
+        override(IERC4626, ERC4626Upgradeable)
         returns (uint256 assets)
     {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
-        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, MathUpgradeable.Rounding.Down);
+        assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
         _updateLastTotalAssets(newTotalAssets - assets);
     }
 
-    function totalAssets() public view override(IERC4626Upgradeable, ERC4626Upgradeable) returns (uint256 assets) {
+    function totalAssets() public view override(IERC4626, ERC4626Upgradeable) returns (uint256 assets) {
         uint256 nbMarkets = withdrawQueue.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
@@ -506,29 +499,17 @@ contract MetaMorpho is
         (feeShares, newTotalAssets) = _accruedFeeShares();
         newTotalSupply = totalSupply() + feeShares;
 
-        assets = _convertToAssetsWithFeeAccrued(
-            balanceOf(owner), newTotalSupply, newTotalAssets, MathUpgradeable.Rounding.Down
-        );
+        assets = _convertToAssetsWithFeeAccrued(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Floor);
         assets -= _staticWithdrawMorpho(assets);
     }
 
-    function _convertToShares(uint256 assets, MathUpgradeable.Rounding rounding)
-        internal
-        view
-        override
-        returns (uint256)
-    {
+    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
         return _convertToSharesWithFeeAccrued(assets, totalSupply() + feeShares, newTotalAssets, rounding);
     }
 
-    function _convertToAssets(uint256 shares, MathUpgradeable.Rounding rounding)
-        internal
-        view
-        override
-        returns (uint256)
-    {
+    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
         return _convertToAssetsWithFeeAccrued(shares, totalSupply() + feeShares, newTotalAssets, rounding);
@@ -538,7 +519,7 @@ contract MetaMorpho is
         uint256 assets,
         uint256 newTotalSupply,
         uint256 newTotalAssets,
-        MathUpgradeable.Rounding rounding
+        Math.Rounding rounding
     ) internal pure returns (uint256) {
         return assets.mulDiv(newTotalSupply + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
@@ -547,7 +528,7 @@ contract MetaMorpho is
         uint256 shares,
         uint256 newTotalSupply,
         uint256 newTotalAssets,
-        MathUpgradeable.Rounding rounding
+        Math.Rounding rounding
     ) internal pure returns (uint256) {
         return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
@@ -726,7 +707,7 @@ contract MetaMorpho is
             MORPHO.expectedMarketBalances(marketParams);
 
         uint256 availableLiquidity = UtilsLib.min(
-            totalSupplyAssets - totalBorrowAssets, IERC20Upgradeable(marketParams.loanToken).balanceOf(address(MORPHO))
+            totalSupplyAssets - totalBorrowAssets, IERC20(marketParams.loanToken).balanceOf(address(MORPHO))
         );
 
         return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
@@ -756,7 +737,7 @@ contract MetaMorpho is
             // The fee assets is subtracted from the total assets in this calculation to compensate for the fact
             // that total assets is already increased by the total interest (including the fee assets).
             feeShares = feeAssets.mulDiv(
-                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, MathUpgradeable.Rounding.Down
+                totalSupply() + 10 ** _decimalsOffset(), newTotalAssets - feeAssets + 1, Math.Rounding.Floor
             );
         }
     }

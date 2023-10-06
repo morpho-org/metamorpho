@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@morpho-blue/interfaces/IMorpho.sol";
 
 import {WAD, MathLib} from "@morpho-blue/libraries/MathLib.sol";
-import {Math} from "@openzeppelin/utils/math/Math.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
@@ -94,7 +94,7 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
         vm.stopPrank();
 
-        factory = new MetaMorphoFactory(address(morpho), address(new MetaMorpho()));
+        factory = new MetaMorphoFactory(address(new MetaMorpho(address(morpho))));
         vault = factory.createMetaMorpho(OWNER, 0, address(loanToken), "MetaMorpho Vault", "MMV", bytes32(0));
 
         vm.startPrank(OWNER);

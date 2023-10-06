@@ -6,10 +6,7 @@ import "./helpers/BaseTest.sol";
 contract MetaMorphoFactoryTest is BaseTest {
     function testMetaMorphoFactoryAddressZero() public {
         vm.expectRevert(ErrorsLib.ZeroAddress.selector);
-        new MetaMorphoFactory(address(0), address(1));
-
-        vm.expectRevert(ErrorsLib.ZeroAddress.selector);
-        new MetaMorphoFactory(address(1), address(0));
+        new MetaMorphoFactory(address(0));
     }
 
     function testCreateMetaMorpho(

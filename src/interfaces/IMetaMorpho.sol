@@ -2,7 +2,7 @@
 pragma solidity >=0.5.0;
 
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
-import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 struct MarketConfig {
     uint192 cap;
@@ -30,7 +30,6 @@ interface IMetaMorpho is IERC4626 {
 
     function initialize(
         address owner,
-        address morpho,
         uint256 initialTimelock,
         address _asset,
         string memory _name,

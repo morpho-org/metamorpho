@@ -3,6 +3,6 @@ test/=test/
 
 @forge-std/=lib/forge-std/src/
 @morpho-blue/=lib/morpho-blue/src/
-@openzeppelin/=lib/openzeppelin-contracts/contracts/
-@openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/
 @universal-rewards-distributor/=lib/universal-rewards-distributor/src/

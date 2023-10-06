@@ -5,14 +5,13 @@ import {IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
 
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
-import {Clones} from "@openzeppelin/proxy/Clones.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 import {MetaMorpho} from "./MetaMorpho.sol";
 
 contract MetaMorphoFactory {
     /* IMMUTABLES */
 
-    address public immutable MORPHO;
     address public immutable METAMORPHO_IMPL;
 
     /* STORAGE */
@@ -21,10 +20,9 @@ contract MetaMorphoFactory {
 
     /* CONSTRCUTOR */
 
-    constructor(address morpho, address implementation) {
-        if (morpho == address(0) || implementation == address(0)) revert ErrorsLib.ZeroAddress();
+    constructor(address implementation) {
+        if (implementation == address(0)) revert ErrorsLib.ZeroAddress();
 
-        MORPHO = morpho;
         METAMORPHO_IMPL = implementation;
     }
 
@@ -40,7 +38,7 @@ contract MetaMorphoFactory {
     ) external returns (MetaMorpho metaMorpho) {
         metaMorpho = MetaMorpho(Clones.cloneDeterministic(METAMORPHO_IMPL, salt));
 
-        metaMorpho.initialize(initialOwner, MORPHO, initialTimelock, asset, name, symbol);
+        metaMorpho.initialize(initialOwner, initialTimelock, asset, name, symbol);
 
         isMetaMorpho[address(metaMorpho)] = true;
 
