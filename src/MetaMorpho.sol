@@ -150,7 +150,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// - there's no pending value;
     /// - the timelock has not elapsed since the pending value has been submitted;
     /// - the timelock has expired since the pending value has been submitted.
-    modifier timelockElapsed(uint256 submittedAt) {
+    modifier withinTimelockWindow(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
         if (block.timestamp > submittedAt + timelock + TIMELOCK_EXPIRATION) {
@@ -400,22 +400,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* EXTERNAL */
 
     /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external timelockElapsed(pendingTimelock.submittedAt) {
+    function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
     }
 
     /// @notice Accepts the `pendingFee`.
-    function acceptFee() external timelockElapsed(pendingFee.submittedAt) {
+    function acceptFee() external withinTimelockWindow(pendingFee.submittedAt) {
         _setFee(pendingFee.value);
     }
 
     /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external timelockElapsed(pendingGuardian.submittedAt) {
+    function acceptGuardian() external withinTimelockWindow(pendingGuardian.submittedAt) {
         _setGuardian(pendingGuardian.value);
     }
 
     /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external timelockElapsed(pendingCap[id].submittedAt) {
+    function acceptCap(Id id) external withinTimelockWindow(pendingCap[id].submittedAt) {
         _setCap(id, pendingCap[id].value);
     }
 
