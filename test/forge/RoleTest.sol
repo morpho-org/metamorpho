@@ -7,7 +7,7 @@ contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
     function testSetRiskManager() public {
-        address newRiskManager = _addrFromHashedString("FeeRecipient2");
+        address newRiskManager = _addrFromHashedString("RiskManager2");
 
         vm.prank(OWNER);
         vault.setRiskManager(newRiskManager);
@@ -31,24 +31,16 @@ contract RoleTest is BaseTest {
     }
 
     function testUnsetAllocator() public {
-        address newAllocator = _addrFromHashedString("Allocator2");
+        vm.prank(OWNER);
+        vault.setIsAllocator(ALLOCATOR, false);
 
-        vm.startPrank(OWNER);
-        vault.setIsAllocator(newAllocator, true);
-        vault.setIsAllocator(newAllocator, false);
-        vm.stopPrank();
-
-        assertFalse(vault.isAllocator(newAllocator), "isAllocator");
+        assertFalse(vault.isAllocator(ALLOCATOR), "isAllocator");
     }
 
     function testSetAllocatorShouldRevertAlreadySet() public {
-        address newAllocator = _addrFromHashedString("Allocator2");
-
-        vm.startPrank(OWNER);
-        vault.setIsAllocator(newAllocator, true);
+        vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setIsAllocator(newAllocator, true);
-        vm.stopPrank();
+        vault.setIsAllocator(ALLOCATOR, true);
     }
 
     function testOwnerFunctionsShouldRevertWhenNotOwner(address caller) public {
