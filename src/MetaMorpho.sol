@@ -232,6 +232,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a `newGuardian`.
+    /// @notice Warning: the guardian has the power to revoke any pending guardian.
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
@@ -281,8 +282,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetSupplyQueue(msg.sender, newSupplyQueue);
     }
 
-    /// @dev Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
+    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
     /// vault's supply can be removed.
+    /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
+    /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
+    /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
         uint256 newLength = indexes.length;
@@ -337,6 +341,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (allocation.marketParams.loanToken != asset()) {
                 revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
+            }
+
+            // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
+            if (allocation.shares == type(uint256).max) {
+                allocation.shares = MORPHO.supplyShares(allocation.marketParams.id(), address(this));
             }
 
             (uint256 withdrawnAssets,) = MORPHO.withdraw(
