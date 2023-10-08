@@ -126,6 +126,14 @@ contract TimelockTest is BaseTest {
         vault.submitTimelock(timelock);
     }
 
+    function testSubmitTimelockAlreadySet() public {
+        uint256 timelock = vault.timelock();
+
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.submitTimelock(timelock);
+    }
+
     function testAcceptTimelock(uint256 timelock) public {
         timelock = bound(timelock, 0, TIMELOCK - 1);
 
