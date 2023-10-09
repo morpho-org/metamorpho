@@ -37,6 +37,14 @@ contract MarketTest is BaseTest {
         vault.submitCap(marketParams, 0);
     }
 
+    function testSubmitCapAlreadySet() public {
+        _setCap(allMarkets[0], CAP);
+
+        vm.prank(RISK_MANAGER);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.submitCap(allMarkets[0], CAP);
+    }
+
     function testSetSupplyQueue() public {
         _setCap(allMarkets[0], CAP);
         _setCap(allMarkets[1], CAP);
@@ -55,6 +63,16 @@ contract MarketTest is BaseTest {
 
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(allMarkets[1].id()));
         assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(allMarkets[2].id()));
+    }
+
+    function testSetSupplyQueueUnauthorizedMarket() public {
+        Id[] memory supplyQueue = new Id[](2);
+        supplyQueue[0] = allMarkets[0].id();
+        supplyQueue[1] = allMarkets[1].id();
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.UnauthorizedMarket.selector, allMarkets[0].id()));
+        vault.setSupplyQueue(supplyQueue);
     }
 
     function testSortWithdrawQueue() public {
