@@ -168,9 +168,6 @@ contract ReallocateWithdrawTest is BaseTest {
         vm.prank(rewardDonator);
         loanToken.transfer(address(vault), rewards);
 
-        console2.log(rewards, "rewards");
-        console2.log(loanToken.balanceOf(address(vault)), "loanToken.balanceOf(address(vault))");
-
         _setCap(allMarkets[0], type(uint192).max);
 
         supplied.push(MarketAllocation(allMarkets[0], CAP2 + rewards, 0));

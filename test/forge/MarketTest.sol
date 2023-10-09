@@ -46,9 +46,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSetSupplyQueue() public {
-        _setCap(allMarkets[0], CAP);
-        _setCap(allMarkets[1], CAP);
-        _setCap(allMarkets[2], CAP);
+        _setCaps();
 
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(allMarkets[1].id()));
@@ -66,9 +64,8 @@ contract MarketTest is BaseTest {
     }
 
     function testSetSupplyQueueUnauthorizedMarket() public {
-        Id[] memory supplyQueue = new Id[](2);
+        Id[] memory supplyQueue = new Id[](1);
         supplyQueue[0] = allMarkets[0].id();
-        supplyQueue[1] = allMarkets[1].id();
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.UnauthorizedMarket.selector, allMarkets[0].id()));
@@ -76,9 +73,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSortWithdrawQueue() public {
-        _setCap(allMarkets[0], CAP);
-        _setCap(allMarkets[1], CAP);
-        _setCap(allMarkets[2], CAP);
+        _setCaps();
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(allMarkets[1].id()));
@@ -98,9 +93,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSortWithdrawQueueRemovingDisabledMarket() public {
-        _setCap(allMarkets[0], CAP);
-        _setCap(allMarkets[1], CAP);
-        _setCap(allMarkets[2], CAP);
+        _setCaps();
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[0].id()));
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(allMarkets[1].id()));
@@ -120,9 +113,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSortWithdrawQueueInvalidIndex() public {
-        _setCap(allMarkets[0], CAP);
-        _setCap(allMarkets[1], CAP);
-        _setCap(allMarkets[2], CAP);
+        _setCaps();
 
         uint256[] memory indexes = new uint256[](3);
         indexes[0] = 1;
@@ -135,9 +126,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSortWithdrawQueueDuplicateMarket() public {
-        _setCap(allMarkets[0], CAP);
-        _setCap(allMarkets[1], CAP);
-        _setCap(allMarkets[2], CAP);
+        _setCaps();
 
         uint256[] memory indexes = new uint256[](3);
         indexes[0] = 1;
@@ -150,9 +139,7 @@ contract MarketTest is BaseTest {
     }
 
     function testSortWithdrawQueueMissingMarket() public {
-        _setCap(allMarkets[0], CAP);
-        _setCap(allMarkets[1], CAP);
-        _setCap(allMarkets[2], CAP);
+        _setCaps();
 
         loanToken.setBalance(SUPPLIER, 1);
 
@@ -166,5 +153,11 @@ contract MarketTest is BaseTest {
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MissingMarket.selector, allMarkets[0].id()));
         vault.sortWithdrawQueue(indexes);
+    }
+
+    function _setCaps() internal {
+        _setCap(allMarkets[0], CAP);
+        _setCap(allMarkets[1], CAP);
+        _setCap(allMarkets[2], CAP);
     }
 }
