@@ -6,27 +6,64 @@ import "./helpers/BaseTest.sol";
 contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
+    function testSetRiskManager() public {
+        address newRiskManager = _addrFromHashedString("RiskManager2");
+
+        vm.prank(OWNER);
+        vault.setRiskManager(newRiskManager);
+
+        assertEq(vault.riskManager(), newRiskManager, "riskManager");
+    }
+
+    function testSetRiskManagerShouldRevertAlreadySet() public {
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.setRiskManager(RISK_MANAGER);
+    }
+
+    function testSetAllocator() public {
+        address newAllocator = _addrFromHashedString("Allocator2");
+
+        vm.prank(OWNER);
+        vault.setIsAllocator(newAllocator, true);
+
+        assertTrue(vault.isAllocator(newAllocator), "isAllocator");
+    }
+
+    function testUnsetAllocator() public {
+        vm.prank(OWNER);
+        vault.setIsAllocator(ALLOCATOR, false);
+
+        assertFalse(vault.isAllocator(ALLOCATOR), "isAllocator");
+    }
+
+    function testSetAllocatorShouldRevertAlreadySet() public {
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.setIsAllocator(ALLOCATOR, true);
+    }
+
     function testOwnerFunctionsShouldRevertWhenNotOwner(address caller) public {
         vm.assume(caller != vault.owner());
 
         vm.startPrank(caller);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.setRiskManager(caller);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.setIsAllocator(caller, true);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.submitTimelock(1);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.submitFee(1);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.submitGuardian(address(1));
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.setFeeRecipient(caller);
 
         vm.stopPrank();

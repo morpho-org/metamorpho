@@ -10,12 +10,8 @@ contract FeeTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
-    address internal FEE_RECIPIENT;
-
     function setUp() public override {
         super.setUp();
-
-        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
 
         vm.prank(OWNER);
         vault.setFeeRecipient(FEE_RECIPIENT);
@@ -50,7 +46,7 @@ contract FeeTest is BaseTest {
         uint256 feeAmount = interest.wMulDown(FEE);
 
         return feeAmount.mulDiv(
-            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Down
+            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Floor
         );
     }
 
@@ -228,7 +224,7 @@ contract FeeTest is BaseTest {
     }
 
     function testSubmitFeeNotOwner(uint256 fee) public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.submitFee(fee);
     }
 
@@ -244,5 +240,17 @@ contract FeeTest is BaseTest {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitFee(FEE);
+    }
+
+    function testSetFeeRecipientAlreadySet() public {
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.setFeeRecipient(FEE_RECIPIENT);
+    }
+
+    function testSetZeroFeeRecipientWithFee() public {
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.ZeroFeeRecipient.selector);
+        vault.setFeeRecipient(address(0));
     }
 }

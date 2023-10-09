@@ -6,17 +6,25 @@ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
 import {MetaMorpho} from "./MetaMorpho.sol";
 
+/// @title MetaMorphoFactory
+/// @author Morpho Labs
+/// @custom:contact security@morpho.org
+/// @notice This contract allows to create MetaMorpho vaults, and to index them easily.
 contract MetaMorphoFactory {
     /* IMMUTABLES */
 
+    /// @notice The address of the Morpho contract.
     address public immutable MORPHO;
 
     /* STORAGE */
 
+    /// @notice Whether a MetaMorpho vault was created with the factory.
     mapping(address => bool) public isMetaMorpho;
 
     /* CONSTRCUTOR */
 
+    /// @dev Initializes the contract.
+    /// @param morpho The address of the Morpho contract.
     constructor(address morpho) {
         if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
 
@@ -25,6 +33,13 @@ contract MetaMorphoFactory {
 
     /* EXTERNAL */
 
+    /// @notice Creates a new MetaMorpho vault.
+    /// @param initialOwner The owner of the vault.
+    /// @param initialTimelock The initial timelock of the vault.
+    /// @param asset The address of the underlying asset.
+    /// @param name The name of the vault.
+    /// @param symbol The symbol of the vault.
+    /// @param salt The salt to use for the MetaMorpho vault's CREATE2 address.
     function createMetaMorpho(
         address initialOwner,
         uint256 initialTimelock,

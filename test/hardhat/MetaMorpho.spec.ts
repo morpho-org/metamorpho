@@ -1,7 +1,7 @@
-import { AbiCoder, MaxUint256, keccak256, toBigInt } from "ethers";
+import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho } from "types";
+import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
 import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -73,6 +73,7 @@ describe("MetaMorpho", () => {
   let oracle: OracleMock;
   let irm: IIrm;
 
+  let factory: MetaMorphoFactory;
   let metaMorpho: MetaMorpho;
   let metaMorphoAddress: string;
 
@@ -174,11 +175,22 @@ describe("MetaMorpho", () => {
       await morpho.createMarket(marketParams);
     }
 
-    const IMetaMorphoFactory = await hre.ethers.getContractFactory("MetaMorpho", admin);
+    const MetaMorphoFactoryFactory = await hre.ethers.getContractFactory("MetaMorphoFactory", admin);
 
-    metaMorpho = await IMetaMorphoFactory.deploy(admin.address, morphoAddress, 1, loanAddress, "MetaMorpho", "mB");
+    factory = await MetaMorphoFactoryFactory.deploy(morphoAddress);
 
-    metaMorphoAddress = await metaMorpho.getAddress();
+    metaMorphoAddress = await factory.createMetaMorpho.staticCall(
+      admin.address,
+      1,
+      loanAddress,
+      "MetaMorpho",
+      "mB",
+      ZeroHash,
+    );
+
+    metaMorpho = MetaMorpho__factory.connect(metaMorphoAddress, admin);
+
+    await factory.createMetaMorpho(admin.address, 1, loanAddress, "MetaMorpho", "mB", ZeroHash);
 
     for (const user of users) {
       await loan.setBalance(user.address, initBalance);
