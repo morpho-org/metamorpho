@@ -46,6 +46,20 @@ contract ReallocateWithdrawTest is BaseTest {
         assertEq(vault.idle(), INITIAL_DEPOSIT, "vault.idle() 1");
     }
 
+    function testReallocateWithdrawMax() public {
+        withdrawn.push(MarketAllocation(allMarkets[0], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[1], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[2], 0, type(uint256).max));
+
+        vm.prank(ALLOCATOR);
+        vault.reallocate(withdrawn, supplied);
+
+        assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), 0, "morpho.supplyShares(0)");
+        assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), 0, "morpho.supplyShares(1)");
+        assertEq(morpho.supplyShares(allMarkets[2].id(), address(vault)), 0, "morpho.supplyShares(2)");
+        assertEq(vault.idle(), INITIAL_DEPOSIT, "vault.idle() 1");
+    }
+
     function testReallocateWithdrawInconsistentAsset() public {
         allMarkets[0].loanToken = address(1);
 
@@ -132,5 +146,34 @@ contract ReallocateWithdrawTest is BaseTest {
             "morpho.supplyShares(2)"
         );
         assertApproxEqAbs(vault.idle(), expectedIdle, 1, "vault.idle() 1");
+    }
+
+    function testReallocateSupplyCapExceeded() public {
+        withdrawn.push(MarketAllocation(allMarkets[0], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[1], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[2], 0, type(uint256).max));
+
+        supplied.push(MarketAllocation(allMarkets[0], CAP2 + 1, 0));
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.SupplyCapExceeded.selector, allMarkets[0].id()));
+        vault.reallocate(withdrawn, supplied);
+    }
+
+    function testReallocateInsufficientIdle(uint256 rewards) public {
+        rewards = bound(rewards, 1, MAX_TEST_ASSETS);
+
+        address rewardDonator = _addrFromHashedString("reward donator");
+        loanToken.setBalance(rewardDonator, rewards);
+        vm.prank(rewardDonator);
+        loanToken.transfer(address(vault), rewards);
+
+        _setCap(allMarkets[0], type(uint192).max);
+
+        supplied.push(MarketAllocation(allMarkets[0], CAP2 + rewards, 0));
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(ErrorsLib.InsufficientIdle.selector);
+        vault.reallocate(withdrawn, supplied);
     }
 }
