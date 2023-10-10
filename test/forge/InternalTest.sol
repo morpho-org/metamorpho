@@ -18,7 +18,7 @@ import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation, SharesMathLib} from "src/MetaMorpho.sol";
 
-import "@forge-std/Test.sol";
+import {DeployUtils} from "./helpers/DeployUtils.sol";
 import "@forge-std/console2.sol";
 
 uint256 constant MIN_TEST_ASSETS = 1e8;
@@ -26,14 +26,13 @@ uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = MAX_QUEUE_SIZE + 1;
 uint192 constant CAP = type(uint192).max;
 
-contract InternalTest is Test, MetaMorpho {
+contract InternalTest is DeployUtils, MetaMorpho {
     using MathLib for uint256;
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
     using SharesMathLib for uint256;
     using UtilsLib for uint256;
-    using stdJson for string;
 
     address internal OWNER = makeAddr("Owner");
     address internal SUPPLIER = makeAddr("Supplier");
@@ -106,17 +105,6 @@ contract InternalTest is Test, MetaMorpho {
 
         vm.prank(BORROWER);
         collateralToken.approve(address(morpho), type(uint256).max);
-    }
-
-    function _deploy(string memory artifactPath, bytes memory constructorArgs) internal returns (address deployed) {
-        string memory artifact = vm.readFile(artifactPath);
-        bytes memory bytecode = bytes.concat(artifact.readBytes("$.bytecode.object"), constructorArgs);
-
-        assembly {
-            deployed := create(0, add(bytecode, 0x20), mload(bytecode))
-        }
-
-        require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
     function testSetCapMaxQueueSizeExcedeed() public {
