@@ -55,11 +55,33 @@ contract TimelockTest is BaseTest {
         vault.submitTimelock(timelock);
     }
 
-    function testSubmitTimelockMaxTimelockExceeded(uint256 timelock) public {
+    function testDeployMetaMorphoAboveMaxTimelock(uint256 timelock) public {
+        timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
+
+        vm.expectRevert(ErrorsLib.AboveMaxTimelock.selector);
+        new MetaMorpho(OWNER, address(morpho), timelock, address(loanToken), "MetaMorpho Vault", "MMV");
+    }
+
+    function testDeployMetaMorphoBelowMinTimelock(uint256 timelock) public {
+        timelock = bound(timelock, 0, MIN_TIMELOCK - 1);
+
+        vm.expectRevert(ErrorsLib.BelowMinTimelock.selector);
+        new MetaMorpho(OWNER, address(morpho), timelock, address(loanToken), "MetaMorpho Vault", "MMV");
+    }
+
+    function testSubmitTimelockAboveMaxTimelock(uint256 timelock) public {
         timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AboveMaxTimelock.selector);
+        vault.submitTimelock(timelock);
+    }
+
+    function testSubmitTimelockBelowMinTimelock(uint256 timelock) public {
+        timelock = bound(timelock, 0, MIN_TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.BelowMinTimelock.selector);
         vault.submitTimelock(timelock);
     }
 
