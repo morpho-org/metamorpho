@@ -113,10 +113,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
+        MORPHO = IMorpho(morpho);
+
         _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
-
-        MORPHO = IMorpho(morpho);
 
         SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
     }
