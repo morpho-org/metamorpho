@@ -95,7 +95,7 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
         vm.stopPrank();
 
-        vault = new MetaMorpho(OWNER, address(morpho), 0, address(loanToken), "MetaMorpho Vault", "MMV");
+        vault = new MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vm.startPrank(OWNER);
         vault.setRiskManager(RISK_MANAGER);
@@ -279,7 +279,7 @@ contract BaseTest is Test {
         vault.submitCap(marketParams, newCap);
 
         uint256 timelock = vault.timelock();
-        if (newCap < cap || timelock == 0) return;
+        if (newCap < cap) return;
 
         vm.warp(block.timestamp + timelock);
 

@@ -4,69 +4,6 @@ pragma solidity ^0.8.0;
 import "./helpers/BaseTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
-
-contract NoTimelockTest is BaseTest {
-    using MarketParamsLib for MarketParams;
-
-    function setUp() public override {
-        super.setUp();
-
-        vm.prank(OWNER);
-        vault.setFeeRecipient(FEE_RECIPIENT);
-
-        _setFee(FEE);
-        _setGuardian(GUARDIAN);
-    }
-
-    function testSubmitFeeNoTimelock(uint256 fee) public {
-        fee = bound(fee, 0, MAX_FEE);
-
-        _setTimelock(0);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        uint256 newFee = vault.fee();
-        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
-
-        assertEq(newFee, fee, "newFee");
-        assertEq(pendingFee, 0, "pendingFee");
-        assertEq(submittedAt, 0, "submittedAt");
-    }
-
-    function testSubmitGuardianNoTimelock() public {
-        vm.prank(OWNER);
-        vault.submitGuardian(address(0));
-
-        address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
-
-        assertEq(newGuardian, address(0), "newGuardian");
-        assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
-    }
-
-    function testSubmitCapNoTimelock(uint256 seed, uint256 cap) public {
-        cap = bound(cap, 1, type(uint192).max);
-
-        MarketParams memory marketParams = _randomMarketParams(seed);
-
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(marketParams, cap);
-
-        Id id = marketParams.id();
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
-        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
-
-        assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
-        assertEq(pendingCap, 0, "pendingCap");
-        assertEq(submittedAt, 0, "submittedAt");
-        assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
-        assertEq(vault.withdrawQueueSize(), 1, "withdrawQueueSize");
-    }
-}
-
 uint256 constant TIMELOCK = 1 weeks;
 
 contract TimelockTest is BaseTest {
@@ -100,7 +37,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testSubmitTimelockDecreased(uint256 timelock) public {
-        timelock = bound(timelock, 0, TIMELOCK - 1);
+        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
@@ -135,7 +72,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptTimelock(uint256 timelock) public {
-        timelock = bound(timelock, 0, TIMELOCK - 1);
+        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
@@ -158,7 +95,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptTimelockTimelockNotElapsed(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, 0, TIMELOCK - 1);
+        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -171,7 +108,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptTimelockTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, 0, TIMELOCK - 1);
+        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.prank(OWNER);
@@ -431,7 +368,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, 1, MAX_TIMELOCK);
+        timelock = bound(timelock, MIN_TIMELOCK, MAX_TIMELOCK);
 
         vm.assume(timelock != vault.timelock());
 

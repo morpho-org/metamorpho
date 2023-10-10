@@ -8,6 +8,9 @@ uint256 constant TIMELOCK_EXPIRATION = 3 days;
 /// @dev The maximum delay of a timelock.
 uint256 constant MAX_TIMELOCK = 2 weeks;
 
+/// @dev The minimum delay of a timelock.
+uint256 constant MIN_TIMELOCK = 12 hours;
+
 /// @dev OpenZeppelin's decimals offset used in MetaMorpho's ERC4626 implementation.
 uint8 constant DECIMALS_OFFSET = 6;
 

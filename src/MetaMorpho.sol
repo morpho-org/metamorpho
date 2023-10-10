@@ -114,6 +114,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
         if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
+        if (initialTimelock < MIN_TIMELOCK) revert ErrorsLib.MinTimelockExceeded();
 
         MORPHO = IMorpho(morpho);
 
@@ -191,9 +192,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
         if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
+        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.MinTimelockExceeded();
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
 
-        if (newTimelock > timelock || timelock == 0) {
+        if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
@@ -208,7 +210,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
         if (newFee == fee) revert ErrorsLib.AlreadySet();
 
-        if (newFee < fee || timelock == 0) {
+        if (newFee < fee) {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= MAX_FEE.
@@ -236,7 +238,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
-        if (guardian == address(0) || timelock == 0) {
+        if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
@@ -256,7 +258,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 marketCap = config[id].cap;
         if (newMarketCap == marketCap) revert ErrorsLib.AlreadySet();
 
-        if (newMarketCap < marketCap || timelock == 0) {
+        if (newMarketCap < marketCap) {
             _setCap(id, newMarketCap.toUint192());
         } else {
             pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));

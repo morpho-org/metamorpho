@@ -54,6 +54,9 @@ library ErrorsLib {
     /// @notice Thrown when the max timelock is exceeded.
     error MaxTimelockExceeded();
 
+    /// @notice Thrown when the min timelock is exceeded.
+    error MinTimelockExceeded();
+
     /// @notice Thrown when the timelock is not elapsed.
     error TimelockNotElapsed();
 
