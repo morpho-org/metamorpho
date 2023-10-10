@@ -16,6 +16,10 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         _setCap(allMarkets[0], CAP);
     }
 
+    function testDecimals() public {
+        assertEq(vault.decimals(), loanToken.decimals() + DECIMALS_OFFSET, "decimals");
+    }
+
     function testMint(uint256 assets) public {
         assets = bound(assets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
