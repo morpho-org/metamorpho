@@ -18,6 +18,7 @@ import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation, SharesMathLib} from "src/MetaMorpho.sol";
 
+import {DeployUtils} from "./helpers/DeployUtils.sol";
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
@@ -43,7 +44,9 @@ contract InternalTest is Test, MetaMorpho {
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
-    IMorpho internal morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+    DeployUtils internal deployUtils = new DeployUtils();
+    IMorpho internal morpho =
+        IMorpho(deployUtils._deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
     ERC20Mock internal loanToken = new ERC20Mock("loan", "B");
     ERC20Mock internal collateralToken;
     OracleMock internal oracle;
@@ -106,17 +109,6 @@ contract InternalTest is Test, MetaMorpho {
 
         vm.prank(BORROWER);
         collateralToken.approve(address(morpho), type(uint256).max);
-    }
-
-    function _deploy(string memory artifactPath, bytes memory constructorArgs) internal returns (address deployed) {
-        string memory artifact = vm.readFile(artifactPath);
-        bytes memory bytecode = bytes.concat(artifact.readBytes("$.bytecode.object"), constructorArgs);
-
-        assembly {
-            deployed := create(0, add(bytecode, 0x20), mload(bytecode))
-        }
-
-        require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
     function testSetCapMaxQueueSizeExcedeed() public {

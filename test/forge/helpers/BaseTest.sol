@@ -19,6 +19,7 @@ import {OracleMock} from "src/mocks/OracleMock.sol";
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
 
+import {DeployUtils} from "./DeployUtils.sol";
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
@@ -48,6 +49,8 @@ contract BaseTest is Test {
     address internal MORPHO_OWNER;
     address internal MORPHO_FEE_RECIPIENT;
 
+    DeployUtils internal deployUtils;
+
     IMorpho internal morpho;
     ERC20Mock internal loanToken;
     ERC20Mock internal collateralToken;
@@ -72,7 +75,8 @@ contract BaseTest is Test {
         MORPHO_OWNER = makeAddr("MorphoOwner");
         MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
-        morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+        deployUtils = new DeployUtils();
+        morpho = IMorpho(deployUtils._deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
         vm.label(address(morpho), "Morpho");
 
         loanToken = new ERC20Mock("loan", "B");
@@ -198,17 +202,6 @@ contract BaseTest is Test {
         users = _removeAll(users, address(0));
 
         return _randomCandidate(users, seed);
-    }
-
-    function _deploy(string memory artifactPath, bytes memory constructorArgs) internal returns (address deployed) {
-        string memory artifact = vm.readFile(artifactPath);
-        bytes memory bytecode = bytes.concat(artifact.readBytes("$.bytecode.object"), constructorArgs);
-
-        assembly {
-            deployed := create(0, add(bytecode, 0x20), mload(bytecode))
-        }
-
-        require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
     function _setTimelock(uint256 newTimelock) internal {
