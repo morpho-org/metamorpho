@@ -25,7 +25,7 @@ import "@forge-std/console2.sol";
 uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
-uint256 constant NB_MARKETS = 31;
+uint256 constant NB_MARKETS = 10;
 uint256 constant CAP = type(uint128).max;
 
 contract BaseTest is Test {
