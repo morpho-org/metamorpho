@@ -113,12 +113,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
-        if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
-        if (initialTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
+        _checkTimelockBounds(initialTimelock);
+        _setTimelock(initialTimelock);
 
         MORPHO = IMorpho(morpho);
-
-        _setTimelock(initialTimelock);
 
         SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
     }
@@ -191,9 +189,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
-        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
-        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
+        _checkTimelockBounds(newTimelock);
 
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
@@ -639,6 +636,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Returns the vault's balance the market defined by `marketParams`.
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
         return MORPHO.expectedSupplyBalance(marketParams, address(this));
+    }
+
+    /// @dev Reverts if `newTimelock` is not within the bounds.
+    function _checkTimelockBounds(uint256 newTimelock) internal pure {
+        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
+        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
     }
 
     /// @dev Sets `timelock` to `newTimelock`.
