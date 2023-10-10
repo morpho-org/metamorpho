@@ -163,7 +163,7 @@ contract ReallocateWithdrawTest is BaseTest {
     function testReallocateInsufficientIdle(uint256 rewards) public {
         rewards = bound(rewards, 1, MAX_TEST_ASSETS);
 
-        address rewardDonator = _addrFromHashedString("reward donator");
+        address rewardDonator = makeAddr("reward donator");
         loanToken.setBalance(rewardDonator, rewards);
         vm.prank(rewardDonator);
         loanToken.transfer(address(vault), rewards);
