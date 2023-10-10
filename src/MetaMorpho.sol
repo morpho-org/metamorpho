@@ -113,8 +113,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
-        if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
-        if (initialTimelock < MIN_TIMELOCK) revert ErrorsLib.MinTimelockExceeded();
+        if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
+        if (initialTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
 
         MORPHO = IMorpho(morpho);
 
@@ -191,8 +191,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
-        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
-        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.MinTimelockExceeded();
+        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
+        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
 
         if (newTimelock > timelock) {

@@ -59,7 +59,7 @@ contract TimelockTest is BaseTest {
         timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
 
         vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.MaxTimelockExceeded.selector);
+        vm.expectRevert(ErrorsLib.AboveMaxTimelock.selector);
         vault.submitTimelock(timelock);
     }
 
