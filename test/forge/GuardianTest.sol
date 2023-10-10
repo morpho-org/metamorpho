@@ -75,7 +75,7 @@ contract GuardianTest is BaseTest {
     function testRevokeGuardian(uint256 elapsed) public {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
-        address guardian = _addrFromHashedString("Guardian2");
+        address guardian = makeAddr("Guardian2");
 
         vm.prank(OWNER);
         vault.submitGuardian(guardian);

@@ -261,7 +261,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testSubmitGuardian() public {
-        address guardian = _addrFromHashedString("Guardian2");
+        address guardian = makeAddr("Guardian2");
 
         vm.prank(OWNER);
         vault.submitGuardian(guardian);
@@ -301,7 +301,7 @@ contract TimelockTest is BaseTest {
     }
 
     function testAcceptGuardian() public {
-        address guardian = _addrFromHashedString("Guardian2");
+        address guardian = makeAddr("Guardian2");
 
         vm.prank(OWNER);
         vault.submitGuardian(guardian);
@@ -326,7 +326,7 @@ contract TimelockTest is BaseTest {
     function testAcceptGuardianTimelockNotElapsed(uint256 elapsed) public {
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
-        address guardian = _addrFromHashedString("Guardian2");
+        address guardian = makeAddr("Guardian2");
 
         vm.prank(OWNER);
         vault.submitGuardian(guardian);
@@ -340,7 +340,7 @@ contract TimelockTest is BaseTest {
     function testAcceptGuardianTimelockExpirationExceeded(uint256 elapsed) public {
         elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
-        address guardian = _addrFromHashedString("Guardian2");
+        address guardian = makeAddr("Guardian2");
 
         vm.prank(OWNER);
         vault.submitGuardian(guardian);
