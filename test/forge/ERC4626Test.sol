@@ -228,9 +228,8 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         vm.startPrank(BORROWER);
         morpho.supplyCollateral(allMarkets[0], type(uint128).max, BORROWER, hex"");
         morpho.borrow(allMarkets[0], 1, 0, BORROWER, BORROWER);
-        vm.stopPrank();
 
-        vm.prank(ONBEHALF);
+        changePrank(ONBEHALF);
         vm.expectRevert(ErrorsLib.WithdrawMorphoFailed.selector);
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
