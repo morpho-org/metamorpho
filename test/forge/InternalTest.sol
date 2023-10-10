@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@morpho-blue/interfaces/IMorpho.sol";
 
-import {WAD, MathLib} from "@morpho-blue/libraries/MathLib.sol";
-import {Math} from "@openzeppelin/utils/math/Math.sol";
 import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
@@ -16,33 +14,27 @@ import {IrmMock} from "src/mocks/IrmMock.sol";
 import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
-import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {MetaMorpho, IMetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorpho, IMetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation, SharesMathLib} from "src/MetaMorpho.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
-import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
-
-uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = MAX_QUEUE_SIZE + 1;
 uint192 constant CAP = type(uint192).max;
 
-abstract contract InternalTest is Test, MetaMorpho {
-    using MathLib for uint256;
+contract InternalTest is Test, MetaMorpho {
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
+    using SharesMathLib for uint256;
     using stdJson for string;
 
     address internal OWNER = makeAddr("Owner");
     address internal SUPPLIER = makeAddr("Supplier");
     address internal ALLOCATOR = makeAddr("Allocator");
     address internal RISK_MANAGER = makeAddr("RiskManager");
-    address internal GUARDIAN = makeAddr("Guardian");
-    address internal FEE_RECIPIENT = makeAddr("FeeRecipient");
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
@@ -125,8 +117,8 @@ abstract contract InternalTest is Test, MetaMorpho {
             _setCap(id, CAP);
         }
 
-        Id lsastId = allMarkets[NB_MARKETS].id();
-        vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
+        Id lsastId = allMarkets[NB_MARKETS - 1].id();
+        vm.expectRevert(ErrorsLib.MaxQueueSizeExceeded.selector);
         _setCap(lsastId, CAP);
     }
 
@@ -137,7 +129,7 @@ abstract contract InternalTest is Test, MetaMorpho {
         assertEq(suppliable, 0, "suppliable");
     }
 
-    function testSuppliableNotEnabledMarket(uint256 suppliedAmount) public {
+    function testSuppliableEnabledMarket(uint256 suppliedAmount) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         Id id = allMarkets[0].id();
@@ -150,5 +142,24 @@ abstract contract InternalTest is Test, MetaMorpho {
         uint256 suppliable = _suppliable(allMarkets[0], id);
 
         assertEq(suppliable, CAP - suppliedAmount, "suppliable");
+    }
+
+    function testWithdrawable(uint256 suppliedAmount) public {
+        suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        Id id = allMarkets[0].id();
+        _setCap(id, CAP);
+
+        loanToken.setBalance(SUPPLIER, suppliedAmount);
+        vm.prank(SUPPLIER);
+        IMetaMorpho(address(this)).deposit(suppliedAmount, SUPPLIER);
+
+        uint256 withdrawable = _withdrawable(allMarkets[0], id);
+
+        uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+        (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(allMarkets[0]);
+        uint256 expectedWithdrawable = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+
+        assertEq(withdrawable, expectedWithdrawable, "withdrawable");
     }
 }
