@@ -7,7 +7,7 @@ contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
     function testSetRiskManager() public {
-        address newRiskManager = _addrFromHashedString("RiskManager2");
+        address newRiskManager = makeAddr("RiskManager2");
 
         vm.prank(OWNER);
         vault.setRiskManager(newRiskManager);
@@ -22,7 +22,7 @@ contract RoleTest is BaseTest {
     }
 
     function testSetAllocator() public {
-        address newAllocator = _addrFromHashedString("Allocator2");
+        address newAllocator = makeAddr("Allocator2");
 
         vm.prank(OWNER);
         vault.setIsAllocator(newAllocator, true);
@@ -124,15 +124,13 @@ contract RoleTest is BaseTest {
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
-        vm.stopPrank();
 
-        vm.startPrank(RISK_MANAGER);
+        changePrank(RISK_MANAGER);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
-        vm.stopPrank();
 
-        vm.startPrank(ALLOCATOR);
+        changePrank(ALLOCATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);

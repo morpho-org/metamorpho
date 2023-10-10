@@ -59,18 +59,18 @@ contract BaseTest is Test {
     MarketParams[] internal allMarkets;
 
     function setUp() public virtual {
-        OWNER = _addrFromHashedString("Owner");
-        SUPPLIER = _addrFromHashedString("Supplier");
-        BORROWER = _addrFromHashedString("Borrower");
-        REPAYER = _addrFromHashedString("Repayer");
-        ONBEHALF = _addrFromHashedString("OnBehalf");
-        RECEIVER = _addrFromHashedString("Receiver");
-        ALLOCATOR = _addrFromHashedString("Allocator");
-        RISK_MANAGER = _addrFromHashedString("RiskManager");
-        GUARDIAN = _addrFromHashedString("Guardian");
-        FEE_RECIPIENT = _addrFromHashedString("FeeRecipient");
-        MORPHO_OWNER = _addrFromHashedString("MorphoOwner");
-        MORPHO_FEE_RECIPIENT = _addrFromHashedString("MorphoFeeRecipient");
+        OWNER = makeAddr("Owner");
+        SUPPLIER = makeAddr("Supplier");
+        BORROWER = makeAddr("Borrower");
+        REPAYER = makeAddr("Repayer");
+        ONBEHALF = makeAddr("OnBehalf");
+        RECEIVER = makeAddr("Receiver");
+        ALLOCATOR = makeAddr("Allocator");
+        RISK_MANAGER = makeAddr("RiskManager");
+        GUARDIAN = makeAddr("Guardian");
+        FEE_RECIPIENT = makeAddr("FeeRecipient");
+        MORPHO_OWNER = makeAddr("MorphoOwner");
+        MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
         morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
         vm.label(address(morpho), "Morpho");
@@ -93,11 +93,10 @@ contract BaseTest is Test {
         vm.startPrank(MORPHO_OWNER);
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
-        vm.stopPrank();
 
         vault = new MetaMorpho(OWNER, address(morpho), 0, address(loanToken), "MetaMorpho Vault", "MMV");
 
-        vm.startPrank(OWNER);
+        changePrank(OWNER);
         vault.setRiskManager(RISK_MANAGER);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
@@ -141,11 +140,6 @@ contract BaseTest is Test {
         loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
-    }
-
-    function _addrFromHashedString(string memory name) internal returns (address addr) {
-        addr = address(uint160(uint256(keccak256(bytes(name)))));
-        vm.label(addr, name);
     }
 
     /// @dev Rolls & warps the given number of blocks forward the blockchain.
