@@ -52,6 +52,41 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
         assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), assets, "expectedSupplyBalance(vault)");
     }
 
+    function testRedeem(uint256 deposited, uint256 redeemed) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        loanToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
+
+        redeemed = bound(redeemed, 0, shares);
+
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() - vault.convertToAssets(redeemed));
+        vm.prank(ONBEHALF);
+        vault.redeem(redeemed, RECEIVER, ONBEHALF);
+
+        assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
+    }
+
+    function testWithdraw(uint256 deposited, uint256 withdrawn) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        withdrawn = bound(withdrawn, 0, deposited);
+
+        loanToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
+
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() - withdrawn);
+        vm.prank(ONBEHALF);
+        uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
+
+        assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
+    }
+
     function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
