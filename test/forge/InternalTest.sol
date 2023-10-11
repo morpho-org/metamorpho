@@ -18,7 +18,7 @@ import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation, SharesMathLib} from "src/MetaMorpho.sol";
 
-import {DeployUtils} from "./helpers/DeployUtils.sol";
+import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
 uint256 constant MIN_TEST_ASSETS = 1e8;
@@ -26,7 +26,7 @@ uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = MAX_QUEUE_SIZE + 1;
 uint192 constant CAP = type(uint192).max;
 
-contract InternalTest is DeployUtils, MetaMorpho {
+contract InternalTest is Test, MetaMorpho {
     using MathLib for uint256;
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
@@ -42,7 +42,8 @@ contract InternalTest is DeployUtils, MetaMorpho {
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
-    IMorpho internal morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+    IMorpho internal morpho =
+        IMorpho(deployCode("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
     ERC20Mock internal loanToken = new ERC20Mock("loan", "B");
     ERC20Mock internal collateralToken;
     OracleMock internal oracle;

@@ -19,7 +19,7 @@ import {OracleMock} from "src/mocks/OracleMock.sol";
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
 
-import {DeployUtils} from "./DeployUtils.sol";
+import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
 
 uint256 constant BLOCK_TIME = 1;
@@ -28,7 +28,7 @@ uint256 constant MAX_TEST_ASSETS = 1e28;
 uint256 constant NB_MARKETS = 10;
 uint256 constant CAP = type(uint128).max;
 
-contract BaseTest is DeployUtils {
+contract BaseTest is Test {
     using MathLib for uint256;
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
@@ -71,7 +71,7 @@ contract BaseTest is DeployUtils {
         MORPHO_OWNER = makeAddr("MorphoOwner");
         MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
-        morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+        morpho = IMorpho(deployCode("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
         vm.label(address(morpho), "Morpho");
 
         loanToken = new ERC20Mock("loan", "B");
