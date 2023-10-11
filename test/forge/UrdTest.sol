@@ -24,8 +24,11 @@ contract UrdTest is BaseTest {
     function testSetRewardsRecipient(address newRewardsRecipient) public {
         vm.assume(newRewardsRecipient != vault.rewardsRecipient());
 
+        vm.expectEmit();
+        emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
         vm.prank(OWNER);
         vault.setRewardsRecipient(newRewardsRecipient);
+
         assertEq(vault.rewardsRecipient(), newRewardsRecipient);
     }
 
@@ -50,6 +53,8 @@ contract UrdTest is BaseTest {
         uint256 vaultBalanceBefore = collateralToken.balanceOf(address(vault));
         assertEq(vaultBalanceBefore, amount, "vaultBalanceBefore");
 
+        vm.expectEmit();
+        emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(collateralToken), amount);
         vault.transferRewards(address(collateralToken));
         uint256 vaultBalanceAfter = collateralToken.balanceOf(address(vault));
 
@@ -78,6 +83,8 @@ contract UrdTest is BaseTest {
         uint256 vaultBalanceBefore = loanToken.balanceOf(address(vault));
         assertEq(vaultBalanceBefore, idle + rewards, "vaultBalanceBefore");
 
+        vm.expectEmit();
+        emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(loanToken), rewards);
         vault.transferRewards(address(loanToken));
         uint256 vaultBalanceAfter = loanToken.balanceOf(address(vault));
 

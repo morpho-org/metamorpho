@@ -9,6 +9,8 @@ contract RoleTest is BaseTest {
     function testSetRiskManager() public {
         address newRiskManager = makeAddr("RiskManager2");
 
+        vm.expectEmit();
+        emit EventsLib.SetRiskManager(newRiskManager);
         vm.prank(OWNER);
         vault.setRiskManager(newRiskManager);
 
@@ -24,6 +26,8 @@ contract RoleTest is BaseTest {
     function testSetAllocator() public {
         address newAllocator = makeAddr("Allocator2");
 
+        vm.expectEmit();
+        emit EventsLib.SetIsAllocator(newAllocator, true);
         vm.prank(OWNER);
         vault.setIsAllocator(newAllocator, true);
 
@@ -31,6 +35,8 @@ contract RoleTest is BaseTest {
     }
 
     function testUnsetAllocator() public {
+        vm.expectEmit();
+        emit EventsLib.SetIsAllocator(ALLOCATOR, false);
         vm.prank(OWNER);
         vault.setIsAllocator(ALLOCATOR, false);
 

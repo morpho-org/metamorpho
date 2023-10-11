@@ -9,7 +9,11 @@ import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
+import {IPending} from "src/interfaces/IMetaMorpho.sol";
+
 import "src/libraries/ConstantsLib.sol";
+import {ErrorsLib} from "src/libraries/ErrorsLib.sol";
+import {EventsLib} from "src/libraries/EventsLib.sol";
 import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
 
 import {IrmMock} from "src/mocks/IrmMock.sol";
@@ -17,7 +21,7 @@ import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "src/MetaMorpho.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
