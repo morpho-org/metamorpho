@@ -51,7 +51,7 @@ contract InternalTest is Test, MetaMorpho {
 
     MarketParams[] internal allMarkets;
 
-    constructor() MetaMorpho(OWNER, address(morpho), 0, address(loanToken), "MetaMorpho Vault", "MM") {}
+    constructor() MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MM") {}
 
     function setUp() public virtual {
         vm.label(address(morpho), "Morpho");
