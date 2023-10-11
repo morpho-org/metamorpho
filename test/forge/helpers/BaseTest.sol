@@ -33,7 +33,6 @@ contract BaseTest is Test {
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
-    using stdJson for string;
 
     address internal OWNER;
     address internal SUPPLIER;
@@ -72,7 +71,7 @@ contract BaseTest is Test {
         MORPHO_OWNER = makeAddr("MorphoOwner");
         MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
-        morpho = IMorpho(_deploy("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+        morpho = IMorpho(deployCode("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
         vm.label(address(morpho), "Morpho");
 
         loanToken = new ERC20Mock("loan", "B");
@@ -198,17 +197,6 @@ contract BaseTest is Test {
         users = _removeAll(users, address(0));
 
         return _randomCandidate(users, seed);
-    }
-
-    function _deploy(string memory artifactPath, bytes memory constructorArgs) internal returns (address deployed) {
-        string memory artifact = vm.readFile(artifactPath);
-        bytes memory bytecode = bytes.concat(artifact.readBytes("$.bytecode.object"), constructorArgs);
-
-        assembly {
-            deployed := create(0, add(bytecode, 0x20), mload(bytecode))
-        }
-
-        require(deployed != address(0), string.concat("could not deploy `", artifactPath, "`"));
     }
 
     function _setTimelock(uint256 newTimelock) internal {
