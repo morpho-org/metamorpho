@@ -152,6 +152,8 @@ contract TimelockTest is BaseTest {
         fee = bound(fee, 0, FEE - 1);
 
         vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
+        vm.expectEmit();
         emit EventsLib.SetFee(fee);
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -188,6 +190,8 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
         vm.expectEmit();
         emit EventsLib.SetFee(fee);
         vault.acceptFee();

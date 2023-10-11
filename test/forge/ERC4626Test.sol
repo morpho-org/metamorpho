@@ -27,6 +27,8 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
 
         loanToken.setBalance(SUPPLIER, assets);
 
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() + assets);
         vm.prank(SUPPLIER);
         uint256 deposited = vault.mint(shares, ONBEHALF);
 
@@ -40,6 +42,8 @@ contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
 
         loanToken.setBalance(SUPPLIER, assets);
 
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() + assets);
         vm.prank(SUPPLIER);
         uint256 shares = vault.deposit(assets, ONBEHALF);
 

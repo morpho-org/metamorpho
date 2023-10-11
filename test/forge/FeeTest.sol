@@ -216,6 +216,8 @@ contract FeeTest is BaseTest {
         uint256 feeShares = _feeShares(totalAssetsBefore);
 
         vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
+        vm.expectEmit();
         emit EventsLib.SetFeeRecipient(address(1));
         vm.prank(OWNER);
         vault.setFeeRecipient(address(1));
