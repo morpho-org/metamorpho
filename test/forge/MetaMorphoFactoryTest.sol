@@ -27,7 +27,7 @@ contract MetaMorphoFactoryTest is BaseTest {
         bytes32 salt
     ) public {
         vm.assume(address(initialOwner) != address(0));
-        initialTimelock = bound(initialTimelock, 0, MAX_TIMELOCK);
+        initialTimelock = bound(initialTimelock, MIN_TIMELOCK, MAX_TIMELOCK);
 
         bytes32 initCodeHash = hashInitCode(
             type(MetaMorpho).creationCode,

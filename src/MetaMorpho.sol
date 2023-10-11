@@ -113,10 +113,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
-        if (initialTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
-
         MORPHO = IMorpho(morpho);
 
+        _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
 
         SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
@@ -190,10 +189,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
-        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.MaxTimelockExceeded();
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
+        _checkTimelockBounds(newTimelock);
 
-        if (newTimelock > timelock || timelock == 0) {
+        if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
@@ -208,7 +207,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
         if (newFee == fee) revert ErrorsLib.AlreadySet();
 
-        if (newFee < fee || timelock == 0) {
+        if (newFee < fee) {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= MAX_FEE.
@@ -236,7 +235,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
-        if (guardian == address(0) || timelock == 0) {
+        if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
@@ -256,7 +255,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 marketCap = config[id].cap;
         if (newMarketCap == marketCap) revert ErrorsLib.AlreadySet();
 
-        if (newMarketCap < marketCap || timelock == 0) {
+        if (newMarketCap < marketCap) {
             _setCap(id, newMarketCap.toUint192());
         } else {
             pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));
@@ -637,6 +636,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Returns the vault's balance the market defined by `marketParams`.
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
         return MORPHO.expectedSupplyBalance(marketParams, address(this));
+    }
+
+    /// @dev Reverts if `newTimelock` is not within the bounds.
+    function _checkTimelockBounds(uint256 newTimelock) internal pure {
+        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
+        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
     }
 
     /// @dev Sets `timelock` to `newTimelock`.

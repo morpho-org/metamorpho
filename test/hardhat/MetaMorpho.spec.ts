@@ -20,6 +20,7 @@ import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
 const nbMarkets = 5;
+const timelock = 3600 * 24 * 7; // 1 week.
 
 const ln2 = 693147180559945309n;
 const targetUtilization = 800000000000000000n;
@@ -181,7 +182,7 @@ describe("MetaMorpho", () => {
 
     metaMorphoAddress = await factory.createMetaMorpho.staticCall(
       admin.address,
-      1,
+      timelock,
       loanAddress,
       "MetaMorpho",
       "mB",
@@ -190,7 +191,7 @@ describe("MetaMorpho", () => {
 
     metaMorpho = MetaMorpho__factory.connect(metaMorphoAddress, admin);
 
-    await factory.createMetaMorpho(admin.address, 1, loanAddress, "MetaMorpho", "mB", ZeroHash);
+    await factory.createMetaMorpho(admin.address, timelock, loanAddress, "MetaMorpho", "mB", ZeroHash);
 
     for (const user of users) {
       await loan.setBalance(user.address, initBalance);
@@ -202,18 +203,21 @@ describe("MetaMorpho", () => {
     await metaMorpho.setRiskManager(riskManager.address);
     await metaMorpho.setIsAllocator(allocator.address, true);
 
-    await metaMorpho.submitTimelock(0);
-
-    await forwardTimestamp(1);
-
-    await metaMorpho.acceptTimelock();
-
     await metaMorpho.setFeeRecipient(admin.address);
     await metaMorpho.submitFee(BigInt.WAD / 10n);
+
+    await forwardTimestamp(timelock);
+    await metaMorpho.connect(admin).acceptFee();
 
     marketCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
       await metaMorpho.connect(riskManager).submitCap(marketParams, marketCap);
+    }
+
+    await forwardTimestamp(timelock);
+
+    for (const marketParams of allMarketParams) {
+      await metaMorpho.connect(admin).acceptCap(identifier(marketParams));
     }
 
     await metaMorpho.connect(riskManager).setSupplyQueue(allMarketParams.map(identifier));

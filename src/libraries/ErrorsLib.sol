@@ -51,8 +51,11 @@ library ErrorsLib {
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();
 
-    /// @notice Thrown when the max timelock is exceeded.
-    error MaxTimelockExceeded();
+    /// @notice Thrown when the submitted timelock is above the max timelock.
+    error AboveMaxTimelock();
+
+    /// @notice Thrown when the submitted timelock is below the min timelock.
+    error BelowMinTimelock();
 
     /// @notice Thrown when the timelock is not elapsed.
     error TimelockNotElapsed();

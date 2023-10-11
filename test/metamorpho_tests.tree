@@ -41,16 +41,18 @@
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
         ├── when newTimelock > MAX_TIMELOCK
-        │   └── revert with MAX_TIMELOCK_EXCEEDED
+        │   └── revert with ABOVE_MAX_TIMELOCK
+        ├── when newTimelock < MIN_TIMELOCK
+        │   └── revert with BELOW_MAX_TIMELOCK
         └── when newTimelock <= MAX_TIMELOCK
             ├── when newTimelock == timelock
             │   └── revert with AlreadySet()
             └── when newTimelock != timelock
-                ├── when newTimelock > timelock or timelock == 0
+                ├── when newTimelock > timelock
                 │   ├── it should set timelock to newTimelock
                 │   ├── it should emit SetTimelock(newTimelock)
                 │   └── it should delete pendingTimelock
-                └── when newTimelock < timelock and timelock != 0
+                └── when newTimelock < timelock
                     ├── it should set pendingTimelock to PendingUint192(uint192(newTimelock), uint64(block.timestamp))
                     └── it should emit SubmitTimelock(newTimelock)
 
@@ -80,12 +82,12 @@
             ├── when newFee == fee
             │   └── revert with AlreadySet()
             └── when newFee != fee
-                ├── when newFee < fee or timelock == 0
+                ├── when newFee < fee
                 │   ├── it should accrue fees
                 │   ├── it should set fee to newFee
                 │   ├── it should emit SetFee(newFee)
                 │   └── it should delete pendingFee
-                └── when newFee > fee and timelock != 0
+                └── when newFee > fee
                     ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
                     └── it should emit SubmitFee(newFee)
 
@@ -125,19 +127,16 @@
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
-        ├── when timelock == 0
-        │   └── revert with NoTimelock()
-        └── when timelock != 0
-            ├── when newGuardian == guardian
-            │   └── revert with AlreadySet()
-            └── when newGuardian != guardian
-                ├── when guardian == address(0)
-                │   ├── it should set guardian to newGuardian
-                │   ├── it should emit SetGuardian(newGuardian)
-                │   └── it should delete pendingGuardian
-                └── when guardian != address(0)
-                    ├── it should it should set pendingGuardian to PendingAddress(newGuardian, uint64(block.timestamp))
-                    └── it should emit SubmitGuardian(newGuardian)
+        ├── when newGuardian == guardian
+        │   └── revert with AlreadySet()
+        └── when newGuardian != guardian
+            ├── when guardian == address(0)
+            │   ├── it should set guardian to newGuardian
+            │   ├── it should emit SetGuardian(newGuardian)
+            │   └── it should delete pendingGuardian
+            └── when guardian != address(0)
+                ├── it should it should set pendingGuardian to PendingAddress(newGuardian, uint64(block.timestamp))
+                └── it should emit SubmitGuardian(newGuardian)
 
 .
 └── acceptGuardian() external
@@ -173,7 +172,7 @@
                 ├── when newMarketCap == marketCap
                 │   └── revert with AlreadySet()
                 └── when newMarketCap != marketCap
-                    ├── when newMarketCap < marketCap or timelock == 0
+                    ├── when newMarketCap < marketCap
                     │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue
                     │   │   ├── it should push id to withdrawQueue
@@ -182,7 +181,7 @@
                     │   ├── it should set config[id].cap to newMarketCap
                     │   ├── it should emit SetCap(id, newMarketCap)
                     │   └── it should delete pendingCap[id]
-                    └── when newMarketCap > marketCap and timelock != 0
+                    └── when newMarketCap > marketCap
                         ├── it should it should set pendingCap[id] to PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp))
                         └── it should emit EventsLib.SubmitCap(id, newMarketCap)
 
