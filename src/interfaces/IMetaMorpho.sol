@@ -80,3 +80,9 @@ interface IMetaMorpho is IERC4626 {
     function sortWithdrawQueue(uint256[] calldata indexes) external;
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
+
+interface IPending {
+    function pendingTimelock() external view returns (PendingUint192 memory);
+    function pendingCap(Id) external view returns (PendingUint192 memory);
+    function pendingGuardian() external view returns (PendingAddress memory);
+}

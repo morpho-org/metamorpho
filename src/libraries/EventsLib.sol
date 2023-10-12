@@ -51,9 +51,6 @@ library EventsLib {
     /// @notice Emitted when a `pendingTimelock` is revoked by `guardian`.
     event RevokeTimelock(address indexed guardian, PendingUint192 pendingTimelock);
 
-    /// @notice Emitted when a `pendingFee` is revoked by `guardian`.
-    event RevokeFee(address indexed guardian, PendingUint192 pendingFee);
-
     /// @notice Emitted when a `pendingCap` for the market identified by `id` is revoked by `guardian`.
     event RevokeCap(address indexed guardian, Id indexed id, PendingUint192 pendingCap);
 
