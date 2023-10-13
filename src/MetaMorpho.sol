@@ -766,7 +766,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             // 1. oracle.price() is never called (the vault doesn't borrow)
             // 2. `_withdrawable` caps to the liquidity available on Morpho
             // 3. virtually accruing interest didn't fail in `_withdrawable`
-            remaining -= _withdrawable(marketParams, id);
+            remaining -= UtilsLib.min(_withdrawable(marketParams, id), remaining);
 
             if (remaining == 0) return 0;
         }
