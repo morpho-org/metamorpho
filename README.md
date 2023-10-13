@@ -14,7 +14,7 @@ These roles are primarily responsible for enabling and disabling markets on Morp
 
 ### MetaMorpho
 
-MetaMorpho vaults are ERC-4626 compliant vault with the permit feature (ERC-2612). One MetaMorpho vault is dedicated to one loan asset on Morpho Blue.
+MetaMorpho vaults are ERC-4626 compliant vault with the permit feature (ERC-2612). One MetaMorpho vault is related to one loan asset on Morpho Blue.
 
 Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
@@ -41,15 +41,15 @@ The owner can:
 The risk manager can:
 - Do whatever the allocators can do.
 - [Timelocked] Enable or disable a market by setting a cap to a specific market.
-    - The cap can be set to 0 to disable the market.
-	- Disabling a market can only be done if there's the vault has no liquidity on the market.
+    - The cap must be set to 0 to disable the market.
+	- Disabling a market can then only be done if there's the vault has no liquidity supplied on the market.
 
 The allocators can:
 - Set the `supplyQueue` and `withdrawQueue`, ie decides on the order of the markets to supply/withdraw from.
     - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
 	- Upon a withdrawal, the vault will first withdraw from the idle supply, then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
 	- The `supplyQueue` can only contain enabled markets.
-	- The `withdrawQueue` MUST contain all enabled and disabled markets on which the vault has still liquidity.
+	- The `withdrawQueue` MUST contain all enabled markets on which the vault has still liquidity (enabled market are markets with non-zero cap or with non-zero vault's supply).
 - Reallocate funds among the enabled market at any moment.
 
 The guardian can:
