@@ -300,6 +300,6 @@ contract FeeTest is BaseTest {
         uint256 assets = vault.convertToAssets(shares);
 
         assertEq(assets, expectedAssets, "assets");
-        //assertGt(assets, assetsBefore, "assets increased");
+        assertGe(assets, assetsBefore, "assets increased");
     }
 }
