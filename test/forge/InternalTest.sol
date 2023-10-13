@@ -73,7 +73,7 @@ contract InternalTest is Test, MetaMorpho {
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
 
-        changePrank(OWNER);
+        vm.startPrank(OWNER);
         this.setRiskManager(RISK_MANAGER);
         this.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
