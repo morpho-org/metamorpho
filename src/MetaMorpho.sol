@@ -98,7 +98,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* CONSTRUCTOR */
 
-    /// @dev Initializes the contract.
+    /// @dev Constructs the contract.
     /// @param owner The owner of the contract.
     /// @param morpho The address of the Morpho contract.
     /// @param initialTimelock The initial timelock.
