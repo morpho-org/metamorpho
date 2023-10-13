@@ -58,7 +58,7 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets");
+        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
     }
 
     function testAccrueFeeWithinABlock(uint256 deposited, uint256 withdrawn) public {
@@ -289,7 +289,6 @@ contract FeeTest is BaseTest {
         vault.deposit(deposited, ONBEHALF);
 
         uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
-        uint256 assetsBefore = vault.convertToAssets(shares);
 
         _forward(blocks);
 

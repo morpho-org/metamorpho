@@ -482,7 +482,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _deposit(_msgSender(), receiver, assets, shares);
 
-        _updateLastTotalAssets(newTotalAssets + assets);
+        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc IERC4626
@@ -492,7 +493,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _deposit(_msgSender(), receiver, assets, shares);
 
-        _updateLastTotalAssets(newTotalAssets + assets);
+        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc IERC4626
@@ -508,7 +510,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
-        _updateLastTotalAssets(newTotalAssets - assets);
+        // `newTotalAssets - assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc IERC4626
@@ -524,7 +527,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
 
-        _updateLastTotalAssets(newTotalAssets - assets);
+        // `newTotalAssets - assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc IERC4626
