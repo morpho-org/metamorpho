@@ -42,7 +42,7 @@ The risk manager can:
 - Do whatever the allocators can do.
 - [Timelocked] Enable or disable a market by setting a cap to a specific market.
     - The cap must be set to 0 to disable the market.
-	- Disabling a market can then only be done if there's the vault has no liquidity supplied on the market.
+	- Disabling a market can then only be done if the vault has no liquidity supplied on the market.
 
 The allocators can:
 - Set the `supplyQueue` and `withdrawQueue`, ie decides on the order of the markets to supply/withdraw from.
