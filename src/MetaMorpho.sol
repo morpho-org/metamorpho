@@ -561,7 +561,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc ERC4626
-    /// @dev The accrual of performance fees is taken into account in the conversion.
+    /// @dev The accrual of the performance fee is taken into account in the conversion.
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
@@ -591,7 +591,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the amount of assets that the Vault would exchange for the amount of `shares` provided, in an ideal
     /// scenario where all the conditions are met.
-    /// @dev It assumes that fees have been accrued and taking into account in `newTotalSupply` and `newTotalAssets`.
+    /// @dev It assumes the performance fee has been accrued and thus takes into account `newTotalSupply` and
+    /// `newTotalAssets`.
     function _convertToAssetsWithFeeAccrued(
         uint256 shares,
         uint256 newTotalSupply,
