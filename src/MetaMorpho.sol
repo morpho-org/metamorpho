@@ -480,10 +480,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalAssets = _accrueFee();
 
         shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
-        _deposit(_msgSender(), receiver, assets, shares);
+        newTotalAssets = _depositCustom(_msgSender(), receiver, assets, shares, newTotalAssets);
 
-        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
+        _updateLastTotalAssets(newTotalAssets);
     }
 
     /// @inheritdoc IERC4626
@@ -491,10 +490,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalAssets = _accrueFee();
 
         assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
-        _deposit(_msgSender(), receiver, assets, shares);
+        newTotalAssets = _depositCustom(_msgSender(), receiver, assets, shares, newTotalAssets);
 
-        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
+        _updateLastTotalAssets(newTotalAssets);
     }
 
     /// @inheritdoc IERC4626
@@ -605,12 +603,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
 
-    /// @inheritdoc ERC4626
     /// @dev Used in mint or deposit to deposit the underlying asset to Morpho markets.
-    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
+    /// @return The new total assets.
+    function _depositCustom(address caller, address owner, uint256 assets, uint256 shares, uint256 oldTotalAssets)
+        internal
+        returns (uint256)
+    {
         super._deposit(caller, owner, assets, shares);
 
-        _supplyMorpho(assets);
+        return _supplyMorpho(assets, oldTotalAssets);
     }
 
     /// @inheritdoc ERC4626
@@ -705,8 +706,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* LIQUIDITY ALLOCATION */
 
     /// @dev Supplies `assets` to Morpho and increase the idle liquidity if necessary.
-    function _supplyMorpho(uint256 assets) internal {
+    function _supplyMorpho(uint256 assets, uint256 oldTotalAssets) internal returns (uint256 newTotalAssets) {
         uint256 nbMarkets = supplyQueue.length;
+        newTotalAssets = oldTotalAssets;
 
         for (uint256 i; i < nbMarkets; ++i) {
             Id id = supplyQueue[i];
@@ -715,15 +717,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
 
             if (toSupply > 0) {
+                uint256 balanceBefore = _supplyBalance(marketParams);
+
                 // Using try/catch to skip markets that revert.
                 try MORPHO.supply(marketParams, toSupply, 0, address(this), hex"") {
+                    newTotalAssets += _supplyBalance(marketParams) - balanceBefore;
                     assets -= toSupply;
                 } catch {}
             }
 
-            if (assets == 0) return;
+            if (assets == 0) return newTotalAssets;
         }
 
+        newTotalAssets += assets;
         idle += assets;
     }
 
