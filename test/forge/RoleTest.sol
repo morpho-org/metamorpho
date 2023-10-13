@@ -125,12 +125,12 @@ contract RoleTest is BaseTest {
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
 
-        changePrank(RISK_MANAGER);
+        vm.startPrank(RISK_MANAGER);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
 
-        changePrank(ALLOCATOR);
+        vm.startPrank(ALLOCATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
