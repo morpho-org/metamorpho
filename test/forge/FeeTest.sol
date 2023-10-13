@@ -289,6 +289,7 @@ contract FeeTest is BaseTest {
         vault.deposit(deposited, ONBEHALF);
 
         uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 assetsBefore = vault.convertToAssets(shares);
 
         _forward(blocks);
 
