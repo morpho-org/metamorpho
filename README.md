@@ -2,9 +2,66 @@
 
 [Morpho Blue](https://github.com/morpho-org/morpho-blue) is a trustless lending primitive that offers unparalleled efficiency and flexibility.
 
-MetaMorpho is a protocol for noncustodial risk management built on top of Morpho Blue. It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets. It offers a seamless experience similar to Aave and Compound.
+MetaMorpho is a protocol for noncustodial risk management built on top of Morpho Blue.
+It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
+It offers a seamless experience similar to Aave and Compound.
 
-Users of MetaMorpho are liquidity providers that want to earn from borrowing interest whithout having to actively manage the risk of their position. The active management of the deposited assets is the responsibility of a set of different roles (owner, risk manager and allocators). These roles are primarily responsible for enabling and disabling markets on Morpho Blue and managing the allocation of users’ funds.
+Users of MetaMorpho are liquidity providers that want to earn from borrowing interest whithout having to actively manage the risk of their position.
+The active management of the deposited assets is the responsibility of a set of different roles (owner, risk manager and allocators).
+These roles are primarily responsible for enabling and disabling markets on Morpho Blue and managing the allocation of users’ funds.
+
+## Specifications
+
+### MetaMorpho
+
+MetaMorpho vaults are ERC-4626 compliant vault with the permit feature (ERC-2612). One MetaMorpho vault is dedicated to one loan asset on Morpho Blue.
+
+Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
+A maximum of 30 markets can be enabled on a given MetaMorpho vault.
+
+There are 4 different roles for a MetaMorpho vault (owner, risk manager, guardian & allocators).
+All actions that are against the interest of the users (e.g. enabling a market with a high liquidation risk, increasing the fee) are subject to a timelock of minimum 12 hours.
+During this timelock, users can withdraw their funds from the vault if they don't agree or the guardian (if set) can revoke the action. After the timelock, the action can be executed by anyone until the `TIMELOCK_EXPIRATION` is exceeded.
+
+In case the vault receives rewards on Morpho Blue markets, the rewards can be redistributed by setting a rewards recipient. This rewards recipient can be [Universal Rewards Distributor (URD)](https://github.com/morpho-org/universal-rewards-distributor).
+
+Below is a more fine-grained description of the different roles.
+
+The owner can:
+- Do whatever the risk manager and allocators can do.
+- Transfer or renounce the ownership.
+- Set the risk manager.
+- Set allocators.
+- Set the rewards recipient.
+- [Timelocked] Set the timelock.
+- [Timelocked] Set the performance fee (capped to 50%).
+- [Timelocked] Set the guardian.
+- Set the fee recipient.
+
+The risk manager can:
+- Do whatever the allocators can do.
+- [Timelocked] Enable or disable a market by setting a cap to a specific market.
+    - The cap can be set to 0 to disable the market.
+	- Disabling a market can only be done if there's the vault has no liquidity on the market.
+
+The allocators can:
+- Set the `supplyQueue` and `withdrawQueue`, ie decides on the order of the markets to supply/withdraw from.
+    - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
+	- Upon a withdrawal, the vault will first withdraw from the idle supply, then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
+	- The `supplyQueue` can only contain enabled markets.
+	- The `withdrawQueue` MUST contain all enabled and disabled markets on which the vault has still liquidity.
+- Reallocate funds among the enabled market at any moment.
+
+The guardian can:
+- Revoke any timelocked action.
+
+Anyone can:
+- Trigger the ERC-4626 entry points.
+- Transfer rewards to the rewards recipient.
+
+### MetaMorpho Factory
+
+The MetaMorpho factory is permissionless factory contract that allows anyone to create a new MetaMorpho vault.
 
 ## Getting Started
 
