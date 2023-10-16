@@ -23,7 +23,7 @@ There are 4 different roles for a MetaMorpho vault (owner, curator, guardian & a
 All actions that are against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
 During this timelock, users who disagree with the policy change can withdraw their funds from the vault or the guardian (if it is set) can revoke the action. After the timelock, the action can be executed by anyone until 3 days have passed.
 
-In case the vault receives rewards on Morpho Blue markets, the rewards can be redistributed by setting a rewards recipient. This rewards recipient can be [Universal Rewards Distributor (URD)](https://github.com/morpho-org/universal-rewards-distributor).
+In case the vault receives rewards on Morpho Blue markets, the rewards can be redistributed by setting a rewards recipient. This rewards recipient can be an instance of a [Universal Rewards Distributor (URD)](https://github.com/morpho-org/universal-rewards-distributor).
 
 ### Roles
 
