@@ -14,7 +14,7 @@ contract MarketTest is IntegrationTest {
         MarketParams memory marketParams = _randomMarketParams(seed);
         cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, uint8(192), cap));
         vault.submitCap(marketParams, cap);
     }
@@ -22,7 +22,7 @@ contract MarketTest is IntegrationTest {
     function testSubmitCapInconsistentAsset(MarketParams memory marketParams) public {
         vm.assume(marketParams.loanToken != address(loanToken));
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, marketParams.id()));
         vault.submitCap(marketParams, 0);
     }
@@ -32,7 +32,7 @@ contract MarketTest is IntegrationTest {
 
         vm.assume(morpho.lastUpdate(marketParams.id()) == 0);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vm.expectRevert(ErrorsLib.MarketNotCreated.selector);
         vault.submitCap(marketParams, 0);
     }
@@ -40,7 +40,7 @@ contract MarketTest is IntegrationTest {
     function testSubmitCapAlreadySet() public {
         _setCap(allMarkets[0], CAP);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitCap(allMarkets[0], CAP);
     }

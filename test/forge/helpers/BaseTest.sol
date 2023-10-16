@@ -46,7 +46,7 @@ contract BaseTest is Test {
     address internal ONBEHALF = makeAddr("OnBehalf");
     address internal RECEIVER = makeAddr("Receiver");
     address internal ALLOCATOR = makeAddr("Allocator");
-    address internal RISK_MANAGER = makeAddr("RiskManager");
+    address internal CURATOR = makeAddr("Curator");
     address internal GUARDIAN = makeAddr("Guardian");
     address internal FEE_RECIPIENT = makeAddr("FeeRecipient");
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");

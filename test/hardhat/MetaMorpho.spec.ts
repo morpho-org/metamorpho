@@ -63,7 +63,7 @@ const randomForwardTimestamp = async () => {
 
 describe("MetaMorpho", () => {
   let admin: SignerWithAddress;
-  let riskManager: SignerWithAddress;
+  let curator: SignerWithAddress;
   let allocator: SignerWithAddress;
   let suppliers: SignerWithAddress[];
   let borrowers: SignerWithAddress[];
@@ -123,7 +123,7 @@ describe("MetaMorpho", () => {
 
     const users = allSigners.slice(0, -3);
 
-    [admin, riskManager, allocator] = allSigners.slice(-3);
+    [admin, curator, allocator] = allSigners.slice(-3);
     suppliers = users.slice(0, users.length / 2);
     borrowers = users.slice(users.length / 2);
 
@@ -200,7 +200,7 @@ describe("MetaMorpho", () => {
       await collateral.connect(user).approve(morphoAddress, MaxUint256);
     }
 
-    await metaMorpho.setRiskManager(riskManager.address);
+    await metaMorpho.setCurator(curator.address);
     await metaMorpho.setIsAllocator(allocator.address, true);
 
     await metaMorpho.setFeeRecipient(admin.address);
@@ -211,7 +211,7 @@ describe("MetaMorpho", () => {
 
     marketCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
-      await metaMorpho.connect(riskManager).submitCap(marketParams, marketCap);
+      await metaMorpho.connect(curator).submitCap(marketParams, marketCap);
     }
 
     await forwardTimestamp(timelock);
@@ -220,8 +220,8 @@ describe("MetaMorpho", () => {
       await metaMorpho.connect(admin).acceptCap(identifier(marketParams));
     }
 
-    await metaMorpho.connect(riskManager).setSupplyQueue(allMarketParams.map(identifier));
-    await metaMorpho.connect(riskManager).sortWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
+    await metaMorpho.connect(curator).setSupplyQueue(allMarketParams.map(identifier));
+    await metaMorpho.connect(curator).sortWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";

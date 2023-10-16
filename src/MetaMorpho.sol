@@ -44,8 +44,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* STORAGE */
 
-    /// @notice The address of the risk manager.
-    address public riskManager;
+    /// @notice The address of the curator.
+    address public curator;
 
     /// @notice Stores whether an address is an allocator or not.
     mapping(address => bool) internal _isAllocator;
@@ -123,9 +123,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* MODIFIERS */
 
-    /// @dev Reverts if the caller doesn't have the risk manager's privilege.
-    modifier onlyRiskManager() {
-        if (_msgSender() != riskManager && _msgSender() != owner()) revert ErrorsLib.NotRiskManager();
+    /// @dev Reverts if the caller doesn't have the curator's privilege.
+    modifier onlyCurator() {
+        if (_msgSender() != curator && _msgSender() != owner()) revert ErrorsLib.NotCurator();
 
         _;
     }
@@ -161,13 +161,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* ONLY OWNER FUNCTIONS */
 
-    /// @notice Sets `riskManager` to `newRiskManager`.
-    function setRiskManager(address newRiskManager) external onlyOwner {
-        if (newRiskManager == riskManager) revert ErrorsLib.AlreadySet();
+    /// @notice Sets `curator` to `newCurator`.
+    function setCurator(address newCurator) external onlyOwner {
+        if (newCurator == curator) revert ErrorsLib.AlreadySet();
 
-        riskManager = newRiskManager;
+        curator = newCurator;
 
-        emit EventsLib.SetRiskManager(newRiskManager);
+        emit EventsLib.SetCurator(newCurator);
     }
 
     /// @notice Sets `newAllocator` as an allocator or not (`newIsAllocator`).
@@ -244,10 +244,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /* ONLY RISK MANAGER FUNCTIONS */
+    /* ONLY CURATOR FUNCTIONS */
 
     /// @notice Submits a `newMarketCap` for the market defined by `marketParams`.
-    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyRiskManager {
+    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyCurator {
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
@@ -453,7 +453,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Returns whether `target` is an allocator or not.
     function isAllocator(address target) public view returns (bool) {
-        return _isAllocator[target] || target == riskManager || target == owner();
+        return _isAllocator[target] || target == curator || target == owner();
     }
 
     /* ERC4626 (PUBLIC) */
@@ -766,7 +766,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             // 1. oracle.price() is never called (the vault doesn't borrow)
             // 2. `_withdrawable` caps to the liquidity available on Morpho
             // 3. virtually accruing interest didn't fail in `_withdrawable`
-            remaining -= _withdrawable(marketParams, id);
+            remaining -= UtilsLib.min(_withdrawable(marketParams, id), remaining);
 
             if (remaining == 0) return 0;
         }

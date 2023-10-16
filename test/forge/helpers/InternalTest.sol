@@ -10,7 +10,7 @@ contract InternalTest is BaseTest, MetaMorpho {
         super.setUp();
 
         vm.startPrank(OWNER);
-        this.setRiskManager(RISK_MANAGER);
+        this.setCurator(CURATOR);
         this.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 

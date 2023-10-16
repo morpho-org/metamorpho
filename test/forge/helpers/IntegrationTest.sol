@@ -15,7 +15,7 @@ contract IntegrationTest is BaseTest {
         vault = new MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vm.startPrank(OWNER);
-        vault.setRiskManager(RISK_MANAGER);
+        vault.setCurator(CURATOR);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
@@ -91,7 +91,7 @@ contract IntegrationTest is BaseTest {
         (uint256 cap,) = vault.config(id);
         if (newCap == cap) return;
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, newCap);
 
         uint256 timelock = vault.timelock();
