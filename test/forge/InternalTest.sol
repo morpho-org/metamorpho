@@ -38,7 +38,7 @@ contract InternalTest is Test, MetaMorpho {
     address internal SUPPLIER = makeAddr("Supplier");
     address internal BORROWER = makeAddr("Borrower");
     address internal ALLOCATOR = makeAddr("Allocator");
-    address internal RISK_MANAGER = makeAddr("RiskManager");
+    address internal CURATOR = makeAddr("Curator");
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
@@ -74,7 +74,7 @@ contract InternalTest is Test, MetaMorpho {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
 
         vm.startPrank(OWNER);
-        this.setRiskManager(RISK_MANAGER);
+        this.setCurator(CURATOR);
         this.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 

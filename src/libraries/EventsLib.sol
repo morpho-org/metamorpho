@@ -42,8 +42,8 @@ library EventsLib {
     /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
     event UpdateLastTotalAssets(uint256 newTotalAssets);
 
-    /// @notice Emitted when `riskManager` is set to `newRiskManager`.
-    event SetRiskManager(address indexed newRiskManager);
+    /// @notice Emitted when `curator` is set to `newCurator`.
+    event SetCurator(address indexed newCurator);
 
     /// @notice Emitted when an `allocator` is set to `isAllocator`.
     event SetIsAllocator(address indexed allocator, bool isAllocator);
