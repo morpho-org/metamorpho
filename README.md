@@ -20,12 +20,12 @@ Users can supply or withdraw assets at any time, depending on the available liqu
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
 
 There are 4 different roles for a MetaMorpho vault (owner, curator, guardian & allocators).
-All actions that are against the interest of the users (e.g. enabling a market with a high liquidation risk, increasing the fee) are subject to a timelock of minimum 12 hours.
-During this timelock, users can withdraw their funds from the vault if they don't agree or the guardian (if set) can revoke the action. After the timelock, the action can be executed by anyone until the `TIMELOCK_EXPIRATION` is exceeded.
+All actions that are against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
+During this timelock, users who disagree with the policy change can withdraw their funds from the vault or the guardian (if it is set) can revoke the action. After the timelock, the action can be executed by anyone until 3 days have passed.
 
 In case the vault receives rewards on Morpho Blue markets, the rewards can be redistributed by setting a rewards recipient. This rewards recipient can be [Universal Rewards Distributor (URD)](https://github.com/morpho-org/universal-rewards-distributor).
 
-Below is a more fine-grained description of the different roles.
+### Roles
 
 The owner can:
 - Do whatever the curator and allocators can do.
