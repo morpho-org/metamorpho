@@ -23,17 +23,17 @@ contract FeeTest is BaseTest {
 
             // Create some debt on the market to accrue interest.
 
-            loanToken.setBalance(SUPPLIER, MIN_TEST_ASSETS);
+            loanToken.setBalance(SUPPLIER, MAX_TEST_ASSETS);
 
             vm.prank(SUPPLIER);
-            morpho.supply(marketParams, MIN_TEST_ASSETS, 0, ONBEHALF, hex"");
+            morpho.supply(marketParams, MAX_TEST_ASSETS, 0, ONBEHALF, hex"");
 
-            uint256 collateral = uint256(MIN_TEST_ASSETS).wDivUp(marketParams.lltv);
+            uint256 collateral = uint256(MAX_TEST_ASSETS).wDivUp(marketParams.lltv);
             collateralToken.setBalance(BORROWER, collateral);
 
             vm.startPrank(BORROWER);
             morpho.supplyCollateral(marketParams, collateral, BORROWER, hex"");
-            morpho.borrow(marketParams, MIN_TEST_ASSETS / 2, 0, BORROWER, BORROWER);
+            morpho.borrow(marketParams, MAX_TEST_ASSETS / 2, 0, BORROWER, BORROWER);
             vm.stopPrank();
         }
 
