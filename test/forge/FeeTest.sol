@@ -33,7 +33,7 @@ contract FeeTest is BaseTest {
 
             vm.startPrank(BORROWER);
             morpho.supplyCollateral(marketParams, collateral, BORROWER, hex"");
-            morpho.borrow(marketParams, MAX_TEST_ASSETS / 2, 0, BORROWER, BORROWER);
+            morpho.borrow(marketParams, MAX_TEST_ASSETS, 0, BORROWER, BORROWER);
             vm.stopPrank();
         }
 
@@ -62,9 +62,9 @@ contract FeeTest is BaseTest {
     }
 
     function testAccrueFeeWithinABlock(uint256 deposited, uint256 withdrawn) public {
-        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        deposited = bound(deposited, MIN_TEST_ASSETS + 1, MAX_TEST_ASSETS);
         // The deposited amount is rounded down on Morpho and thus cannot be withdrawn in a block in most cases.
-        withdrawn = bound(withdrawn, 1, deposited - 1);
+        withdrawn = bound(withdrawn, MIN_TEST_ASSETS, deposited - 1);
 
         loanToken.setBalance(SUPPLIER, deposited);
 
