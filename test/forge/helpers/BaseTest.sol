@@ -45,7 +45,7 @@ contract BaseTest is Test {
     address internal ONBEHALF;
     address internal RECEIVER;
     address internal ALLOCATOR;
-    address internal RISK_MANAGER;
+    address internal CURATOR;
     address internal GUARDIAN;
     address internal FEE_RECIPIENT;
     address internal MORPHO_OWNER;
@@ -69,7 +69,7 @@ contract BaseTest is Test {
         ONBEHALF = makeAddr("OnBehalf");
         RECEIVER = makeAddr("Receiver");
         ALLOCATOR = makeAddr("Allocator");
-        RISK_MANAGER = makeAddr("RiskManager");
+        CURATOR = makeAddr("Curator");
         GUARDIAN = makeAddr("Guardian");
         FEE_RECIPIENT = makeAddr("FeeRecipient");
         MORPHO_OWNER = makeAddr("MorphoOwner");
@@ -100,7 +100,7 @@ contract BaseTest is Test {
         vault = new MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vm.startPrank(OWNER);
-        vault.setRiskManager(RISK_MANAGER);
+        vault.setCurator(CURATOR);
         vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
@@ -261,7 +261,7 @@ contract BaseTest is Test {
         (uint256 cap,) = vault.config(id);
         if (newCap == cap) return;
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, newCap);
 
         uint256 timelock = vault.timelock();

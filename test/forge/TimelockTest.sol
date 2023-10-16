@@ -340,7 +340,7 @@ contract TimelockTest is BaseTest {
 
         vm.expectEmit();
         emit EventsLib.SetCap(id, cap);
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
@@ -360,7 +360,7 @@ contract TimelockTest is BaseTest {
 
         vm.expectEmit();
         emit EventsLib.SubmitCap(id, cap);
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
@@ -380,7 +380,7 @@ contract TimelockTest is BaseTest {
         MarketParams memory marketParams = allMarkets[0];
         Id id = marketParams.id();
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
         vm.warp(block.timestamp + TIMELOCK);
@@ -408,7 +408,7 @@ contract TimelockTest is BaseTest {
     function testAcceptCapTimelockNotElapsed(uint256 elapsed) public {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
 
         vm.warp(block.timestamp + elapsed);
@@ -426,7 +426,7 @@ contract TimelockTest is BaseTest {
 
         elapsed = bound(elapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
-        vm.startPrank(RISK_MANAGER);
+        vm.startPrank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
 
         vm.warp(block.timestamp + elapsed);

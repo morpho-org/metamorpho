@@ -3,15 +3,15 @@
 
 
 .
-└── setRiskManager(address newRiskManager) external
+└── setCurator(address newCurator) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
-        ├── when newRiskManager == riskManager
+        ├── when newCurator == curator
         │   └── revert with AlreadySet()
-        └── when newRiskManager != riskManager
-            ├── it should set riskManager to newRiskManager
-            └── it should emit SetRiskManager(newRiskManager)
+        └── when newCurator != curator
+            ├── it should set curator to newCurator
+            └── it should emit SetCurator(newCurator)
 
 .
 └── setIsAllocator(address newAllocator, bool newIsAllocator) external
@@ -154,14 +154,14 @@
                 └── it should delete pendingGuardian
 
 
-/* ONLY RISK MANAGER FUNCTIONS */
+/* ONLY CURATOR FUNCTIONS */
 
 
 .
 └── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external
-    ├── when msg.sender not owner or riskManager
-    │   └── revert with NotRiskManager()
-    └── when msg.sender is owner or riskManager
+    ├── when msg.sender not owner or curator
+    │   └── revert with NotCurator()
+    └── when msg.sender is owner or curator
         ├── when marketParams.loanToken != asset()
         │   └── revert with InconsistentAsset()
         ├── when marketParams.loanToken == asset()
@@ -211,9 +211,9 @@
 
 .
 └── setSupplyQueue(Id[] calldata newSupplyQueue) external
-    ├── when msg.sender not owner or riskManager or allocator
+    ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocator()
-    └── when msg.sender is owner or riskManager or allocator
+    └── when msg.sender is owner or curator or allocator
         ├── when some markets of newSupplyQueue have a zero cap
         │   └── revert with UnauthorizedMarket()
         └── when all the markets of newSupplyQueue have non zero cap
@@ -222,9 +222,9 @@
 
 .
 └── sortWithdrawQueue(uint256[] calldata indexes) external
-    ├── when msg.sender not owner or riskManager or allocator
+    ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocator()
-    └── when msg.sender is owner or riskManager or allocator
+    └── when msg.sender is owner or curator or allocator
         ├── when indexes contains a duplicate market
         │   ├── it should compute the id of the duplicate market
         │   └── revert with DuplicateMarket(id)
@@ -242,9 +242,9 @@
 .
 └── reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external
     ├── external
-    ├── when msg.sender not owner or riskManager or allocator
+    ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocator()
-    └── when msg.sender is owner or riskManager or allocator
+    └── when msg.sender is owner or curator or allocator
         ├── for each market withdrawn[i] from withdrawn
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
         │   └── it should add the withdrawn amount to totalWithdrawn
@@ -311,9 +311,9 @@
 
 .
 └── isAllocator(address target) public view returns (bool)
-    ├── when _isAllocator[target] == true or target == riskManager or target == owner
+    ├── when _isAllocator[target] == true or target == curator or target == owner
     │   └── it should return true
-    └── when _isAllocator[target] == false and target != riskManager and target != owner
+    └── when _isAllocator[target] == false and target != curator and target != owner
         └── it should return false
 
 

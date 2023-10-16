@@ -6,21 +6,21 @@ import "./helpers/BaseTest.sol";
 contract RoleTest is BaseTest {
     using MarketParamsLib for MarketParams;
 
-    function testSetRiskManager() public {
-        address newRiskManager = makeAddr("RiskManager2");
+    function testSetCurator() public {
+        address newCurator = makeAddr("Curator2");
 
         vm.expectEmit();
-        emit EventsLib.SetRiskManager(newRiskManager);
+        emit EventsLib.SetCurator(newCurator);
         vm.prank(OWNER);
-        vault.setRiskManager(newRiskManager);
+        vault.setCurator(newCurator);
 
-        assertEq(vault.riskManager(), newRiskManager, "riskManager");
+        assertEq(vault.curator(), newCurator, "curator");
     }
 
-    function testSetRiskManagerShouldRevertAlreadySet() public {
+    function testSetCuratorShouldRevertAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setRiskManager(RISK_MANAGER);
+        vault.setCurator(CURATOR);
     }
 
     function testSetAllocator() public {
@@ -55,7 +55,7 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
-        vault.setRiskManager(caller);
+        vault.setCurator(caller);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.setIsAllocator(caller, true);
@@ -75,18 +75,18 @@ contract RoleTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testRiskManagerFunctionsShouldRevertWhenNotRiskManagerAndNotOwner(address caller) public {
-        vm.assume(caller != vault.owner() && caller != vault.riskManager());
+    function testCuratorFunctionsShouldRevertWhenNotCuratorAndNotOwner(address caller) public {
+        vm.assume(caller != vault.owner() && caller != vault.curator());
 
         vm.startPrank(caller);
 
-        vm.expectRevert(ErrorsLib.NotRiskManager.selector);
+        vm.expectRevert(ErrorsLib.NotCurator.selector);
         vault.submitCap(allMarkets[0], CAP);
 
         vm.stopPrank();
     }
 
-    function testAllocatorFunctionsShouldRevertWhenNotAllocatorAndNotRiskManagerAndNotOwner(address caller) public {
+    function testAllocatorFunctionsShouldRevertWhenNotAllocatorAndNotCuratorAndNotOwner(address caller) public {
         vm.assume(!vault.isAllocator(caller));
 
         vm.startPrank(caller);
@@ -107,15 +107,15 @@ contract RoleTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testRiskManagerOrOwnerShouldTriggerRiskManagerFunctions() public {
+    function testCuratorOrOwnerShouldTriggerCuratorFunctions() public {
         vm.prank(OWNER);
         vault.submitCap(allMarkets[0], CAP);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
     }
 
-    function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {
+    function testAllocatorOrCuratorOrOwnerShouldTriggerAllocatorFunctions() public {
         _setCap(allMarkets[0], CAP);
 
         Id[] memory supplyQueue = new Id[](1);
@@ -131,7 +131,7 @@ contract RoleTest is BaseTest {
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
 
-        vm.startPrank(RISK_MANAGER);
+        vm.startPrank(CURATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
