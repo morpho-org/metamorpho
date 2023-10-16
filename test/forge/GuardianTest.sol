@@ -37,6 +37,8 @@ contract GuardianTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
+        vm.expectEmit();
+        emit EventsLib.RevokeTimelock(GUARDIAN, IPending(address(vault)).pendingTimelock());
         vm.prank(GUARDIAN);
         vault.revokeTimelock();
 
@@ -60,6 +62,8 @@ contract GuardianTest is BaseTest {
 
         Id id = marketParams.id();
 
+        vm.expectEmit();
+        emit EventsLib.RevokeCap(GUARDIAN, id, IPending(address(vault)).pendingCap(id));
         vm.prank(GUARDIAN);
         vault.revokeCap(id);
 
@@ -82,6 +86,8 @@ contract GuardianTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
+        vm.expectEmit();
+        emit EventsLib.RevokeGuardian(GUARDIAN, IPending(address(vault)).pendingGuardian());
         vm.prank(GUARDIAN);
         vault.revokeGuardian();
 

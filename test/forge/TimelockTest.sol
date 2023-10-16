@@ -25,6 +25,8 @@ contract TimelockTest is BaseTest {
     function testSubmitTimelockIncreased(uint256 timelock) public {
         timelock = bound(timelock, TIMELOCK + 1, MAX_TIMELOCK);
 
+        vm.expectEmit();
+        emit EventsLib.SetTimelock(timelock);
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
@@ -39,6 +41,8 @@ contract TimelockTest is BaseTest {
     function testSubmitTimelockDecreased(uint256 timelock) public {
         timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
 
+        vm.expectEmit();
+        emit EventsLib.SubmitTimelock(timelock);
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
@@ -101,6 +105,8 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
+        vm.expectEmit();
+        emit EventsLib.SetTimelock(timelock);
         vault.acceptTimelock();
 
         uint256 newTimelock = vault.timelock();
@@ -145,6 +151,10 @@ contract TimelockTest is BaseTest {
     function testSubmitFeeDecreased(uint256 fee) public {
         fee = bound(fee, 0, FEE - 1);
 
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
+        vm.expectEmit();
+        emit EventsLib.SetFee(fee);
         vm.prank(OWNER);
         vault.submitFee(fee);
 
@@ -159,6 +169,8 @@ contract TimelockTest is BaseTest {
     function testSubmitFeeIncreased(uint256 fee) public {
         fee = bound(fee, FEE + 1, MAX_FEE);
 
+        vm.expectEmit();
+        emit EventsLib.SubmitFee(fee);
         vm.prank(OWNER);
         vault.submitFee(fee);
 
@@ -178,6 +190,10 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
+        vm.expectEmit();
+        emit EventsLib.SetFee(fee);
         vault.acceptFee();
 
         uint256 newFee = vault.fee();
@@ -222,6 +238,8 @@ contract TimelockTest is BaseTest {
     function testSubmitGuardian() public {
         address guardian = makeAddr("Guardian2");
 
+        vm.expectEmit();
+        emit EventsLib.SubmitGuardian(guardian);
         vm.prank(OWNER);
         vault.submitGuardian(guardian);
 
@@ -236,6 +254,8 @@ contract TimelockTest is BaseTest {
     function testSubmitGuardianFromZero() public {
         _setGuardian(address(0));
 
+        vm.expectEmit();
+        emit EventsLib.SetGuardian(GUARDIAN);
         vm.prank(OWNER);
         vault.submitGuardian(GUARDIAN);
 
@@ -267,6 +287,8 @@ contract TimelockTest is BaseTest {
 
         vm.warp(block.timestamp + TIMELOCK);
 
+        vm.expectEmit();
+        emit EventsLib.SetGuardian(guardian);
         vault.acceptGuardian();
 
         address newGuardian = vault.guardian();
@@ -314,11 +336,13 @@ contract TimelockTest is BaseTest {
         cap = bound(cap, 0, CAP - 1);
 
         MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
 
-        vm.prank(RISK_MANAGER);
+        vm.expectEmit();
+        emit EventsLib.SetCap(id, cap);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
-        Id id = marketParams.id();
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
@@ -332,11 +356,13 @@ contract TimelockTest is BaseTest {
         cap = bound(cap, 1, type(uint192).max);
 
         MarketParams memory marketParams = allMarkets[1];
+        Id id = marketParams.id();
 
-        vm.prank(RISK_MANAGER);
+        vm.expectEmit();
+        emit EventsLib.SubmitCap(id, cap);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
-        Id id = marketParams.id();
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
@@ -352,13 +378,15 @@ contract TimelockTest is BaseTest {
         cap = bound(cap, CAP + 1, type(uint192).max);
 
         MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
         vm.warp(block.timestamp + TIMELOCK);
 
-        Id id = marketParams.id();
+        vm.expectEmit();
+        emit EventsLib.SetCap(id, cap);
         vault.acceptCap(id);
 
         (uint192 newCap, uint64 withdrawRank) = vault.config(id);
@@ -380,7 +408,7 @@ contract TimelockTest is BaseTest {
     function testAcceptCapTimelockNotElapsed(uint256 elapsed) public {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
 
         vm.warp(block.timestamp + elapsed);
@@ -398,7 +426,7 @@ contract TimelockTest is BaseTest {
 
         elapsed = bound(elapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
-        vm.startPrank(RISK_MANAGER);
+        vm.startPrank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
 
         vm.warp(block.timestamp + elapsed);
