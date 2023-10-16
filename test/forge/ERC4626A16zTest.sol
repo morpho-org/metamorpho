@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import "erc4626-tests/ERC4626.test.sol";
 
-import {BaseTest} from "./helpers/BaseTest.sol";
+import {IntegrationTest} from "./helpers/IntegrationTest.sol";
 
-contract ERC4626A16zTest is BaseTest, ERC4626Test {
-    function setUp() public override(BaseTest, ERC4626Test) {
+contract ERC4626A16zTest is IntegrationTest, ERC4626Test {
+    function setUp() public override(IntegrationTest, ERC4626Test) {
         super.setUp();
 
         _underlying_ = address(loanToken);

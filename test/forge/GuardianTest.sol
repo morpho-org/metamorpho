@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 uint256 constant TIMELOCK = 1 weeks;
 
-contract GuardianTest is BaseTest {
+contract GuardianTest is IntegrationTest {
     using Math for uint256;
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;

@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 uint256 constant CAP2 = 100e18;
 uint256 constant INITIAL_DEPOSIT = 4 * CAP2;
 
-contract ReallocateWithdrawTest is BaseTest {
+contract ReallocateWithdrawTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
     using MorphoLib for IMorpho;

@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import {IERC20Errors} from "@openzeppelin/interfaces/draft-IERC6093.sol";
 import {IMorphoFlashLoanCallback} from "@morpho-blue/interfaces/IMorphoCallbacks.sol";
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
-contract ERC4626Test is BaseTest, IMorphoFlashLoanCallback {
+contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
 

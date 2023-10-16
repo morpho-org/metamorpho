@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
 uint256 constant TIMELOCK = 1 weeks;
 
-contract TimelockTest is BaseTest {
+contract TimelockTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
 
     function setUp() public override {
