@@ -141,9 +141,9 @@ contract InternalTest is Test, MetaMorpho {
         assertEq(suppliable, CAP - suppliedAmount, "suppliable");
     }
 
-    function testWithdrawable(uint256 suppliedAmount, uint256 amountBorrowed) public {
+    function testWithdrawable(uint256 suppliedAmount, uint256 borrowedAmount) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        amountBorrowed = bound(amountBorrowed, MIN_TEST_ASSETS, suppliedAmount);
+        borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 
         Id id = allMarkets[0].id();
         _setCap(id, CAP);
@@ -157,7 +157,7 @@ contract InternalTest is Test, MetaMorpho {
 
         vm.startPrank(BORROWER);
         morpho.supplyCollateral(allMarkets[0], collateral, BORROWER, hex"");
-        morpho.borrow(allMarkets[0], amountBorrowed, 0, BORROWER, BORROWER);
+        morpho.borrow(allMarkets[0], borrowedAmount, 0, BORROWER, BORROWER);
         vm.stopPrank();
 
         uint256 withdrawable = _withdrawable(allMarkets[0], id);
@@ -165,14 +165,14 @@ contract InternalTest is Test, MetaMorpho {
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(allMarkets[0]);
 
-        uint256 expectedWithdrawable = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares) - amountBorrowed;
+        uint256 expectedWithdrawable = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares) - borrowedAmount;
 
         assertEq(withdrawable, expectedWithdrawable, "withdrawable");
     }
 
-    function testStaticWithdraw(uint256 suppliedAmount, uint256 amountBorrowed, uint256 assets) public {
+    function testStaticWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        amountBorrowed = bound(amountBorrowed, MIN_TEST_ASSETS, suppliedAmount);
+        borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 
         Id id = allMarkets[0].id();
         _setCap(id, CAP);
@@ -186,7 +186,7 @@ contract InternalTest is Test, MetaMorpho {
 
         vm.startPrank(BORROWER);
         morpho.supplyCollateral(allMarkets[0], collateral, BORROWER, hex"");
-        morpho.borrow(allMarkets[0], amountBorrowed, 0, BORROWER, BORROWER);
+        morpho.borrow(allMarkets[0], borrowedAmount, 0, BORROWER, BORROWER);
         vm.stopPrank();
 
         uint256 remaining = _staticWithdrawMorpho(assets);
@@ -194,7 +194,7 @@ contract InternalTest is Test, MetaMorpho {
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(allMarkets[0]);
 
-        uint256 expectedWithdrawable = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares) - amountBorrowed;
+        uint256 expectedWithdrawable = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares) - borrowedAmount;
         uint256 expectedRemaining = assets.zeroFloorSub(expectedWithdrawable);
 
         assertEq(remaining, expectedRemaining, "remaining");
