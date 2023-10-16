@@ -7,7 +7,7 @@ It enables anyone to create a vault depositing liquidity into multiple Morpho Bl
 It offers a seamless experience similar to Aave and Compound.
 
 Users of MetaMorpho are liquidity providers that want to earn from borrowing interest whithout having to actively manage the risk of their position.
-The active management of the deposited assets is the responsibility of a set of different roles (owner, risk manager and allocators).
+The active management of the deposited assets is the responsibility of a set of different roles (owner, curator and allocators).
 These roles are primarily responsible for enabling and disabling markets on Morpho Blue and managing the allocation of users’ funds.
 
 ## Specifications
@@ -19,7 +19,7 @@ MetaMorpho vaults are ERC-4626 compliant vault with the permit feature (ERC-2612
 Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
 
-There are 4 different roles for a MetaMorpho vault (owner, risk manager, guardian & allocators).
+There are 4 different roles for a MetaMorpho vault (owner, curator, guardian & allocators).
 All actions that are against the interest of the users (e.g. enabling a market with a high liquidation risk, increasing the fee) are subject to a timelock of minimum 12 hours.
 During this timelock, users can withdraw their funds from the vault if they don't agree or the guardian (if set) can revoke the action. After the timelock, the action can be executed by anyone until the `TIMELOCK_EXPIRATION` is exceeded.
 
@@ -28,9 +28,9 @@ In case the vault receives rewards on Morpho Blue markets, the rewards can be re
 Below is a more fine-grained description of the different roles.
 
 The owner can:
-- Do whatever the risk manager and allocators can do.
+- Do whatever the curator and allocators can do.
 - Transfer or renounce the ownership.
-- Set the risk manager.
+- Set the curator.
 - Set allocators.
 - Set the rewards recipient.
 - [Timelocked] Set the timelock.
@@ -38,7 +38,7 @@ The owner can:
 - [Timelocked] Set the guardian.
 - Set the fee recipient.
 
-The risk manager can:
+The curator can:
 - Do whatever the allocators can do.
 - [Timelocked] Enable or disable a market by setting a cap to a specific market.
     - The cap can be set to 0 to disable the market.
