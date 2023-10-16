@@ -6,9 +6,9 @@ import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {UrdFactory} from "@universal-rewards-distributor/UrdFactory.sol";
 import {IUniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
-contract UrdTest is BaseTest {
+contract UrdTest is IntegrationTest {
     using UtilsLib for uint256;
 
     UrdFactory internal urdFactory;

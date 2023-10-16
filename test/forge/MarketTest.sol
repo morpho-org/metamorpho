@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import {stdError} from "@forge-std/StdError.sol";
 
 import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
-contract MarketTest is BaseTest {
+contract MarketTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 

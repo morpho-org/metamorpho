@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 import "src/MetaMorphoFactory.sol";
 
-contract MetaMorphoFactoryTest is BaseTest {
+contract MetaMorphoFactoryTest is IntegrationTest {
     MetaMorphoFactory factory;
 
     function setUp() public override {

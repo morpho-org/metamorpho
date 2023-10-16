@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "./helpers/SigUtils.sol";
 
 import {ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
-contract PermitTest is BaseTest {
+contract PermitTest is IntegrationTest {
     uint256 internal constant OWNER_PK = 0xA11CE;
     uint256 internal constant SPENDER_PK = 0xB0B;
     uint256 internal constant DEADLINE = 1 days;
