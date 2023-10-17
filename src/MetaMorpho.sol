@@ -204,8 +204,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newFee`.
     function submitFee(uint256 newFee) external onlyOwner {
-        if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
         if (newFee == fee) revert ErrorsLib.AlreadySet();
+        if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
 
         if (newFee < fee) {
             _setFee(newFee);
