@@ -270,9 +270,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
     /// depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
-        uint256 length = newSupplyQueue.length;
-
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < newSupplyQueue.length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
 
@@ -333,9 +331,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         onlyAllocator
     {
         uint256 totalWithdrawn;
-        uint256 nbWithdrawn = withdrawn.length;
-
-        for (uint256 i; i < nbWithdrawn; ++i) {
+        for (uint256 i; i < withdrawn.length; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
 
             if (allocation.marketParams.loanToken != asset()) {
@@ -355,9 +351,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         uint256 totalSupplied;
-        uint256 nbSupplied = supplied.length;
-
-        for (uint256 i; i < nbSupplied; ++i) {
+        for (uint256 i; i < supplied.length; ++i) {
             MarketAllocation memory allocation = supplied[i];
 
             (uint256 suppliedAssets,) =
@@ -529,9 +523,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IERC4626
     function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
-        uint256 nbMarkets = withdrawQueue.length;
-
-        for (uint256 i; i < nbMarkets; ++i) {
+        for (uint256 i; i < withdrawQueue.length; ++i) {
             assets += _supplyBalance(_marketParams(withdrawQueue[i]));
         }
 
@@ -702,9 +694,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Supplies `assets` to Morpho and increase the idle liquidity if necessary.
     function _supplyMorpho(uint256 assets) internal {
-        uint256 nbMarkets = supplyQueue.length;
-
-        for (uint256 i; i < nbMarkets; ++i) {
+        for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
@@ -730,9 +720,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         if (remaining == 0) return 0;
 
-        uint256 nbMarkets = withdrawQueue.length;
-
-        for (uint256 i; i < nbMarkets; ++i) {
+        for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
@@ -756,9 +744,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         if (remaining == 0) return 0;
 
-        uint256 nbMarkets = withdrawQueue.length;
-
-        for (uint256 i; i < nbMarkets; ++i) {
+        for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
