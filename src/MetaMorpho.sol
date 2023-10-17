@@ -758,7 +758,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Withdraws `assets` from the idle liquidity.
-    /// @return The assets withdrawn from the idle liquidity.
+    /// @return The remaining assets to withdraw.
     /// @return The new `idle` liquidity value.
     function _withdrawIdle(uint256 assets) internal view returns (uint256, uint256) {
         return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
