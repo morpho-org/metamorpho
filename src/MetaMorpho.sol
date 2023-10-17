@@ -294,11 +294,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         for (uint256 i; i < newLength; ++i) {
             uint256 prevIndex = indexes[i];
+
+            // If prevIndex >= currLength, it will revert with native "Index out of bounds".
             Id id = withdrawQueue[prevIndex];
-
-            // If prevIndex >= currLength, reverts with native "Index out of bounds".
             if (seen[prevIndex]) revert ErrorsLib.DuplicateMarket(id);
-
             seen[prevIndex] = true;
 
             newWithdrawQueue[i] = id;
