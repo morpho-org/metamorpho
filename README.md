@@ -23,9 +23,18 @@ A maximum of 30 markets can be enabled on a given MetaMorpho vault.
 Each market has a supply cap configured onchain that guarantees lenders a maximum absolute exposure to the specific market.
 
 There are 4 different roles for a MetaMorpho vault (owner, curator, guardian & allocators).
-The vault manager can extract a performance fee (up to 50%) from the total interest generated.
+
+The vault owner can set a performance fee (up to 50%) from the total interest generated.
+The `feeRecipient` can then withdraw the accumulated fee at any time.
+
+The vault may be entitled to some rewards emitted on Morpho Blue markets the vault has supplied to.
+Those rewards can be transferred to the `rewardsRecipient`.
+The vault's owner has the choice to distribute back these rewards to vault depositors however they want.
+For more information about this use case, see the [Rewards](#rewards) section.
+
 All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
-During this timelock, users who disagree with the policy change can withdraw their funds from the vault or the guardian (if it is set) can revoke the action. After the timelock, the action can be executed by anyone until 3 days have passed.
+During this timelock, users who disagree with the policy change can withdraw their funds from the vault or the guardian (if it is set) can revoke the action.
+After the timelock, the action can be executed by anyone until 3 days have passed.
 
 ### Roles
 
@@ -73,7 +82,7 @@ It can:
 
 ### Rewards
 
-The vault may be entitled to some rewards emitted on Morpho Blue markets the vault has supplied to. The vault's owner has the choice to distribute back these rewards to vault depositors however they want. To this end, it is advised to use the [Universal Rewards Distributor (URD)](https://github.com/morpho-org/universal-rewards-distributor).
+To redistribute rewards to vault depositors, it is advised to use the [Universal Rewards Distributor (URD)](https://github.com/morpho-org/universal-rewards-distributor).
 
 Below is a typical example of how this use case would take place:
 
