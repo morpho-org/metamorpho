@@ -50,12 +50,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Stores whether an address is an allocator or not.
     mapping(address => bool) internal _isAllocator;
 
-    /// @notice Stores the configuration of each market.
-    mapping(Id => MarketConfig) public config;
-
-    /// @notice Stores the pending cap of each market.
-    mapping(Id => PendingUint192) public pendingCap;
-
     /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
     /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
     Id[] public supplyQueue;
@@ -64,6 +58,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Always contain all non-zero cap markets as well as all markets on which the vault supplies liquidity,
     /// without duplicate.
     Id[] public withdrawQueue;
+
+    /// @notice Stores the pending cap for each market.
+    mapping(Id => PendingUint192) public pendingCap;
 
     /// @notice The pending fee.
     PendingUint192 public pendingFee;
@@ -74,17 +71,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The pending guardian.
     PendingAddress public pendingGuardian;
 
+    /// @notice Stores the current configuration of each market.
+    mapping(Id => MarketConfig) public config;
+
     /// @notice The current fee.
     uint96 public fee;
 
-    /// @notice The fee recipient.
-    address public feeRecipient;
-
-    /// @notice The timelock.
+    /// @notice The current timelock.
     uint256 public timelock;
 
-    /// @notice The guardian. Can be set even without the timelock set.
+    /// @notice The current guardian. Can be set even without the timelock set.
     address public guardian;
+
+    /// @notice The fee recipient.
+    address public feeRecipient;
 
     /// @notice The rewards recipient.
     address public rewardsRecipient;
