@@ -68,6 +68,8 @@ It can:
 
 #### Guardian
 
+Only one single address can have this role.
+
 It can:
 - Revoke any timelocked action except it can't revoke a pending fee.
 
@@ -105,4 +107,4 @@ You will find other useful commands in the [`package.json`](./package.json) file
 
 ## License
 
-Morpho Blue Oracles is licensed under `GPL-2.0-or-later`, see [`LICENSE`](./LICENSE).
+MetaMorpho is licensed under `GPL-2.0-or-later`, see [`LICENSE`](./LICENSE).
