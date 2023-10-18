@@ -62,26 +62,26 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Stores the pending cap for each market.
     mapping(Id => PendingUint192) public pendingCap;
 
-    /// @notice The pending fee.
-    PendingUint192 public pendingFee;
-
     /// @notice The pending timelock.
     PendingUint192 public pendingTimelock;
 
     /// @notice The pending guardian.
     PendingAddress public pendingGuardian;
 
+    /// @notice The pending fee.
+    PendingUint192 public pendingFee;
+
     /// @notice Stores the current configuration of each market.
     mapping(Id => MarketConfig) public config;
-
-    /// @notice The current fee.
-    uint96 public fee;
 
     /// @notice The current timelock.
     uint256 public timelock;
 
     /// @notice The current guardian. Can be set even without the timelock set.
     address public guardian;
+
+    /// @notice The current fee.
+    uint96 public fee;
 
     /// @notice The fee recipient.
     address public feeRecipient;
