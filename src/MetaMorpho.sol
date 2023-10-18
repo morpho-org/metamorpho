@@ -481,8 +481,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _deposit(_msgSender(), receiver, assets, shares);
-
-        _updateLastTotalAssets(newTotalAssets + assets);
     }
 
     /// @inheritdoc IERC4626
@@ -491,8 +489,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _deposit(_msgSender(), receiver, assets, shares);
-
-        _updateLastTotalAssets(newTotalAssets + assets);
     }
 
     /// @inheritdoc IERC4626
@@ -507,8 +503,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         shares = _convertToSharesWithFeeAccrued(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
-
-        _updateLastTotalAssets(newTotalAssets - assets);
     }
 
     /// @inheritdoc IERC4626
@@ -523,8 +517,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         assets = _convertToAssetsWithFeeAccrued(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
         _withdraw(_msgSender(), receiver, owner, assets, shares);
-
-        _updateLastTotalAssets(newTotalAssets - assets);
     }
 
     /// @inheritdoc IERC4626
@@ -607,6 +599,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         super._deposit(caller, owner, assets, shares);
 
         _supplyMorpho(assets);
+
+        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc ERC4626
@@ -624,6 +619,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (_withdrawMorpho(assets) != 0) revert ErrorsLib.WithdrawMorphoFailed();
 
         super._withdraw(caller, receiver, owner, assets, shares);
+
+        // `newTotalAssets - assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /* INTERNAL */
