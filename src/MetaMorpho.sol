@@ -7,7 +7,7 @@ import {
 } from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
-import "./libraries/ConstantsLib.sol";
+import {ConstantsLib} from "./libraries/ConstantsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {WAD} from "@morpho-blue/libraries/MathLib.sol";
@@ -152,7 +152,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     modifier withinTimelockWindow(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
-        if (block.timestamp > submittedAt + timelock + TIMELOCK_EXPIRATION) {
+        if (block.timestamp > submittedAt + timelock + ConstantsLib.TIMELOCK_EXPIRATION) {
             revert ErrorsLib.TimelockExpirationExceeded();
         }
 
@@ -205,7 +205,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Submits a `newFee`.
     function submitFee(uint256 newFee) external onlyOwner {
         if (newFee == fee) revert ErrorsLib.AlreadySet();
-        if (newFee > MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
+        if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
 
         if (newFee < fee) {
             _setFee(newFee);
@@ -533,7 +533,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc ERC4626
     function _decimalsOffset() internal pure override returns (uint8) {
-        return DECIMALS_OFFSET;
+        return ConstantsLib.DECIMALS_OFFSET;
     }
 
     /// @dev Returns the maximum amount of asset (`assets`) that the `owner` can withdraw from the vault, as well as the
@@ -630,8 +630,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
     function _checkTimelockBounds(uint256 newTimelock) internal pure {
-        if (newTimelock > MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
-        if (newTimelock < MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
+        if (newTimelock > ConstantsLib.MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
+        if (newTimelock < ConstantsLib.MIN_TIMELOCK) revert ErrorsLib.BelowMinTimelock();
     }
 
     /// @dev Sets `timelock` to `newTimelock`.
@@ -660,7 +660,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            if (withdrawQueue.length > MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+            if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
 
             // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);

@@ -46,7 +46,9 @@ contract FeeTest is IntegrationTest {
         uint256 feeAmount = interest.wMulDown(FEE);
 
         return feeAmount.mulDiv(
-            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAmount + 1, Math.Rounding.Floor
+            vault.totalSupply() + 10 ** ConstantsLib.DECIMALS_OFFSET,
+            totalAssetsAfter - feeAmount + 1,
+            Math.Rounding.Floor
         );
     }
 
@@ -178,7 +180,7 @@ contract FeeTest is IntegrationTest {
 
     function testSetFeeAccrueFee(uint256 deposited, uint256 fee, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        fee = bound(fee, 0, MAX_FEE);
+        fee = bound(fee, 0, ConstantsLib.MAX_FEE);
         blocks = _boundBlocks(blocks);
 
         vm.assume(fee != FEE);
@@ -233,7 +235,7 @@ contract FeeTest is IntegrationTest {
     }
 
     function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
-        fee = bound(fee, MAX_FEE + 1, type(uint256).max);
+        fee = bound(fee, ConstantsLib.MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
