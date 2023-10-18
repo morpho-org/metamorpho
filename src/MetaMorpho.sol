@@ -50,35 +50,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Stores whether an address is an allocator or not.
     mapping(address => bool) internal _isAllocator;
 
-    /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
-    /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
-    Id[] public supplyQueue;
-
-    /// @dev Stores the order of markets from which liquidity is withdrawn upon withdrawal.
-    /// @dev Always contain all non-zero cap markets as well as all markets on which the vault supplies liquidity,
-    /// without duplicate.
-    Id[] public withdrawQueue;
-
-    /// @notice Stores the pending cap for each market.
-    mapping(Id => PendingUint192) public pendingCap;
-
-    /// @notice The pending timelock.
-    PendingUint192 public pendingTimelock;
-
-    /// @notice The pending guardian.
-    PendingAddress public pendingGuardian;
-
-    /// @notice The pending fee.
-    PendingUint192 public pendingFee;
+    /// @notice The current guardian. Can be set even without the timelock set.
+    address public guardian;
 
     /// @notice Stores the current configuration of each market.
     mapping(Id => MarketConfig) public config;
 
     /// @notice The current timelock.
     uint256 public timelock;
-
-    /// @notice The current guardian. Can be set even without the timelock set.
-    address public guardian;
 
     /// @notice The current fee.
     uint96 public fee;
@@ -89,12 +68,33 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The rewards recipient.
     address public rewardsRecipient;
 
-    /// @notice Stores the total assets managed by this vault when the fee was last accrued.
-    uint256 public lastTotalAssets;
+    /// @notice The pending guardian.
+    PendingAddress public pendingGuardian;
+
+    /// @notice Stores the pending cap for each market.
+    mapping(Id => PendingUint192) public pendingCap;
+
+    /// @notice The pending timelock.
+    PendingUint192 public pendingTimelock;
+
+    /// @notice The pending fee.
+    PendingUint192 public pendingFee;
+
+    /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
+    /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
+    Id[] public supplyQueue;
+
+    /// @dev Stores the order of markets from which liquidity is withdrawn upon withdrawal.
+    /// @dev Always contain all non-zero cap markets as well as all markets on which the vault supplies liquidity,
+    /// without duplicate.
+    Id[] public withdrawQueue;
 
     /// @notice Stores the idle liquidity.
     /// @dev The idle liquidity does not generate any interest.
     uint256 public idle;
+
+    /// @notice Stores the total assets managed by this vault when the fee was last accrued.
+    uint256 public lastTotalAssets;
 
     /* CONSTRUCTOR */
 
