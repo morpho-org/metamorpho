@@ -1,4 +1,4 @@
-import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
+import { AbiCoder, MaxUint256, ZeroHash, concat, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
@@ -15,6 +15,8 @@ import {
 // Must use relative import path.
 import SpeedJumpIrmArtifact from "../../lib/morpho-blue-irm/out/SpeedJumpIrm.sol/SpeedJumpIrm.json";
 import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
+
+const appendSupplyQueue = true;
 
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
@@ -34,14 +36,13 @@ const random = () => {
   return (seed - 1) / 2147483646;
 };
 
-const identifier = (marketParams: MarketParamsStruct) => {
-  const encodedMarket = AbiCoder.defaultAbiCoder().encode(
+const encodeMarketParams = (marketParams: MarketParamsStruct) =>
+  AbiCoder.defaultAbiCoder().encode(
     ["address", "address", "address", "address", "uint256"],
-    Object.values(marketParams),
+    [marketParams.loanToken, marketParams.collateralToken, marketParams.oracle, marketParams.irm, marketParams.lltv],
   );
 
-  return Buffer.from(keccak256(encodedMarket).slice(2), "hex");
-};
+const identifier = (marketParams: MarketParamsStruct) => keccak256(encodeMarketParams(marketParams));
 
 const logProgress = (name: string, i: number, max: number) => {
   if (i % 10 == 0) console.log("[" + name + "]", Math.floor((100 * i) / max), "%");
@@ -240,7 +241,14 @@ describe("MetaMorpho", () => {
 
       await randomForwardTimestamp();
 
-      await metaMorpho.connect(supplier).deposit(assets, supplier.address);
+      const tx = await metaMorpho.deposit.populateTransaction(assets, supplier.address);
+      if (appendSupplyQueue) {
+        tx.data = concat([tx.data].concat(allMarketParams.map(encodeMarketParams)));
+      }
+
+      // hre.tracer.printNext = true;
+
+      await supplier.sendTransaction(tx);
 
       await randomForwardTimestamp();
 

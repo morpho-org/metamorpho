@@ -71,4 +71,6 @@ library ErrorsLib {
 
     /// @notice Thrown when the idle liquidity is insufficient to cover supply during a reallocation of funds.
     error InsufficientIdle();
+
+    error InconsistentSupplyQueue();
 }

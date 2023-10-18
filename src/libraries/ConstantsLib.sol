@@ -19,3 +19,5 @@ uint256 constant MAX_QUEUE_SIZE = 30;
 
 /// @dev The maximum fee the vault can have (50%).
 uint256 constant MAX_FEE = 0.5e18;
+
+uint256 constant MARKET_PARAMS_BYTES_LENGTH = 32 * 5;

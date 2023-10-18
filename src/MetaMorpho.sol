@@ -524,7 +524,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 nbMarkets = withdrawQueue.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
-            assets += _supplyBalance(_marketParams(withdrawQueue[i]));
+            assets += _supplyBalance(IMorphoMarketParams(address(MORPHO)).idToMarketParams(withdrawQueue[i]));
         }
 
         assets += idle;
@@ -626,9 +626,32 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* INTERNAL */
 
-    /// @dev Returns the market params of the market defined by `id`.
-    function _marketParams(Id id) internal view returns (MarketParams memory) {
-        return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
+    /// @dev Returns the market params of the market at `index` in `supplyQueue`.
+    function _supplyMarketParams(uint256 index) internal view returns (MarketParams memory, Id) {
+        return _marketParams(withdrawQueue, index, 68);
+    }
+
+    /// @dev Returns the market params of the market at `index` in `withdrawQueue`.
+    function _withdrawMarketParams(uint256 index) internal view returns (MarketParams memory, Id) {
+        return _marketParams(withdrawQueue, index, 100);
+    }
+
+    function _marketParams(Id[] storage queue, uint256 index, uint256 offset)
+        internal
+        view
+        returns (MarketParams memory marketParams, Id id)
+    {
+        bytes calldata data = _msgData();
+        if (data.length > offset) {
+            uint256 dataIndex = offset + MARKET_PARAMS_BYTES_LENGTH * index;
+
+            // TODO: order is trusted for now
+            marketParams = abi.decode(data[dataIndex:dataIndex + MARKET_PARAMS_BYTES_LENGTH], (MarketParams));
+            id = marketParams.id();
+        } else {
+            id = queue[index];
+            marketParams = IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
+        }
     }
 
     /// @dev Returns the vault's balance the market defined by `marketParams`.
@@ -703,8 +726,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 nbMarkets = supplyQueue.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
-            Id id = supplyQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
+            (MarketParams memory marketParams, Id id) = _supplyMarketParams(i);
 
             uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
 
@@ -731,8 +753,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 nbMarkets = withdrawQueue.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
-            Id id = withdrawQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
+            (MarketParams memory marketParams, Id id) = _withdrawMarketParams(i);
 
             uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining);
 
@@ -757,8 +778,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 nbMarkets = withdrawQueue.length;
 
         for (uint256 i; i < nbMarkets; ++i) {
-            Id id = withdrawQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
+            (MarketParams memory marketParams, Id id) = _withdrawMarketParams(i);
 
             // The vault withdrawing from Morpho cannot fail because:
             // 1. oracle.price() is never called (the vault doesn't borrow)
