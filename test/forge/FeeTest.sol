@@ -40,9 +40,9 @@ contract FeeTest is BaseTest {
         _setCap(allMarkets[0], CAP);
     }
 
-    function _feeShares(uint256 lastTotalAssetsBefore) internal view returns (uint256) {
+    function _feeShares(uint256 totalAssetsBefore) internal view returns (uint256) {
         uint256 totalAssetsAfter = vault.totalAssets();
-        uint256 interest = totalAssetsAfter - lastTotalAssetsBefore;
+        uint256 interest = totalAssetsAfter - totalAssetsBefore;
         uint256 feeAssets = interest.mulDiv(FEE, WAD);
 
         return feeAssets.mulDiv(
@@ -87,11 +87,11 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
@@ -112,11 +112,11 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
 
         uint256 shares = vault.convertToShares(newDeposit);
 
@@ -139,11 +139,11 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
 
         uint256 shares = vault.convertToShares(withdrawn);
 
@@ -164,11 +164,11 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
 
         vm.prank(ONBEHALF);
         vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
@@ -187,11 +187,11 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
 
         _setFee(fee);
 
@@ -208,11 +208,11 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
 
         vm.prank(OWNER);
         vault.setFeeRecipient(address(1));
@@ -263,12 +263,12 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
         uint256 sharesBefore = vault.convertToShares(assets);
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
         uint256 expectedShares = assets.mulDiv(
             vault.totalSupply() + feeShares + 10 ** DECIMALS_OFFSET, vault.totalAssets() + 1, Math.Rounding.Floor
         );
@@ -288,12 +288,12 @@ contract FeeTest is BaseTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 lastTotalAssetsBefore = vault.lastTotalAssets();
+        uint256 totalAssetsBefore = vault.totalAssets();
         uint256 assetsBefore = vault.convertToAssets(shares);
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(lastTotalAssetsBefore);
+        uint256 feeShares = _feeShares(totalAssetsBefore);
         uint256 expectedAssets = shares.mulDiv(
             vault.totalAssets() + 1, vault.totalSupply() + feeShares + 10 ** DECIMALS_OFFSET, Math.Rounding.Floor
         );
