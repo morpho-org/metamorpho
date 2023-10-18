@@ -20,6 +20,12 @@ library ErrorsLib {
     /// @notice Thrown when the caller is not the guardian.
     error NotGuardian();
 
+    /// @notice Thrown when the caller is not the owner nor the guardian.
+    error NotOwnerOrGuardian();
+
+    /// @notice Thrown when the caller doesn't have the curator's privilege and is not the guardian.
+    error NotCuratorOrGuardian();
+
     /// @notice Thrown when the market `id` cannot be set in the supply queue.
     error UnauthorizedMarket(Id id);
 
