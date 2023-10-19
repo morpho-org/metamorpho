@@ -246,21 +246,21 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* ONLY CURATOR FUNCTIONS */
 
-    /// @notice Submits a `newMarketCap` for the market defined by `marketParams`.
-    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyCurator {
+    /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
+    function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCurator {
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
 
-        uint256 marketCap = config[id].cap;
-        if (newMarketCap == marketCap) revert ErrorsLib.AlreadySet();
+        uint256 supplyCap = config[id].cap;
+        if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
-        if (newMarketCap < marketCap) {
-            _setCap(id, newMarketCap.toUint192());
+        if (newSupplyCap < supplyCap) {
+            _setCap(id, newSupplyCap.toUint192());
         } else {
-            pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));
+            pendingCap[id] = PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp));
 
-            emit EventsLib.SubmitCap(id, newMarketCap);
+            emit EventsLib.SubmitCap(id, newSupplyCap);
         }
     }
 
@@ -660,11 +660,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         delete pendingGuardian;
     }
 
-    /// @dev Sets the cap of the market defined by `id` to `marketCap`.
-    function _setCap(Id id, uint192 marketCap) internal {
+    /// @dev Sets the cap of the market defined by `id` to `supplyCap`.
+    function _setCap(Id id, uint192 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
-        if (marketCap > 0 && marketConfig.withdrawRank == 0) {
+        if (supplyCap > 0 && marketConfig.withdrawRank == 0) {
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
@@ -674,9 +674,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             marketConfig.withdrawRank = uint64(withdrawQueue.length);
         }
 
-        marketConfig.cap = marketCap;
+        marketConfig.cap = supplyCap;
 
-        emit EventsLib.SetCap(id, marketCap);
+        emit EventsLib.SetCap(id, supplyCap);
 
         delete pendingCap[id];
     }
@@ -780,10 +780,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
     /// @dev Assumes that the inputs `marketParams` and `id` match.
     function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 marketCap = config[id].cap;
-        if (marketCap == 0) return 0;
+        uint256 supplyCap = config[id].cap;
+        if (supplyCap == 0) return 0;
 
-        return marketCap.zeroFloorSub(_supplyBalance(marketParams));
+        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
     }
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
