@@ -95,8 +95,6 @@ contract FeeTest is IntegrationTest {
 
         vm.assume(feeShares != 0);
 
-        console2.log(feeShares, "feeShares");
-
         loanToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
