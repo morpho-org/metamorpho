@@ -249,6 +249,8 @@
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
         │   └── it should add the withdrawn amount to totalWithdrawn
         ├── for each market supplied[i] from supplied
+        │   ├── if config[id].cap == 0
+        │   │   └── revert with UnauthorizedMarket(id)
         │   ├── it should supply supplied[i].assets or supplied[i].shares
         │   ├── it should add the supplied amount to totalSupplied
         │   └── if supplyBalance(supplied[i].marketParams) > config[supplied[i].marketParams.id()].cap
