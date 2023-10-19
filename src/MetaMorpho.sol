@@ -815,7 +815,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 feeShares;
         (feeShares, newTotalAssets) = _accruedFeeShares();
 
-        if (feeShares != 0 && feeRecipient != address(0)) _mint(feeRecipient, feeShares);
+        if (feeShares != 0 && feeRecipient != address(0)) {
+            _mint(feeRecipient, feeShares);
+
+            emit EventsLib.AccrueFee(feeShares);
+        }
     }
 
     /// @dev Computes and returns the fee shares (`feeShares`) to mint and the new vault's total assets

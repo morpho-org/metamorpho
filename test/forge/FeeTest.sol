@@ -93,9 +93,16 @@ contract FeeTest is IntegrationTest {
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
 
+        vm.assume(feeShares != 0);
+
+        console2.log(feeShares, "feeShares");
+
         loanToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit EventsLib.AccrueFee(feeShares);
+
         vault.deposit(newDeposit, ONBEHALF);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
