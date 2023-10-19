@@ -269,7 +269,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
     /// depositing to the vault.
-    /// @dev The supply queue can be empty to minimize gas costs on deposits.
+    /// @dev The supply queue can be empty to minimize gas costs on deposits. In that case, the deposited assets stay
+    /// idle until the next reallocation (triggered by allocators).
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
         uint256 length = newSupplyQueue.length;
 
