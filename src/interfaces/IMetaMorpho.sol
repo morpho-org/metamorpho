@@ -3,6 +3,7 @@ pragma solidity >=0.5.0;
 
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
+import {IERC20Permit} from "@openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
 
 struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
@@ -35,7 +36,19 @@ struct MarketAllocation {
     uint256 shares;
 }
 
-interface IMetaMorpho is IERC4626 {
+interface IMultiCall {
+    function multicall(bytes[] calldata) external returns (bytes[] memory);
+}
+
+interface IOwnable {
+    function owner() external returns (address);
+    function transferOwnership(address) external;
+    function renounceOwnership() external;
+    function acceptOwnership() external;
+    function pendingOwner() external view returns (address);
+}
+
+interface IMetaMorphoSpecific {
     function MORPHO() external view returns (IMorpho);
 
     function curator() external view returns (address);
@@ -50,7 +63,6 @@ interface IMetaMorpho is IERC4626 {
     function supplyQueueSize() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueSize() external view returns (uint256);
-    function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
 
     function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);
@@ -58,21 +70,17 @@ interface IMetaMorpho is IERC4626 {
     function submitTimelock(uint256 newTimelock) external;
     function acceptTimelock() external;
     function revokeTimelock() external;
-    function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
 
     function submitCap(MarketParams memory marketParams, uint256 marketCap) external;
     function acceptCap(Id id) external;
     function revokeCap(Id id) external;
-    function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
 
     function submitFee(uint256 newFee) external;
     function acceptFee() external;
-    function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokeGuardian() external;
-    function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
 
     function transferRewards(address) external;
 
@@ -86,8 +94,18 @@ interface IMetaMorpho is IERC4626 {
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
 
-interface IPending {
-    function pendingTimelock() external view returns (PendingUint192 memory);
-    function pendingCap(Id) external view returns (PendingUint192 memory);
+interface IMetaMorpho is IMetaMorphoSpecific {
+    function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
+    function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
+    function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
+    function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
+    function pendingFee() external view returns (uint192 value, uint64 submittedAt);
+}
+
+interface IMetaMorphoFull is IMetaMorphoSpecific, IERC4626, IERC20Permit, IOwnable, IMultiCall {
+    function config(Id) external view returns (MarketConfig memory);
     function pendingGuardian() external view returns (PendingAddress memory);
+    function pendingCap(Id) external view returns (PendingUint192 memory);
+    function pendingTimelock() external view returns (PendingUint192 memory);
+    function pendingFee() external view returns (PendingUint192 memory);
 }
