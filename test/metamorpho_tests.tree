@@ -214,11 +214,14 @@
     ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocator()
     └── when msg.sender is owner or curator or allocator
-        ├── when some markets of newSupplyQueue have a zero cap
-        │   └── revert with UnauthorizedMarket()
-        └── when all the markets of newSupplyQueue have non zero cap
-            ├── it should set supplyQueue to newSupplyQueue
-            └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
+        ├── when newSupplyQueue.length > MAX_QUEUE_SIZE
+        │   └── revert with MaxQueueSizeExceeded()
+        └── when newSupplyQueue.length <= MAX_QUEUE_SIZE
+            ├── when some markets of newSupplyQueue have a zero cap
+            │   └── revert with UnauthorizedMarket()
+            └── when all the markets of newSupplyQueue have non zero cap
+                ├── it should set supplyQueue to newSupplyQueue
+                └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
 
 .
 └── sortWithdrawQueue(uint256[] calldata indexes) external

@@ -272,6 +272,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
         uint256 length = newSupplyQueue.length;
 
+        if (length > MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+
         for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
