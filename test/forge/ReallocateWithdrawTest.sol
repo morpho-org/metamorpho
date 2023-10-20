@@ -148,6 +148,24 @@ contract ReallocateWithdrawTest is IntegrationTest {
         assertApproxEqAbs(vault.idle(), expectedIdle, 1, "vault.idle() 1");
     }
 
+    function testReallocateUnauthorizedMarket(uint256 amount) public {
+        amount = bound(amount, 1, CAP2);
+
+        _setCap(allMarkets[1], 0);
+
+        withdrawn.push(MarketAllocation(allMarkets[0], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[1], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[2], 0, type(uint256).max));
+
+        supplied.push(MarketAllocation(allMarkets[0], amount, 0));
+        supplied.push(MarketAllocation(allMarkets[1], amount, 0));
+        supplied.push(MarketAllocation(allMarkets[2], amount, 0));
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.UnauthorizedMarket.selector, allMarkets[1].id()));
+        vault.reallocate(withdrawn, supplied);
+    }
+
     function testReallocateSupplyCapExceeded() public {
         withdrawn.push(MarketAllocation(allMarkets[0], 0, type(uint256).max));
         withdrawn.push(MarketAllocation(allMarkets[1], 0, type(uint256).max));

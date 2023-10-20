@@ -158,7 +158,7 @@
 
 
 .
-└── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external
+└── submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external
     ├── when msg.sender not owner or curator
     │   └── revert with NotCuratorRole()
     └── when msg.sender is owner or curator
@@ -169,21 +169,21 @@
             ├── when MORPHO.lastUpdate(id) == 0
             │   └── revert with MarketNotCreated()
             └── when MORPHO.lastUpdate(id) != 0
-                ├── when newMarketCap == marketCap
+                ├── when newSupplyCap == supplyCap
                 │   └── revert with AlreadySet()
-                └── when newMarketCap != marketCap
-                    ├── when newMarketCap < marketCap
-                    │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
+                └── when newSupplyCap != supplyCap
+                    ├── when newSupplyCap < supplyCap
+                    │   ├── when newSupplyCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue
                     │   │   ├── it should push id to withdrawQueue
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                     │   │       └── revert with MaxQueueSizeExceeded()
-                    │   ├── it should set config[id].cap to newMarketCap
-                    │   ├── it should emit SetCap(id, newMarketCap)
+                    │   ├── it should set config[id].cap to newSupplyCap
+                    │   ├── it should emit SetCap(id, newSupplyCap)
                     │   └── it should delete pendingCap[id]
-                    └── when newMarketCap > marketCap
-                        ├── it should it should set pendingCap[id] to PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp))
-                        └── it should emit EventsLib.SubmitCap(id, newMarketCap)
+                    └── when newSupplyCap > supplyCap
+                        ├── it should it should set pendingCap[id] to PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp))
+                        └── it should emit EventsLib.SubmitCap(id, newSupplyCap)
 
 .
 └── acceptCap(Id id) external
@@ -196,7 +196,7 @@
             ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
             │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
             └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── when marketCap > 0 and marketConfig.withdrawRank == 0
+                ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
                 │   ├── it should push id to supplyQueue
                 │   ├── it should push id to withdrawQueue
                 │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
@@ -249,6 +249,8 @@
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
         │   └── it should add the withdrawn amount to totalWithdrawn
         ├── for each market supplied[i] from supplied
+        │   ├── if config[id].cap == 0
+        │   │   └── revert with UnauthorizedMarket(id)
         │   ├── it should supply supplied[i].assets or supplied[i].shares
         │   ├── it should add the supplied amount to totalSupplied
         │   └── if supplyBalance(supplied[i].marketParams) > config[supplied[i].marketParams.id()].cap
