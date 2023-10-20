@@ -190,7 +190,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newTimelock`.
     /// @dev In case the new timelock is higher than the current one, the timelock is set immediately.
-    /// @dev Warning: Submitting a timelock a fee will overwrite the current pending timelock.
+    /// @dev Warning: Submitting a timelock will overwrite the current pending timelock.
     function submitTimelock(uint256 newTimelock) external onlyOwner {
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
         _checkTimelockBounds(newTimelock);
@@ -207,7 +207,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newFee`.
     /// @dev In case the new fee is lower than the current one, the fee is set immediately.
-    /// @dev Warning: Submitting a fee a fee will overwrite the current pending fee.
+    /// @dev Warning: Submitting a fee will overwrite the current pending fee.
     function submitFee(uint256 newFee) external onlyOwner {
         if (newFee == fee) revert ErrorsLib.AlreadySet();
         if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
@@ -238,7 +238,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Submits a `newGuardian`.
     /// @notice Warning: the guardian has the power to revoke any pending guardian.
     /// @dev In case there is no guardian, the gardian is set immediately.
-    /// @dev Warning: Submitting a gardian a fee will overwrite the current pending gardian.
+    /// @dev Warning: Submitting a gardian will overwrite the current pending gardian.
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
@@ -255,7 +255,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
-    /// @dev Warning: Submitting a cap a fee will overwrite the current pending cap.
+    /// @dev Warning: Submitting a cap will overwrite the current pending cap.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCurator {
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
