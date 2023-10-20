@@ -87,6 +87,26 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
     }
 
+    function testWithdrawIdle(uint256 deposited, uint256 withdrawn) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        withdrawn = bound(withdrawn, 0, deposited);
+
+        _setCap(allMarkets[0], 0);
+
+        loanToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
+
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() - withdrawn);
+        vm.prank(ONBEHALF);
+        uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
+
+        assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
+        assertEq(vault.idle(), deposited - withdrawn, "idle");
+    }
+
     function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
@@ -293,6 +313,24 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assertEq(vault.balanceOf(SUPPLIER), 0, "balanceOf(SUPPLIER)");
         assertEq(vault.balanceOf(ONBEHALF), minted - toTransfer, "balanceOf(ONBEHALF)");
         assertEq(vault.balanceOf(RECEIVER), toTransfer, "balanceOf(RECEIVER)");
+    }
+
+    function testMaxWithdraw(uint256 depositedAssets, uint256 borrowedAssets) public {
+        depositedAssets = bound(depositedAssets, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        borrowedAssets = bound(borrowedAssets, MIN_TEST_ASSETS, depositedAssets);
+
+        loanToken.setBalance(SUPPLIER, depositedAssets);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(depositedAssets, ONBEHALF);
+
+        collateralToken.setBalance(BORROWER, type(uint128).max);
+
+        vm.startPrank(BORROWER);
+        morpho.supplyCollateral(allMarkets[0], type(uint128).max, BORROWER, hex"");
+        morpho.borrow(allMarkets[0], borrowedAssets, 0, BORROWER, BORROWER);
+
+        assertEq(vault.maxWithdraw(ONBEHALF), depositedAssets - borrowedAssets, "maxWithdraw(ONBEHALF)");
     }
 
     function testMaxWithdrawFlashLoan(uint256 supplied, uint256 deposited) public {
