@@ -45,12 +45,12 @@ Only one single address can have this role.
 It can:
 
 - Do whatever the curator and allocators can do.
+- Do whatever the guardian can do.
 - Transfer or renounce the ownership.
 - Set the curator.
 - Set allocators.
 - Set the rewards recipient.
 - [Timelocked] Set the timelock.
-- Revoke the pending timelock.
 - [Timelocked with no possible veto] Set the performance fee (capped to 50%).
 - Revoke the pending fee.
 - [Timelocked] Set the guardian.
