@@ -283,7 +283,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
     /// depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
-        for (uint256 i; i < newSupplyQueue.length; ++i) {
+        uint256 length = newSupplyQueue.length;
+
+        if (length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+
+        for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
 
@@ -666,7 +670,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+            if (supplyQueue.length > ConstantsLib.MAX_QUEUE_SIZE || withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE)
+            {
+                revert ErrorsLib.MaxQueueSizeExceeded();
+            }
 
             // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);

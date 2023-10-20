@@ -199,6 +199,8 @@
                 ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
                 │   ├── it should push id to supplyQueue
                 │   ├── it should push id to withdrawQueue
+                │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
+                │   │   └── revert with MaxQueueSizeExceeded()
                 │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                 │       └── revert with MaxQueueSizeExceeded()
                 ├── it should set config[id].cap to pendingCap[id].value
@@ -214,11 +216,14 @@
     ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
-        ├── when some markets of newSupplyQueue have a zero cap
-        │   └── revert with UnauthorizedMarket()
-        └── when all the markets of newSupplyQueue have non zero cap
-            ├── it should set supplyQueue to newSupplyQueue
-            └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
+        ├── when newSupplyQueue.length > MAX_QUEUE_SIZE
+        │   └── revert with MaxQueueSizeExceeded()
+        └── when newSupplyQueue.length <= MAX_QUEUE_SIZE
+            ├── when some markets of newSupplyQueue have a zero cap
+            │   └── revert with UnauthorizedMarket()
+            └── when all the markets of newSupplyQueue have non zero cap
+                ├── it should set supplyQueue to newSupplyQueue
+                └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
 
 .
 └── sortWithdrawQueue(uint256[] calldata indexes) external
