@@ -124,7 +124,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* MODIFIERS */
 
     /// @dev Reverts if the caller doesn't have the curator's privilege.
-    modifier onlyCurator() {
+    modifier hasCuratorPrivilege() {
         address sender = _msgSender();
         if (sender != curator && sender != owner()) revert ErrorsLib.NotCurator();
 
@@ -132,7 +132,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Reverts if the caller doesn't have the allocator's privilege.
-    modifier onlyAllocator() {
+    modifier hasAllocatorPrivilege() {
         address sender = _msgSender();
         if (!isAllocator[sender] && sender != curator && sender != owner()) {
             revert ErrorsLib.NotAllocator();
@@ -251,7 +251,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY CURATOR FUNCTIONS */
 
     /// @notice Submits a `newMarketCap` for the market defined by `marketParams`.
-    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyCurator {
+    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external hasCuratorPrivilege {
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
@@ -273,7 +273,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
     /// depositing to the vault.
-    function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
+    function setSupplyQueue(Id[] calldata newSupplyQueue) external hasAllocatorPrivilege {
         for (uint256 i; i < newSupplyQueue.length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
@@ -289,7 +289,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
-    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
+    function sortWithdrawQueue(uint256[] calldata indexes) external hasAllocatorPrivilege {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
@@ -331,7 +331,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// `supplied`).
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
-        onlyAllocator
+        hasAllocatorPrivilege
     {
         uint256 totalWithdrawn;
         for (uint256 i; i < withdrawn.length; ++i) {
