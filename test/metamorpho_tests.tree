@@ -160,7 +160,7 @@
 .
 └── submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external
     ├── when msg.sender not owner or curator
-    │   └── revert with NotCurator()
+    │   └── revert with NotCuratorRole()
     └── when msg.sender is owner or curator
         ├── when marketParams.loanToken != asset()
         │   └── revert with InconsistentAsset()
@@ -214,7 +214,7 @@
 .
 └── setSupplyQueue(Id[] calldata newSupplyQueue) external
     ├── when msg.sender not owner or curator or allocator
-    │   └── revert with NotAllocator()
+    │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
         ├── when newSupplyQueue.length > MAX_QUEUE_SIZE
         │   └── revert with MaxQueueSizeExceeded()
@@ -228,7 +228,7 @@
 .
 └── sortWithdrawQueue(uint256[] calldata indexes) external
     ├── when msg.sender not owner or curator or allocator
-    │   └── revert with NotAllocator()
+    │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
         ├── when indexes contains a duplicate market
         │   ├── it should compute the id of the duplicate market
@@ -248,7 +248,7 @@
 └── reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external
     ├── external
     ├── when msg.sender not owner or curator or allocator
-    │   └── revert with NotAllocator()
+    │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
         ├── for each market withdrawn[i] from withdrawn
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
