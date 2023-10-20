@@ -48,7 +48,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     address public curator;
 
     /// @notice Stores whether an address is an allocator or not.
-    mapping(address => bool) internal _isAllocator;
+    mapping(address => bool) public isAllocator;
 
     /// @notice The current guardian. Can be set even without the timelock set.
     address public guardian;
@@ -132,7 +132,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Reverts if the caller doesn't have the allocator's privilege.
     modifier onlyAllocator() {
-        if (!isAllocator(_msgSender())) revert ErrorsLib.NotAllocator();
+        if (!isAllocator[_msgSender()] && _msgSender() != curator && _msgSender() != owner()) {
+            revert ErrorsLib.NotAllocator();
+        }
 
         _;
     }
@@ -172,9 +174,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `newAllocator` as an allocator or not (`newIsAllocator`).
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        if (_isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
+        if (isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
 
-        _isAllocator[newAllocator] = newIsAllocator;
+        isAllocator[newAllocator] = newIsAllocator;
 
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
@@ -440,13 +442,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
 
         emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
-    }
-
-    /* PUBLIC */
-
-    /// @notice Returns whether `target` is an allocator or not.
-    function isAllocator(address target) public view returns (bool) {
-        return _isAllocator[target] || target == curator || target == owner();
     }
 
     /* ERC4626 (PUBLIC) */
