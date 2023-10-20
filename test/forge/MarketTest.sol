@@ -73,6 +73,24 @@ contract MarketTest is IntegrationTest {
         vault.setSupplyQueue(supplyQueue);
     }
 
+    function testAcceptCapMaxQueueSizeExceeded() public {
+        for (uint256 i; i < ConstantsLib.MAX_QUEUE_SIZE; ++i) {
+            _setCap(allMarkets[i], CAP);
+        }
+
+        _setTimelock(1 weeks);
+
+        MarketParams memory marketParams = allMarkets[ConstantsLib.MAX_QUEUE_SIZE];
+
+        vm.prank(CURATOR);
+        vault.submitCap(marketParams, CAP);
+
+        vm.warp(block.timestamp + 1 weeks);
+
+        vm.expectRevert(ErrorsLib.MaxQueueSizeExceeded.selector);
+        vault.acceptCap(marketParams.id());
+    }
+
     function testSetSupplyQueueUnauthorizedMarket() public {
         Id[] memory supplyQueue = new Id[](1);
         supplyQueue[0] = allMarkets[0].id();
