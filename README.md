@@ -68,7 +68,7 @@ It can:
     - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
 	- Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
 	- The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
-	- The `withdrawQueue` contains at least all enabled markets on which the vault has some funds deposited.
+	- The `withdrawQueue` contains all enabled markets.
 - Instantaneously reallocate funds among the enabled market at any moment.
 
 #### Guardian
