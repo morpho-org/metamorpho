@@ -125,14 +125,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Reverts if the caller doesn't have the curator's privilege.
     modifier onlyCurator() {
-        if (_msgSender() != curator && _msgSender() != owner()) revert ErrorsLib.NotCurator();
+        address sender = _msgSender();
+        if (sender != curator && sender != owner()) revert ErrorsLib.NotCurator();
 
         _;
     }
 
     /// @dev Reverts if the caller doesn't have the allocator's privilege.
     modifier onlyAllocator() {
-        if (!isAllocator[_msgSender()] && _msgSender() != curator && _msgSender() != owner()) {
+        address sender = _msgSender();
+        if (!isAllocator[sender] && sender != curator && sender != owner()) {
             revert ErrorsLib.NotAllocator();
         }
 
