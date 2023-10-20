@@ -15,7 +15,7 @@ contract MetaMorphoInternalTest is InternalTest {
     using UtilsLib for uint256;
 
     constructor() {
-        NB_MARKETS = MAX_QUEUE_SIZE + 1;
+        NB_MARKETS = ConstantsLib.MAX_QUEUE_SIZE + 1;
     }
 
     function testSetCapMaxQueueSizeExcedeed() public {

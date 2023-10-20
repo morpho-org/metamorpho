@@ -46,7 +46,9 @@ contract FeeTest is IntegrationTest {
         uint256 feeAssets = interest.mulDiv(FEE, WAD);
 
         return feeAssets.mulDiv(
-            vault.totalSupply() + 10 ** DECIMALS_OFFSET, totalAssetsAfter - feeAssets + 1, Math.Rounding.Floor
+            vault.totalSupply() + 10 ** ConstantsLib.DECIMALS_OFFSET,
+            totalAssetsAfter - feeAssets + 1,
+            Math.Rounding.Floor
         );
     }
 
@@ -92,10 +94,14 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
+        vm.assume(feeShares != 0);
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
+        vm.expectEmit();
+        emit EventsLib.AccrueFee(feeShares);
+
         vault.deposit(newDeposit, ONBEHALF);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
@@ -117,12 +123,16 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
+        vm.assume(feeShares != 0);
 
         uint256 shares = vault.convertToShares(newDeposit);
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
         vm.prank(SUPPLIER);
+        vm.expectEmit();
+        emit EventsLib.AccrueFee(feeShares);
+
         vault.mint(shares, ONBEHALF);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
@@ -144,10 +154,14 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
+        vm.assume(feeShares != 0);
 
         uint256 shares = vault.convertToShares(withdrawn);
 
         vm.prank(ONBEHALF);
+        vm.expectEmit();
+        emit EventsLib.AccrueFee(feeShares);
+
         vault.redeem(shares, RECEIVER, ONBEHALF);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
@@ -169,8 +183,12 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
+        vm.assume(feeShares != 0);
 
         vm.prank(ONBEHALF);
+        vm.expectEmit();
+        emit EventsLib.AccrueFee(feeShares);
+
         vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
@@ -192,7 +210,10 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
+        vm.assume(feeShares != 0);
 
+        vm.expectEmit();
+        emit EventsLib.AccrueFee(feeShares);
         _setFee(fee);
 
         assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
@@ -213,10 +234,11 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
+        vm.assume(feeShares != 0);
 
         vm.expectEmit();
+        emit EventsLib.AccrueFee(feeShares);
         emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
-        vm.expectEmit();
         emit EventsLib.SetFeeRecipient(address(1));
         vm.prank(OWNER);
         vault.setFeeRecipient(address(1));
@@ -232,7 +254,7 @@ contract FeeTest is IntegrationTest {
     }
 
     function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
-        fee = bound(fee, MAX_FEE + 1, type(uint256).max);
+        fee = bound(fee, ConstantsLib.MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
@@ -274,7 +296,9 @@ contract FeeTest is IntegrationTest {
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
         uint256 expectedShares = assets.mulDiv(
-            vault.totalSupply() + feeShares + 10 ** DECIMALS_OFFSET, vault.totalAssets() + 1, Math.Rounding.Floor
+            vault.totalSupply() + feeShares + 10 ** ConstantsLib.DECIMALS_OFFSET,
+            vault.totalAssets() + 1,
+            Math.Rounding.Floor
         );
         uint256 shares = vault.convertToShares(assets);
 
@@ -284,7 +308,7 @@ contract FeeTest is IntegrationTest {
 
     function testConvertToSharesWithFeeAndInterest(uint256 deposited, uint256 shares, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        shares = bound(shares, 10 ** DECIMALS_OFFSET, MAX_TEST_ASSETS);
+        shares = bound(shares, 10 ** ConstantsLib.DECIMALS_OFFSET, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
         loanToken.setBalance(SUPPLIER, deposited);
@@ -299,7 +323,9 @@ contract FeeTest is IntegrationTest {
 
         uint256 feeShares = _feeShares(totalAssetsBefore);
         uint256 expectedAssets = shares.mulDiv(
-            vault.totalAssets() + 1, vault.totalSupply() + feeShares + 10 ** DECIMALS_OFFSET, Math.Rounding.Floor
+            vault.totalAssets() + 1,
+            vault.totalSupply() + feeShares + 10 ** ConstantsLib.DECIMALS_OFFSET,
+            Math.Rounding.Floor
         );
         uint256 assets = vault.convertToAssets(shares);
 

@@ -23,7 +23,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitTimelockIncreased(uint256 timelock) public {
-        timelock = bound(timelock, TIMELOCK + 1, MAX_TIMELOCK);
+        timelock = bound(timelock, TIMELOCK + 1, ConstantsLib.MAX_TIMELOCK);
 
         vm.expectEmit();
         emit EventsLib.SetTimelock(timelock);
@@ -39,7 +39,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitTimelockDecreased(uint256 timelock) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
 
         vm.expectEmit();
         emit EventsLib.SubmitTimelock(timelock);
@@ -60,21 +60,21 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testDeployMetaMorphoAboveMaxTimelock(uint256 timelock) public {
-        timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
+        timelock = bound(timelock, ConstantsLib.MAX_TIMELOCK + 1, type(uint256).max);
 
         vm.expectRevert(ErrorsLib.AboveMaxTimelock.selector);
         new MetaMorpho(OWNER, address(morpho), timelock, address(loanToken), "MetaMorpho Vault", "MMV");
     }
 
     function testDeployMetaMorphoBelowMinTimelock(uint256 timelock) public {
-        timelock = bound(timelock, 0, MIN_TIMELOCK - 1);
+        timelock = bound(timelock, 0, ConstantsLib.MIN_TIMELOCK - 1);
 
         vm.expectRevert(ErrorsLib.BelowMinTimelock.selector);
         new MetaMorpho(OWNER, address(morpho), timelock, address(loanToken), "MetaMorpho Vault", "MMV");
     }
 
     function testSubmitTimelockAboveMaxTimelock(uint256 timelock) public {
-        timelock = bound(timelock, MAX_TIMELOCK + 1, type(uint256).max);
+        timelock = bound(timelock, ConstantsLib.MAX_TIMELOCK + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AboveMaxTimelock.selector);
@@ -82,7 +82,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitTimelockBelowMinTimelock(uint256 timelock) public {
-        timelock = bound(timelock, 0, MIN_TIMELOCK - 1);
+        timelock = bound(timelock, 0, ConstantsLib.MIN_TIMELOCK - 1);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.BelowMinTimelock.selector);
@@ -98,7 +98,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptTimelock(uint256 timelock) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
@@ -123,7 +123,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptTimelockTimelockNotElapsed(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -136,8 +136,8 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptTimelockTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
-        elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+        elapsed = bound(elapsed, TIMELOCK + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
@@ -153,7 +153,6 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectEmit();
         emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
-        vm.expectEmit();
         emit EventsLib.SetFee(fee);
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -167,7 +166,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitFeeIncreased(uint256 fee) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
 
         vm.expectEmit();
         emit EventsLib.SubmitFee(fee);
@@ -183,7 +182,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptFee(uint256 fee) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
 
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -192,7 +191,6 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectEmit();
         emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
-        vm.expectEmit();
         emit EventsLib.SetFee(fee);
         vault.acceptFee();
 
@@ -210,7 +208,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptFeeTimelockNotElapsed(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -223,8 +221,8 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptFeeTimelockExpirationExceeded(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
-        elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
+        elapsed = bound(elapsed, TIMELOCK + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -319,7 +317,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptGuardianTimelockExpirationExceeded(uint256 elapsed) public {
-        elapsed = bound(elapsed, TIMELOCK + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+        elapsed = bound(elapsed, TIMELOCK + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         address guardian = makeAddr("Guardian2");
 
@@ -418,13 +416,13 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, MIN_TIMELOCK, MAX_TIMELOCK);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, ConstantsLib.MAX_TIMELOCK);
 
         vm.assume(timelock != vault.timelock());
 
         _setTimelock(timelock);
 
-        elapsed = bound(elapsed, timelock + TIMELOCK_EXPIRATION + 1, type(uint64).max);
+        elapsed = bound(elapsed, timelock + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
 
         vm.startPrank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
