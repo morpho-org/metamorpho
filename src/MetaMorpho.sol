@@ -276,7 +276,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         supplyQueue = newSupplyQueue;
 
-        emit EventsLib.SetSupplyQueue(msg.sender, newSupplyQueue);
+        emit EventsLib.SetSupplyQueue(_msgSender(), newSupplyQueue);
     }
 
     /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
@@ -320,7 +320,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         withdrawQueue = newWithdrawQueue;
 
-        emit EventsLib.SetWithdrawQueue(msg.sender, newWithdrawQueue);
+        emit EventsLib.SetWithdrawQueue(_msgSender(), newWithdrawQueue);
     }
 
     /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on
@@ -378,21 +378,21 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Revokes the `pendingTimelock`.
     function revokeTimelock() external onlyGuardian {
-        emit EventsLib.RevokeTimelock(msg.sender, pendingTimelock);
+        emit EventsLib.RevokeTimelock(_msgSender(), pendingTimelock);
 
         delete pendingTimelock;
     }
 
     /// @notice Revokes the `pendingGuardian`.
     function revokeGuardian() external onlyGuardian {
-        emit EventsLib.RevokeGuardian(msg.sender, pendingGuardian);
+        emit EventsLib.RevokeGuardian(_msgSender(), pendingGuardian);
 
         delete pendingGuardian;
     }
 
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokeCap(Id id) external onlyGuardian {
-        emit EventsLib.RevokeCap(msg.sender, id, pendingCap[id]);
+        emit EventsLib.RevokeCap(_msgSender(), id, pendingCap[id]);
 
         delete pendingCap[id];
     }
@@ -439,7 +439,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
 
-        emit EventsLib.TransferRewards(msg.sender, rewardsRecipient, token, amount);
+        emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
     }
 
     /* PUBLIC */
