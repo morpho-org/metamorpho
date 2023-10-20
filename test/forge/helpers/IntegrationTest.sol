@@ -12,7 +12,8 @@ contract IntegrationTest is BaseTest {
     function setUp() public virtual override {
         super.setUp();
 
-        vault = new MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
+        vault =
+        new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vm.startPrank(OWNER);
         vault.setCurator(CURATOR);

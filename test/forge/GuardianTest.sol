@@ -34,7 +34,7 @@ contract GuardianTest is IntegrationTest {
     }
 
     function testGuardianRevokeTimelockDecreased(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -56,7 +56,7 @@ contract GuardianTest is IntegrationTest {
     }
 
     function testOwnerRevokeTimelockDecreased(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -194,7 +194,7 @@ contract GuardianTest is IntegrationTest {
     }
 
     function testOwnerRevokeFeeIncreased(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -216,7 +216,7 @@ contract GuardianTest is IntegrationTest {
     }
 
     function testGuardianRevokeFeeIncreased(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, MAX_FEE);
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(OWNER);
