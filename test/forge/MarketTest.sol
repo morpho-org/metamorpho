@@ -66,7 +66,7 @@ contract MarketTest is IntegrationTest {
     }
 
     function testSetSupplyQueueMaxQueueSizeExceeded() public {
-        Id[] memory supplyQueue = new Id[](MAX_QUEUE_SIZE + 1);
+        Id[] memory supplyQueue = new Id[](ConstantsLib.MAX_QUEUE_SIZE + 1);
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(ErrorsLib.MaxQueueSizeExceeded.selector);

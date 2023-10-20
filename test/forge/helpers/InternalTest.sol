@@ -4,7 +4,9 @@ pragma solidity ^0.8.0;
 import "./BaseTest.sol";
 
 contract InternalTest is BaseTest, MetaMorpho {
-    constructor() MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MM") {}
+    constructor()
+        MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MM")
+    {}
 
     function setUp() public virtual override {
         super.setUp();
