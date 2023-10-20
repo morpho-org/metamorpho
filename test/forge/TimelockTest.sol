@@ -153,7 +153,6 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectEmit();
         emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
-        vm.expectEmit();
         emit EventsLib.SetFee(fee);
         vm.prank(OWNER);
         vault.submitFee(fee);
@@ -192,7 +191,6 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectEmit();
         emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
-        vm.expectEmit();
         emit EventsLib.SetFee(fee);
         vault.acceptFee();
 
