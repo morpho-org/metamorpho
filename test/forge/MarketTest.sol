@@ -161,7 +161,7 @@ contract MarketTest is IntegrationTest {
         vault.sortWithdrawQueue(indexes);
     }
 
-    function testSortWithdrawQueueMissingMarket() public {
+    function testSortWithdrawQueueMissingMarketWithNonZeroSupply() public {
         _setCaps();
 
         loanToken.setBalance(SUPPLIER, 1);
@@ -175,6 +175,18 @@ contract MarketTest is IntegrationTest {
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MissingMarket.selector, allMarkets[0].id()));
+        vault.sortWithdrawQueue(indexes);
+    }
+
+    function testSortWithdrawQueueMissingMarketWithNonZeroCap() public {
+        _setCaps();
+
+        uint256[] memory indexes = new uint256[](2);
+        indexes[0] = 0;
+        indexes[1] = 2;
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MissingMarket.selector, allMarkets[1].id()));
         vault.sortWithdrawQueue(indexes);
     }
 
