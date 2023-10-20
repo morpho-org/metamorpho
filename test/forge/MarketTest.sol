@@ -37,14 +37,6 @@ contract MarketTest is IntegrationTest {
         vault.submitCap(marketParams, 0);
     }
 
-    function testSubmitCapAlreadySet() public {
-        _setCap(allMarkets[0], CAP);
-
-        vm.prank(CURATOR);
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitCap(allMarkets[0], CAP);
-    }
-
     function testSetSupplyQueue() public {
         _setCaps();
 

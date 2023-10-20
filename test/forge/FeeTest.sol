@@ -261,12 +261,6 @@ contract FeeTest is IntegrationTest {
         vault.submitFee(fee);
     }
 
-    function testSubmitFeeAlreadySet() public {
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitFee(FEE);
-    }
-
     function testSetFeeRecipientAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);

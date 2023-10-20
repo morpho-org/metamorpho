@@ -189,10 +189,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function submitTimelock(uint256 newTimelock) external onlyOwner {
-        if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
         _checkTimelockBounds(newTimelock);
 
-        if (newTimelock > timelock) {
+        if (newTimelock >= timelock) {
             _setTimelock(newTimelock);
         } else {
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
@@ -204,10 +203,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newFee`.
     function submitFee(uint256 newFee) external onlyOwner {
-        if (newFee == fee) revert ErrorsLib.AlreadySet();
         if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
 
-        if (newFee < fee) {
+        if (newFee <= fee) {
             _setFee(newFee);
         } else {
             // Safe "unchecked" cast because newFee <= MAX_FEE.
@@ -233,9 +231,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Submits a `newGuardian`.
     /// @notice Warning: the guardian has the power to revoke any pending guardian.
     function submitGuardian(address newGuardian) external onlyOwner {
-        if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
-
-        if (guardian == address(0)) {
+        if (guardian == address(0) || newGuardian == guardian) {
             _setGuardian(newGuardian);
         } else {
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
@@ -252,10 +248,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
 
-        uint256 marketCap = config[id].cap;
-        if (newMarketCap == marketCap) revert ErrorsLib.AlreadySet();
-
-        if (newMarketCap < marketCap) {
+        if (newMarketCap <= config[id].cap) {
             _setCap(id, newMarketCap.toUint192());
         } else {
             pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));

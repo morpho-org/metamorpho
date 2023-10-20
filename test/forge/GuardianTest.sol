@@ -22,12 +22,6 @@ contract GuardianTest is IntegrationTest {
         vault.submitGuardian(GUARDIAN);
     }
 
-    function testSubmitGuardianAlreadySet() public {
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitGuardian(GUARDIAN);
-    }
-
     function testRevokeTimelockDecreased(uint256 timelock, uint256 elapsed) public {
         timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);

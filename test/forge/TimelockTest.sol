@@ -23,7 +23,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitTimelockIncreased(uint256 timelock) public {
-        timelock = bound(timelock, TIMELOCK + 1, ConstantsLib.MAX_TIMELOCK);
+        timelock = bound(timelock, TIMELOCK, ConstantsLib.MAX_TIMELOCK);
 
         vm.expectEmit();
         emit EventsLib.SetTimelock(timelock);
@@ -86,14 +86,6 @@ contract TimelockTest is IntegrationTest {
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.BelowMinTimelock.selector);
-        vault.submitTimelock(timelock);
-    }
-
-    function testSubmitTimelockAlreadySet() public {
-        uint256 timelock = vault.timelock();
-
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
         vault.submitTimelock(timelock);
     }
 
