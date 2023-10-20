@@ -325,6 +325,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on
     /// `supplied`).
+    /// @dev The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
+    /// token of the market is the same as the vault's asset.
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
         onlyAllocator
