@@ -199,6 +199,8 @@
                 ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
                 │   ├── it should push id to supplyQueue
                 │   ├── it should push id to withdrawQueue
+                │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
+                │   │   └── revert with MaxQueueSizeExceeded()
                 │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                 │       └── revert with MaxQueueSizeExceeded()
                 ├── it should set config[id].cap to pendingCap[id].value
