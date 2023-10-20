@@ -1,8 +1,8 @@
-# Morpho Blue MetaMorpho
+# MetaMorpho
 
-[Morpho Blue](https://github.com/morpho-org/morpho-blue) is a trustless lending primitive that offers unparalleled efficiency and flexibility.
+## Overview
 
-MetaMorpho is a protocol for noncustodial risk management built on top of Morpho Blue.
+MetaMorpho is a protocol for noncustodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
 It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
 It offers a seamless experience similar to Aave and Compound.
 
@@ -10,21 +10,17 @@ Users of MetaMorpho are liquidity providers that want to earn from borrowing int
 The active management of the deposited assets is the responsibility of a set of different roles (owner, curator and allocators).
 These roles are primarily responsible for enabling and disabling markets on Morpho Blue and managing the allocation of users’ funds.
 
-## Overview
-
-### MetaMorpho
-
-[`MetaMorpho`](./src/MetaMorpho.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) compliant vaults with the permit feature ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)).
+[`MetaMorpho`](./src/MetaMorpho.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
 One MetaMorpho vault is related to one loan asset on Morpho Blue.
-The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) is a permissionless, free and immutable factory contract deploying immutable onchain instances of MetaMorpho vaults.
+The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) is deploying immutable onchain instances of MetaMorpho vaults.
 
 Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
-Each market has a supply cap configured onchain that guarantees lenders a maximum absolute exposure to the specific market.
+Each market has a supply cap that guarantees lenders a maximum absolute exposure to the specific market.
 
-There are 4 different roles for a MetaMorpho vault (owner, curator, guardian & allocators).
+There are 4 different roles for a MetaMorpho vault: owner, curator, guardian & allocator.
 
-The vault owner can set a performance fee (up to 50%) from the total interest generated.
+The vault owner can set a performance fee, cutting up to 50% of the generated interest.
 The `feeRecipient` can then withdraw the accumulated fee at any time.
 
 The vault may be entitled to some rewards emitted on Morpho Blue markets the vault has supplied to.
@@ -33,17 +29,17 @@ The vault's owner has the choice to distribute back these rewards to vault depos
 For more information about this use case, see the [Rewards](#rewards) section.
 
 All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
-During this timelock, users who disagree with the policy change can withdraw their funds from the vault or the guardian (if it is set) can revoke the action.
+If set, the `guardian` can revoke the action during the timelock except for the fee increase.
 After the timelock, the action can be executed by anyone until 3 days have passed.
 
 ### Roles
 
 #### Owner
 
-Only one single address can have this role.
+Only one address can have this role.
 
 It can:
-- Do whatever the curator and allocators can do.
+- Do what the curator can do.
 - Transfer or renounce the ownership.
 - Set the curator.
 - Set allocators.
@@ -55,10 +51,10 @@ It can:
 
 #### Curator
 
-Only one single address can have this role.
+Only one address can have this role.
 
 It can:
-- Do whatever the allocators can do.
+- Do what the allocators can do.
 - [Timelocked] Enable or disable a market by setting a cap to a specific market.
     - The cap must be set to 0 to disable the market.
 	- Disabling a market can then only be done if the vault has no liquidity supplied on the market.
@@ -68,19 +64,19 @@ It can:
 Multiple addresses can have this role.
 
 It can:
-- Set the `supplyQueue` and `withdrawQueue`, ie decides on the order of the markets to supply/withdraw from.
+- Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
     - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
-	- Upon a withdrawal, the vault will first withdraw from the idle supply, then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
-	- The `supplyQueue` can only contain enabled markets.
-	- The `withdrawQueue` MUST contain all enabled markets on which the vault has still liquidity (enabled market are markets with non-zero cap or with non-zero vault's supply).
-- Reallocate funds among the enabled market at any moment.
+	- Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
+	- The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
+	- The `withdrawQueue` contains all enabled markets.
+- Instantaneously reallocate funds among the enabled market at any moment.
 
 #### Guardian
 
-Only one single address can have this role.
+Only one address can have this role.
 
 It can:
-- Revoke any timelocked action except it can't revoke a pending fee.
+- Revoke any timelocked action except it cannot revoke a pending fee.
 
 ### Rewards
 
@@ -89,7 +85,7 @@ To redistribute rewards to vault depositors, it is advised to use the [Universal
 Below is a typical example of how this use case would take place:
 
 - If not already done:
-    - Create a URD using the [UrdFactory](https://github.com/morpho-org/universal-rewards-distributor/blob/main/src/UrdFactory.sol) (can be done with an EOA).
+    - Create a rewards distributor using the [UrdFactory](https://github.com/morpho-org/universal-rewards-distributor/blob/main/src/UrdFactory.sol) (can be done by anyone).
     - Set the vault’s rewards recipient address to the created URD using `setRewardsRecipient`.
 
 - Claim tokens from the Morpho Blue distribution to the vault.
@@ -99,8 +95,10 @@ Below is a typical example of how this use case would take place:
 
 - Transfer rewards from the vault to the rewards distributor using the `transferRewards` function.
 
-	NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset. Thus, this step might be already performed by some third-party.
-    Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault. In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
+	NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset. 
+	Thus, this step might be already performed by some third-party.
+    Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault. 
+	In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
 

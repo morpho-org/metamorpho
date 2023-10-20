@@ -48,7 +48,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     address public curator;
 
     /// @notice Stores whether an address is an allocator or not.
-    mapping(address => bool) internal _isAllocator;
+    mapping(address => bool) public isAllocator;
 
     /// @notice The current guardian. Can be set even without the timelock set.
     address public guardian;
@@ -123,16 +123,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* MODIFIERS */
 
-    /// @dev Reverts if the caller doesn't have the curator's privilege.
-    modifier onlyCurator() {
-        if (_msgSender() != curator && _msgSender() != owner()) revert ErrorsLib.NotCurator();
+    /// @dev Reverts if the caller doesn't have the curator role.
+    modifier onlyCuratorRole() {
+        address sender = _msgSender();
+        if (sender != curator && sender != owner()) revert ErrorsLib.NotCuratorRole();
 
         _;
     }
 
-    /// @dev Reverts if the caller doesn't have the allocator's privilege.
-    modifier onlyAllocator() {
-        if (!isAllocator(_msgSender())) revert ErrorsLib.NotAllocator();
+    /// @dev Reverts if the caller doesn't have the allocator role.
+    modifier onlyAllocatorRole() {
+        address sender = _msgSender();
+        if (!isAllocator[sender] && sender != curator && sender != owner()) {
+            revert ErrorsLib.NotAllocatorRole();
+        }
 
         _;
     }
@@ -172,9 +176,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `newAllocator` as an allocator or not (`newIsAllocator`).
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        if (_isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
+        if (isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
 
-        _isAllocator[newAllocator] = newIsAllocator;
+        isAllocator[newAllocator] = newIsAllocator;
 
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
@@ -256,7 +260,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
     /// @dev Warning: Submitting a cap will overwrite the current pending cap.
-    function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCurator {
+    function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCuratorRole {
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
@@ -278,7 +282,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
     /// depositing to the vault.
-    function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
+    function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
         for (uint256 i; i < newSupplyQueue.length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
@@ -294,7 +298,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
-    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
+    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
@@ -338,7 +342,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// token of the market is the same as the vault's asset.
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
-        onlyAllocator
+        onlyAllocatorRole
     {
         uint256 totalWithdrawn;
         for (uint256 i; i < withdrawn.length; ++i) {
@@ -454,13 +458,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
 
         emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
-    }
-
-    /* PUBLIC */
-
-    /// @notice Returns whether `target` is an allocator or not.
-    function isAllocator(address target) public view returns (bool) {
-        return _isAllocator[target] || target == curator || target == owner();
     }
 
     /* ERC4626 (PUBLIC) */
