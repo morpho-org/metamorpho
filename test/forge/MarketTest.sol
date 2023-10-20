@@ -173,11 +173,6 @@ contract MarketTest is IntegrationTest {
     function testSortWithdrawQueueMissingMarketWithNonZeroCap() public {
         _setCaps();
 
-        loanToken.setBalance(SUPPLIER, 1);
-
-        vm.prank(SUPPLIER);
-        vault.deposit(1, RECEIVER);
-
         uint256[] memory indexes = new uint256[](2);
         indexes[0] = 0;
         indexes[1] = 2;
