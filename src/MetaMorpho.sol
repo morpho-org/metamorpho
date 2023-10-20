@@ -3,7 +3,11 @@ pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
 import {
-    IMetaMorpho, MarketConfig, PendingUint192, PendingAddress, MarketAllocation
+    MarketConfig,
+    PendingUint192,
+    PendingAddress,
+    MarketAllocation,
+    IMetaMorphoStaticTyping
 } from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
@@ -28,7 +32,7 @@ import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/t
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org
 /// @notice ERC4626 compliant vault allowing users to deposit assets to Morpho.
-contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorphoStaticTyping {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;

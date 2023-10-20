@@ -48,7 +48,7 @@ interface IOwnable {
     function pendingOwner() external view returns (address);
 }
 
-interface IMetaMorphoSpecific {
+interface IMetaMorphoBare {
     function MORPHO() external view returns (IMorpho);
 
     function curator() external view returns (address);
@@ -94,7 +94,7 @@ interface IMetaMorphoSpecific {
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
 
-interface IMetaMorpho is IMetaMorphoSpecific {
+interface IMetaMorphoStaticTyping is IMetaMorphoBare {
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
     function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
     function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
@@ -102,7 +102,7 @@ interface IMetaMorpho is IMetaMorphoSpecific {
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 }
 
-interface IMetaMorphoFull is IMetaMorphoSpecific, IERC4626, IERC20Permit, IOwnable, IMultiCall {
+interface IMetaMorpho is IMetaMorphoBare, IERC4626, IERC20Permit, IOwnable, IMultiCall {
     function config(Id) external view returns (MarketConfig memory);
     function pendingGuardian() external view returns (PendingAddress memory);
     function pendingCap(Id) external view returns (PendingUint192 memory);

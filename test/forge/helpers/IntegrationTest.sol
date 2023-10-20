@@ -7,12 +7,12 @@ contract IntegrationTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
-    IMetaMorphoFull internal vault;
+    IMetaMorpho internal vault;
 
     function setUp() public virtual override {
         super.setUp();
 
-        vault = IMetaMorphoFull(
+        vault = IMetaMorpho(
             address(
                 new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV")
             )
