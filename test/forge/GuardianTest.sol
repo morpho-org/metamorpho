@@ -188,9 +188,17 @@ contract GuardianTest is IntegrationTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.expectRevert(ErrorsLib.NotGuardian.selector);
-        vm.prank(OWNER);
+        vm.expectEmit();
+        emit EventsLib.RevokeGuardian(GUARDIAN, IPending(address(vault)).pendingGuardian());
+        vm.prank(GUARDIAN);
         vault.revokeGuardian();
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, GUARDIAN, "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
+        assertEq(submittedAt, 0, "submittedAt");
     }
 
     function testOwnerRevokeFeeIncreased(uint256 fee, uint256 elapsed) public {

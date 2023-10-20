@@ -139,7 +139,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Reverts if the caller is not the guardian.
     modifier onlyGuardian() {
-        if (_msgSender() != owner() && _msgSender() != guardian) revert ErrorsLib.NotOwnerNorGuardian();
+        if (_msgSender() != owner() && _msgSender() != guardian) revert ErrorsLib.NotGuardian();
 
         _;
     }
