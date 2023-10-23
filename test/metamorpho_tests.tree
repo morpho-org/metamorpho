@@ -176,8 +176,8 @@
                     │   ├── when newSupplyCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue
                     │   │   ├── it should push id to withdrawQueue
-                    │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                    │   │       └── revert with MaxQueueSizeExceeded()
+                    │   │   └── if withdrawQueue.length > MAX_QUEUE_LENGTH
+                    │   │       └── revert with MaxQueueLengthExceeded()
                     │   ├── it should set config[id].cap to newSupplyCap
                     │   ├── it should emit SetCap(id, newSupplyCap)
                     │   └── it should delete pendingCap[id]
@@ -199,10 +199,10 @@
                 ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
                 │   ├── it should push id to supplyQueue
                 │   ├── it should push id to withdrawQueue
-                │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
-                │   │   └── revert with MaxQueueSizeExceeded()
-                │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                │       └── revert with MaxQueueSizeExceeded()
+                │   ├── if supplyQueue.length > MAX_QUEUE_LENGTH
+                │   │   └── revert with MaxQueueLengthExceeded()
+                │   └── if withdrawQueue.length > MAX_QUEUE_LENGTH
+                │       └── revert with MaxQueueLengthExceeded()
                 ├── it should set config[id].cap to pendingCap[id].value
                 ├── it should emit SetCap(id, pendingCap[id].value)
                 └── it should delete pendingCap[id]
@@ -216,9 +216,9 @@
     ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
-        ├── when newSupplyQueue.length > MAX_QUEUE_SIZE
-        │   └── revert with MaxQueueSizeExceeded()
-        └── when newSupplyQueue.length <= MAX_QUEUE_SIZE
+        ├── when newSupplyQueue.length > MAX_QUEUE_LENGTH
+        │   └── revert with MaxQueueLengthExceeded()
+        └── when newSupplyQueue.length <= MAX_QUEUE_LENGTH
             ├── when some markets of newSupplyQueue have a zero cap
             │   └── revert with UnauthorizedMarket()
             └── when all the markets of newSupplyQueue have non zero cap

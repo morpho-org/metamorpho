@@ -285,7 +285,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
         uint256 length = newSupplyQueue.length;
 
-        if (length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+        if (length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
 
         for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
@@ -421,13 +421,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* EXTERNAL */
 
-    /// @notice Returns the size of the supply queue.
-    function supplyQueueSize() external view returns (uint256) {
+    /// @notice Returns the length of the supply queue.
+    function supplyQueueLength() external view returns (uint256) {
         return supplyQueue.length;
     }
 
-    /// @notice Returns the size of the withdraw queue.
-    function withdrawQueueSize() external view returns (uint256) {
+    /// @notice Returns the length of the withdraw queue.
+    function withdrawQueueLength() external view returns (uint256) {
         return withdrawQueue.length;
     }
 
@@ -670,12 +670,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            if (supplyQueue.length > ConstantsLib.MAX_QUEUE_SIZE || withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE)
-            {
-                revert ErrorsLib.MaxQueueSizeExceeded();
+            if (
+                supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                    || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+            ) {
+                revert ErrorsLib.MaxQueueLengthExceeded();
             }
 
-            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
+            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_LENGTH.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);
         }
 
