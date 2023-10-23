@@ -206,9 +206,6 @@ describe("MetaMorpho", () => {
     await metaMorpho.setFeeRecipient(admin.address);
     await metaMorpho.setFee(BigInt.WAD / 10n);
 
-    await forwardTimestamp(timelock);
-    await metaMorpho.connect(admin).acceptFee();
-
     supplyCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
       await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);

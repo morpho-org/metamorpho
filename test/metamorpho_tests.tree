@@ -82,29 +82,9 @@
             ├── when newFee == fee
             │   └── revert with AlreadySet()
             └── when newFee != fee
-                ├── when newFee < fee
-                │   ├── it should accrue fees
-                │   ├── it should set fee to newFee
-                │   ├── it should emit SetFee(newFee)
-                │   └── it should delete pendingFee
-                └── when newFee > fee
-                    ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
-                    └── it should emit SetFee(newFee)
-
-.
-└── acceptFee() external
-    ├── when pendingFee.submittedAt == 0
-    │   └── revert with NoPendingValue()
-    └── when pendingFee.submittedAt != 0
-        ├── when block.timestamp < pendingFee.submittedAt + timelock
-        │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingFee.submittedAt + timelock
-            ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
                 ├── it should accrue fees
-                ├── it should set fee to pendingFee.value
-                ├── it should emit SetFee(pendingFee.value)
+                ├── it should set fee to newFee
+                ├── it should emit SetFee(newFee)
                 └── it should delete pendingFee
 
 .
