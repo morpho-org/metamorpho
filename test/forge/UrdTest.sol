@@ -21,40 +21,40 @@ contract UrdTest is IntegrationTest {
         rewardsDistributor = urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0));
     }
 
-    function testSetRewardsRecipient(address newRewardsRecipient) public {
-        vm.assume(newRewardsRecipient != vault.rewardsRecipient());
+    function testSetSkimRecipient(address newSkimRecipient) public {
+        vm.assume(newSkimRecipient != vault.skimRecipient());
 
         vm.expectEmit();
-        emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
+        emit EventsLib.SetSkimRecipient(newSkimRecipient);
         vm.prank(OWNER);
-        vault.setRewardsRecipient(newRewardsRecipient);
+        vault.setSkimRecipient(newSkimRecipient);
 
-        assertEq(vault.rewardsRecipient(), newRewardsRecipient);
+        assertEq(vault.skimRecipient(), newSkimRecipient);
     }
 
-    function testAlreadySetRewardsRecipient() public {
-        address currentRewardsRecipient = vault.rewardsRecipient();
+    function testAlreadySetSkimRecipient() public {
+        address currentSkimRecipient = vault.skimRecipient();
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setRewardsRecipient(currentRewardsRecipient);
+        vault.setSkimRecipient(currentSkimRecipient);
     }
 
-    function testSetRewardsRecipientNotOwner() public {
+    function testSetSkimRecipientNotOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        vault.setRewardsRecipient(address(0));
+        vault.setSkimRecipient(address(0));
     }
 
     function testSkimNotLoanToken(uint256 amount) public {
         vm.prank(OWNER);
-        vault.setRewardsRecipient(address(rewardsDistributor));
+        vault.setSkimRecipient(address(rewardsDistributor));
 
         collateralToken.setBalance(address(vault), amount);
         uint256 vaultBalanceBefore = collateralToken.balanceOf(address(vault));
         assertEq(vaultBalanceBefore, amount, "vaultBalanceBefore");
 
         vm.expectEmit();
-        emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(collateralToken), amount);
+        emit EventsLib.Skim(address(this), address(rewardsDistributor), address(collateralToken), amount);
         vault.skim(address(collateralToken));
         uint256 vaultBalanceAfter = collateralToken.balanceOf(address(vault));
 

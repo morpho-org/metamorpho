@@ -65,8 +65,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The fee recipient.
     address public feeRecipient;
 
-    /// @notice The rewards recipient.
-    address public rewardsRecipient;
+    /// @notice The skim recipient.
+    address public skimRecipient;
 
     /// @notice The pending guardian.
     PendingAddress public pendingGuardian;
@@ -179,13 +179,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    /// @notice Sets `rewardsRecipient` to `newRewardsRecipient`.
-    function setRewardsRecipient(address newRewardsRecipient) external onlyOwner {
-        if (newRewardsRecipient == rewardsRecipient) revert ErrorsLib.AlreadySet();
+    /// @notice Sets `skimRecipient` to `newSkimRecipient`.
+    function setSkimRecipient(address newSkimRecipient) external onlyOwner {
+        if (newSkimRecipient == skimRecipient) revert ErrorsLib.AlreadySet();
 
-        rewardsRecipient = newRewardsRecipient;
+        skimRecipient = newSkimRecipient;
 
-        emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
+        emit EventsLib.SetSkimRecipient(newSkimRecipient);
     }
 
     /// @notice Submits a `newTimelock`.
@@ -446,13 +446,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice TODO.
     function skim(address token) external {
-        if (rewardsRecipient == address(0)) revert ErrorsLib.ZeroAddress();
+        if (skimRecipient == address(0)) revert ErrorsLib.ZeroAddress();
 
         uint256 amount = IERC20(token).balanceOf(address(this));
 
-        SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
+        SafeERC20.safeTransfer(IERC20(token), skimRecipient, amount);
 
-        emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
+        emit EventsLib.Skim(_msgSender(), skimRecipient, token, amount);
     }
 
     /* ERC4626 (PUBLIC) */

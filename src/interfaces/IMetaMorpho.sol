@@ -44,7 +44,7 @@ interface IMetaMorpho is IERC4626 {
 
     function fee() external view returns (uint96);
     function feeRecipient() external view returns (address);
-    function rewardsRecipient() external view returns (address);
+    function skimRecipient() external view returns (address);
     function timelock() external view returns (uint256);
     function supplyQueue(uint256) external view returns (Id);
     function supplyQueueSize() external view returns (uint256);
@@ -78,7 +78,7 @@ interface IMetaMorpho is IERC4626 {
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
     function setCurator(address newCurator) external;
     function setFeeRecipient(address newFeeRecipient) external;
-    function setRewardsRecipient(address) external;
+    function setSkimRecipient(address) external;
 
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
     function sortWithdrawQueue(uint256[] calldata indexes) external;
