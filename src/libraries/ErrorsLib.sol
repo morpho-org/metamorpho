@@ -70,5 +70,5 @@ library ErrorsLib {
     error ZeroFeeRecipient();
 
     error InconsistentReallocation();
-    error AllCapsReached();
+    error AllSupplyQueueCapsReached();
 }

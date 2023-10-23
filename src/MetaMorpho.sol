@@ -559,11 +559,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         assets -= _staticWithdrawMorpho(assets);
     }
 
-    function _maxSupply()
-        internal
-        view
-        returns (uint256 totalSuppliable)
-    {
+    function _maxSupply() internal view returns (uint256 totalSuppliable) {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
             totalSuppliable += _suppliable(_marketParams(id), id);
@@ -732,7 +728,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (assets == 0) return;
         }
-        if (assets != 0) revert ErrorsLib.AllCapsReached();
+        if (assets != 0) revert ErrorsLib.AllSupplyQueueCapsReached();
     }
 
     /// @dev TODO.
