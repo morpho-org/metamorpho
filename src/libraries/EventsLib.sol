@@ -67,9 +67,7 @@ library EventsLib {
     event AccrueFee(uint256 feeShares);
 
     /// @notice Emitted when an `amount` of `token` is transferred to the `skimRecipient` by `caller`.
-    event Skim(
-        address indexed caller, address indexed skimRecipient, address indexed token, uint256 amount
-    );
+    event Skim(address indexed caller, address indexed skimRecipient, address indexed token, uint256 amount);
 
     /// @notice Emitted when a new MetaMorpho vault is created.
     /// @param metaMorpho The address of the MetaMorpho vault.
