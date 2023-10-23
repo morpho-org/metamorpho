@@ -43,9 +43,9 @@ contract FeeTest is IntegrationTest {
     function testSetFee(uint256 fee) public {
         fee = bound(fee, 0, ConstantsLib.MAX_FEE);
 
-        vm.prank(OWNER);
         vm.expectEmit();
         emit EventsLib.SetFee(fee);
+        vm.prank(OWNER);
         vault.setFee(fee);
 
         assertEq(vault.fee(), fee, "fee");
