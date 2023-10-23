@@ -40,6 +40,17 @@ contract FeeTest is IntegrationTest {
         _setCap(allMarkets[0], CAP);
     }
 
+    function testSetFee(uint256 fee) public {
+        fee = bound(fee, 0, ConstantsLib.MAX_FEE);
+
+        vm.prank(OWNER);
+        vm.expectEmit();
+        emit EventsLib.SetFee(fee);
+        vault.setFee(fee);
+
+        assertEq(vault.fee(), fee, "fee");
+    }
+
     function _feeShares(uint256 totalAssetsBefore) internal view returns (uint256) {
         uint256 totalAssetsAfter = vault.totalAssets();
         uint256 interest = totalAssetsAfter - totalAssetsBefore;
@@ -248,23 +259,23 @@ contract FeeTest is IntegrationTest {
         assertEq(vault.balanceOf(address(1)), 0, "vault.balanceOf(address(1))");
     }
 
-    function testSubmitFeeNotOwner(uint256 fee) public {
+    function testSetFeeNotOwner(uint256 fee) public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        vault.submitFee(fee);
+        vault.setFee(fee);
     }
 
-    function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
+    function testSetFeeMaxFeeExceeded(uint256 fee) public {
         fee = bound(fee, ConstantsLib.MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
-        vault.submitFee(fee);
+        vault.setFee(fee);
     }
 
-    function testSubmitFeeAlreadySet() public {
+    function testSetFeeAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitFee(FEE);
+        vault.setFee(FEE);
     }
 
     function testSetFeeRecipientAlreadySet() public {

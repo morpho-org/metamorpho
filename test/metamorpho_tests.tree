@@ -72,7 +72,7 @@
                 └── it should delete pendingTimelock
 
 .
-└── submitFee(uint256 newFee) external
+└── setFee(uint256 newFee) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
@@ -89,7 +89,7 @@
                 │   └── it should delete pendingFee
                 └── when newFee > fee
                     ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
-                    └── it should emit SubmitFee(newFee)
+                    └── it should emit SetFee(newFee)
 
 .
 └── acceptFee() external

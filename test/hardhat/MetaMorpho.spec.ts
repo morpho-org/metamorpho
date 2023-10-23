@@ -204,7 +204,7 @@ describe("MetaMorpho", () => {
     await metaMorpho.setIsAllocator(allocator.address, true);
 
     await metaMorpho.setFeeRecipient(admin.address);
-    await metaMorpho.submitFee(BigInt.WAD / 10n);
+    await metaMorpho.setFee(BigInt.WAD / 10n);
 
     await forwardTimestamp(timelock);
     await metaMorpho.connect(admin).acceptFee();

@@ -77,9 +77,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The pending timelock.
     PendingUint192 public pendingTimelock;
 
-    /// @notice The pending fee.
-    PendingUint192 public pendingFee;
-
     /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
     /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
     Id[] public supplyQueue;
@@ -209,21 +206,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /// @notice Submits a `newFee`.
-    /// @dev In case the new fee is lower than the current one, the fee is set immediately.
-    /// @dev Warning: Submitting a fee will overwrite the current pending fee.
-    function submitFee(uint256 newFee) external onlyOwner {
+    /// @notice Sets the `fee` to `newFee`.
+    function setFee(uint256 newFee) external onlyOwner {
         if (newFee == fee) revert ErrorsLib.AlreadySet();
         if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
+        if (newFee != 0 && feeRecipient == address(0)) revert ErrorsLib.ZeroFeeRecipient();
 
-        if (newFee < fee) {
-            _setFee(newFee);
-        } else {
-            // Safe "unchecked" cast because newFee <= MAX_FEE.
-            pendingFee = PendingUint192(uint192(newFee), uint64(block.timestamp));
+        // Accrue interest using the previous fee set before changing it.
+        _updateLastTotalAssets(_accrueFee());
 
-            emit EventsLib.SubmitFee(newFee);
-        }
+        // Safe "unchecked" cast because newFee <= MAX_FEE.
+        fee = uint96(newFee);
+
+        emit EventsLib.SetFee(fee);
     }
 
     /// @notice Sets `feeRecipient` to `newFeeRecipient`.
@@ -434,11 +429,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Accepts the `pendingTimelock`.
     function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
-    }
-
-    /// @notice Accepts the `pendingFee`.
-    function acceptFee() external withinTimelockWindow(pendingFee.submittedAt) {
-        _setFee(pendingFee.value);
     }
 
     /// @notice Accepts the `pendingGuardian`.
@@ -684,21 +674,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetCap(id, supplyCap);
 
         delete pendingCap[id];
-    }
-
-    /// @dev Sets `fee` to `newFee`.
-    function _setFee(uint256 newFee) internal {
-        if (newFee != 0 && feeRecipient == address(0)) revert ErrorsLib.ZeroFeeRecipient();
-
-        // Accrue interest using the previous fee set before changing it.
-        _updateLastTotalAssets(_accrueFee());
-
-        // Safe "unchecked" cast because newFee <= MAX_FEE.
-        fee = uint96(newFee);
-
-        emit EventsLib.SetFee(newFee);
-
-        delete pendingFee;
     }
 
     /* LIQUIDITY ALLOCATION */
