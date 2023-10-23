@@ -153,7 +153,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// - there's no pending value;
     /// - the timelock has not elapsed since the pending value has been submitted;
     /// - the timelock has expired since the pending value has been submitted.
-    modifier withinTimelockWindow(uint256 submittedAt) {
+    modifier afterTimelock(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
 
@@ -429,22 +429,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {
+    function acceptTimelock() external afterTimelock(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
     }
 
     /// @notice Accepts the `pendingFee`.
-    function acceptFee() external withinTimelockWindow(pendingFee.submittedAt) {
+    function acceptFee() external afterTimelock(pendingFee.submittedAt) {
         _setFee(pendingFee.value);
     }
 
     /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external withinTimelockWindow(pendingGuardian.submittedAt) {
+    function acceptGuardian() external afterTimelock(pendingGuardian.submittedAt) {
         _setGuardian(pendingGuardian.value);
     }
 
     /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external withinTimelockWindow(pendingCap[id].submittedAt) {
+    function acceptCap(Id id) external afterTimelock(pendingCap[id].submittedAt) {
         _setCap(id, pendingCap[id].value);
     }
 
