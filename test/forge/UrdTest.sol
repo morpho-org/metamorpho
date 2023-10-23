@@ -45,7 +45,7 @@ contract UrdTest is IntegrationTest {
         vault.setRewardsRecipient(address(0));
     }
 
-    function testTransferRewardsNotLoanToken(uint256 amount) public {
+    function testSkimNotLoanToken(uint256 amount) public {
         vm.prank(OWNER);
         vault.setRewardsRecipient(address(rewardsDistributor));
 
@@ -55,7 +55,7 @@ contract UrdTest is IntegrationTest {
 
         vm.expectEmit();
         emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(collateralToken), amount);
-        vault.transferRewards(address(collateralToken));
+        vault.skim(address(collateralToken));
         uint256 vaultBalanceAfter = collateralToken.balanceOf(address(vault));
 
         assertEq(vaultBalanceAfter, 0, "vaultBalanceAfter");
@@ -66,38 +66,8 @@ contract UrdTest is IntegrationTest {
         );
     }
 
-    function testTransferRewardsLoanToken(uint256 rewards, uint256 idle) public {
-        idle = bound(idle, 0, MAX_TEST_ASSETS);
-        rewards = bound(rewards, 0, MAX_TEST_ASSETS);
-
-        vm.prank(OWNER);
-        vault.setRewardsRecipient(address(rewardsDistributor));
-
-        loanToken.setBalance(address(vault), rewards);
-
-        loanToken.setBalance(address(SUPPLIER), idle);
-        vm.prank(SUPPLIER);
-        vault.deposit(idle, SUPPLIER);
-
-        assertEq(vault.idle(), idle, "vault.idle()");
-        uint256 vaultBalanceBefore = loanToken.balanceOf(address(vault));
-        assertEq(vaultBalanceBefore, idle + rewards, "vaultBalanceBefore");
-
-        vm.expectEmit();
-        emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(loanToken), rewards);
-        vault.transferRewards(address(loanToken));
-        uint256 vaultBalanceAfter = loanToken.balanceOf(address(vault));
-
-        assertEq(vaultBalanceAfter, idle, "vaultBalanceAfter");
-        assertEq(
-            loanToken.balanceOf(address(rewardsDistributor)),
-            rewards,
-            "loanToken.balanceOf(address(rewardsDistributor))"
-        );
-    }
-
-    function testTransferRewardsZeroAddress() public {
+    function testSkimZeroAddress() public {
         vm.expectRevert(ErrorsLib.ZeroAddress.selector);
-        vault.transferRewards(address(loanToken));
+        vault.skim(address(loanToken));
     }
 }

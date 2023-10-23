@@ -52,7 +52,6 @@ interface IMetaMorpho is IERC4626 {
     function withdrawQueueSize() external view returns (uint256);
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
 
-    function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);
 
     function submitTimelock(uint256 newTimelock) external;
@@ -74,7 +73,7 @@ interface IMetaMorpho is IERC4626 {
     function revokeGuardian() external;
     function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
 
-    function transferRewards(address) external;
+    function skim(address) external;
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
     function setCurator(address newCurator) external;

@@ -69,6 +69,6 @@ library ErrorsLib {
     /// @notice Thrown when setting the fee to a non zero value while the fee recipient is the zero address.
     error ZeroFeeRecipient();
 
-    /// @notice Thrown when the idle liquidity is insufficient to cover supply during a reallocation of funds.
-    error InsufficientIdle();
+    error InconsistentReallocation();
+    error AllCapsReached();
 }

@@ -87,26 +87,6 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
     }
 
-    function testWithdrawIdle(uint256 deposited, uint256 withdrawn) public {
-        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        withdrawn = bound(withdrawn, 0, deposited);
-
-        _setCap(allMarkets[0], 0);
-
-        loanToken.setBalance(SUPPLIER, deposited);
-
-        vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(deposited, ONBEHALF);
-
-        vm.expectEmit();
-        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() - withdrawn);
-        vm.prank(ONBEHALF);
-        uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
-
-        assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
-        assertEq(vault.idle(), deposited - withdrawn, "idle");
-    }
-
     function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
@@ -236,28 +216,19 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
-    function testWithdrawMoreThanBalanceButLessThanTotalAssets(uint256 deposited, uint256 assets) public {
-        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+    function testWithdrawMoreThanBalanceButLessThanTotalAssets(uint256 deposited) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, CAP);
 
         loanToken.setBalance(SUPPLIER, deposited);
+        vm.prank(SUPPLIER);
+        vault.deposit(deposited / 2, ONBEHALF);
 
         vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(deposited, ONBEHALF);
+        vault.deposit(deposited / 2, SUPPLIER);
 
-        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
-
-        uint256 toAdd = assets - deposited + 1;
-        loanToken.setBalance(SUPPLIER, toAdd);
-
-        vm.prank(SUPPLIER);
-        vault.deposit(toAdd, SUPPLIER);
-
-        uint256 sharesBurnt = vault.previewWithdraw(assets);
         vm.prank(ONBEHALF);
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, sharesBurnt)
-        );
-        vault.withdraw(assets, RECEIVER, ONBEHALF);
+        vm.expectRevert();
+        vault.withdraw(deposited, RECEIVER, ONBEHALF);
     }
 
     function testWithdrawMoreThanTotalAssets(uint256 deposited, uint256 assets) public {
