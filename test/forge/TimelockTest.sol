@@ -135,19 +135,6 @@ contract TimelockTest is IntegrationTest {
         vault.acceptTimelock();
     }
 
-    function testAcceptTimelockTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
-        elapsed = bound(elapsed, TIMELOCK + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
-
-        vm.prank(OWNER);
-        vault.submitTimelock(timelock);
-
-        vm.warp(block.timestamp + elapsed);
-
-        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
-        vault.acceptTimelock();
-    }
-
     function testSubmitFeeDecreased(uint256 fee) public {
         fee = bound(fee, 0, FEE - 1);
 
@@ -217,19 +204,6 @@ contract TimelockTest is IntegrationTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
-        vault.acceptFee();
-    }
-
-    function testAcceptFeeTimelockExpirationExceeded(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
-        elapsed = bound(elapsed, TIMELOCK + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        vm.warp(block.timestamp + elapsed);
-
-        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptFee();
     }
 
@@ -316,20 +290,6 @@ contract TimelockTest is IntegrationTest {
         vault.acceptGuardian();
     }
 
-    function testAcceptGuardianTimelockExpirationExceeded(uint256 elapsed) public {
-        elapsed = bound(elapsed, TIMELOCK + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
-
-        address guardian = makeAddr("Guardian2");
-
-        vm.prank(OWNER);
-        vault.submitGuardian(guardian);
-
-        vm.warp(block.timestamp + elapsed);
-
-        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
-        vault.acceptGuardian();
-    }
-
     function testSubmitCapDecreased(uint256 cap) public {
         cap = bound(cap, 0, CAP - 1);
 
@@ -412,24 +372,6 @@ contract TimelockTest is IntegrationTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
-        vault.acceptCap(allMarkets[1].id());
-    }
-
-    function testAcceptCapTimelockExpirationExceeded(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, ConstantsLib.MAX_TIMELOCK);
-
-        vm.assume(timelock != vault.timelock());
-
-        _setTimelock(timelock);
-
-        elapsed = bound(elapsed, timelock + ConstantsLib.TIMELOCK_EXPIRATION + 1, type(uint64).max);
-
-        vm.startPrank(CURATOR);
-        vault.submitCap(allMarkets[1], CAP);
-
-        vm.warp(block.timestamp + elapsed);
-
-        vm.expectRevert(ErrorsLib.TimelockExpirationExceeded.selector);
         vault.acceptCap(allMarkets[1].id());
     }
 }
