@@ -1,29 +1,33 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
-contract RoleTest is BaseTest {
+contract RoleTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
 
-    function testSetRiskManager() public {
-        address newRiskManager = makeAddr("RiskManager2");
+    function testSetCurator() public {
+        address newCurator = makeAddr("Curator2");
 
+        vm.expectEmit();
+        emit EventsLib.SetCurator(newCurator);
         vm.prank(OWNER);
-        vault.setRiskManager(newRiskManager);
+        vault.setCurator(newCurator);
 
-        assertEq(vault.riskManager(), newRiskManager, "riskManager");
+        assertEq(vault.curator(), newCurator, "curator");
     }
 
-    function testSetRiskManagerShouldRevertAlreadySet() public {
+    function testSetCuratorShouldRevertAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setRiskManager(RISK_MANAGER);
+        vault.setCurator(CURATOR);
     }
 
     function testSetAllocator() public {
         address newAllocator = makeAddr("Allocator2");
 
+        vm.expectEmit();
+        emit EventsLib.SetIsAllocator(newAllocator, true);
         vm.prank(OWNER);
         vault.setIsAllocator(newAllocator, true);
 
@@ -31,6 +35,8 @@ contract RoleTest is BaseTest {
     }
 
     function testUnsetAllocator() public {
+        vm.expectEmit();
+        emit EventsLib.SetIsAllocator(ALLOCATOR, false);
         vm.prank(OWNER);
         vault.setIsAllocator(ALLOCATOR, false);
 
@@ -49,7 +55,7 @@ contract RoleTest is BaseTest {
         vm.startPrank(caller);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
-        vault.setRiskManager(caller);
+        vault.setCurator(caller);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.setIsAllocator(caller, true);
@@ -69,19 +75,19 @@ contract RoleTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testRiskManagerFunctionsShouldRevertWhenNotRiskManagerAndNotOwner(address caller) public {
-        vm.assume(caller != vault.owner() && caller != vault.riskManager());
+    function testCuratorFunctionsShouldRevertWhenNotCuratorRole(address caller) public {
+        vm.assume(caller != vault.owner() && caller != vault.curator());
 
         vm.startPrank(caller);
 
-        vm.expectRevert(ErrorsLib.NotRiskManager.selector);
+        vm.expectRevert(ErrorsLib.NotCuratorRole.selector);
         vault.submitCap(allMarkets[0], CAP);
 
         vm.stopPrank();
     }
 
-    function testAllocatorFunctionsShouldRevertWhenNotAllocatorAndNotRiskManagerAndNotOwner(address caller) public {
-        vm.assume(!vault.isAllocator(caller));
+    function testAllocatorFunctionsShouldRevertWhenNotAllocatorRole(address caller) public {
+        vm.assume(!vault.isAllocator(caller) && caller != vault.owner() && caller != vault.curator());
 
         vm.startPrank(caller);
 
@@ -89,27 +95,27 @@ contract RoleTest is BaseTest {
         MarketAllocation[] memory allocation;
         uint256[] memory withdrawQueueFromRanks;
 
-        vm.expectRevert(ErrorsLib.NotAllocator.selector);
+        vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
         vault.setSupplyQueue(supplyQueue);
 
-        vm.expectRevert(ErrorsLib.NotAllocator.selector);
+        vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
 
-        vm.expectRevert(ErrorsLib.NotAllocator.selector);
+        vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
         vault.reallocate(allocation, allocation);
 
         vm.stopPrank();
     }
 
-    function testRiskManagerOrOwnerShouldTriggerRiskManagerFunctions() public {
+    function testCuratorOrOwnerShouldTriggerCuratorFunctions() public {
         vm.prank(OWNER);
         vault.submitCap(allMarkets[0], CAP);
 
-        vm.prank(RISK_MANAGER);
+        vm.prank(CURATOR);
         vault.submitCap(allMarkets[1], CAP);
     }
 
-    function testAllocatorOrRiskManagerOrOwnerShouldTriggerAllocatorFunctions() public {
+    function testAllocatorOrCuratorOrOwnerShouldTriggerAllocatorFunctions() public {
         _setCap(allMarkets[0], CAP);
 
         Id[] memory supplyQueue = new Id[](1);
@@ -125,12 +131,12 @@ contract RoleTest is BaseTest {
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
 
-        changePrank(RISK_MANAGER);
+        vm.startPrank(CURATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);
 
-        changePrank(ALLOCATOR);
+        vm.startPrank(ALLOCATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
         vault.reallocate(allocation, allocation);

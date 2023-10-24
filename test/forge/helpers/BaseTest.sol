@@ -9,7 +9,11 @@ import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
+import {IPending} from "src/interfaces/IMetaMorpho.sol";
+
 import "src/libraries/ConstantsLib.sol";
+import {ErrorsLib} from "src/libraries/ErrorsLib.sol";
+import {EventsLib} from "src/libraries/EventsLib.sol";
 import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
 
 import {IrmMock} from "src/mocks/IrmMock.sol";
@@ -17,7 +21,7 @@ import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
 import {OracleMock} from "src/mocks/OracleMock.sol";
 
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {MetaMorpho, ERC20, IERC20, ErrorsLib, MarketAllocation} from "src/MetaMorpho.sol";
+import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "src/MetaMorpho.sol";
 
 import "@forge-std/Test.sol";
 import "@forge-std/console2.sol";
@@ -25,8 +29,8 @@ import "@forge-std/console2.sol";
 uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
-uint256 constant NB_MARKETS = 10;
-uint256 constant CAP = type(uint128).max;
+uint192 constant CAP = type(uint128).max;
+uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_SIZE + 1;
 
 contract BaseTest is Test {
     using MathLib for uint256;
@@ -34,70 +38,42 @@ contract BaseTest is Test {
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
 
-    address internal OWNER;
-    address internal SUPPLIER;
-    address internal BORROWER;
-    address internal REPAYER;
-    address internal ONBEHALF;
-    address internal RECEIVER;
-    address internal ALLOCATOR;
-    address internal RISK_MANAGER;
-    address internal GUARDIAN;
-    address internal FEE_RECIPIENT;
-    address internal MORPHO_OWNER;
-    address internal MORPHO_FEE_RECIPIENT;
+    address internal OWNER = makeAddr("Owner");
+    address internal SUPPLIER = makeAddr("Supplier");
+    address internal BORROWER = makeAddr("Borrower");
+    address internal REPAYER = makeAddr("Repayer");
+    address internal ONBEHALF = makeAddr("OnBehalf");
+    address internal RECEIVER = makeAddr("Receiver");
+    address internal ALLOCATOR = makeAddr("Allocator");
+    address internal CURATOR = makeAddr("Curator");
+    address internal GUARDIAN = makeAddr("Guardian");
+    address internal FEE_RECIPIENT = makeAddr("FeeRecipient");
+    address internal MORPHO_OWNER = makeAddr("MorphoOwner");
+    address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
-    IMorpho internal morpho;
-    ERC20Mock internal loanToken;
-    ERC20Mock internal collateralToken;
-    OracleMock internal oracle;
-    IrmMock internal irm;
-
-    MetaMorpho internal vault;
+    IMorpho internal morpho =
+        IMorpho(deployCode("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+    ERC20Mock internal loanToken = new ERC20Mock("loan", "B");
+    ERC20Mock internal collateralToken = new ERC20Mock("collateral", "C");
+    OracleMock internal oracle = new OracleMock();
+    IrmMock internal irm = new IrmMock();
 
     MarketParams[] internal allMarkets;
 
     function setUp() public virtual {
-        OWNER = makeAddr("Owner");
-        SUPPLIER = makeAddr("Supplier");
-        BORROWER = makeAddr("Borrower");
-        REPAYER = makeAddr("Repayer");
-        ONBEHALF = makeAddr("OnBehalf");
-        RECEIVER = makeAddr("Receiver");
-        ALLOCATOR = makeAddr("Allocator");
-        RISK_MANAGER = makeAddr("RiskManager");
-        GUARDIAN = makeAddr("Guardian");
-        FEE_RECIPIENT = makeAddr("FeeRecipient");
-        MORPHO_OWNER = makeAddr("MorphoOwner");
-        MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
-
-        morpho = IMorpho(deployCode("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
         vm.label(address(morpho), "Morpho");
-
-        loanToken = new ERC20Mock("loan", "B");
         vm.label(address(loanToken), "Loan");
-
-        collateralToken = new ERC20Mock("collateral", "C");
         vm.label(address(collateralToken), "Collateral");
-
-        oracle = new OracleMock();
         vm.label(address(oracle), "Oracle");
+        vm.label(address(irm), "Irm");
 
         oracle.setPrice(ORACLE_PRICE_SCALE);
-
-        irm = new IrmMock();
 
         irm.setApr(0.5 ether); // 50%.
 
         vm.startPrank(MORPHO_OWNER);
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
-
-        vault = new MetaMorpho(OWNER, address(morpho), MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
-
-        changePrank(OWNER);
-        vault.setRiskManager(RISK_MANAGER);
-        vault.setIsAllocator(ALLOCATOR, true);
         vm.stopPrank();
 
         for (uint256 i; i < NB_MARKETS; ++i) {
@@ -119,12 +95,7 @@ contract BaseTest is Test {
             allMarkets.push(marketParams);
         }
 
-        loanToken.approve(address(vault), type(uint256).max);
-        collateralToken.approve(address(vault), type(uint256).max);
-
         vm.startPrank(SUPPLIER);
-        loanToken.approve(address(vault), type(uint256).max);
-        collateralToken.approve(address(vault), type(uint256).max);
         loanToken.approve(address(morpho), type(uint256).max);
         collateralToken.approve(address(morpho), type(uint256).max);
         vm.stopPrank();
@@ -134,11 +105,6 @@ contract BaseTest is Test {
 
         vm.prank(REPAYER);
         loanToken.approve(address(morpho), type(uint256).max);
-
-        vm.startPrank(ONBEHALF);
-        loanToken.approve(address(vault), type(uint256).max);
-        collateralToken.approve(address(vault), type(uint256).max);
-        vm.stopPrank();
     }
 
     /// @dev Rolls & warps the given number of blocks forward the blockchain.
@@ -149,7 +115,7 @@ contract BaseTest is Test {
 
     /// @dev Bounds the fuzzing input to a realistic number of blocks.
     function _boundBlocks(uint256 blocks) internal view returns (uint256) {
-        return bound(blocks, 1, type(uint24).max);
+        return bound(blocks, 2, type(uint24).max);
     }
 
     /// @dev Bounds the fuzzing input to a non-zero address.
@@ -197,78 +163,5 @@ contract BaseTest is Test {
         users = _removeAll(users, address(0));
 
         return _randomCandidate(users, seed);
-    }
-
-    function _setTimelock(uint256 newTimelock) internal {
-        uint256 timelock = vault.timelock();
-        if (newTimelock == timelock) return;
-
-        // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
-        if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
-
-        vm.prank(OWNER);
-        vault.submitTimelock(newTimelock);
-
-        if (newTimelock > timelock || timelock == 0) return;
-
-        vm.warp(block.timestamp + timelock);
-
-        vault.acceptTimelock();
-
-        assertEq(vault.timelock(), newTimelock, "_setTimelock");
-    }
-
-    function _setGuardian(address newGuardian) internal {
-        address guardian = vault.guardian();
-        if (newGuardian == guardian) return;
-
-        vm.prank(OWNER);
-        vault.submitGuardian(newGuardian);
-
-        uint256 timelock = vault.timelock();
-        if (guardian == address(0) || timelock == 0) return;
-
-        vm.warp(block.timestamp + timelock);
-
-        vault.acceptGuardian();
-
-        assertEq(vault.guardian(), newGuardian, "_setGuardian");
-    }
-
-    function _setFee(uint256 newFee) internal {
-        uint256 fee = vault.fee();
-        if (newFee == fee) return;
-
-        vm.prank(OWNER);
-        vault.submitFee(newFee);
-
-        uint256 timelock = vault.timelock();
-        if (newFee < fee || timelock == 0) return;
-
-        vm.warp(block.timestamp + timelock);
-
-        vault.acceptFee();
-
-        assertEq(vault.fee(), newFee, "_setFee");
-    }
-
-    function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
-        Id id = marketParams.id();
-        (uint256 cap,) = vault.config(id);
-        if (newCap == cap) return;
-
-        vm.prank(RISK_MANAGER);
-        vault.submitCap(marketParams, newCap);
-
-        uint256 timelock = vault.timelock();
-        if (newCap < cap) return;
-
-        vm.warp(block.timestamp + timelock);
-
-        vault.acceptCap(id);
-
-        (cap,) = vault.config(id);
-
-        assertEq(cap, newCap, "_setCap");
     }
 }

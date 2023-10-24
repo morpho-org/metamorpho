@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 uint256 constant TIMELOCK = 1 weeks;
 
-contract GuardianTest is BaseTest {
+contract GuardianTest is IntegrationTest {
     using Math for uint256;
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
@@ -29,7 +29,7 @@ contract GuardianTest is BaseTest {
     }
 
     function testRevokeTimelockDecreased(uint256 timelock, uint256 elapsed) public {
-        timelock = bound(timelock, MIN_TIMELOCK, TIMELOCK - 1);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         vm.prank(OWNER);
@@ -37,6 +37,8 @@ contract GuardianTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
+        vm.expectEmit();
+        emit EventsLib.RevokeTimelock(GUARDIAN, IPending(address(vault)).pendingTimelock());
         vm.prank(GUARDIAN);
         vault.revokeTimelock();
 
@@ -60,6 +62,8 @@ contract GuardianTest is BaseTest {
 
         Id id = marketParams.id();
 
+        vm.expectEmit();
+        emit EventsLib.RevokeCap(GUARDIAN, id, IPending(address(vault)).pendingCap(id));
         vm.prank(GUARDIAN);
         vault.revokeCap(id);
 
@@ -82,6 +86,8 @@ contract GuardianTest is BaseTest {
 
         vm.warp(block.timestamp + elapsed);
 
+        vm.expectEmit();
+        emit EventsLib.RevokeGuardian(GUARDIAN, IPending(address(vault)).pendingGuardian());
         vm.prank(GUARDIAN);
         vault.revokeGuardian();
 

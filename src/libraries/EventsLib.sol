@@ -42,17 +42,14 @@ library EventsLib {
     /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
     event UpdateLastTotalAssets(uint256 newTotalAssets);
 
-    /// @notice Emitted when `riskManager` is set to `newRiskManager`.
-    event SetRiskManager(address indexed newRiskManager);
+    /// @notice Emitted when `curator` is set to `newCurator`.
+    event SetCurator(address indexed newCurator);
 
     /// @notice Emitted when an `allocator` is set to `isAllocator`.
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
     /// @notice Emitted when a `pendingTimelock` is revoked by `guardian`.
     event RevokeTimelock(address indexed guardian, PendingUint192 pendingTimelock);
-
-    /// @notice Emitted when a `pendingFee` is revoked by `guardian`.
-    event RevokeFee(address indexed guardian, PendingUint192 pendingFee);
 
     /// @notice Emitted when a `pendingCap` for the market identified by `id` is revoked by `guardian`.
     event RevokeCap(address indexed guardian, Id indexed id, PendingUint192 pendingCap);
@@ -65,6 +62,9 @@ library EventsLib {
 
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.
     event SetWithdrawQueue(address indexed allocator, Id[] newWithdrawQueue);
+
+    /// @notice Emitted when fees are accrued.
+    event AccrueFee(uint256 feeShares);
 
     /// @notice Emitted when an `amount` of `token` is transferred to the `rewardsRecipient` by `caller`.
     event TransferRewards(

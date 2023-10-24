@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
 import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 uint256 constant CAP2 = 100e18;
 uint256 constant INITIAL_DEPOSIT = 4 * CAP2;
 
-contract ReallocateWithdrawTest is BaseTest {
+contract ReallocateWithdrawTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
     using MorphoBalancesLib for IMorpho;
     using MorphoLib for IMorpho;
@@ -146,6 +146,24 @@ contract ReallocateWithdrawTest is BaseTest {
             "morpho.supplyShares(2)"
         );
         assertApproxEqAbs(vault.idle(), expectedIdle, 1, "vault.idle() 1");
+    }
+
+    function testReallocateUnauthorizedMarket(uint256 amount) public {
+        amount = bound(amount, 1, CAP2);
+
+        _setCap(allMarkets[1], 0);
+
+        withdrawn.push(MarketAllocation(allMarkets[0], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[1], 0, type(uint256).max));
+        withdrawn.push(MarketAllocation(allMarkets[2], 0, type(uint256).max));
+
+        supplied.push(MarketAllocation(allMarkets[0], amount, 0));
+        supplied.push(MarketAllocation(allMarkets[1], amount, 0));
+        supplied.push(MarketAllocation(allMarkets[2], amount, 0));
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.UnauthorizedMarket.selector, allMarkets[1].id()));
+        vault.reallocate(withdrawn, supplied);
     }
 
     function testReallocateSupplyCapExceeded() public {

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "./helpers/BaseTest.sol";
+import "./helpers/IntegrationTest.sol";
 
 import "src/MetaMorphoFactory.sol";
 
-contract MetaMorphoFactoryTest is BaseTest {
+contract MetaMorphoFactoryTest is IntegrationTest {
     MetaMorphoFactory factory;
 
     function setUp() public override {
@@ -27,7 +27,7 @@ contract MetaMorphoFactoryTest is BaseTest {
         bytes32 salt
     ) public {
         vm.assume(address(initialOwner) != address(0));
-        initialTimelock = bound(initialTimelock, MIN_TIMELOCK, MAX_TIMELOCK);
+        initialTimelock = bound(initialTimelock, ConstantsLib.MIN_TIMELOCK, ConstantsLib.MAX_TIMELOCK);
 
         bytes32 initCodeHash = hashInitCode(
             type(MetaMorpho).creationCode,
