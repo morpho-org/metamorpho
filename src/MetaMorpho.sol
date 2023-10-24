@@ -559,7 +559,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc ERC4626
-    /// @dev The accrual of the performance fee is taken into account in the conversion.
+    /// @dev The performance fee is virtually accrued and taken into account in the conversion.
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
@@ -567,7 +567,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc ERC4626
-    /// @dev The accrual of performance fees is taken into account in the conversion.
+    /// @dev The performance fee is virtually accrued and taken into account in the conversion.
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
         (uint256 feeShares, uint256 newTotalAssets) = _accruedFeeShares();
 
