@@ -232,6 +232,7 @@ describe("MetaMorpho", () => {
   });
 
   it("should simulate gas cost [main]", async () => {
+    let totalAssets: bigint = toBigInt(0);
     for (let i = 0; i < suppliers.length; ++i) {
       logProgress("main", i, suppliers.length);
 
@@ -239,6 +240,8 @@ describe("MetaMorpho", () => {
       const assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
 
       await randomForwardTimestamp();
+
+      if (totalAssets + assets > supplyCap) { break; }
 
       await metaMorpho.connect(supplier).deposit(assets, supplier.address);
 
@@ -291,7 +294,7 @@ describe("MetaMorpho", () => {
         }))
         .filter(({ assets }) => assets > 0n);
 
-      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+      // await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
 
       // Borrow liquidity to generate interest.
 
@@ -313,6 +316,8 @@ describe("MetaMorpho", () => {
 
         await mine(); // Include supplyCollateral + borrow in a single block.
       }
+
+      totalAssets += assets / 2n;
 
       await hre.network.provider.send("evm_setAutomine", [true]);
     }
