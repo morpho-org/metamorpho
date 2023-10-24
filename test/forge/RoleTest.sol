@@ -87,7 +87,7 @@ contract RoleTest is IntegrationTest {
     }
 
     function testAllocatorFunctionsShouldRevertWhenNotAllocatorRole(address caller) public {
-        vm.assume(!vault.isAllocator(caller));
+        vm.assume(!vault.isAllocator(caller) && caller != vault.owner() && caller != vault.curator());
 
         vm.startPrank(caller);
 
