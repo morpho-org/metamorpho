@@ -85,7 +85,7 @@ jobs:
             invariant-depth: 1024
           - type: "fast"
             fuzz-runs: 256
-            max-test-rejects: 131072
+            max-test-rejects: 262144
             invariant-runs: 16
             invariant-depth: 256
 
