@@ -36,7 +36,7 @@ struct MarketAllocation {
     uint256 shares;
 }
 
-interface IMultiCall {
+interface IMulticall {
     function multicall(bytes[] calldata) external returns (bytes[] memory);
 }
 
@@ -107,7 +107,7 @@ interface IMetaMorphoStaticTyping is IMetaMorphoBase {
 }
 
 /// @dev Use this interface for MetaMorpho vaults to have access to all the functions with the appropriate signatures.
-interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMultiCall {
+interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMulticall {
     function config(Id) external view returns (MarketConfig memory);
     function pendingGuardian() external view returns (PendingAddress memory);
     function pendingCap(Id) external view returns (PendingUint192 memory);
