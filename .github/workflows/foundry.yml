@@ -80,12 +80,12 @@ jobs:
         include:
           - type: "slow"
             fuzz-runs: 32768
-            max-test-rejects: 1048576
+            max-test-rejects: 16777216
             invariant-runs: 64
             invariant-depth: 1024
           - type: "fast"
             fuzz-runs: 256
-            max-test-rejects: 65536
+            max-test-rejects: 131072
             invariant-runs: 16
             invariant-depth: 256
 
