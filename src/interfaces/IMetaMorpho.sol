@@ -48,7 +48,9 @@ interface IOwnable {
     function pendingOwner() external view returns (address);
 }
 
-interface IMetaMorphoBare {
+/// @dev This interface is used for factorizing IMetaMorphoStaticTyping and IMetaMorpho.
+/// @dev Consider using the IMetaMorpho interface instead of this one.
+interface IMetaMorphoBase {
     function MORPHO() external view returns (IMorpho);
 
     function curator() external view returns (address);
@@ -94,7 +96,9 @@ interface IMetaMorphoBare {
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
 
-interface IMetaMorphoStaticTyping is IMetaMorphoBare {
+/// @dev This interface is inherited by MetaMorpho so that signatures are checked by the compiler.
+/// @dev Consider using the IMetaMorpho interface instead of this one.
+interface IMetaMorphoStaticTyping is IMetaMorphoBase {
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
     function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
     function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
@@ -102,7 +106,8 @@ interface IMetaMorphoStaticTyping is IMetaMorphoBare {
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 }
 
-interface IMetaMorpho is IMetaMorphoBare, IERC4626, IERC20Permit, IOwnable, IMultiCall {
+/// @dev Use this interface for MetaMorpho vaults to have access to all the functions with the appropriate signatures.
+interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMultiCall {
     function config(Id) external view returns (MarketConfig memory);
     function pendingGuardian() external view returns (PendingAddress memory);
     function pendingCap(Id) external view returns (PendingUint192 memory);
