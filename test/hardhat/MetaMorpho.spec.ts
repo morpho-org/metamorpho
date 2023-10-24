@@ -241,7 +241,9 @@ describe("MetaMorpho", () => {
 
       await randomForwardTimestamp();
 
-      if (totalAssets + assets > supplyCap) { break; }
+      if (totalAssets + assets > supplyCap) {
+        break;
+      }
 
       await metaMorpho.connect(supplier).deposit(assets, supplier.address);
 
