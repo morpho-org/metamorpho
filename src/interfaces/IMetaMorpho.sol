@@ -96,7 +96,7 @@ interface IMetaMorphoBase {
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
 
-/// @dev This interface is inherited by MetaMorpho so that signatures are checked by the compiler.
+/// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoStaticTyping is IMetaMorphoBase {
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
