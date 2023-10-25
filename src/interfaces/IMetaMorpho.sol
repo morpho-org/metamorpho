@@ -60,7 +60,7 @@ interface IMetaMorpho is IERC4626 {
     function revokeTimelock() external;
     function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
 
-    function submitCap(MarketParams memory marketParams, uint256 marketCap) external;
+    function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
     function acceptCap(Id id) external;
     function revokeCap(Id id) external;
     function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);

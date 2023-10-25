@@ -48,7 +48,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     address public curator;
 
     /// @notice Stores whether an address is an allocator or not.
-    mapping(address => bool) internal _isAllocator;
+    mapping(address => bool) public isAllocator;
 
     /// @notice The current guardian. Can be set even without the timelock set.
     address public guardian;
@@ -123,16 +123,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* MODIFIERS */
 
-    /// @dev Reverts if the caller doesn't have the curator's privilege.
-    modifier onlyCurator() {
-        if (_msgSender() != curator && _msgSender() != owner()) revert ErrorsLib.NotCurator();
+    /// @dev Reverts if the caller doesn't have the curator role.
+    modifier onlyCuratorRole() {
+        address sender = _msgSender();
+        if (sender != curator && sender != owner()) revert ErrorsLib.NotCuratorRole();
 
         _;
     }
 
-    /// @dev Reverts if the caller doesn't have the allocator's privilege.
-    modifier onlyAllocator() {
-        if (!isAllocator(_msgSender())) revert ErrorsLib.NotAllocator();
+    /// @dev Reverts if the caller doesn't have the allocator role.
+    modifier onlyAllocatorRole() {
+        address sender = _msgSender();
+        if (!isAllocator[sender] && sender != curator && sender != owner()) {
+            revert ErrorsLib.NotAllocatorRole();
+        }
 
         _;
     }
@@ -180,9 +184,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Sets `newAllocator` as an allocator or not (`newIsAllocator`).
     function setIsAllocator(address newAllocator, bool newIsAllocator) external onlyOwner {
-        if (_isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
+        if (isAllocator[newAllocator] == newIsAllocator) revert ErrorsLib.AlreadySet();
 
-        _isAllocator[newAllocator] = newIsAllocator;
+        isAllocator[newAllocator] = newIsAllocator;
 
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
@@ -196,6 +200,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
     }
 
+    /// @notice Submits a `newTimelock`.
+    /// @dev In case the new timelock is higher than the current one, the timelock is set immediately.
+    /// @dev Warning: Submitting a timelock will overwrite the current pending timelock.
     function submitTimelock(uint256 newTimelock) external onlyOwner {
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
         _checkTimelockBounds(newTimelock);
@@ -211,6 +218,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a `newFee`.
+    /// @dev In case the new fee is lower than the current one, the fee is set immediately.
+    /// @dev Warning: Submitting a fee will overwrite the current pending fee.
     function submitFee(uint256 newFee) external onlyOwner {
         if (newFee == fee) revert ErrorsLib.AlreadySet();
         if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
@@ -240,6 +249,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Submits a `newGuardian`.
     /// @notice Warning: the guardian has the power to revoke any pending guardian.
+    /// @dev In case there is no guardian, the gardian is set immediately.
+    /// @dev Warning: Submitting a gardian will overwrite the current pending gardian.
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
 
@@ -254,21 +265,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* ONLY CURATOR FUNCTIONS */
 
-    /// @notice Submits a `newMarketCap` for the market defined by `marketParams`.
-    function submitCap(MarketParams memory marketParams, uint256 newMarketCap) external onlyCurator {
+    /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
+    /// @dev In case the new cap is lower than the current one, the cap is set immediately.
+    /// @dev Warning: Submitting a cap will overwrite the current pending cap.
+    function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCuratorRole {
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
 
-        uint256 marketCap = config[id].cap;
-        if (newMarketCap == marketCap) revert ErrorsLib.AlreadySet();
+        uint256 supplyCap = config[id].cap;
+        if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
-        if (newMarketCap < marketCap) {
-            _setCap(id, newMarketCap.toUint192());
+        if (newSupplyCap < supplyCap) {
+            _setCap(id, newSupplyCap.toUint192());
         } else {
-            pendingCap[id] = PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp));
+            pendingCap[id] = PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp));
 
-            emit EventsLib.SubmitCap(id, newMarketCap);
+            emit EventsLib.SubmitCap(id, newSupplyCap);
         }
     }
 
@@ -277,8 +290,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
     /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
     /// depositing to the vault.
-    function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocator {
-        for (uint256 i; i < newSupplyQueue.length; ++i) {
+    function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
+        uint256 length = newSupplyQueue.length;
+
+        if (length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+
+        for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
         }
 
@@ -293,7 +310,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
-    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocator {
+    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
@@ -337,7 +354,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// token of the market is the same as the vault's asset.
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
         external
-        onlyAllocator
+        onlyAllocatorRole
     {
         uint256 totalWithdrawn;
         for (uint256 i; i < withdrawn.length; ++i) {
@@ -460,13 +477,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
 
         emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
-    }
-
-    /* PUBLIC */
-
-    /// @notice Returns whether `target` is an allocator or not.
-    function isAllocator(address target) public view returns (bool) {
-        return _isAllocator[target] || target == curator || target == owner();
     }
 
     /* ERC4626 (PUBLIC) */
@@ -667,23 +677,26 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         delete pendingGuardian;
     }
 
-    /// @dev Sets the cap of the market defined by `id` to `marketCap`.
-    function _setCap(Id id, uint192 marketCap) internal {
+    /// @dev Sets the cap of the market defined by `id` to `supplyCap`.
+    function _setCap(Id id, uint192 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
-        if (marketCap > 0 && marketConfig.withdrawRank == 0) {
+        if (supplyCap > 0 && marketConfig.withdrawRank == 0) {
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+            if (supplyQueue.length > ConstantsLib.MAX_QUEUE_SIZE || withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE)
+            {
+                revert ErrorsLib.MaxQueueSizeExceeded();
+            }
 
             // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);
         }
 
-        marketConfig.cap = marketCap;
+        marketConfig.cap = supplyCap;
 
-        emit EventsLib.SetCap(id, marketCap);
+        emit EventsLib.SetCap(id, supplyCap);
 
         delete pendingCap[id];
     }
@@ -781,10 +794,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
     /// @dev Assumes that the inputs `marketParams` and `id` match.
     function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 marketCap = config[id].cap;
-        if (marketCap == 0) return 0;
+        uint256 supplyCap = config[id].cap;
+        if (supplyCap == 0) return 0;
 
-        return marketCap.zeroFloorSub(_supplyBalance(marketParams));
+        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
     }
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
@@ -816,7 +829,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 feeShares;
         (feeShares, newTotalAssets) = _accruedFeeShares();
 
-        if (feeShares != 0) _mint(feeRecipient, feeShares);
+        if (feeShares != 0) {
+            _mint(feeRecipient, feeShares);
+
+            emit EventsLib.AccrueFee(feeShares);
+        }
     }
 
     /// @dev Computes and returns the fee shares (`feeShares`) to mint and the new vault's total assets

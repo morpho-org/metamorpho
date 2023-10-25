@@ -11,11 +11,11 @@ library ErrorsLib {
     /// @notice Thrown when the address passed is the zero address.
     error ZeroAddress();
 
-    /// @notice Thrown when the caller doesn't have the curator's privilege.
-    error NotCurator();
+    /// @notice Thrown when the caller doesn't have the curator role.
+    error NotCuratorRole();
 
-    /// @notice Thrown when the caller doesn't have the allocator's privilege.
-    error NotAllocator();
+    /// @notice Thrown when the caller doesn't have the allocator role.
+    error NotAllocatorRole();
 
     /// @notice Thrown when the caller doesn't have the guardian's privilege.
     error NotGuardian();
