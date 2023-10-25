@@ -278,6 +278,20 @@ contract FeeTest is IntegrationTest {
         vault.setFee(FEE);
     }
 
+    function testSetFeeZeroFeeRecipient(uint256 fee) public {
+        fee = bound(fee, 1, ConstantsLib.MAX_FEE);
+
+        vm.startPrank(OWNER);
+
+        vault.setFee(0);
+        vault.setFeeRecipient(address(0));
+
+        vm.expectRevert(ErrorsLib.ZeroFeeRecipient.selector);
+        vault.setFee(fee);
+
+        vm.stopPrank();
+    }
+
     function testSetFeeRecipientAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);

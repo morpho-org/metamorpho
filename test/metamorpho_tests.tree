@@ -82,10 +82,13 @@
             ├── when newFee == fee
             │   └── revert with AlreadySet()
             └── when newFee != fee
-                ├── it should accrue fees
-                ├── it should set fee to newFee
-                ├── it should emit SetFee(newFee)
-                └── it should delete pendingFee
+                ├── when newFee != 0 and feeRecipient == address(0)
+                │   └── revert with ZeroFeeRecipient()
+                └── when newFee == 0 or feeRecipient != address(0)
+                    ├── it should accrue fees
+                    ├── it should set fee to newFee
+                    ├── it should emit SetFee(newFee)
+                    └── it should delete pendingFee
 
 .
 └── setFeeRecipient(address newFeeRecipient) external
