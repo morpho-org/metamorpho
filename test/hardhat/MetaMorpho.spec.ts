@@ -78,7 +78,7 @@ describe("MetaMorpho", () => {
   let metaMorpho: MetaMorpho;
   let metaMorphoAddress: string;
 
-  let marketCap: bigint;
+  let supplyCap: bigint;
   let allMarketParams: MarketParamsStruct[];
 
   const expectedMarket = async (marketParams: MarketParamsStruct) => {
@@ -209,9 +209,9 @@ describe("MetaMorpho", () => {
     await forwardTimestamp(timelock);
     await metaMorpho.connect(admin).acceptFee();
 
-    marketCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
+    supplyCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
-      await metaMorpho.connect(curator).submitCap(marketParams, marketCap);
+      await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);
     }
 
     await forwardTimestamp(timelock);

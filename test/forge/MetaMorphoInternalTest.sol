@@ -14,10 +14,6 @@ contract MetaMorphoInternalTest is InternalTest {
     using SharesMathLib for uint256;
     using UtilsLib for uint256;
 
-    constructor() {
-        NB_MARKETS = ConstantsLib.MAX_QUEUE_SIZE + 1;
-    }
-
     function testSetCapMaxQueueSizeExcedeed() public {
         for (uint256 i; i < NB_MARKETS - 1; ++i) {
             Id id = allMarkets[i].id();

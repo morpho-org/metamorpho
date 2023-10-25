@@ -73,7 +73,7 @@ interface IMetaMorphoBase {
     function acceptTimelock() external;
     function revokeTimelock() external;
 
-    function submitCap(MarketParams memory marketParams, uint256 marketCap) external;
+    function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
     function acceptCap(Id id) external;
     function revokeCap(Id id) external;
 

@@ -30,14 +30,13 @@ uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint192 constant CAP = type(uint128).max;
+uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_SIZE + 1;
 
 contract BaseTest is Test {
     using MathLib for uint256;
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
-
-    uint256 internal immutable NB_MARKETS = 10;
 
     address internal OWNER = makeAddr("Owner");
     address internal SUPPLIER = makeAddr("Supplier");
