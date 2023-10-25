@@ -7,16 +7,13 @@ contract IntegrationTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
-    IMetaMorpho internal vault;
+    MetaMorpho internal vault;
 
     function setUp() public virtual override {
         super.setUp();
 
-        vault = IMetaMorpho(
-            address(
-                new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV")
-            )
-        );
+        vault =
+        new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vm.startPrank(OWNER);
         vault.setCurator(CURATOR);
@@ -92,7 +89,7 @@ contract IntegrationTest is BaseTest {
 
     function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
         Id id = marketParams.id();
-        uint256 cap = vault.config(id).cap;
+        (uint256 cap,) = vault.config(id);
         if (newCap == cap) return;
 
         vm.prank(CURATOR);
@@ -105,6 +102,8 @@ contract IntegrationTest is BaseTest {
 
         vault.acceptCap(id);
 
-        assertEq(vault.config(id).cap, newCap, "_setCap");
+        (cap,) = vault.config(id);
+
+        assertEq(cap, newCap, "_setCap");
     }
 }
