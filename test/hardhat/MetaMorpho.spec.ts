@@ -1,7 +1,7 @@
 import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IrmMock } from "types";
+import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
 import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -13,6 +13,7 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
+import SpeedJumpIrmArtifact from "../../lib/morpho-blue-irm/out/SpeedJumpIrm.sol/SpeedJumpIrm.json";
 import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 
 // Without the division it overflows.
@@ -71,7 +72,7 @@ describe("MetaMorpho", () => {
   let loan: ERC20Mock;
   let collateral: ERC20Mock;
   let oracle: OracleMock;
-  let irm: IrmMock;
+  let irm: IIrm;
 
   let factory: MetaMorphoFactory;
   let metaMorpho: MetaMorpho;
@@ -147,11 +148,13 @@ describe("MetaMorpho", () => {
 
     const morphoAddress = await morpho.getAddress();
 
-    const IrmMockFactory = await hre.ethers.getContractFactory("IrmMock", admin);
+    const SpeedJumpIrmFactory = await hre.ethers.getContractFactory(
+      SpeedJumpIrmArtifact.abi,
+      SpeedJumpIrmArtifact.bytecode.object,
+      admin,
+    );
 
-    irm = await IrmMockFactory.deploy();
-
-    await irm.setApr(BigInt.WAD / 100n); // 1%
+    irm = (await SpeedJumpIrmFactory.deploy(morphoAddress, ln2, speedFactor, targetUtilization, initialRate)) as IIrm;
 
     const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
