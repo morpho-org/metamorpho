@@ -151,8 +151,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Makes sure conditions are met to accept a pending value.
     /// @dev Reverts if:
     /// - there's no pending value;
-    /// - the timelock has not elapsed since the pending value has been submitted;
-    /// - the timelock has expired since the pending value has been submitted.
+    /// - the timelock has not elapsed since the pending value has been submitted.
     modifier afterTimelock(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
