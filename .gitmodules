@@ -11,9 +11,6 @@
 [submodule "lib/universal-rewards-distributor"]
 	path = lib/universal-rewards-distributor
 	url = https://github.com/morpho-org/universal-rewards-distributor
-[submodule "lib/morpho-blue-irm"]
-	path = lib/morpho-blue-irm
-	url = https://github.com/morpho-labs/morpho-blue-irm
 [submodule "lib/erc4626-tests"]
 	path = lib/erc4626-tests
 	url = https://github.com/a16z/erc4626-tests
