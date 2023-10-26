@@ -106,7 +106,10 @@ interface IMetaMorphoStaticTyping is IMetaMorphoBase {
     function pendingFee() external view returns (uint192 value, uint64 submittedAt);
 }
 
-/// @dev Use this interface for MetaMorpho vaults to have access to all the functions with the appropriate function signatures.
+/// @title IMetaMorpho
+/// @author Morpho Labs
+/// @custom:contact security@morpho.org
+/// @dev Use this interface for MetaMorpho to have access to all the functions with the appropriate function signatures.
 interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMulticall {
     function config(Id) external view returns (MarketConfig memory);
     function pendingGuardian() external view returns (PendingAddress memory);
