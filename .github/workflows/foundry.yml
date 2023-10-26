@@ -16,17 +16,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Generate a token
-        id: generate-token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          token: ${{ steps.generate-token.outputs.token }}
           submodules: recursive
 
       - uses: ./.github/actions/install
@@ -39,17 +31,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Generate a token
-        id: generate-token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          token: ${{ steps.generate-token.outputs.token }}
           submodules: recursive
 
       - uses: ./.github/actions/install-cache
@@ -90,17 +74,9 @@ jobs:
             invariant-depth: 256
 
     steps:
-      - name: Generate a token
-        id: generate-token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          token: ${{ steps.generate-token.outputs.token }}
           submodules: recursive
 
       - uses: ./.github/actions/install-cache
