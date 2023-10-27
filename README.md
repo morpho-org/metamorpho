@@ -87,7 +87,10 @@ It can:
 - Revoke the pending guardian.
 - Revoke the pending cap of any market.
 
-In particular, it cannot revoke a pending fee.
+In particular, the guardian:
+
+- Cannot revoke a pending fee.
+- Can revoke any guardian change.
 
 ### Rewards
 
