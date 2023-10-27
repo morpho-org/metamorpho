@@ -408,6 +408,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokeFee() external onlyOwner {
+        if (pendingFee.value == 0) revert ErrorsLib.NoPendingValue();
+
         emit EventsLib.RevokeFee(_msgSender(), pendingFee);
 
         delete pendingFee;
@@ -415,6 +417,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Revokes the `pendingTimelock`.
     function revokeTimelock() external onlyGuardian {
+        if (pendingTimelock.value == 0) revert ErrorsLib.NoPendingValue();
+
         emit EventsLib.RevokeTimelock(_msgSender(), pendingTimelock);
 
         delete pendingTimelock;
@@ -429,6 +433,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokeCap(Id id) external onlyCuratorOrGuardian {
+        if (pendingCap[id].value == 0) revert ErrorsLib.NoPendingValue();
+
         emit EventsLib.RevokeCap(_msgSender(), id, pendingCap[id]);
 
         delete pendingCap[id];
