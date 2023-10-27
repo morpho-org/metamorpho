@@ -728,7 +728,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (assets == 0) return;
         }
-        if (assets != 0) revert ErrorsLib.AllSupplyQueueCapsReached();
+
+        if (assets != 0) revert ErrorsLib.AllCapsReached();
     }
 
     /// @dev TODO.
@@ -748,6 +749,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (assets == 0) return;
         }
+
         if (assets != 0) revert ErrorsLib.WithdrawMorphoFailed();
     }
 
@@ -766,6 +768,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (assets == 0) break;
         }
+
         return assets;
     }
 
