@@ -103,7 +103,8 @@ contract ReallocateWithdrawTest is IntegrationTest {
 
         suppliedAssets[0] = bound(suppliedAssets[0], 0, withdrawnAssets[0].zeroFloorSub(CAP2));
         suppliedAssets[1] = bound(suppliedAssets[1], 0, withdrawnAssets[1].zeroFloorSub(CAP2));
-        suppliedAssets[2] = bound(suppliedAssets[2], 0, withdrawnAssets[2].zeroFloorSub(CAP2));
+        suppliedAssets[2] =
+            withdrawnAssets[0] + withdrawnAssets[1] + withdrawnAssets[2] - suppliedAssets[0] - suppliedAssets[1];
 
         uint256[3] memory suppliedShares = [
             suppliedAssets[0].toSharesDown(totalSupplyAssets[0], totalSupplyShares[0]),
@@ -118,22 +119,22 @@ contract ReallocateWithdrawTest is IntegrationTest {
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
 
-        // assertEq(
-        //     morpho.supplyShares(allMarkets[0].id(), address(vault)),
-        //     sharesBefore[0] - withdrawnShares[0] + suppliedShares[0],
-        //     "morpho.supplyShares(0)"
-        // );
-        // assertApproxEqAbs(
-        //     morpho.supplyShares(allMarkets[1].id(), address(vault)),
-        //     sharesBefore[1] - withdrawnShares[1] + suppliedShares[1],
-        //     SharesMathLib.VIRTUAL_SHARES,
-        //     "morpho.supplyShares(1)"
-        // );
-        // assertEq(
-        //     morpho.supplyShares(allMarkets[2].id(), address(vault)),
-        //     sharesBefore[2] - withdrawnShares[2] + suppliedShares[2],
-        //     "morpho.supplyShares(2)"
-        // );
+        assertEq(
+            morpho.supplyShares(allMarkets[0].id(), address(vault)),
+            sharesBefore[0] - withdrawnShares[0] + suppliedShares[0],
+            "morpho.supplyShares(0)"
+        );
+        assertApproxEqAbs(
+            morpho.supplyShares(allMarkets[1].id(), address(vault)),
+            sharesBefore[1] - withdrawnShares[1] + suppliedShares[1],
+            SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(1)"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[2].id(), address(vault)),
+            sharesBefore[2] - withdrawnShares[2] + suppliedShares[2],
+            "morpho.supplyShares(2)"
+        );
     }
 
     function testReallocateUnauthorizedMarket(uint256 amount) public {

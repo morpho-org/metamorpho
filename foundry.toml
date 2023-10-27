@@ -15,7 +15,7 @@ tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 wrap_comments = true
 
 [profile.default.fuzz]
-max_test_rejects = 131072
+max_test_rejects = 16777216
 
 [profile.build]
 via-ir = true
