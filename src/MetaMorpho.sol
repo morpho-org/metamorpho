@@ -442,7 +442,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _setCap(id, pendingCap[id].value);
     }
 
-    /// @notice TODO.
+    /// @notice Skims the vault `token` balance to `skimRecipient`.
     function skim(address token) external {
         if (skimRecipient == address(0)) revert ErrorsLib.ZeroAddress();
 
@@ -557,6 +557,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         assets -= _staticWithdrawMorpho(assets);
     }
 
+    /// @dev Returns the maximum amount of assets that the vault can withdraw from Morpho.
     function _maxSupply() internal view returns (uint256 totalSuppliable) {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
@@ -730,7 +731,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (assets != 0) revert ErrorsLib.AllCapsReached();
     }
 
-    /// @dev TODO.
+    /// @dev Withdraws `assets` from Morpho.
     function _withdrawMorpho(uint256 assets) internal {
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
