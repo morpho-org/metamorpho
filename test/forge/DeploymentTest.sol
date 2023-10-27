@@ -12,6 +12,7 @@ contract DeploymentTest is IntegrationTest {
     function testDeployMetaMorphoNotToken(address notToken) public {
         vm.assume(address(notToken) != address(loanToken));
         vm.assume(address(notToken) != address(collateralToken));
+        vm.assume(address(notToken) != address(vault));
 
         vm.expectRevert();
         new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, notToken, "MetaMorpho Vault", "MMV");
