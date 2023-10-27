@@ -292,6 +292,8 @@
 └── revokeFee() external
     ├── when msg.sender not owner
     │   └── revert with OwnableUnauthorizedAccount()
+    ├── when pending fee is zero
+    │   └── revert with NoPendingValue()
     └── when msg.sender is owner
         ├── it should emit RevokeFee(msg.sender, pendingFee)
         └── it should delete pendingFee
@@ -300,6 +302,8 @@
 └── revokeTimelock() external
     ├── when msg.sender not guardian nor owner
     │   └── revert with NotGuardian()
+    ├── when pending timelock is zero
+    │   └── revert with NoPendingValue()
     └── when msg.sender is guardian
         ├── it should emit RevokeTimelock(msg.sender, pendingTimelock)
         └── it should delete pendingTimelock
@@ -308,6 +312,8 @@
 └── revokeCap(Id id) external
     ├── when msg.sender not curator nor guardian nor owner
     │   └── revert with NotCuratorNorGuardian()
+    ├── when pending cap is zero
+    │   └── revert with NoPendingValue()
     └── when msg.sender is curator or guardian or owner
         ├── it should emit RevokeCap(msg.sender, id, pendingCap[id])
         └── it should delete pendingCap[id]
