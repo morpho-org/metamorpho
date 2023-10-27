@@ -75,19 +75,19 @@ contract RoleTest is IntegrationTest {
         vm.stopPrank();
     }
 
-    function testCuratorFunctionsShouldRevertWhenNotCuratorAndNotOwner(address caller) public {
+    function testCuratorFunctionsShouldRevertWhenNotCuratorRole(address caller) public {
         vm.assume(caller != vault.owner() && caller != vault.curator());
 
         vm.startPrank(caller);
 
-        vm.expectRevert(ErrorsLib.NotCurator.selector);
+        vm.expectRevert(ErrorsLib.NotCuratorRole.selector);
         vault.submitCap(allMarkets[0], CAP);
 
         vm.stopPrank();
     }
 
-    function testAllocatorFunctionsShouldRevertWhenNotAllocatorAndNotCuratorAndNotOwner(address caller) public {
-        vm.assume(!vault.isAllocator(caller));
+    function testAllocatorFunctionsShouldRevertWhenNotAllocatorRole(address caller) public {
+        vm.assume(!vault.isAllocator(caller) && caller != vault.owner() && caller != vault.curator());
 
         vm.startPrank(caller);
 
@@ -95,13 +95,13 @@ contract RoleTest is IntegrationTest {
         MarketAllocation[] memory allocation;
         uint256[] memory withdrawQueueFromRanks;
 
-        vm.expectRevert(ErrorsLib.NotAllocator.selector);
+        vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
         vault.setSupplyQueue(supplyQueue);
 
-        vm.expectRevert(ErrorsLib.NotAllocator.selector);
+        vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
         vault.sortWithdrawQueue(withdrawQueueFromRanks);
 
-        vm.expectRevert(ErrorsLib.NotAllocator.selector);
+        vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
         vault.reallocate(allocation, allocation);
 
         vm.stopPrank();

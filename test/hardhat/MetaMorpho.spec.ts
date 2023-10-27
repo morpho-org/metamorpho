@@ -1,7 +1,7 @@
 import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
+import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IrmMock } from "types";
 import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -13,7 +13,6 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
-import SpeedJumpIrmArtifact from "../../lib/morpho-blue-irm/out/SpeedJumpIrm.sol/SpeedJumpIrm.json";
 import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 
 // Without the division it overflows.
@@ -72,13 +71,13 @@ describe("MetaMorpho", () => {
   let loan: ERC20Mock;
   let collateral: ERC20Mock;
   let oracle: OracleMock;
-  let irm: IIrm;
+  let irm: IrmMock;
 
   let factory: MetaMorphoFactory;
   let metaMorpho: MetaMorpho;
   let metaMorphoAddress: string;
 
-  let marketCap: bigint;
+  let supplyCap: bigint;
   let allMarketParams: MarketParamsStruct[];
 
   const expectedMarket = async (marketParams: MarketParamsStruct) => {
@@ -148,13 +147,11 @@ describe("MetaMorpho", () => {
 
     const morphoAddress = await morpho.getAddress();
 
-    const SpeedJumpIrmFactory = await hre.ethers.getContractFactory(
-      SpeedJumpIrmArtifact.abi,
-      SpeedJumpIrmArtifact.bytecode.object,
-      admin,
-    );
+    const IrmMockFactory = await hre.ethers.getContractFactory("IrmMock", admin);
 
-    irm = (await SpeedJumpIrmFactory.deploy(morphoAddress, ln2, speedFactor, targetUtilization, initialRate)) as IIrm;
+    irm = await IrmMockFactory.deploy();
+
+    await irm.setApr(BigInt.WAD / 100n); // 1%
 
     const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
@@ -209,9 +206,9 @@ describe("MetaMorpho", () => {
     await forwardTimestamp(timelock);
     await metaMorpho.connect(admin).acceptFee();
 
-    marketCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
+    supplyCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
-      await metaMorpho.connect(curator).submitCap(marketParams, marketCap);
+      await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);
     }
 
     await forwardTimestamp(timelock);

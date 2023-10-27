@@ -158,9 +158,9 @@
 
 
 .
-└── submitCap(MarketParams memory marketParams, uint256 newMarketCap) external
+└── submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external
     ├── when msg.sender not owner or curator
-    │   └── revert with NotCurator()
+    │   └── revert with NotCuratorRole()
     └── when msg.sender is owner or curator
         ├── when marketParams.loanToken != asset()
         │   └── revert with InconsistentAsset()
@@ -169,21 +169,21 @@
             ├── when MORPHO.lastUpdate(id) == 0
             │   └── revert with MarketNotCreated()
             └── when MORPHO.lastUpdate(id) != 0
-                ├── when newMarketCap == marketCap
+                ├── when newSupplyCap == supplyCap
                 │   └── revert with AlreadySet()
-                └── when newMarketCap != marketCap
-                    ├── when newMarketCap < marketCap
-                    │   ├── when newMarketCap > 0 and marketConfig.withdrawRank == 0
+                └── when newSupplyCap != supplyCap
+                    ├── when newSupplyCap < supplyCap
+                    │   ├── when newSupplyCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue
                     │   │   ├── it should push id to withdrawQueue
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                     │   │       └── revert with MaxQueueSizeExceeded()
-                    │   ├── it should set config[id].cap to newMarketCap
-                    │   ├── it should emit SetCap(id, newMarketCap)
+                    │   ├── it should set config[id].cap to newSupplyCap
+                    │   ├── it should emit SetCap(id, newSupplyCap)
                     │   └── it should delete pendingCap[id]
-                    └── when newMarketCap > marketCap
-                        ├── it should it should set pendingCap[id] to PendingUint192(newMarketCap.toUint192(), uint64(block.timestamp))
-                        └── it should emit EventsLib.SubmitCap(id, newMarketCap)
+                    └── when newSupplyCap > supplyCap
+                        ├── it should it should set pendingCap[id] to PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp))
+                        └── it should emit EventsLib.SubmitCap(id, newSupplyCap)
 
 .
 └── acceptCap(Id id) external
@@ -196,9 +196,11 @@
             ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
             │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
             └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── when marketCap > 0 and marketConfig.withdrawRank == 0
+                ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
                 │   ├── it should push id to supplyQueue
                 │   ├── it should push id to withdrawQueue
+                │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
+                │   │   └── revert with MaxQueueSizeExceeded()
                 │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
                 │       └── revert with MaxQueueSizeExceeded()
                 ├── it should set config[id].cap to pendingCap[id].value
@@ -212,18 +214,21 @@
 .
 └── setSupplyQueue(Id[] calldata newSupplyQueue) external
     ├── when msg.sender not owner or curator or allocator
-    │   └── revert with NotAllocator()
+    │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
-        ├── when some markets of newSupplyQueue have a zero cap
-        │   └── revert with UnauthorizedMarket()
-        └── when all the markets of newSupplyQueue have non zero cap
-            ├── it should set supplyQueue to newSupplyQueue
-            └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
+        ├── when newSupplyQueue.length > MAX_QUEUE_SIZE
+        │   └── revert with MaxQueueSizeExceeded()
+        └── when newSupplyQueue.length <= MAX_QUEUE_SIZE
+            ├── when some markets of newSupplyQueue have a zero cap
+            │   └── revert with UnauthorizedMarket()
+            └── when all the markets of newSupplyQueue have non zero cap
+                ├── it should set supplyQueue to newSupplyQueue
+                └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
 
 .
 └── sortWithdrawQueue(uint256[] calldata indexes) external
     ├── when msg.sender not owner or curator or allocator
-    │   └── revert with NotAllocator()
+    │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
         ├── when indexes contains a duplicate market
         │   ├── it should compute the id of the duplicate market
@@ -243,7 +248,7 @@
 └── reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external
     ├── external
     ├── when msg.sender not owner or curator or allocator
-    │   └── revert with NotAllocator()
+    │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
         ├── for each market withdrawn[i] from withdrawn
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
