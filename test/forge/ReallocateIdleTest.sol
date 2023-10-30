@@ -18,10 +18,6 @@ contract ReallocateIdleTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        _setCap(allMarkets[0], CAP2);
-        _setCap(allMarkets[1], CAP2);
-        _setCap(allMarkets[2], CAP2);
-
         vm.prank(ALLOCATOR);
         vault.setSupplyQueue(new Id[](0));
 
@@ -29,28 +25,45 @@ contract ReallocateIdleTest is IntegrationTest {
 
         vm.prank(SUPPLIER);
         vault.deposit(INITIAL_DEPOSIT, ONBEHALF);
+
+        _setCap(allMarkets[0], CAP2);
+        _setCap(allMarkets[1], CAP2);
+        _setCap(allMarkets[2], CAP2);
     }
 
-    function testReallocateSupplyIdle(uint256[3] memory suppliedShares) public {
-        suppliedShares[0] = bound(suppliedShares[0], SharesMathLib.VIRTUAL_SHARES, CAP2 * SharesMathLib.VIRTUAL_SHARES);
-        suppliedShares[1] = bound(suppliedShares[1], SharesMathLib.VIRTUAL_SHARES, CAP2 * SharesMathLib.VIRTUAL_SHARES);
-        suppliedShares[2] = bound(suppliedShares[2], SharesMathLib.VIRTUAL_SHARES, CAP2 * SharesMathLib.VIRTUAL_SHARES);
+    function testReallocateSupplyIdle(uint256[3] memory suppliedAssets) public {
+        suppliedAssets[0] = bound(suppliedAssets[0], 1, CAP2);
+        suppliedAssets[1] = bound(suppliedAssets[1], 1, CAP2);
+        suppliedAssets[2] = bound(suppliedAssets[2], 1, CAP2);
 
-        supplied.push(MarketAllocation(allMarkets[0], 0, suppliedShares[0]));
-        supplied.push(MarketAllocation(allMarkets[1], 0, suppliedShares[1]));
-        supplied.push(MarketAllocation(allMarkets[2], 0, suppliedShares[2]));
+        uint256 idleWithdrawn = suppliedAssets[0] + suppliedAssets[1] + suppliedAssets[2];
 
-        uint256 idleBefore = vault.idle();
+        withdrawn.push(MarketAllocation(_idleParams(), idleWithdrawn, 0));
+        supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0], 0));
+        supplied.push(MarketAllocation(allMarkets[1], suppliedAssets[1], 0));
+        supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2], 0));
+
+        uint256 idleBefore = _idle();
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
 
-        assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), suppliedShares[0], "morpho.supplyShares(0)");
-        assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), suppliedShares[1], "morpho.supplyShares(1)");
-        assertEq(morpho.supplyShares(allMarkets[2].id(), address(vault)), suppliedShares[2], "morpho.supplyShares(2)");
+        assertEq(
+            morpho.supplyShares(allMarkets[0].id(), address(vault)),
+            suppliedAssets[0] * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(0)"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[1].id(), address(vault)),
+            suppliedAssets[1] * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(1)"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[2].id(), address(vault)),
+            suppliedAssets[2] * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(2)"
+        );
 
-        uint256 expectedIdle = idleBefore - suppliedShares[0] / SharesMathLib.VIRTUAL_SHARES
-            - suppliedShares[1] / SharesMathLib.VIRTUAL_SHARES - suppliedShares[2] / SharesMathLib.VIRTUAL_SHARES;
-        assertApproxEqAbs(vault.idle(), expectedIdle, 3, "vault.idle() 1");
+        assertApproxEqAbs(_idle(), idleBefore - idleWithdrawn, 3, "idle");
     }
 }

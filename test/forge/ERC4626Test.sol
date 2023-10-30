@@ -104,7 +104,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
-        assertEq(vault.idle(), deposited - withdrawn, "idle");
+        assertEq(_idle(), deposited - withdrawn, "idle");
     }
 
     function testRedeemTooMuch(uint256 deposited) public {

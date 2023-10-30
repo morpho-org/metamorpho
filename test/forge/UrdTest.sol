@@ -76,19 +76,21 @@ contract UrdTest is IntegrationTest {
         loanToken.setBalance(address(vault), rewards);
 
         loanToken.setBalance(address(SUPPLIER), idle);
+
         vm.prank(SUPPLIER);
         vault.deposit(idle, SUPPLIER);
 
-        assertEq(vault.idle(), idle, "vault.idle()");
+        assertEq(_idle(), idle, "idle");
+
         uint256 vaultBalanceBefore = loanToken.balanceOf(address(vault));
-        assertEq(vaultBalanceBefore, idle + rewards, "vaultBalanceBefore");
+        assertEq(vaultBalanceBefore, rewards, "vaultBalanceBefore");
 
         vm.expectEmit();
         emit EventsLib.Skim(address(this), address(rewardsDistributor), address(loanToken), rewards);
         vault.skim(address(loanToken));
         uint256 vaultBalanceAfter = loanToken.balanceOf(address(vault));
 
-        assertEq(vaultBalanceAfter, idle, "vaultBalanceAfter");
+        assertEq(vaultBalanceAfter, 0, "vaultBalanceAfter");
         assertEq(
             loanToken.balanceOf(address(rewardsDistributor)),
             rewards,

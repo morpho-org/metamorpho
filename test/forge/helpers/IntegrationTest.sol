@@ -5,6 +5,7 @@ import "./BaseTest.sol";
 
 contract IntegrationTest is BaseTest {
     using MathLib for uint256;
+    using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
 
     MetaMorpho internal vault;
@@ -32,6 +33,14 @@ contract IntegrationTest is BaseTest {
         loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
+    }
+
+    function _idleParams() internal view returns (MarketParams memory) {
+        return allMarkets[allMarkets.length - 1];
+    }
+
+    function _idle() internal view returns (uint256) {
+        return morpho.expectedSupplyBalance(_idleParams(), address(vault));
     }
 
     function _setTimelock(uint256 newTimelock) internal {

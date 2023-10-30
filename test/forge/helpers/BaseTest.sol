@@ -71,9 +71,21 @@ contract BaseTest is Test {
 
         irm.setApr(0.5 ether); // 50%.
 
+        MarketParams memory idleParams = MarketParams({
+            loanToken: address(loanToken),
+            collateralToken: address(0),
+            oracle: address(0),
+            irm: address(irm),
+            lltv: 0
+        });
+
         vm.startPrank(MORPHO_OWNER);
+        morpho.enableIrm(address(0));
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
+
+        morpho.enableLltv(0);
+        morpho.createMarket(idleParams);
         vm.stopPrank();
 
         for (uint256 i; i < NB_MARKETS; ++i) {
@@ -94,6 +106,8 @@ contract BaseTest is Test {
 
             allMarkets.push(marketParams);
         }
+
+        allMarkets.push(idleParams); // Must be pushed last.
 
         vm.startPrank(SUPPLIER);
         loanToken.approve(address(morpho), type(uint256).max);
