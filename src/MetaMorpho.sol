@@ -753,7 +753,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Fakes a withdraw of `assets` from Morpho.
-    /// @return The assets left to be withdrawn.
+    /// @return The remaining assets to be withdrawn.
     function _staticWithdrawMorpho(uint256 assets) internal view returns (uint256) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
@@ -763,7 +763,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             // 1. oracle.price() is never called (the vault doesn't borrow)
             // 2. `_withdrawable` caps to the liquidity available on Morpho
             // 3. virtually accruing interest didn't fail in `_withdrawable`
-            assets -= UtilsLib.min(_withdrawable(marketParams, id), assets);
+            assets = assets.zeroFloorSub(_withdrawable(marketParams, id));
 
             if (assets == 0) break;
         }

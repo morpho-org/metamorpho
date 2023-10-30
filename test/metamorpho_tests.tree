@@ -262,12 +262,8 @@
         │       └── revert with SupplyCapExceeded(id)
         ├── when totalWithdrawn > totalSupplied
         │   └── it should add totalWithdrawn - totalSupplied to idle
-        └── when totalWithdrawn <= totalSupplied
-            └── it should compute idleSupplied = totalSupplied - totalWithdrawn
-                ├── when idle < idleSupplied
-                │   └── revert with InsufficientIdle()
-                └── when idle >= idleSupplied
-                    └── it should remove idleSupplied from idle
+        └── when totalWithdrawn != totalSupplied
+            └── revert with InconsistentReallocation()
 
 
 /* EXTERNAL */

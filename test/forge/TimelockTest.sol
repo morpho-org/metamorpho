@@ -345,7 +345,7 @@ contract TimelockTest is IntegrationTest {
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(withdrawRank, 2, "withdrawRank");
         assertEq(pendingCap, 0, "pendingCap");
         assertEq(submittedAt, 0, "submittedAt");
     }
@@ -368,8 +368,8 @@ contract TimelockTest is IntegrationTest {
         assertEq(withdrawRank, 0, "withdrawRank");
         assertEq(pendingCap, cap, "pendingCap");
         assertEq(submittedAt, block.timestamp, "submittedAt");
-        assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
-        assertEq(vault.withdrawQueueSize(), 1, "withdrawQueueSize");
+        assertEq(vault.supplyQueueSize(), 2, "supplyQueueSize");
+        assertEq(vault.withdrawQueueSize(), 2, "withdrawQueueSize");
     }
 
     function testAcceptCapIncreased(uint256 cap) public {
@@ -391,11 +391,11 @@ contract TimelockTest is IntegrationTest {
         (uint192 pendingCapAfter, uint64 submittedAtAfter) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(withdrawRank, 2, "withdrawRank");
         assertEq(pendingCapAfter, 0, "pendingCapAfter");
         assertEq(submittedAtAfter, 0, "submittedAtAfter");
-        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
-        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+        assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(id), "supplyQueue");
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(id), "withdrawQueue");
     }
 
     function testAcceptCapNoPendingValue() public {

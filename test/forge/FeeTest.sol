@@ -38,6 +38,7 @@ contract FeeTest is IntegrationTest {
         }
 
         _setCap(allMarkets[0], CAP);
+        _sortSupplyQueueIdleLast();
     }
 
     function _feeShares(uint256 totalAssetsBefore) internal view returns (uint256) {

@@ -14,6 +14,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         super.setUp();
 
         _setCap(allMarkets[0], CAP);
+        _sortSupplyQueueIdleLast();
     }
 
     function testDecimals() public {
@@ -85,6 +86,26 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
+    }
+
+    function testWithdrawIdle(uint256 deposited, uint256 withdrawn) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        withdrawn = bound(withdrawn, 0, deposited);
+
+        _setCap(allMarkets[0], 0);
+
+        loanToken.setBalance(SUPPLIER, deposited);
+
+        vm.prank(SUPPLIER);
+        uint256 shares = vault.deposit(deposited, ONBEHALF);
+
+        vm.expectEmit();
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets() - withdrawn);
+        vm.prank(ONBEHALF);
+        uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
+
+        assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
+        assertEq(_idle(), deposited - withdrawn, "idle");
     }
 
     function testRedeemTooMuch(uint256 deposited) public {
