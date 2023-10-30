@@ -125,18 +125,4 @@ contract GuardianTest is IntegrationTest {
         assertEq(pendingGuardian, address(0), "pendingGuardian");
         assertEq(submittedAt, 0, "submittedAt");
     }
-
-    function testGuardianRevokeFeeIncreased(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
-        elapsed = bound(elapsed, 0, TIMELOCK - 1);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        vm.warp(block.timestamp + elapsed);
-
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, GUARDIAN));
-        vm.prank(GUARDIAN);
-        vault.revokeFee();
-    }
 }

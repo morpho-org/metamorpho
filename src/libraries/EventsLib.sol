@@ -18,9 +18,6 @@ library EventsLib {
     /// @notice Emitted `rewardsDistibutor` is set to `newRewardsRecipient`.
     event SetRewardsRecipient(address indexed newRewardsRecipient);
 
-    /// @notice Emitted when a pending `newFee` is submitted.
-    event SubmitFee(uint256 newFee);
-
     /// @notice Emitted `fee` is set to `newFee`.
     event SetFee(uint256 newFee);
 

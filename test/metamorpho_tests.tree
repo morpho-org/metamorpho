@@ -72,7 +72,7 @@
                 └── it should delete pendingTimelock
 
 .
-└── submitFee(uint256 newFee) external
+└── setFee(uint256 newFee) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
@@ -82,30 +82,13 @@
             ├── when newFee == fee
             │   └── revert with AlreadySet()
             └── when newFee != fee
-                ├── when newFee < fee
-                │   ├── it should accrue fees
-                │   ├── it should set fee to newFee
-                │   ├── it should emit SetFee(newFee)
-                │   └── it should delete pendingFee
-                └── when newFee > fee
-                    ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
-                    └── it should emit SubmitFee(newFee)
-
-.
-└── acceptFee() external
-    ├── when pendingFee.submittedAt == 0
-    │   └── revert with NoPendingValue()
-    └── when pendingFee.submittedAt != 0
-        ├── when block.timestamp < pendingFee.submittedAt + timelock
-        │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingFee.submittedAt + timelock
-            ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should accrue fees
-                ├── it should set fee to pendingFee.value
-                ├── it should emit SetFee(pendingFee.value)
-                └── it should delete pendingFee
+                ├── when newFee != 0 and feeRecipient == address(0)
+                │   └── revert with ZeroFeeRecipient()
+                └── when newFee == 0 or feeRecipient != address(0)
+                    ├── it should accrue fees
+                    ├── it should set fee to newFee
+                    ├── it should emit SetFee(newFee)
+                    └── it should delete pendingFee
 
 .
 └── setFeeRecipient(address newFeeRecipient) external
@@ -287,16 +270,6 @@
 
 /* REVOKE FUNCTIONS */
 
-
-.
-└── revokeFee() external
-    ├── when msg.sender not owner
-    │   └── revert with OwnableUnauthorizedAccount()
-    ├── when pending fee is zero
-    │   └── revert with NoPendingValue()
-    └── when msg.sender is owner
-        ├── it should emit RevokeFee(msg.sender, pendingFee)
-        └── it should delete pendingFee
 
 .
 └── revokeTimelock() external

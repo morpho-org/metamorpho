@@ -119,34 +119,6 @@ contract RevokeTest is IntegrationTest {
         assertEq(submittedAt, 0, "submittedAt");
     }
 
-    function testOwnerRevokeFeeIncreased(uint256 fee, uint256 elapsed) public {
-        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
-        elapsed = bound(elapsed, 0, TIMELOCK - 1);
-
-        vm.prank(OWNER);
-        vault.submitFee(fee);
-
-        vm.warp(block.timestamp + elapsed);
-
-        vm.expectEmit();
-        emit EventsLib.RevokeFee(OWNER, IPending(address(vault)).pendingFee());
-        vm.prank(OWNER);
-        vault.revokeFee();
-
-        uint256 newFee = vault.fee();
-        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
-
-        assertEq(newFee, FEE, "newFee");
-        assertEq(pendingFee, 0, "pendingFee");
-        assertEq(submittedAt, 0, "submittedAt");
-    }
-
-    function testOwnerRevokeFeeNoPendingValue() public {
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
-        vault.revokeFee();
-    }
-
     function testOwnerRevokeCapNoPendingValue(uint256 seed) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
 

@@ -65,10 +65,6 @@ interface IMetaMorpho is IERC4626 {
     function revokeCap(Id id) external;
     function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
 
-    function submitFee(uint256 newFee) external;
-    function acceptFee() external;
-    function pendingFee() external view returns (uint192 value, uint64 submittedAt);
-
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokeGuardian() external;
@@ -78,6 +74,7 @@ interface IMetaMorpho is IERC4626 {
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
     function setCurator(address newCurator) external;
+    function setFee(uint256 newFee) external;
     function setFeeRecipient(address newFeeRecipient) external;
     function setRewardsRecipient(address) external;
 
