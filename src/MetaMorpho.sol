@@ -139,13 +139,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Reverts if the caller is not the guardian.
-    modifier onlyGuardian() {
+    modifier onlyGuardianRole() {
         if (_msgSender() != owner() && _msgSender() != guardian) revert ErrorsLib.NotGuardian();
 
         _;
     }
 
-    modifier onlyCuratorOrGuardian() {
+    modifier onlyCuratorOrGuardianRole() {
         if (_msgSender() != guardian && _msgSender() != curator && _msgSender() != owner()) {
             revert ErrorsLib.NotCuratorNorGuardian();
         }
@@ -402,7 +402,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* REVOKE FUNCTIONS */
 
     /// @notice Revokes the pending timelock.
-    function revokeTimelock() external onlyGuardian {
+    function revokeTimelock() external onlyGuardianRole {
         if (pendingTimelock.value == 0) revert ErrorsLib.NoPendingValue();
 
         emit EventsLib.RevokeTimelock(_msgSender(), pendingTimelock);
@@ -411,14 +411,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Revokes the pending guardian.
-    function revokeGuardian() external onlyGuardian {
+    function revokeGuardian() external onlyGuardianRole {
         emit EventsLib.RevokeGuardian(_msgSender(), pendingGuardian);
 
         delete pendingGuardian;
     }
 
     /// @notice Revokes the pending cap of the market defined by `id`.
-    function revokeCap(Id id) external onlyCuratorOrGuardian {
+    function revokeCap(Id id) external onlyCuratorOrGuardianRole {
         if (pendingCap[id].value == 0) revert ErrorsLib.NoPendingValue();
 
         emit EventsLib.RevokeCap(_msgSender(), id, pendingCap[id]);
