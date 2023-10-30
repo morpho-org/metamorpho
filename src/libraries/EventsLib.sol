@@ -15,8 +15,8 @@ library EventsLib {
     /// @notice Emitted `timelock` is set to `newTimelock`.
     event SetTimelock(uint256 newTimelock);
 
-    /// @notice Emitted `rewardsDistibutor` is set to `newRewardsRecipient`.
-    event SetRewardsRecipient(address indexed newRewardsRecipient);
+    /// @notice Emitted when `skimRecipient` is set to `newSkimRecipient`.
+    event SetSkimRecipient(address indexed newSkimRecipient);
 
     /// @notice Emitted when a pending `newFee` is submitted.
     event SubmitFee(uint256 newFee);
@@ -66,10 +66,8 @@ library EventsLib {
     /// @notice Emitted when fees are accrued.
     event AccrueFee(uint256 feeShares);
 
-    /// @notice Emitted when an `amount` of `token` is transferred to the `rewardsRecipient` by `caller`.
-    event TransferRewards(
-        address indexed caller, address indexed rewardsRecipient, address indexed token, uint256 amount
-    );
+    /// @notice Emitted when an `amount` of `token` is transferred to the `skimRecipient` by `caller`.
+    event Skim(address indexed caller, address indexed skimRecipient, address indexed token, uint256 amount);
 
     /// @notice Emitted when a new MetaMorpho vault is created.
     /// @param metaMorpho The address of the MetaMorpho vault.

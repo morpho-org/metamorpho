@@ -25,15 +25,15 @@
             └── it should emit SetIsAllocator(newAllocator, newIsAllocator)
 
 .
-└── setRewardsRecipient(address newRewardsRecipient) external
+└── setSkimRecipient(address newSkimRecipient) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
-        ├── when newRewardsRecipient == rewardsRecipient
+        ├── when newSkimRecipient == skimRecipient
         │   └── revert with AlreadySet()
-        └── when newRewardsRecipient != rewardsRecipient
-            ├── it should set rewardsRecipient to newRewardsRecipient
-            └── it shoud emit SetRewardsRecipient(newRewardsRecipient)
+        └── when newSkimRecipient != skimRecipient
+            ├── it should set skimRecipient to newSkimRecipient
+            └── it shoud emit SetSkimRecipient(newSkimRecipient)
 
 .
 └── submitTimelock(uint256 newTimelock) external
@@ -274,15 +274,15 @@
 
 
 .
-└── transferRewards(address token) external
-    ├── when rewardsRecipient == address(0)
+└── skim(address token) external
+    ├── when skimRecipient == address(0)
     │   └── revert with ZERO_ADDRESS
-    └── when rewardsRecipient != address(0)
+    └── when skimRecipient != address(0)
         ├── it should compute amount = IERC20(token).balanceOf(address(this))
         ├── when token == asset()
         │   └── it should remove idle from amount
-        ├── it should transfer amount of token from the the vault to rewardsRecipient
-        └── it should emit TransferRewards(msg.sender, rewardsRecipient, token, amount)
+        ├── it should transfer amount of token from the the vault to skimRecipient
+        └── it should emit Skim(msg.sender, skimRecipient, token, amount)
 
 
 /* ONLY GUARDIAN FUNCTIONS */
