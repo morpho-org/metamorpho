@@ -48,7 +48,6 @@ It can:
 - Set the rewards recipient.
 - [Timelocked] Set the timelock.
 - [Timelocked with no possible veto] Set the performance fee (capped to 50%).
-- Revoke the pending fee.
 - [Timelocked] Set the guardian.
 - Set the fee recipient.
 
@@ -87,10 +86,7 @@ It can:
 - Revoke the pending guardian.
 - Revoke the pending cap of any market.
 
-In particular, the guardian:
-
-- Cannot revoke a pending fee.
-- Can revoke any guardian change.
+In particular, the guardian **can revoke any guardian change**.
 
 ### Rewards
 
