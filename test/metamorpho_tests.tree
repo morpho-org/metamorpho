@@ -275,7 +275,7 @@
 └── revokeTimelock() external
     ├── when msg.sender not guardian nor owner
     │   └── revert with NotGuardian()
-    ├── when pending timelock is zero
+    ├── when pending timelock's submittedAt is zero
     │   └── revert with NoPendingValue()
     └── when msg.sender is guardian
         ├── it should emit RevokeTimelock(msg.sender, pendingTimelock)
@@ -285,7 +285,7 @@
 └── revokeCap(Id id) external
     ├── when msg.sender not curator nor guardian nor owner
     │   └── revert with NotCuratorNorGuardian()
-    ├── when pending cap is zero
+    ├── when pending cap's submittedAt is zero
     │   └── revert with NoPendingValue()
     └── when msg.sender is curator or guardian or owner
         ├── it should emit RevokeCap(msg.sender, id, pendingCap[id])
@@ -295,6 +295,8 @@
 └── revokeGuardian() external
     ├── when msg.sender not guardian nor owner
     │   └── revert with NotGuardian()
+    ├── when pending guardian's submittedAt is zero
+    │   └── revert with NoPendingValue()
     └── when msg.sender is guardian
         ├── it should emit RevokeGuardian(msg.sender, pendingGuardian);
         └── it should delete pendingGuardian

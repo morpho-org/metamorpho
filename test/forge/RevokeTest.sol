@@ -132,4 +132,10 @@ contract RevokeTest is IntegrationTest {
         vm.expectRevert(ErrorsLib.NoPendingValue.selector);
         vault.revokeTimelock();
     }
+
+    function testOwnerRevokeGuardianNoPendingValue() public {
+        vm.prank(OWNER);
+        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
+        vault.revokeGuardian();
+    }
 }
