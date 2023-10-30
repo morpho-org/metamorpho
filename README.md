@@ -24,7 +24,7 @@ The vault owner can set a performance fee, cutting up to 50% of the generated in
 The `feeRecipient` can then withdraw the accumulated fee at any time.
 
 The vault may be entitled to some rewards emitted on Morpho Blue markets the vault has supplied to.
-Those rewards can be transferred to the `rewardsRecipient`.
+Those rewards can be transferred to the `skimRecipient`.
 The vault's owner has the choice to distribute back these rewards to vault depositors however they want.
 For more information about this use case, see the [Rewards](#rewards) section.
 
@@ -39,6 +39,7 @@ After the timelock, the action can be executed by anyone until 3 days have passe
 Only one address can have this role.
 
 It can:
+
 - Do what the curator can do.
 - Transfer or renounce the ownership.
 - Set the curator.
@@ -54,21 +55,23 @@ It can:
 Only one address can have this role.
 
 It can:
+
 - Do what the allocators can do.
 - [Timelocked] Enable or disable a market by setting a cap to a specific market.
-    - The cap must be set to 0 to disable the market.
-	- Disabling a market can then only be done if the vault has no liquidity supplied on the market.
+  - The cap must be set to 0 to disable the market.
+  - Disabling a market can then only be done if the vault has no liquidity supplied on the market.
 
 #### Allocator
 
 Multiple addresses can have this role.
 
 It can:
+
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
-    - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
-	- Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
-	- The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
-	- The `withdrawQueue` contains all enabled markets.
+  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
+  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
+  - The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
+  - The `withdrawQueue` contains all enabled markets.
 - Instantaneously reallocate funds among the enabled market at any moment.
 
 #### Guardian
@@ -76,6 +79,7 @@ It can:
 Only one address can have this role.
 
 It can:
+
 - Revoke any timelocked action except it cannot revoke a pending fee.
 
 ### Rewards
@@ -85,20 +89,21 @@ To redistribute rewards to vault depositors, it is advised to use the [Universal
 Below is a typical example of how this use case would take place:
 
 - If not already done:
-    - Create a rewards distributor using the [UrdFactory](https://github.com/morpho-org/universal-rewards-distributor/blob/main/src/UrdFactory.sol) (can be done by anyone).
-    - Set the vault’s rewards recipient address to the created URD using `setRewardsRecipient`.
+
+  - Create a rewards distributor using the [UrdFactory](https://github.com/morpho-org/universal-rewards-distributor/blob/main/src/UrdFactory.sol) (can be done by anyone).
+  - Set the vault’s rewards recipient address to the created URD using `setSkimRecipient`.
 
 - Claim tokens from the Morpho Blue distribution to the vault.
 
-	NB: Anyone can claim tokens on behalf of the vault and automatically transfer them to the vault.
-	Thus, this step might be already performed by some third-party.
+  NB: Anyone can claim tokens on behalf of the vault and automatically transfer them to the vault.
+  Thus, this step might be already performed by some third-party.
 
-- Transfer rewards from the vault to the rewards distributor using the `transferRewards` function.
+- Transfer rewards from the vault to the rewards distributor using the `skim` function.
 
-	NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset. 
-	Thus, this step might be already performed by some third-party.
-    Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault. 
-	In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
+  NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
+  Thus, this step might be already performed by some third-party.
+  Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
+  In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
 
