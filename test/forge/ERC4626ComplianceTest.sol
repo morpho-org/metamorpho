@@ -5,7 +5,7 @@ import "erc4626-tests/ERC4626.test.sol";
 
 import {IntegrationTest} from "./helpers/IntegrationTest.sol";
 
-contract ERC4626A16zTest is IntegrationTest, ERC4626Test {
+contract ERC4626ComplianceTest is IntegrationTest, ERC4626Test {
     function setUp() public override(IntegrationTest, ERC4626Test) {
         super.setUp();
 
