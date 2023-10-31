@@ -598,8 +598,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc ERC4626
     /// @dev Used in mint or deposit to deposit the underlying asset to Morpho markets.
-    function _deposit(address caller, address owner, uint256 assets, uint256 shares) internal override {
-        super._deposit(caller, owner, assets, shares);
+    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal override {
+        super._deposit(caller, receiver, assets, shares);
 
         _supplyMorpho(assets);
 
