@@ -7,7 +7,7 @@ import {SharesMathLib} from "@morpho-blue/libraries/SharesMathLib.sol";
 import "./helpers/IntegrationTest.sol";
 
 uint256 constant CAP2 = 100e18;
-uint256 constant INITIAL_DEPOSIT = 3 * CAP2;
+uint256 constant INITIAL_DEPOSIT = 4 * CAP2;
 
 contract ReallocateWithdrawTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
@@ -24,7 +24,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
 
         _setCap(allMarkets[0], CAP2);
         _setCap(allMarkets[1], CAP2);
-        _setCap(allMarkets[2], 3 * CAP2);
+        _setCap(allMarkets[2], CAP2);
 
         _sortSupplyQueueIdleLast();
 
@@ -82,6 +82,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
             withdrawnShares[2].toAssetsDown(totalSupplyAssets[2], totalSupplyShares[2])
         ];
 
+        withdrawn.push(MarketAllocation(idleParams, 0, type(uint256).max));
         if (withdrawnShares[0] > 0) withdrawn.push(MarketAllocation(allMarkets[0], 0, withdrawnShares[0]));
         if (withdrawnAssets[1] > 0) withdrawn.push(MarketAllocation(allMarkets[1], withdrawnAssets[1], 0));
         if (withdrawnShares[2] > 0) withdrawn.push(MarketAllocation(allMarkets[2], 0, withdrawnShares[2]));
@@ -111,9 +112,10 @@ contract ReallocateWithdrawTest is IntegrationTest {
             suppliedAssets[2].toSharesDown(totalSupplyAssets[2], totalSupplyShares[2])
         ];
 
-        if (withdrawnAssets[0] + withdrawnAssets[1] + withdrawnAssets[2] > 0) {
-            supplied.push(MarketAllocation(allMarkets[2], type(uint256).max, 0));
-        }
+        if (suppliedAssets[0] > 0) supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0], 0));
+        if (suppliedShares[1] > 0) supplied.push(MarketAllocation(allMarkets[1], 0, suppliedShares[1]));
+        if (suppliedAssets[2] > 0) supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2], 0));
+        if (expectedIdle > 0) supplied.push(MarketAllocation(idleParams, type(uint256).max, 0));
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
