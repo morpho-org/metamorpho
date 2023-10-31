@@ -327,7 +327,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
+                uint256 supplyShares = _simulateSupplyShares(id);
+
+                if (supplyShares != 0 || config[id].cap != 0) {
                     revert ErrorsLib.MissingMarket(id);
                 }
 
@@ -464,6 +466,32 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
     }
 
+    /* MORPHO GETTERS */
+
+    /// @notice Returns the expected supply shares of the vault on the given market `id`.
+    function getSupplyShares(Id id) external view returns (uint256) {
+        return MORPHO.supplyShares(id, address(this));
+    }
+
+    /// @notice Returns the expected supply asset balance of the vault on the market defined by `marketParams`.
+    function getExpectedSupplyBalance(MarketParams memory marketParams) external view returns (uint256) {
+        return MORPHO.expectedSupplyBalance(marketParams, address(this));
+    }
+
+    /// @notice Returns the expected balances of the market defined by `marketParams`.
+    function getExpectedMarketBalances(MarketParams memory marketParams)
+        external
+        view
+        returns (
+            uint256 totalSupplyAssets,
+            uint256 totalSupplyShares,
+            uint256 totalBorrowAssets,
+            uint256 totalBorrowShares
+        )
+    {
+        return MORPHO.expectedMarketBalances(marketParams);
+    }
+
     /* ERC4626 (PUBLIC) */
 
     /// @inheritdoc IERC20Metadata
@@ -530,7 +558,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IERC4626
     function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
-            assets += _supplyBalance(_marketParams(withdrawQueue[i]));
+            (uint256 supplyAssets,) = _simulateSupplyBalance(_marketParams(withdrawQueue[i]));
+            assets += supplyAssets;
         }
 
         assets += idle;
@@ -638,6 +667,28 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return MORPHO.expectedSupplyBalance(marketParams, address(this));
     }
 
+    /// @dev Returns the vault's assets balance the market defined by `marketParams`.
+    /// @dev To use when the function must not revert.
+    /// @return The vault's balance on the market defined by `marketParams`.
+    /// @return Whether the call succeeded or not. This information is needed when computing the suppliable amount.
+    function _simulateSupplyBalance(MarketParams memory marketParams) internal view returns (uint256, bool) {
+        try this.getExpectedSupplyBalance(marketParams) returns (uint256 balance) {
+            return (balance, true);
+        } catch {
+            return (0, false);
+        }
+    }
+
+    /// @dev Returns the vault's share balance the market defined by `id`.
+    /// @dev To use when the function must not revert.
+    function _simulateSupplyShares(Id id) internal view returns (uint256) {
+        try this.getSupplyShares(id) returns (uint256 shares) {
+            return shares;
+        } catch {
+            return 0;
+        }
+    }
+
     /// @dev Reverts if `newTimelock` is not within the bounds.
     function _checkTimelockBounds(uint256 newTimelock) internal pure {
         if (newTimelock > ConstantsLib.MAX_TIMELOCK) revert ErrorsLib.AboveMaxTimelock();
@@ -709,6 +760,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = supplyQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
+            // _suppliable returns 0 if the call on Morpho fails.
             uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
 
             if (toSupply > 0) {
@@ -778,25 +830,39 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
     /// @dev Assumes that the inputs `marketParams` and `id` match.
+    /// @dev Must not revert.
     function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
         uint256 supplyCap = config[id].cap;
         if (supplyCap == 0) return 0;
 
-        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
+        (uint256 supplyAssets, bool success) = _simulateSupplyBalance(marketParams);
+
+        if (success) return supplyCap.zeroFloorSub(supplyAssets);
+        else return 0;
     }
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
     /// @dev Assumes that the inputs `marketParams` and `id` match.
+    /// @dev Must not revert.
     function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-        (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
-            MORPHO.expectedMarketBalances(marketParams);
+        uint256 supplyShares;
+        try this.getSupplyShares(id) returns (uint256 shares) {
+            supplyShares = shares;
+        } catch {
+            return 0;
+        }
 
-        uint256 availableLiquidity = UtilsLib.min(
-            totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
-        );
+        try this.getExpectedMarketBalances(marketParams) returns (
+            uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets, uint256
+        ) {
+            uint256 availableLiquidity = UtilsLib.min(
+                totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
+            );
 
-        return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
+            return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
+        } catch {
+            return 0;
+        }
     }
 
     /* FEE MANAGEMENT */
