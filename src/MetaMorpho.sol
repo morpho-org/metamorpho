@@ -372,7 +372,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
 
-            if (allocation.assets == type(uint256).max) allocation.assets = totalWithdrawn.zeroFloorSub(totalSupplied);
+            if (allocation.assets == type(uint256).max) {
+                allocation.assets = totalWithdrawn.zeroFloorSub(totalSupplied);
+
+                if (allocation.assets == 0) continue;
+            }
 
             (uint256 suppliedAssets,) =
                 MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");

@@ -1,8 +1,9 @@
-import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
+import { AbiCoder, MaxUint256, ZeroAddress, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IrmMock } from "types";
 import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
+import { MarketAllocationStruct } from "types/src/MetaMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
@@ -79,6 +80,7 @@ describe("MetaMorpho", () => {
 
   let supplyCap: bigint;
   let allMarketParams: MarketParamsStruct[];
+  let idleParams: MarketParamsStruct;
 
   const expectedMarket = async (marketParams: MarketParamsStruct) => {
     const id = identifier(marketParams);
@@ -158,6 +160,14 @@ describe("MetaMorpho", () => {
     const oracleAddress = await oracle.getAddress();
     const irmAddress = await irm.getAddress();
 
+    idleParams = {
+      loanToken: loanAddress,
+      collateralToken: ZeroAddress,
+      oracle: ZeroAddress,
+      irm: ZeroAddress,
+      lltv: 0n,
+    };
+
     allMarketParams = _range(1, 1 + nbMarkets).map((i) => ({
       loanToken: loanAddress,
       collateralToken: collateralAddress,
@@ -172,6 +182,10 @@ describe("MetaMorpho", () => {
       await morpho.enableLltv(marketParams.lltv);
       await morpho.createMarket(marketParams);
     }
+
+    await morpho.enableIrm(idleParams.irm);
+    await morpho.enableLltv(idleParams.lltv);
+    await morpho.createMarket(idleParams);
 
     const MetaMorphoFactoryFactory = await hre.ethers.getContractFactory("MetaMorphoFactory", admin);
 
@@ -211,14 +225,24 @@ describe("MetaMorpho", () => {
       await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);
     }
 
+    await metaMorpho.connect(curator).submitCap(idleParams, 2n ** 192n - 1n);
+
     await forwardTimestamp(timelock);
+
+    await metaMorpho.connect(admin).acceptCap(identifier(idleParams));
 
     for (const marketParams of allMarketParams) {
       await metaMorpho.connect(admin).acceptCap(identifier(marketParams));
     }
 
-    await metaMorpho.connect(curator).setSupplyQueue(allMarketParams.map(identifier));
-    await metaMorpho.connect(curator).sortWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
+    await metaMorpho.connect(curator).setSupplyQueue(
+      // Set idle market last.
+      allMarketParams.map(identifier).concat([identifier(idleParams)]),
+    );
+    await metaMorpho.connect(curator).sortWithdrawQueue(
+      // Keep idle market first.
+      [0].concat(allMarketParams.map((_, i) => nbMarkets - i)),
+    );
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
@@ -229,7 +253,6 @@ describe("MetaMorpho", () => {
   });
 
   it("should simulate gas cost [main]", async () => {
-    let totalAssets: bigint = toBigInt(0);
     for (let i = 0; i < suppliers.length; ++i) {
       logProgress("main", i, suppliers.length);
 
@@ -237,10 +260,6 @@ describe("MetaMorpho", () => {
       const assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
 
       await randomForwardTimestamp();
-
-      if (totalAssets + assets > supplyCap) {
-        break;
-      }
 
       await metaMorpho.connect(supplier).deposit(assets, supplier.address);
 
@@ -266,14 +285,24 @@ describe("MetaMorpho", () => {
         }),
       );
 
-      const withdrawn = allocation
-        .map(({ marketParams, liquidShares }) => ({
+      const idlePosition = await morpho.position(identifier(idleParams), metaMorphoAddress);
+
+      const withdrawn: MarketAllocationStruct[] = [];
+
+      // Always withdraw half from idle.
+      if (idlePosition.supplyShares > 1n)
+        withdrawn.push({ marketParams: idleParams, assets: 0n, shares: idlePosition.supplyShares / 2n });
+
+      for (const { marketParams, liquidShares } of allocation) {
+        if (liquidShares === 0n) continue;
+
+        withdrawn.push({
           marketParams,
           assets: 0n,
           // Always withdraw all, up to the liquidity.
           shares: liquidShares,
-        }))
-        .filter(({ shares }) => shares > 0n);
+        });
+      }
 
       const withdrawnAssets = allocation.reduce(
         (total, { market, liquidShares }) =>
@@ -284,16 +313,20 @@ describe("MetaMorpho", () => {
       // Always consider 90% of withdrawn assets because rates go brrrr.
       const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
 
-      const supplied = allocation
-        .map(({ marketParams }) => ({
+      const supplied: MarketAllocationStruct[] = [];
+      for (const { marketParams } of allocation) {
+        supplied.push({
           marketParams,
           // Always supply evenly on each market 90% of what the vault withdrawn in total.
           assets: marketAssets,
           shares: 0n,
-        }))
-        .filter(({ assets }) => assets > 0n);
+        });
+      }
 
-      // await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+      // Always supply remaining to idle.
+      supplied.push({ marketParams: idleParams, assets: MaxUint256, shares: 0n });
+
+      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
 
       // Borrow liquidity to generate interest.
 
@@ -315,8 +348,6 @@ describe("MetaMorpho", () => {
 
         await mine(); // Include supplyCollateral + borrow in a single block.
       }
-
-      totalAssets += assets / 2n;
 
       await hre.network.provider.send("evm_setAutomine", [true]);
     }
