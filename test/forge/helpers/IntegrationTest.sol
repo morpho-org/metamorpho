@@ -121,11 +121,21 @@ contract IntegrationTest is BaseTest {
     function _sortSupplyQueueIdleLast() internal {
         Id[] memory supplyQueue = new Id[](vault.supplyQueueSize());
 
-        for (uint256 i; i < supplyQueue.length - 1; ++i) {
-            supplyQueue[i] = vault.supplyQueue(i + 1);
+        uint256 supplyIndex;
+        for (uint256 i; i < supplyQueue.length; ++i) {
+            Id id = vault.supplyQueue(i);
+            if (Id.unwrap(id) == Id.unwrap(idleParams.id())) continue;
+
+            supplyQueue[supplyIndex] = id;
+            ++supplyIndex;
         }
 
-        supplyQueue[supplyQueue.length - 1] = idleParams.id();
+        supplyQueue[supplyIndex] = idleParams.id();
+        ++supplyIndex;
+
+        assembly {
+            mstore(supplyQueue, supplyIndex)
+        }
 
         vm.prank(ALLOCATOR);
         vault.setSupplyQueue(supplyQueue);
