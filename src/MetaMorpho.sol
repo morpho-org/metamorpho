@@ -792,11 +792,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
             MORPHO.expectedMarketBalances(marketParams);
 
-        // In case a call to the vault is done during a flashloan on Morpho Blue we can have:
-        // totalSupplyAssets - totalBorrowAssets > ERC20(marketParams.loanToken).balanceOf(address(MORPHO)
-        // To keep ERC4626 compliance we must return the available liquidity at the moment:
-        // ERC20(marketParams.loanToken).balanceOf(address(MORPHO)
-        // Hence, the min in the following statement:
+        // Inside a flashloan callback, liquidity on Morpho Blue may be limited to the singleton's balance.
         uint256 availableLiquidity = UtilsLib.min(
             totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
         );
