@@ -327,7 +327,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                uint256 supplyShares = _simulateSupplyShares(id);
+                (uint256 supplyShares,) = _simulateSupplyShares(id);
 
                 if (supplyShares != 0 || config[id].cap != 0) {
                     revert ErrorsLib.MissingMarket(id);
@@ -681,11 +681,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the vault's share balance the market defined by `id`.
     /// @dev To use when the function must not revert.
-    function _simulateSupplyShares(Id id) internal view returns (uint256) {
+    /// @return Whether the call succeeded or not.
+    function _simulateSupplyShares(Id id) internal view returns (uint256, bool) {
         try this.getSupplyShares(id) returns (uint256 shares) {
-            return shares;
+            return (shares, true);
         } catch {
-            return 0;
+            return (0, false);
         }
     }
 
@@ -845,12 +846,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Assumes that the inputs `marketParams` and `id` match.
     /// @dev Must not revert.
     function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyShares;
-        try this.getSupplyShares(id) returns (uint256 shares) {
-            supplyShares = shares;
-        } catch {
-            return 0;
-        }
+        (uint256 supplyShares, bool success) = _simulateSupplyShares(id);
+        if (!success) return 0;
 
         try this.getExpectedMarketBalances(marketParams) returns (
             uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets, uint256
