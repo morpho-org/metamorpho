@@ -237,15 +237,24 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vault.transferFrom(ONBEHALF, RECEIVER, shares);
     }
 
-    function testWithdrawMoreThanBalanceButLessThanTotalAssets(uint256 deposited) public {
+    function testWithdrawMoreThanBalanceButLessThanTotalAssets(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         loanToken.setBalance(SUPPLIER, deposited);
+
         vm.startPrank(SUPPLIER);
-        vault.deposit(deposited / 2, ONBEHALF);
+        uint256 shares = vault.deposit(deposited / 2, ONBEHALF);
         vault.deposit(deposited / 2, SUPPLIER);
-        vm.expectRevert();
-        vault.withdraw(deposited, RECEIVER, SUPPLIER);
+        vm.stopPrank();
+
+        assets = bound(assets, deposited / 2 + 1, vault.totalAssets());
+
+        uint256 sharesBurnt = vault.previewWithdraw(assets);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, sharesBurnt)
+        );
+        vm.prank(ONBEHALF);
+        vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
     function testWithdrawMoreThanTotalAssets(uint256 deposited, uint256 assets) public {
