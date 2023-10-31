@@ -7,8 +7,8 @@ import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
 struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
     uint192 cap;
-    /// @notice The rank of the market in the withdraw queue.
-    uint64 withdrawRank;
+    /// @notice Whether the market is in the withdraw queue.
+    bool inWithdrawQueue;
 }
 
 struct PendingUint192 {
@@ -50,7 +50,7 @@ interface IMetaMorpho is IERC4626 {
     function supplyQueueSize() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueSize() external view returns (uint256);
-    function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
+    function config(Id) external view returns (uint192 cap, bool inWithdrawQueue);
 
     function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);

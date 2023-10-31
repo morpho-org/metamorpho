@@ -341,11 +341,11 @@ contract TimelockTest is IntegrationTest {
         vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 newCap, bool inWithdrawQueue) = vault.config(id);
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(inWithdrawQueue, true, "inWithdrawQueue");
         assertEq(pendingCap, 0, "pendingCap");
         assertEq(submittedAt, 0, "submittedAt");
     }
@@ -361,11 +361,11 @@ contract TimelockTest is IntegrationTest {
         vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 newCap, bool inWithdrawQueue) = vault.config(id);
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
         assertEq(newCap, 0, "newCap");
-        assertEq(withdrawRank, 0, "withdrawRank");
+        assertEq(inWithdrawQueue, false, "inWithdrawQueue");
         assertEq(pendingCap, cap, "pendingCap");
         assertEq(submittedAt, block.timestamp, "submittedAt");
         assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
@@ -387,11 +387,11 @@ contract TimelockTest is IntegrationTest {
         emit EventsLib.SetCap(id, cap);
         vault.acceptCap(id);
 
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 newCap, bool inWithdrawQueue) = vault.config(id);
         (uint192 pendingCapAfter, uint64 submittedAtAfter) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(inWithdrawQueue, true, "inWithdrawQueue");
         assertEq(pendingCapAfter, 0, "pendingCapAfter");
         assertEq(submittedAtAfter, 0, "submittedAtAfter");
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");

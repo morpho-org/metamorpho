@@ -173,7 +173,7 @@
                 │   └── revert with AlreadySet()
                 └── when newSupplyCap != supplyCap
                     ├── when newSupplyCap < supplyCap
-                    │   ├── when newSupplyCap > 0 and marketConfig.withdrawRank == 0
+                    │   ├── when newSupplyCap > 0 and !marketConfig.inWithdrawQueue
                     │   │   ├── it should push id to supplyQueue
                     │   │   ├── it should push id to withdrawQueue
                     │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
@@ -196,7 +196,7 @@
             ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
             │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
             └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
+                ├── when supplyCap > 0 and !marketConfig.inWithdrawQueue
                 │   ├── it should push id to supplyQueue
                 │   ├── it should push id to withdrawQueue
                 │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
@@ -240,7 +240,7 @@
             │   │   ├── it should compute the id of this market
             │   │   └── revert with MissingMarket(id)
             │   └── when all these markets have zero cap and zero vault's supply
-            │       └── it should delete the withdrawRank of these markets
+            │       └── it should set the inWithdrawQueue of these markets to false
             ├── it should set withdrawQueue to newWithdrawQueue
             └── it shoud emit SetWithdrawQueue(msg.sender, newWithdrawQueue)
 

@@ -318,9 +318,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             seen[prevIndex] = true;
 
             newWithdrawQueue[i] = id;
-
-            // Safe "unchecked" cast because i < currLength.
-            config[id].withdrawRank = uint64(i + 1);
         }
 
         for (uint256 i; i < currLength; ++i) {
@@ -331,7 +328,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                     revert ErrorsLib.MissingMarket(id);
                 }
 
-                delete config[id].withdrawRank;
+                config[id].inWithdrawQueue = false;
             }
         }
 
@@ -666,7 +663,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setCap(Id id, uint192 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
-        if (supplyCap > 0 && marketConfig.withdrawRank == 0) {
+        if (supplyCap > 0 && !marketConfig.inWithdrawQueue) {
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
@@ -675,8 +672,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 revert ErrorsLib.MaxQueueSizeExceeded();
             }
 
-            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
-            marketConfig.withdrawRank = uint64(withdrawQueue.length);
+            marketConfig.inWithdrawQueue = true;
         }
 
         marketConfig.cap = supplyCap;
