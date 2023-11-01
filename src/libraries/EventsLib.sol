@@ -63,10 +63,13 @@ library EventsLib {
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.
     event SetWithdrawQueue(address indexed allocator, Id[] newWithdrawQueue);
 
+    /// @notice Emitted when a reallocation supplies `supplied` assets to the market identified by `id`.
     event ReallocateSupply(Id id, uint256 supplied);
 
+    /// @notice Emitted when a reallocation withdraws `withdrawn` assets from the market identified by `id`.
     event ReallocateWithdraw(Id id, uint256 withdrawn);
 
+    /// @notice Emitted when a reallocation supplies or withdraws assets from idle.
     event ReallocateIdle(uint256 supplied, uint256 withdrawn);
 
     /// @notice Emitted when fees are accrued.
