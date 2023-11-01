@@ -289,6 +289,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
+
+            // Check duplicates.
+            for (uint256 j = i + 1; j < length; ++j) {
+                if (Id.unwrap(newSupplyQueue[i]) == Id.unwrap(newSupplyQueue[j])) {
+                    revert ErrorsLib.DuplicateMarket(newSupplyQueue[i]);
+                }
+            }
         }
 
         supplyQueue = newSupplyQueue;
