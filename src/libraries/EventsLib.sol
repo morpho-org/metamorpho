@@ -69,8 +69,8 @@ library EventsLib {
     /// @notice Emitted when a reallocation withdraws `withdrawn` assets from the market identified by `id`.
     event ReallocateWithdraw(Id id, uint256 withdrawn);
 
-    /// @notice Emitted when a reallocation supplies or withdraws assets from idle.
-    event ReallocateIdle(uint256 supplied, uint256 withdrawn);
+    /// @notice Emitted when a reallocation added or removed assets from idle.
+    event ReallocateIdle(uint256 added, uint256 removed);
 
     /// @notice Emitted when fees are accrued.
     event AccrueFee(uint256 feeShares);
