@@ -63,6 +63,12 @@ library EventsLib {
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.
     event SetWithdrawQueue(address indexed allocator, Id[] newWithdrawQueue);
 
+    event ReallocateSupply(Id id, uint256 supplied);
+
+    event ReallocateWithdraw(Id id, uint256 withdrawn);
+
+    event ReallocateIdle(uint256 supplied, uint256 withdrawn);
+
     /// @notice Emitted when fees are accrued.
     event AccrueFee(uint256 feeShares);
 

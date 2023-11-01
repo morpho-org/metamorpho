@@ -351,14 +351,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 totalWithdrawn;
         for (uint256 i; i < withdrawn.length; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
+            Id id = allocation.marketParams.id();
 
             if (allocation.marketParams.loanToken != asset()) {
-                revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
+                revert ErrorsLib.InconsistentAsset(id);
             }
 
             // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
             if (allocation.shares == type(uint256).max) {
-                allocation.shares = MORPHO.supplyShares(allocation.marketParams.id(), address(this));
+                allocation.shares = MORPHO.supplyShares(id, address(this));
             }
 
             (uint256 withdrawnAssets,) = MORPHO.withdraw(
@@ -366,6 +367,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             );
 
             totalWithdrawn += withdrawnAssets;
+
+            emit EventsLib.ReallocateWithdraw(id, withdrawnAssets);
         }
 
         uint256 totalSupplied;
@@ -384,15 +387,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             }
 
             totalSupplied += suppliedAssets;
+
+            emit EventsLib.ReallocateSupply(id, suppliedAssets);
         }
 
         if (totalWithdrawn > totalSupplied) {
-            idle += totalWithdrawn - totalSupplied;
-        } else {
-            uint256 idleSupplied = totalSupplied - totalWithdrawn;
-            if (idle < idleSupplied) revert ErrorsLib.InsufficientIdle();
+            uint256 idleSupplied = totalWithdrawn - totalSupplied;
+            idle += idleSupplied;
 
-            idle -= idleSupplied;
+            emit EventsLib.ReallocateIdle(idleSupplied, 0);
+        } else {
+            uint256 idleWithdrawn = totalSupplied - totalWithdrawn;
+            if (idle < idleWithdrawn) revert ErrorsLib.InsufficientIdle();
+
+            idle -= idleWithdrawn;
+
+            emit EventsLib.ReallocateIdle(0, idleWithdrawn);
         }
     }
 
