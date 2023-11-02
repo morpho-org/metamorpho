@@ -391,19 +391,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             emit EventsLib.ReallocateSupply(id, suppliedAssets);
         }
 
+        uint256 newIdle;
         if (totalWithdrawn > totalSupplied) {
-            uint256 added = totalWithdrawn - totalSupplied;
-            idle += added;
-
-            emit EventsLib.ReallocateIdle(added, 0);
+            newIdle = idle + totalWithdrawn - totalSupplied;
         } else {
-            uint256 removed = totalSupplied - totalWithdrawn;
-            if (idle < removed) revert ErrorsLib.InsufficientIdle();
+            uint256 idleSupplied = totalSupplied - totalWithdrawn;
+            if (idle < idleSupplied) revert ErrorsLib.InsufficientIdle();
 
-            idle -= removed;
-
-            emit EventsLib.ReallocateIdle(0, removed);
+            newIdle = idle - idleSupplied;
         }
+
+        idle = newIdle;
+
+        emit EventsLib.ReallocateIdle(newIdle);
     }
 
     /* ONLY GUARDIAN FUNCTIONS */

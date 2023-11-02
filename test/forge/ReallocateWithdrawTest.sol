@@ -58,7 +58,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.ReallocateWithdraw(allMarkets[2].id(), CAP2);
         vm.expectEmit();
-        emit EventsLib.ReallocateIdle(3 * CAP2, 0);
+        emit EventsLib.ReallocateIdle(4 * CAP2);
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
@@ -161,8 +161,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         }
 
         vm.expectEmit();
-        if (expectedIdle > formerIdle) emit EventsLib.ReallocateIdle(expectedIdle - formerIdle, 0);
-        else emit EventsLib.ReallocateIdle(0, formerIdle - expectedIdle);
+        emit EventsLib.ReallocateIdle(expectedIdle);
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
