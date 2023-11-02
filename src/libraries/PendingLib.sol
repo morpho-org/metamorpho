@@ -4,18 +4,18 @@ pragma solidity ^0.8.0;
 struct PendingUint192 {
     /// @notice The pending value to set.
     uint192 value;
-    /// @notice The timestamp at which the value was submitted.
+    /// @notice The timestamp at which the pending value becomes valid.
     uint64 validAt;
 }
 
 struct PendingAddress {
     /// @notice The pending value to set.
     address value;
-    /// @notice The timestamp at which the value was submitted.
+    /// @notice The timestamp at which the pending value becomes valid.
     uint96 validAt;
 }
 
-/// @title ConstantsLib
+/// @title PendingLib
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org
 /// @notice Library to manage pending values and their validity timestamp.
