@@ -4,25 +4,13 @@ pragma solidity >=0.5.0;
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
 
+import {PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
+
 struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
     uint192 cap;
     /// @notice The rank of the market in the withdraw queue.
     uint64 withdrawRank;
-}
-
-struct PendingUint192 {
-    /// @notice The pending value to set.
-    uint192 value;
-    /// @notice The timestamp at which the value was submitted.
-    uint64 submittedAt;
-}
-
-struct PendingAddress {
-    /// @notice The pending value to set.
-    address value;
-    /// @notice The timestamp at which the value was submitted.
-    uint96 submittedAt;
 }
 
 /// @dev Either `assets` or `shares` should be zero.
@@ -58,21 +46,21 @@ interface IMetaMorpho is IERC4626 {
     function submitTimelock(uint256 newTimelock) external;
     function acceptTimelock() external;
     function revokeTimelock() external;
-    function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
+    function pendingTimelock() external view returns (uint192 value, uint64 validAt);
 
     function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
     function acceptCap(Id id) external;
     function revokeCap(Id id) external;
-    function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
+    function pendingCap(Id) external view returns (uint192 value, uint64 validAt);
 
     function submitFee(uint256 newFee) external;
     function acceptFee() external;
-    function pendingFee() external view returns (uint192 value, uint64 submittedAt);
+    function pendingFee() external view returns (uint192 value, uint64 validAt);
 
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokeGuardian() external;
-    function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
+    function pendingGuardian() external view returns (address guardian, uint96 validAt);
 
     function transferRewards(address) external;
 
