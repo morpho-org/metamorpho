@@ -261,16 +261,14 @@
         │   └── if supplyBalance(supplied[i].marketParams) > config[supplied[i].marketParams.id()].cap
         │       └── revert with SupplyCapExceeded(id)
         ├── when totalWithdrawn > totalSupplied
-        │   ├── it should add added = totalWithdrawn - totalSupplied to idle
-        │   └── it should emit ReallocateIdle(added, 0)
-        └── when totalWithdrawn <= totalSupplied
-            └── it should compute removed = totalSupplied - totalWithdrawn
-                ├── when idle < idleSupplied
-                │   └── revert with InsufficientIdle()
-                └── when idle >= idleSupplied
-                    └── it should remove removed from idle
-                    └── it should emit ReallocateIdle(0, removed)
-
+        │   └── it should add totalWithdrawn - totalSupplied to idle
+        ├── when totalWithdrawn <= totalSupplied
+        │   └── it should compute idleSupplied = totalSupplied - totalWithdrawn
+        │       ├── when idle < idleSupplied
+        │       │   └── revert with InsufficientIdle()
+        │       └── when idle >= idleSupplied
+        │           └── it should remove idleSupplied from idle
+        └── it should emit ReallocateIdle(idle)
 
 /* EXTERNAL */
 

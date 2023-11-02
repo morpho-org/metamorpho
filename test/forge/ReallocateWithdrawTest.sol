@@ -102,19 +102,17 @@ contract ReallocateWithdrawTest is IntegrationTest {
             withdrawnShares[2].toAssetsDown(totalSupplyAssets[2], totalSupplyShares[2])
         ];
 
+        vm.expectEmit();
         if (withdrawnShares[0] > 0) {
             withdrawn.push(MarketAllocation(allMarkets[0], 0, withdrawnShares[0]));
-            vm.expectEmit();
             emit EventsLib.ReallocateWithdraw(allMarkets[0].id(), withdrawnAssets[0]);
         }
         if (withdrawnAssets[1] > 0) {
             withdrawn.push(MarketAllocation(allMarkets[1], withdrawnAssets[1], 0));
-            vm.expectEmit();
             emit EventsLib.ReallocateWithdraw(allMarkets[1].id(), withdrawnAssets[1]);
         }
         if (withdrawnShares[2] > 0) {
             withdrawn.push(MarketAllocation(allMarkets[2], 0, withdrawnShares[2]));
-            vm.expectEmit();
             emit EventsLib.ReallocateWithdraw(allMarkets[2].id(), withdrawnAssets[2]);
         }
 
@@ -126,7 +124,6 @@ contract ReallocateWithdrawTest is IntegrationTest {
         totalSupplyShares[1] -= withdrawnShares[1];
         totalSupplyShares[2] -= withdrawnShares[2];
 
-        uint256 formerIdle = vault.idle();
         uint256 expectedIdle = vault.idle() + withdrawnAssets[0] + withdrawnAssets[1] + withdrawnAssets[2];
 
         suppliedAssets[0] = bound(suppliedAssets[0], 0, withdrawnAssets[0].zeroFloorSub(CAP2).min(expectedIdle));
@@ -146,21 +143,17 @@ contract ReallocateWithdrawTest is IntegrationTest {
 
         if (suppliedShares[0] > 0) {
             supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0], 0));
-            vm.expectEmit();
             emit EventsLib.ReallocateSupply(allMarkets[0].id(), suppliedAssets[0]);
         }
         if (suppliedAssets[1] > 0) {
             supplied.push(MarketAllocation(allMarkets[1], 0, suppliedShares[1]));
-            vm.expectEmit();
             emit EventsLib.ReallocateSupply(allMarkets[1].id(), suppliedAssets[1]);
         }
         if (suppliedShares[2] > 0) {
             supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2], 0));
-            vm.expectEmit();
             emit EventsLib.ReallocateSupply(allMarkets[2].id(), suppliedAssets[2]);
         }
 
-        vm.expectEmit();
         emit EventsLib.ReallocateIdle(expectedIdle);
 
         vm.prank(ALLOCATOR);
