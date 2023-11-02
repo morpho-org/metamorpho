@@ -6,6 +6,10 @@ pragma solidity ^0.8.0;
 /// @custom:contact security@morpho.org
 /// @notice Library exposing constants.
 library ConstantsLib {
+    /// @dev The delay after a timelock ends after which the owner must submit a parameter again.
+    /// It guarantees users that the owner only accepts parameters submitted recently.
+    uint256 internal constant TIMELOCK_EXPIRATION = 3 days;
+
     /// @dev The maximum delay of a timelock.
     uint256 internal constant MAX_TIMELOCK = 2 weeks;
 

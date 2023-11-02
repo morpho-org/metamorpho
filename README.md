@@ -30,7 +30,7 @@ For more information about this use case, see the [Rewards](#rewards) section.
 
 All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
 If set, the `guardian` can revoke the action during the timelock except for the fee increase.
-After the timelock, the action can be executed by anyone.
+After the timelock, the action can be executed by anyone until 3 days have passed.
 
 ### Roles
 
@@ -95,9 +95,9 @@ Below is a typical example of how this use case would take place:
 
 - Transfer rewards from the vault to the rewards distributor using the `transferRewards` function.
 
-	NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
+	NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset. 
 	Thus, this step might be already performed by some third-party.
-    Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
+    Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault. 
 	In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
