@@ -22,7 +22,7 @@ struct PendingAddress {
     /// @notice The pending value to set.
     address value;
     /// @notice The timestamp at which the value was submitted.
-    uint96 submittedAt;
+    uint64 submittedAt;
 }
 
 /// @dev Either `assets` or `shares` should be zero.
@@ -72,7 +72,7 @@ interface IMetaMorpho is IERC4626 {
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokeGuardian() external;
-    function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
+    function pendingGuardian() external view returns (address guardian, uint64 submittedAt);
 
     function transferRewards(address) external;
 
