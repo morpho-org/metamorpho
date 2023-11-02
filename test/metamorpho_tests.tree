@@ -263,7 +263,7 @@
         │   │   └── revert with SupplyCapExceeded(id)
         │   └── it should emit ReallocateSupply(id, suppliedAssets, suppliedShares)
         ├── when totalWithdrawn > totalSupplied
-        │   ├── it should add totalWithdrawn - totalSupplied to idle
+        │   └── it should add totalWithdrawn - totalSupplied to idle
         ├── when totalWithdrawn <= totalSupplied
         │   └── it should compute idleSupplied = totalSupplied - totalWithdrawn
         │       ├── when idle < idleSupplied
