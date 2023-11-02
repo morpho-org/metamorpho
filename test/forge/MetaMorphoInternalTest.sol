@@ -95,7 +95,7 @@ contract MetaMorphoInternalTest is InternalTest {
         morpho.borrow(allMarkets[0], borrowedAmount, 0, BORROWER, BORROWER);
         vm.stopPrank();
 
-        uint256 remaining = _staticWithdrawMorpho(assets);
+        uint256 remaining = _simulateWithdrawMorpho(assets);
 
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(allMarkets[0]);

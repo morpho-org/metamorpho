@@ -245,6 +245,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         uint256 shares = vault.deposit(deposited, ONBEHALF);
 
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
+        vm.assume(assets < type(uint96).max);
 
         uint256 toAdd = assets - deposited + 1;
         loanToken.setBalance(SUPPLIER, toAdd);
