@@ -64,12 +64,9 @@
         ├── when block.timestamp < pendingTimelock.submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingTimelock.submittedAt + timelock
-            ├── when block.timestamp > pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should set timelock to pendingTimelock.value
-                ├── it should emit SetTimelock(pendingTimelock.value)
-                └── it should delete pendingTimelock
+            ├── it should set timelock to pendingTimelock.value
+            ├── it should emit SetTimelock(pendingTimelock.value)
+            └── it should delete pendingTimelock
 
 .
 └── submitFee(uint256 newFee) external
@@ -99,13 +96,10 @@
         ├── when block.timestamp < pendingFee.submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingFee.submittedAt + timelock
-            ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should accrue fees
-                ├── it should set fee to pendingFee.value
-                ├── it should emit SetFee(pendingFee.value)
-                └── it should delete pendingFee
+            ├── it should accrue fees
+            ├── it should set fee to pendingFee.value
+            ├── it should emit SetFee(pendingFee.value)
+            └── it should delete pendingFee
 
 .
 └── setFeeRecipient(address newFeeRecipient) external
@@ -146,12 +140,9 @@
         ├── when block.timestamp < pendingGuardian.submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingGuardian.submittedAt + timelock
-            ├── when block.timestamp > pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should set guardian to pendingGuardian
-                ├── it should emit SetGuardian(pendingGuardian)
-                └── it should delete pendingGuardian
+            ├── it should set guardian to pendingGuardian
+            ├── it should emit SetGuardian(pendingGuardian)
+            └── it should delete pendingGuardian
 
 
 /* ONLY CURATOR FUNCTIONS */
@@ -193,19 +184,16 @@
         ├── when block.timestamp < pendingCap[id].submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingCap[id].submittedAt + timelock
-            ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
-                │   ├── it should push id to supplyQueue
-                │   ├── it should push id to withdrawQueue
-                │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
-                │   │   └── revert with MaxQueueSizeExceeded()
-                │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                │       └── revert with MaxQueueSizeExceeded()
-                ├── it should set config[id].cap to pendingCap[id].value
-                ├── it should emit SetCap(id, pendingCap[id].value)
-                └── it should delete pendingCap[id]
+            ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
+            │   ├── it should push id to supplyQueue
+            │   ├── it should push id to withdrawQueue
+            │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
+            │   │   └── revert with MaxQueueSizeExceeded()
+            │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
+            │       └── revert with MaxQueueSizeExceeded()
+            ├── it should set config[id].cap to pendingCap[id].value
+            ├── it should emit SetCap(id, pendingCap[id].value)
+            └── it should delete pendingCap[id]
 
 
 /* ONLY ALLOCATOR FUNCTIONS */
