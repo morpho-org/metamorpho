@@ -280,7 +280,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY ALLOCATOR FUNCTIONS */
 
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
-    /// @dev `newSupplyQueue` is an array of enabled markets, and can contain duplicate markets, but it would only
+    /// @param newSupplyQueue is an array of enabled markets, and can contain duplicate markets, but it would only
     /// increase the cost of depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
         uint256 length = newSupplyQueue.length;
@@ -296,10 +296,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetSupplyQueue(_msgSender(), newSupplyQueue);
     }
 
-    /// @notice Sets `WithdrawQueue` as a new withdraw queue defined by `indexes`.
-    /// @notice This is the only entry point to disable a market.
     /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
     /// zero vault's supply can be removed from the permutation to be disabled.
+    /// @notice This is the only entry point to disable a market.
     /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
@@ -761,6 +760,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
+            // The vault withdrawing from Morpho cannot fail because:
+            // 1. oracle.price() is never called (the vault doesn't borrow)
+            // 2. `_withdrawable` caps to the liquidity available on Morpho
+            // 3. virtually accruing interest didn't fail in `_withdrawable`
             remaining -= UtilsLib.min(_withdrawable(marketParams, id), remaining);
 
             if (remaining == 0) return 0;
