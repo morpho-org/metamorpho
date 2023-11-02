@@ -353,14 +353,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             MarketAllocation memory allocation = withdrawn[i];
             Id id = allocation.marketParams.id();
 
-            if (allocation.marketParams.loanToken != asset()) {
-                revert ErrorsLib.InconsistentAsset(id);
-            }
+            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
 
             // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            if (allocation.shares == type(uint256).max) {
-                allocation.shares = MORPHO.supplyShares(id, address(this));
-            }
+            if (allocation.shares == type(uint256).max) allocation.shares = MORPHO.supplyShares(id, address(this));
 
             (uint256 withdrawnAssets,) = MORPHO.withdraw(
                 allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
