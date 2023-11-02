@@ -155,8 +155,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// - the timelock has expired since the pending value has been submitted.
     modifier withinTimelockWindow(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
-        if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
-        if (block.timestamp > submittedAt + timelock + ConstantsLib.TIMELOCK_EXPIRATION) {
+
+        uint256 currentTimelock = timelock;
+
+        if (block.timestamp < submittedAt + currentTimelock) revert ErrorsLib.TimelockNotElapsed();
+        if (block.timestamp > submittedAt + currentTimelock + ConstantsLib.TIMELOCK_EXPIRATION) {
             revert ErrorsLib.TimelockExpirationExceeded();
         }
 
@@ -262,11 +265,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Warning: Submitting a cap will overwrite the current pending cap.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCuratorRole {
         Id id = marketParams.id();
-        if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
-        if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
-
         uint256 supplyCap = config[id].cap;
+        if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
+        if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
 
         if (newSupplyCap < supplyCap) {
             _setCap(id, newSupplyCap.toUint192());
@@ -667,13 +669,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         MarketConfig storage marketConfig = config[id];
 
         if (supplyCap > 0 && marketConfig.withdrawRank == 0) {
-            supplyQueue.push(id);
-            withdrawQueue.push(id);
-
-            if (supplyQueue.length > ConstantsLib.MAX_QUEUE_SIZE || withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE)
-            {
+            if (
+                supplyQueue.length + 1 > ConstantsLib.MAX_QUEUE_SIZE
+                    || withdrawQueue.length + 1 > ConstantsLib.MAX_QUEUE_SIZE
+            ) {
                 revert ErrorsLib.MaxQueueSizeExceeded();
             }
+
+            supplyQueue.push(id);
+            withdrawQueue.push(id);
 
             // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);

@@ -27,14 +27,15 @@ contract MarketTest is IntegrationTest {
         vault.submitCap(marketParams, 0);
     }
 
-    function testSubmitCapMarketNotCreated(MarketParams memory marketParams) public {
+    function testSubmitCapMarketNotCreated(MarketParams memory marketParams, uint256 cap) public {
         marketParams.loanToken = address(loanToken);
 
         vm.assume(morpho.lastUpdate(marketParams.id()) == 0);
+        vm.assume(cap != 0);
 
         vm.prank(CURATOR);
         vm.expectRevert(ErrorsLib.MarketNotCreated.selector);
-        vault.submitCap(marketParams, 0);
+        vault.submitCap(marketParams, cap);
     }
 
     function testSubmitCapAlreadySet() public {
