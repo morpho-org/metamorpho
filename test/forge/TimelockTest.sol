@@ -54,6 +54,17 @@ contract TimelockTest is IntegrationTest {
         assertEq(submittedAt, block.timestamp, "submittedAt");
     }
 
+    function testSubmitTimelockAlreadyPending(uint256 timelock) public {
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+    }
+
     function testSubmitTimelockNotOwner(uint256 timelock) public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         vault.submitTimelock(timelock);
@@ -181,6 +192,17 @@ contract TimelockTest is IntegrationTest {
         assertEq(submittedAt, block.timestamp, "submittedAt");
     }
 
+    function testSubmitFeeAlreadyPending(uint256 fee) public {
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+    }
+
     function testAcceptFee(uint256 fee) public {
         fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
 
@@ -277,6 +299,17 @@ contract TimelockTest is IntegrationTest {
         assertEq(submittedAt, block.timestamp, "submittedAt");
     }
 
+    function testSubmitGuardianAlreadyPending() public {
+        address guardian = makeAddr("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+    }
+
     function testAcceptGuardian() public {
         address guardian = makeAddr("Guardian2");
 
@@ -370,6 +403,19 @@ contract TimelockTest is IntegrationTest {
         assertEq(submittedAt, block.timestamp, "submittedAt");
         assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
         assertEq(vault.withdrawQueueSize(), 1, "withdrawQueueSize");
+    }
+
+    function testSubmitCapAlreadyPending(uint256 cap) public {
+        cap = bound(cap, 1, type(uint192).max);
+
+        MarketParams memory marketParams = allMarkets[1];
+
+        vm.prank(CURATOR);
+        vault.submitCap(marketParams, cap);
+
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vm.prank(CURATOR);
+        vault.submitCap(marketParams, cap);
     }
 
     function testAcceptCapIncreased(uint256 cap) public {

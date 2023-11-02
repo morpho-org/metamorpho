@@ -202,6 +202,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
+            if (pendingTimelock.submittedAt != 0 && newTimelock == pendingTimelock.value) {
+                revert ErrorsLib.AlreadyPending();
+            }
+
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
             pendingTimelock = PendingUint192(uint192(newTimelock), uint64(block.timestamp));
 
@@ -219,6 +223,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee < fee) {
             _setFee(newFee);
         } else {
+            if (pendingFee.submittedAt != 0 && newFee == pendingFee.value) revert ErrorsLib.AlreadyPending();
+
             // Safe "unchecked" cast because newFee <= MAX_FEE.
             pendingFee = PendingUint192(uint192(newFee), uint64(block.timestamp));
 
@@ -249,6 +255,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
+            if (pendingGuardian.submittedAt != 0 && newGuardian == pendingGuardian.value) {
+                revert ErrorsLib.AlreadyPending();
+            }
+
             pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
 
             emit EventsLib.SubmitGuardian(newGuardian);
@@ -271,6 +281,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap < supplyCap) {
             _setCap(id, newSupplyCap.toUint192());
         } else {
+            if (pendingCap[id].submittedAt != 0 && newSupplyCap == pendingCap[id].value) {
+                revert ErrorsLib.AlreadyPending();
+            }
+
             pendingCap[id] = PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp));
 
             emit EventsLib.SubmitCap(id, newSupplyCap);

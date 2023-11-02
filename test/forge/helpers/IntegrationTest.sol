@@ -41,10 +41,13 @@ contract IntegrationTest is BaseTest {
         // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
         if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
 
-        vm.prank(OWNER);
-        vault.submitTimelock(newTimelock);
+        (uint192 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        if (submittedAt == 0 || newTimelock != pendingTimelock) {
+            vm.prank(OWNER);
+            vault.submitTimelock(newTimelock);
+        }
 
-        if (newTimelock > timelock || timelock == 0) return;
+        if (newTimelock > timelock) return;
 
         vm.warp(block.timestamp + timelock);
 
@@ -57,13 +60,15 @@ contract IntegrationTest is BaseTest {
         address guardian = vault.guardian();
         if (newGuardian == guardian) return;
 
-        vm.prank(OWNER);
-        vault.submitGuardian(newGuardian);
+        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        if (submittedAt == 0 || newGuardian != pendingGuardian) {
+            vm.prank(OWNER);
+            vault.submitGuardian(newGuardian);
+        }
 
-        uint256 timelock = vault.timelock();
-        if (guardian == address(0) || timelock == 0) return;
+        if (guardian == address(0)) return;
 
-        vm.warp(block.timestamp + timelock);
+        vm.warp(block.timestamp + vault.timelock());
 
         vault.acceptGuardian();
 
@@ -74,13 +79,15 @@ contract IntegrationTest is BaseTest {
         uint256 fee = vault.fee();
         if (newFee == fee) return;
 
-        vm.prank(OWNER);
-        vault.submitFee(newFee);
+        (uint192 pendingFee, uint64 submittedAt) = vault.pendingFee();
+        if (submittedAt == 0 || newFee != pendingFee) {
+            vm.prank(OWNER);
+            vault.submitFee(newFee);
+        }
 
-        uint256 timelock = vault.timelock();
-        if (newFee < fee || timelock == 0) return;
+        if (newFee < fee) return;
 
-        vm.warp(block.timestamp + timelock);
+        vm.warp(block.timestamp + vault.timelock());
 
         vault.acceptFee();
 
@@ -92,13 +99,15 @@ contract IntegrationTest is BaseTest {
         (uint256 cap,) = vault.config(id);
         if (newCap == cap) return;
 
-        vm.prank(CURATOR);
-        vault.submitCap(marketParams, newCap);
+        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+        if (submittedAt == 0 || newCap != pendingCap) {
+            vm.prank(CURATOR);
+            vault.submitCap(marketParams, newCap);
+        }
 
-        uint256 timelock = vault.timelock();
         if (newCap < cap) return;
 
-        vm.warp(block.timestamp + timelock);
+        vm.warp(block.timestamp + vault.timelock());
 
         vault.acceptCap(id);
 
