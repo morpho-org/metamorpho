@@ -221,9 +221,9 @@
         └── when newSupplyQueue.length <= MAX_QUEUE_SIZE
             ├── when some markets of newSupplyQueue have a zero cap
             │   └── revert with UnauthorizedMarket()
-            ├── when some markets are duplicated
+            ├── when there is at least a duplicate market
             │   └── revert with DuplicateMarket(id)
-            └── when all the markets of newSupplyQueue have non zero cap and are not duplicated
+            └── when all the markets of newSupplyQueue have non zero cap and are unique
                 ├── it should set supplyQueue to newSupplyQueue
                 └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
 
