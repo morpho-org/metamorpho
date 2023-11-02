@@ -226,7 +226,7 @@
                 └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
 
 .
-└── sortWithdrawQueue(uint256[] calldata indexes) external
+└── setWithdrawQueue(uint256[] calldata indexes) external
     ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
