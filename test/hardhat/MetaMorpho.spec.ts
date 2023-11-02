@@ -250,29 +250,25 @@ describe("MetaMorpho", () => {
           const market = await expectedMarket(marketParams);
           const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
 
-          const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-          const liquidityShares = liquidity.toSharesDown(market.totalSupplyAssets, market.totalSupplyShares);
-
           return {
             marketParams,
             market,
-            liquidShares: position.supplyShares.min(liquidityShares),
+            liquidity: market.totalSupplyAssets - market.totalBorrowAssets,
+            supplyAssets: position.supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
           };
         }),
       );
 
       const withdrawn = allocation
-        .map(({ marketParams, liquidShares }) => ({
+        .map(({ marketParams, liquidity, supplyAssets }) => ({
           marketParams,
-          assets: 0n,
           // Always withdraw all, up to the liquidity.
-          shares: liquidShares,
+          assets: liquidity > supplyAssets ? MaxUint256 : liquidity,
         }))
-        .filter(({ shares }) => shares > 0n);
+        .filter(({ assets }) => assets > 0n);
 
       const withdrawnAssets = allocation.reduce(
-        (total, { market, liquidShares }) =>
-          total + liquidShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
+        (total, { supplyAssets, liquidity }) => total + supplyAssets.min(liquidity),
         0n,
       );
 
@@ -284,7 +280,6 @@ describe("MetaMorpho", () => {
           marketParams,
           // Always supply evenly on each market 90% of what the vault withdrawn in total.
           assets: marketAssets,
-          shares: 0n,
         }))
         .filter(({ assets }) => assets > 0n);
 
