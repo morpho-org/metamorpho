@@ -48,14 +48,14 @@ library EventsLib {
     /// @notice Emitted when an `allocator` is set to `isAllocator`.
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
-    /// @notice Emitted when a `pendingTimelock` is revoked by `guardian`.
-    event RevokeTimelock(address indexed guardian, PendingUint192 pendingTimelock);
+    /// @notice Emitted when the pending timelock is revoked by `guardian`.
+    event RevokePendingTimelock(address indexed guardian);
 
-    /// @notice Emitted when a `pendingCap` for the market identified by `id` is revoked by `guardian`.
-    event RevokeCap(address indexed guardian, Id indexed id, PendingUint192 pendingCap);
+    /// @notice Emitted when the pending cap of a market identified by `id` is revoked by `guardian`.
+    event RevokePendingCap(address indexed guardian, Id indexed id);
 
-    /// @notice Emitted when a `pendingGuardian` is revoked by `guardian`.
-    event RevokeGuardian(address indexed guardian, PendingAddress pendingGuardian);
+    /// @notice Emitted when the pending guardian is revoked by `guardian`.
+    event RevokePendingGuardian(address indexed guardian);
 
     /// @notice Emitted when the `supplyQgueue` is set to `newSupplyQueue`.
     event SetSupplyQueue(address indexed allocator, Id[] newSupplyQueue);
