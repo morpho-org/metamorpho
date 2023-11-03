@@ -32,6 +32,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
+    using SafeERC20 for IERC20;
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
@@ -118,7 +119,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
 
-        SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
+        IERC20(_asset).forceApprove(morpho, type(uint256).max);
     }
 
     /* MODIFIERS */
@@ -456,7 +457,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
+        IERC20(token).safeTransfer(rewardsRecipient, amount);
 
         emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
     }
