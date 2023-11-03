@@ -32,6 +32,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
+    using SafeERC20 for IERC20;
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
@@ -113,12 +114,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
+        if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
+
         MORPHO = IMorpho(morpho);
 
         _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
 
-        SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
+        IERC20(_asset).forceApprove(morpho, type(uint256).max);
     }
 
     /* MODIFIERS */
@@ -151,14 +154,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Makes sure conditions are met to accept a pending value.
     /// @dev Reverts if:
     /// - there's no pending value;
-    /// - the timelock has not elapsed since the pending value has been submitted;
-    /// - the timelock has expired since the pending value has been submitted.
-    modifier withinTimelockWindow(uint256 submittedAt) {
+    /// - the timelock has not elapsed since the pending value has been submitted.
+    modifier afterTimelock(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
-        if (block.timestamp > submittedAt + timelock + ConstantsLib.TIMELOCK_EXPIRATION) {
-            revert ErrorsLib.TimelockExpirationExceeded();
-        }
 
         _;
     }
@@ -240,7 +239,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a `newGuardian`.
-    /// @notice Warning: the guardian has the power to revoke any pending guardian.
+    /// @notice Warning: a malicious guardian could disrupt the vault's operation, and would have the power to revoke
+    /// any pending guardian.
     /// @dev In case there is no guardian, the gardian is set immediately.
     /// @dev Warning: Submitting a gardian will overwrite the current pending gardian.
     function submitGuardian(address newGuardian) external onlyOwner {
@@ -328,7 +328,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 Id id = withdrawQueue[i];
 
                 if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
-                    revert ErrorsLib.MissingMarket(id);
+                    revert ErrorsLib.InvalidMarketRemoval(id);
                 }
 
                 delete config[id].withdrawRank;
@@ -438,22 +438,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {
+    function acceptTimelock() external afterTimelock(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
     }
 
     /// @notice Accepts the `pendingFee`.
-    function acceptFee() external withinTimelockWindow(pendingFee.submittedAt) {
+    function acceptFee() external afterTimelock(pendingFee.submittedAt) {
         _setFee(pendingFee.value);
     }
 
     /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external withinTimelockWindow(pendingGuardian.submittedAt) {
+    function acceptGuardian() external afterTimelock(pendingGuardian.submittedAt) {
         _setGuardian(pendingGuardian.value);
     }
 
     /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external withinTimelockWindow(pendingCap[id].submittedAt) {
+    function acceptCap(Id id) external afterTimelock(pendingCap[id].submittedAt) {
         _setCap(id, pendingCap[id].value);
     }
 
@@ -465,7 +465,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
+        IERC20(token).safeTransfer(rewardsRecipient, amount);
 
         emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
     }
@@ -561,7 +561,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         newTotalSupply = totalSupply() + feeShares;
 
         assets = _convertToAssetsWithTotals(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Floor);
-        assets -= _staticWithdrawMorpho(assets);
+        assets -= _simulateWithdrawMorpho(assets);
     }
 
     /// @inheritdoc ERC4626
@@ -754,9 +754,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /// @dev Fakes a withdraw of `assets` from the idle liquidity and Morpho if necessary.
+    /// @dev Simulates a withdraw of `assets` from the idle liquidity and Morpho if necessary.
     /// @return remaining The assets left to be withdrawn.
-    function _staticWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
+    function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
         (remaining,) = _withdrawIdle(assets);
 
         if (remaining == 0) return 0;
