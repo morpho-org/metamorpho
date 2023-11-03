@@ -76,7 +76,7 @@ contract MetaMorphoInternalTest is InternalTest {
         assertEq(withdrawable, expectedWithdrawable, "withdrawable");
     }
 
-    function testStaticWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
+    function testSimulateWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 

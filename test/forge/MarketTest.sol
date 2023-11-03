@@ -219,7 +219,7 @@ contract MarketTest is IntegrationTest {
         indexes[1] = 2;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MissingMarket.selector, allMarkets[0].id()));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, allMarkets[0].id()));
         vault.sortWithdrawQueue(indexes);
     }
 
@@ -231,7 +231,7 @@ contract MarketTest is IntegrationTest {
         indexes[1] = 2;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MissingMarket.selector, allMarkets[1].id()));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, allMarkets[1].id()));
         vault.sortWithdrawQueue(indexes);
     }
 
