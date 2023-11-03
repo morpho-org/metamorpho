@@ -67,13 +67,13 @@ library EventsLib {
     /// @param id The id of the market.
     /// @param suppliedAssets The amount of assets supplied to the market.
     /// @param suppliedShares The amount of shares minted.
-    event ReallocateSupply(address indexed caller, Id id, uint256 suppliedAssets, uint256 suppliedShares);
+    event ReallocateSupply(address indexed caller, Id indexed id, uint256 suppliedAssets, uint256 suppliedShares);
 
     /// @notice Emitted when a reallocation withdraws assets from the market identified by `id`.
     /// @param id The id of the market.
     /// @param withdrawnAssets The amount of assets withdrawn from the market.
     /// @param withdrawnShares The amount of shares burned.
-    event ReallocateWithdraw(address indexed caller, Id id, uint256 withdrawnAssets, uint256 withdrawnShares);
+    event ReallocateWithdraw(address indexed caller, Id indexed id, uint256 withdrawnAssets, uint256 withdrawnShares);
 
     /// @notice Emitted when a reallocation added or removed assets from idle.
     event ReallocateIdle(address indexed caller, uint256 idle);
