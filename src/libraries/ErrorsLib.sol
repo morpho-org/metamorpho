@@ -39,8 +39,11 @@ library ErrorsLib {
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);
 
-    /// @notice Thrown when market `id` is missing in the new withdraw queue to set.
-    error InvalidMarketRemoval(Id id);
+    /// @notice Thrown when market `id` has a non-zero cap and is missing in the new withdraw queue to set.
+    error InvalidMarketRemovalNonZeroCap(Id id);
+
+    /// @notice Thrown when market `id` has a non-zero vault's supply and is missing in the new withdraw queue to set.
+    error InvalidMarketRemovalNonZeroSupply(Id id);
 
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();

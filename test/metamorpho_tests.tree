@@ -224,9 +224,11 @@
         └── when indexes does not contain duplicates
             ├── it should compute newWithdrawQueue
             ├── when markets of withdrawQueue are missing in newWithdrawQueue
-            │   ├── when one of these markets has non zero cap or vault's supply
-            │   │   ├── it should compute the id of this market
-            │   │   └── revert with InvalidMarketRemoval(id)
+            │   ├── it should get the id of this market
+            │   ├── when one of these markets has non-zero cap
+            │   │   └── revert with InvalidMarketRemovalNonZeroCap(id)
+            │   ├── when one of these markets has non-zero vault's supply
+            │   │   └── revert with InvalidMarketRemovalNonZeroSupply(id)
             │   └── when all these markets have zero cap and zero vault's supply
             │       └── it should delete the withdrawRank of these markets
             ├── it should set withdrawQueue to newWithdrawQueue
