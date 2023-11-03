@@ -179,6 +179,33 @@ contract MarketTest is IntegrationTest {
         vault.sortWithdrawQueue(indexes);
     }
 
+    function testSortWithdrawQueueBrokenMarket() public {
+        _setCaps();
+
+        loanToken.setBalance(SUPPLIER, 1);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(1, RECEIVER);
+
+        uint256[] memory indexes = new uint256[](2);
+        indexes[0] = 1;
+        indexes[1] = 2;
+
+        _setCap(allMarkets[0], 0);
+
+        vm.mockCallRevert(
+            address(vault),
+            abi.encodeWithSelector(vault.expectedSupplyAssets.selector, allMarkets[0]),
+            abi.encode("FAIL")
+        );
+
+        vm.prank(ALLOCATOR);
+        vault.sortWithdrawQueue(indexes);
+
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[1].id()));
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(allMarkets[2].id()));
+    }
+
     function testSortWithdrawQueueMissingMarketWithNonZeroSupply() public {
         _setCaps();
 
