@@ -273,7 +273,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         } else {
             pendingCap[id] = PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp));
 
-            emit EventsLib.SubmitCap(id, newSupplyCap);
+            emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
         }
     }
 
@@ -364,7 +364,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             totalWithdrawn += withdrawnAssets;
 
-            emit EventsLib.ReallocateWithdraw(id, withdrawnAssets, withdrawnShares);
+            emit EventsLib.ReallocateWithdraw(_msgSender(), id, withdrawnAssets, withdrawnShares);
         }
 
         uint256 totalSupplied;
@@ -384,7 +384,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             totalSupplied += suppliedAssets;
 
-            emit EventsLib.ReallocateSupply(id, suppliedAssets, suppliedShares);
+            emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
         }
 
         uint256 newIdle;
@@ -399,7 +399,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         idle = newIdle;
 
-        emit EventsLib.ReallocateIdle(newIdle);
+        emit EventsLib.ReallocateIdle(_msgSender(), newIdle);
     }
 
     /* ONLY GUARDIAN FUNCTIONS */
@@ -467,7 +467,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         IERC20(token).safeTransfer(rewardsRecipient, amount);
 
-        emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
+        emit EventsLib.TransferRewards(_msgSender(), token, amount);
     }
 
     /* ERC4626 (PUBLIC) */
@@ -654,7 +654,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setTimelock(uint256 newTimelock) internal {
         timelock = newTimelock;
 
-        emit EventsLib.SetTimelock(newTimelock);
+        emit EventsLib.SetTimelock(_msgSender(), newTimelock);
 
         delete pendingTimelock;
     }
@@ -663,7 +663,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setGuardian(address newGuardian) internal {
         guardian = newGuardian;
 
-        emit EventsLib.SetGuardian(newGuardian);
+        emit EventsLib.SetGuardian(_msgSender(), newGuardian);
 
         delete pendingGuardian;
     }
@@ -687,7 +687,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         marketConfig.cap = supplyCap;
 
-        emit EventsLib.SetCap(id, supplyCap);
+        emit EventsLib.SetCap(_msgSender(), id, supplyCap);
 
         delete pendingCap[id];
     }
@@ -702,7 +702,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Safe "unchecked" cast because newFee <= MAX_FEE.
         fee = uint96(newFee);
 
-        emit EventsLib.SetFee(newFee);
+        emit EventsLib.SetFee(_msgSender(), newFee);
 
         delete pendingFee;
     }
