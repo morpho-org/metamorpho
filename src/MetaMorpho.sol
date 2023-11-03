@@ -297,7 +297,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
-    /// zero vault's supply can be removed from the permutation to be disabled.
+    /// zero vault's supply can be removed from the permutation.
     /// @notice This is the only entry point to disable a market.
     /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
