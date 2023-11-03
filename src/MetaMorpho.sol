@@ -777,7 +777,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Simulates a withdraw of `assets` from the idle liquidity and Morpho if necessary.
-    /// @dev Warning: Can revert.
     /// @return remaining The assets left to be withdrawn.
     function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
         (remaining,) = _withdrawIdle(assets);
@@ -803,7 +802,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
     /// @dev Assumes that the inputs `marketParams` and `id` match.
-    /// @dev Warning: Can revert.
     function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
         uint256 supplyCap = config[id].cap;
         if (supplyCap == 0) return 0;
@@ -813,7 +811,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
     /// @dev Assumes that the inputs `marketParams` and `id` match.
-    /// @dev Warning: Can revert.
     function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
