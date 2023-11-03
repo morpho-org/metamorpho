@@ -472,15 +472,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    /// @notice Returns the max amount of assets a user can withdraw without reverting.
-    /// @dev Warning: may be lower than the actual amount of assets that can be withdrawn by `owner` due to conversion roundings between shares and assets.
+    /// @dev Warning: may be lower than the actual amount of assets that can be withdrawn by `owner` due to conversion
+    /// roundings between shares and assets.
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
         (assets,,) = _maxWithdraw(owner);
     }
 
     /// @inheritdoc IERC4626
-    /// @notice Returns the max amount of shares a user can reddem without reverting.
-    /// @notice Warning: may be lower than the actual amount of shares that can be redeemed by `owner` due to conversion roundings between shares and assets.
+    /// @dev Warning: may be lower than the actual amount of shares that can be redeemed by `owner` due to conversion
+    /// roundings between shares and assets.
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
