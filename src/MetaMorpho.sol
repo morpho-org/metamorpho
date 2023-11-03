@@ -555,7 +555,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         newTotalSupply = totalSupply() + feeShares;
 
         assets = _convertToAssetsWithTotals(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Floor);
-        assets -= _staticWithdrawMorpho(assets);
+        assets -= _simulateWithdrawMorpho(assets);
     }
 
     /// @inheritdoc ERC4626
@@ -748,9 +748,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /// @dev Fakes a withdraw of `assets` from the idle liquidity and Morpho if necessary.
+    /// @dev Simulates a withdraw of `assets` from the idle liquidity and Morpho if necessary.
     /// @return remaining The assets left to be withdrawn.
-    function _staticWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
+    function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
         (remaining,) = _withdrawIdle(assets);
 
         if (remaining == 0) return 0;
