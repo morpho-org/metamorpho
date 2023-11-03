@@ -240,7 +240,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a `newGuardian`.
-    /// @notice Warning: the guardian has the power to revoke any pending guardian.
+    /// @notice Warning: a malicious guardian could disrupt the vault's operation, and would have the power to revoke
+    /// any pending guardian.
     /// @dev In case there is no guardian, the gardian is set immediately.
     /// @dev Warning: Submitting a gardian will overwrite the current pending gardian.
     function submitGuardian(address newGuardian) external onlyOwner {
