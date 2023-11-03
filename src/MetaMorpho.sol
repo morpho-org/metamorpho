@@ -344,11 +344,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// `supplied`).
     /// @dev The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
     /// token of the market is the same as the vault's asset.
-    function reallocate(MarketAllocation[] calldata totalAllocation) external onlyAllocatorRole {
+    function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
         uint256 totalSupplied;
         uint256 totalWithdrawn;
-        for (uint256 i; i < totalAllocation.length; ++i) {
-            MarketAllocation memory allocation = totalAllocation[i];
+        for (uint256 i; i < allocations.length; ++i) {
+            MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
 
             if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);

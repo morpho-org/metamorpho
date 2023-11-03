@@ -12,7 +12,7 @@ contract ReallocateIdleTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 
-    MarketAllocation[] internal totalAllocation;
+    MarketAllocation[] internal allocations;
 
     function setUp() public override {
         super.setUp();
@@ -35,14 +35,14 @@ contract ReallocateIdleTest is IntegrationTest {
         suppliedAssets[1] = bound(suppliedAssets[1], 1, CAP2);
         suppliedAssets[2] = bound(suppliedAssets[2], 1, CAP2);
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
-        totalAllocation.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
-        totalAllocation.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
+        allocations.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
+        allocations.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
+        allocations.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
 
         uint256 idleBefore = vault.idle();
 
         vm.prank(ALLOCATOR);
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
 
         assertEq(
             morpho.supplyShares(allMarkets[0].id(), address(vault)),

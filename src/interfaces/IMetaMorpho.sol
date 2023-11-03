@@ -81,7 +81,7 @@ interface IMetaMorpho is IERC4626 {
 
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
     function sortWithdrawQueue(uint256[] calldata indexes) external;
-    function reallocate(MarketAllocation[] calldata totalAllocation) external;
+    function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
 interface IPending {

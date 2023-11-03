@@ -276,13 +276,13 @@ describe("MetaMorpho", () => {
 
       const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
 
-      const totalAllocation = withdrawnAllocation.map(({ marketParams, remaining }) => ({
+      const allocations = withdrawnAllocation.map(({ marketParams, remaining }) => ({
         marketParams,
         // Always supply evenly on each market 90% of what the vault withdrawn in total.
         assets: remaining + marketAssets,
       }));
 
-      await metaMorpho.connect(allocator).reallocate(totalAllocation);
+      await metaMorpho.connect(allocator).reallocate(allocations);
 
       // Borrow liquidity to generate interest.
 

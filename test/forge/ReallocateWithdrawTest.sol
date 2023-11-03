@@ -16,7 +16,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
     using SharesMathLib for uint256;
     using UtilsLib for uint256;
 
-    MarketAllocation[] internal totalAllocation;
+    MarketAllocation[] internal allocations;
 
     function setUp() public override {
         super.setUp();
@@ -32,12 +32,12 @@ contract ReallocateWithdrawTest is IntegrationTest {
     }
 
     function testReallocateWithdrawMax() public {
-        totalAllocation.push(MarketAllocation(allMarkets[0], 0));
-        totalAllocation.push(MarketAllocation(allMarkets[1], 0));
-        totalAllocation.push(MarketAllocation(allMarkets[2], 0));
+        allocations.push(MarketAllocation(allMarkets[0], 0));
+        allocations.push(MarketAllocation(allMarkets[1], 0));
+        allocations.push(MarketAllocation(allMarkets[2], 0));
 
         vm.prank(ALLOCATOR);
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
 
         assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), 0, "morpho.supplyShares(0)");
         assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), 0, "morpho.supplyShares(1)");
@@ -48,11 +48,11 @@ contract ReallocateWithdrawTest is IntegrationTest {
     function testReallocateWithdrawInconsistentAsset() public {
         allMarkets[0].loanToken = address(1);
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], 1));
+        allocations.push(MarketAllocation(allMarkets[0], 1));
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, allMarkets[0].id()));
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
     }
 
     function testReallocateWithdrawSupply(uint256[3] memory assets) public {
@@ -66,14 +66,14 @@ contract ReallocateWithdrawTest is IntegrationTest {
         assets[1] = bound(assets[1], 0, CAP2);
         assets[2] = bound(assets[2], 0, CAP2);
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], assets[0]));
-        totalAllocation.push(MarketAllocation(allMarkets[1], assets[1]));
-        totalAllocation.push(MarketAllocation(allMarkets[2], assets[2]));
+        allocations.push(MarketAllocation(allMarkets[0], assets[0]));
+        allocations.push(MarketAllocation(allMarkets[1], assets[1]));
+        allocations.push(MarketAllocation(allMarkets[2], assets[2]));
 
         uint256 expectedIdle = vault.idle() + 3 * CAP2 - assets[0] - assets[1] - assets[2];
 
         vm.prank(ALLOCATOR);
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
 
         assertEq(
             morpho.supplyShares(allMarkets[0].id(), address(vault)),
@@ -101,29 +101,29 @@ contract ReallocateWithdrawTest is IntegrationTest {
 
         _setCap(allMarkets[1], 0);
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], 0));
-        totalAllocation.push(MarketAllocation(allMarkets[1], 0));
-        totalAllocation.push(MarketAllocation(allMarkets[2], 0));
+        allocations.push(MarketAllocation(allMarkets[0], 0));
+        allocations.push(MarketAllocation(allMarkets[1], 0));
+        allocations.push(MarketAllocation(allMarkets[2], 0));
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
-        totalAllocation.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
-        totalAllocation.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
+        allocations.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
+        allocations.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
+        allocations.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.UnauthorizedMarket.selector, allMarkets[1].id()));
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
     }
 
     function testReallocateSupplyCapExceeded() public {
-        totalAllocation.push(MarketAllocation(allMarkets[0], 0));
-        totalAllocation.push(MarketAllocation(allMarkets[1], 0));
-        totalAllocation.push(MarketAllocation(allMarkets[2], 0));
+        allocations.push(MarketAllocation(allMarkets[0], 0));
+        allocations.push(MarketAllocation(allMarkets[1], 0));
+        allocations.push(MarketAllocation(allMarkets[2], 0));
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], CAP2 + 1));
+        allocations.push(MarketAllocation(allMarkets[0], CAP2 + 1));
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.SupplyCapExceeded.selector, allMarkets[0].id()));
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
     }
 
     function testReallocateInsufficientIdle(uint256 rewards) public {
@@ -136,10 +136,10 @@ contract ReallocateWithdrawTest is IntegrationTest {
 
         _setCap(allMarkets[0], type(uint192).max);
 
-        totalAllocation.push(MarketAllocation(allMarkets[0], 2 * CAP2 + rewards));
+        allocations.push(MarketAllocation(allMarkets[0], 2 * CAP2 + rewards));
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(ErrorsLib.InsufficientIdle.selector);
-        vault.reallocate(totalAllocation);
+        vault.reallocate(allocations);
     }
 }
