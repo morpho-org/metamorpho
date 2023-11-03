@@ -328,7 +328,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 Id id = withdrawQueue[i];
 
                 if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
-                    revert ErrorsLib.MissingMarket(id);
+                    revert ErrorsLib.InvalidMarketRemoval(id);
                 }
 
                 delete config[id].withdrawRank;

@@ -40,7 +40,7 @@ library ErrorsLib {
     error DuplicateMarket(Id id);
 
     /// @notice Thrown when market `id` is missing in the new withdraw queue to set.
-    error MissingMarket(Id id);
+    error InvalidMarketRemoval(Id id);
 
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();

@@ -238,7 +238,7 @@
             ├── when markets of withdrawQueue are missing in newWithdrawQueue
             │   ├── when one of these markets has non zero cap or vault's supply
             │   │   ├── it should compute the id of this market
-            │   │   └── revert with MissingMarket(id)
+            │   │   └── revert with InvalidMarketRemoval(id)
             │   └── when all these markets have zero cap and zero vault's supply
             │       └── it should delete the withdrawRank of these markets
             ├── it should set withdrawQueue to newWithdrawQueue
