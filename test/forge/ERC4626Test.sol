@@ -34,7 +34,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
 
         assertGt(deposited, 0, "deposited");
         assertEq(vault.balanceOf(ONBEHALF), shares, "balanceOf(ONBEHALF)");
-        assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), assets, "expectedSupplyBalance(vault)");
+        assertEq(morpho.expectedSupplyAssets(allMarkets[0], address(vault)), assets, "expectedSupplyAssets(vault)");
     }
 
     function testDeposit(uint256 assets) public {
@@ -49,7 +49,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
 
         assertGt(shares, 0, "shares");
         assertEq(vault.balanceOf(ONBEHALF), shares, "balanceOf(ONBEHALF)");
-        assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), assets, "expectedSupplyBalance(vault)");
+        assertEq(morpho.expectedSupplyAssets(allMarkets[0], address(vault)), assets, "expectedSupplyAssets(vault)");
     }
 
     function testRedeem(uint256 deposited, uint256 redeemed) public {
@@ -138,7 +138,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assertEq(shares, minted, "shares");
         assertEq(vault.balanceOf(ONBEHALF), 0, "balanceOf(ONBEHALF)");
         assertEq(loanToken.balanceOf(RECEIVER), assets, "loanToken.balanceOf(RECEIVER)");
-        assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), 0, "expectedSupplyBalance(vault)");
+        assertEq(morpho.expectedSupplyAssets(allMarkets[0], address(vault)), 0, "expectedSupplyAssets(vault)");
     }
 
     function testRedeemAll(uint256 deposited) public {
@@ -157,7 +157,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assertEq(assets, deposited, "assets");
         assertEq(vault.balanceOf(ONBEHALF), 0, "balanceOf(ONBEHALF)");
         assertEq(loanToken.balanceOf(RECEIVER), deposited, "loanToken.balanceOf(RECEIVER)");
-        assertEq(morpho.expectedSupplyBalance(allMarkets[0], address(vault)), 0, "expectedSupplyBalance(vault)");
+        assertEq(morpho.expectedSupplyAssets(allMarkets[0], address(vault)), 0, "expectedSupplyAssets(vault)");
     }
 
     function testRedeemNotDeposited(uint256 deposited) public {

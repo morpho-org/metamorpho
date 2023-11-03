@@ -385,7 +385,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             (uint256 suppliedAssets,) =
                 MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
 
-            if (_supplyBalance(allocation.marketParams) > supplyCap) {
+            if (_supplyAssetsBalance(allocation.marketParams) > supplyCap) {
                 revert ErrorsLib.SupplyCapExceeded(id);
             }
 
@@ -474,7 +474,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Returns the expected supply asset balance of the vault on the market defined by `marketParams`.
     function expectedSupplyAssets(MarketParams memory marketParams) external view returns (uint256) {
-        return MORPHO.expectedSupplyBalance(marketParams, address(this));
+        return MORPHO.expectedSupplyAssets(marketParams, address(this));
     }
 
     /* ERC4626 (PUBLIC) */
@@ -541,13 +541,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    /// @dev Warning: Can revert. This goes against EIP4626. If a market is broken on Morpho `_supplyBalance` can revert
+    /// @dev Warning: Can revert. This goes against EIP4626. If a market is broken on Morpho `_supplyAssetsBalance` can
+    /// revert
     /// as well as `totalAssets`. The allocator can always remove the broken market from `withdrawQueue` if the
     /// situation
     /// persists and unlock the vault.
     function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
-            assets += _supplyBalance(_marketParams(withdrawQueue[i]));
+            assets += _supplyAssetsBalance(_marketParams(withdrawQueue[i]));
         }
 
         assets += idle;
@@ -651,9 +652,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
     }
 
-    /// @dev Returns the vault's balance the market defined by `marketParams`.
-    function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyBalance(marketParams, address(this));
+    /// @dev Returns the vault's supply assets balance on the market defined by `marketParams`.
+    function _supplyAssetsBalance(MarketParams memory marketParams) internal view returns (uint256) {
+        return MORPHO.expectedSupplyAssets(marketParams, address(this));
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
@@ -798,7 +799,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 supplyCap = config[id].cap;
         if (supplyCap == 0) return 0;
 
-        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
+        return supplyCap.zeroFloorSub(_supplyAssetsBalance(marketParams));
     }
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
