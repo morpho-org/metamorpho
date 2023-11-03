@@ -259,31 +259,30 @@ describe("MetaMorpho", () => {
         }),
       );
 
-      const withdrawn = allocation
-        .map(({ marketParams, liquidity, supplyAssets }) => ({
+      const withdrawnAllocation = allocation.map(({ marketParams, liquidity, supplyAssets }) => {
+        // Always withdraw all, up to the liquidity.
+        const withdrawn = supplyAssets.min(liquidity);
+        const remaining = supplyAssets - withdrawn;
+
+        return {
           marketParams,
-          // Always withdraw all, up to the liquidity.
-          assets: liquidity > supplyAssets ? MaxUint256 : liquidity,
-        }))
-        .filter(({ assets }) => assets > 0n);
+          supplyAssets,
+          remaining,
+          withdrawn,
+        };
+      });
 
-      const withdrawnAssets = allocation.reduce(
-        (total, { supplyAssets, liquidity }) => total + supplyAssets.min(liquidity),
-        0n,
-      );
+      const withdrawnAssets = withdrawnAllocation.reduce((total, { withdrawn }) => total + withdrawn, 0n);
 
-      // Always consider 90% of withdrawn assets because rates go brrrr.
       const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
 
-      const supplied = allocation
-        .map(({ marketParams }) => ({
-          marketParams,
-          // Always supply evenly on each market 90% of what the vault withdrawn in total.
-          assets: marketAssets,
-        }))
-        .filter(({ assets }) => assets > 0n);
+      const totalAllocation = withdrawnAllocation.map(({ marketParams, remaining }) => ({
+        marketParams,
+        // Always supply evenly on each market 90% of what the vault withdrawn in total.
+        assets: remaining + marketAssets,
+      }));
 
-      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+      await metaMorpho.connect(allocator).reallocate(totalAllocation);
 
       // Borrow liquidity to generate interest.
 

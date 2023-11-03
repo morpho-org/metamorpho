@@ -344,49 +344,47 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// `supplied`).
     /// @dev The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
     /// token of the market is the same as the vault's asset.
-    function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
-        external
-        onlyAllocatorRole
-    {
-        uint256 totalWithdrawn;
-        for (uint256 i; i < withdrawn.length; ++i) {
-            MarketAllocation memory allocation = withdrawn[i];
-            Id id = allocation.marketParams.id();
-
-            if (allocation.marketParams.loanToken != asset()) {
-                revert ErrorsLib.InconsistentAsset(id);
-            }
-
-            // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            uint256 shares;
-            if (allocation.assets == type(uint256).max) {
-                shares = MORPHO.supplyShares(id, address(this));
-
-                allocation.assets = 0;
-            }
-
-            (uint256 withdrawnAssets,) =
-                MORPHO.withdraw(allocation.marketParams, allocation.assets, shares, address(this), address(this));
-
-            totalWithdrawn += withdrawnAssets;
-        }
-
+    function reallocate(MarketAllocation[] calldata totalAllocation) external onlyAllocatorRole {
         uint256 totalSupplied;
-        for (uint256 i; i < supplied.length; ++i) {
-            MarketAllocation memory allocation = supplied[i];
+        uint256 totalWithdrawn;
+        for (uint256 i; i < totalAllocation.length; ++i) {
+            MarketAllocation memory allocation = totalAllocation[i];
             Id id = allocation.marketParams.id();
-            uint256 supplyCap = config[id].cap;
 
-            if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
+            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
 
-            (uint256 suppliedAssets,) =
-                MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) =
+                MORPHO.expectedMarketBalances(allocation.marketParams);
 
-            if (_supplyBalance(allocation.marketParams) > supplyCap) {
-                revert ErrorsLib.SupplyCapExceeded(id);
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            uint256 supplyAssets = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+            uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
+
+            if (withdrawn > 0) {
+                // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
+                uint256 shares;
+                if (allocation.assets == 0) {
+                    shares = supplyShares;
+                    withdrawn = 0;
+                }
+
+                (uint256 withdrawnAssets,) =
+                    MORPHO.withdraw(allocation.marketParams, withdrawn, shares, address(this), address(this));
+
+                totalWithdrawn += withdrawnAssets;
+            } else {
+                uint256 supplied = allocation.assets.zeroFloorSub(supplyAssets);
+                if (supplied == 0) continue;
+
+                uint256 supplyCap = config[id].cap;
+                if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
+
+                if (supplyAssets + supplied > supplyCap) revert ErrorsLib.SupplyCapExceeded(id);
+
+                (uint256 suppliedAssets,) = MORPHO.supply(allocation.marketParams, supplied, 0, address(this), hex"");
+
+                totalSupplied += suppliedAssets;
             }
-
-            totalSupplied += suppliedAssets;
         }
 
         if (totalWithdrawn > totalSupplied) {
