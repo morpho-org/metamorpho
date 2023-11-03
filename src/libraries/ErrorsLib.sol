@@ -60,9 +60,6 @@ library ErrorsLib {
     /// @notice Thrown when the timelock is not elapsed.
     error TimelockNotElapsed();
 
-    /// @notice Thrown when the timelock expiration is exceeded.
-    error TimelockExpirationExceeded();
-
     /// @notice Thrown when too many markets are in the withdraw queue.
     error MaxQueueSizeExceeded();
 
