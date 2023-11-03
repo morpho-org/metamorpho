@@ -485,11 +485,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May revert when virtually accruing interest on a market of the withdraw queue, due to the market's
+    /// IRM. In such case, funds supplied to the market are lost as long as accruing interest reverts. The allocator
+    /// role can remove the market from `withdrawQueue` to realize the loss and unlock the vault.
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
         (assets,,) = _maxWithdraw(owner);
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May revert when virtually accruing interest on a market of the withdraw queue, due to the market's
+    /// IRM. In such case, funds supplied to the market are lost as long as accruing interest reverts. The allocator
+    /// role can remove the market from `withdrawQueue` to realize the loss and unlock the vault.
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
@@ -497,6 +503,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May revert when virtually accruing interest on a market of the withdraw queue, due to the market's
+    /// IRM. In such case, funds supplied to the market are lost as long as accruing interest reverts. The allocator
+    /// role can remove the market from `withdrawQueue` to realize the loss and unlock the vault.
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
@@ -505,6 +514,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May revert when virtually accruing interest on a market of the withdraw queue, due to the market's
+    /// IRM. In such case, funds supplied to the market are lost as long as accruing interest reverts. The allocator
+    /// role can remove the market from `withdrawQueue` to realize the loss and unlock the vault.
     function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
@@ -541,11 +553,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    /// @dev Warning: Can revert. This goes against EIP4626. If a market is broken on Morpho `_supplyAssetsBalance` can
-    /// revert
-    /// as well as `totalAssets`. The allocator can always remove the broken market from `withdrawQueue` if the
-    /// situation
-    /// persists and unlock the vault.
+    /// @dev Warning: May revert when virtually accruing interest on a market of the withdraw queue, due to the market's
+    /// IRM. In such case, funds supplied to the market are lost as long as accruing interest reverts. The allocator
+    /// role can remove the market from `withdrawQueue` to realize the loss and unlock the vault.
     function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
             assets += _supplyAssetsBalance(_marketParams(withdrawQueue[i]));
@@ -563,7 +573,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the maximum amount of asset (`assets`) that the `owner` can withdraw from the vault, as well as the
     /// new vault's total supply (`newTotalSupply`) and total assets (`newTotalAssets`).
-    /// @dev Warning: Can revert.
     function _maxWithdraw(address owner)
         internal
         view
