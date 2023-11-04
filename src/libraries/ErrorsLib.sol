@@ -40,7 +40,7 @@ library ErrorsLib {
     error DuplicateMarket(Id id);
 
     /// @notice Thrown when market `id` is missing in the new withdraw queue to set.
-    error MissingMarket(Id id);
+    error InvalidMarketRemoval(Id id);
 
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();
@@ -59,9 +59,6 @@ library ErrorsLib {
 
     /// @notice Thrown when the timelock is not elapsed.
     error TimelockNotElapsed();
-
-    /// @notice Thrown when the timelock expiration is exceeded.
-    error TimelockExpirationExceeded();
 
     /// @notice Thrown when too many markets are in the withdraw queue.
     error MaxQueueSizeExceeded();
