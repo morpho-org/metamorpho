@@ -23,7 +23,7 @@ library ErrorsLib {
     /// @notice Thrown when the market `id` cannot be set in the supply queue.
     error UnauthorizedMarket(Id id);
 
-    /// @notice Thrown when submitting a cap for a market `id` whose loan token does not correspond to the underlyin
+    /// @notice Thrown when submitting a cap for a market `id` whose loan token does not correspond to the underlying.
     /// asset.
     error InconsistentAsset(Id id);
 

@@ -280,8 +280,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY ALLOCATOR FUNCTIONS */
 
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
-    /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
-    /// depositing to the vault.
+    /// @param newSupplyQueue is an array of enabled markets, and can contain duplicate markets, but it would only
+    /// increase the cost of depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
         uint256 length = newSupplyQueue.length;
 
@@ -296,13 +296,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetSupplyQueue(_msgSender(), newSupplyQueue);
     }
 
-    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
-    /// vault's supply can be removed.
+    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
+    /// zero vault's supply can be removed from the permutation.
+    /// @notice This is the only entry point to disable a market.
     /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
-    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
+    function updateWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
