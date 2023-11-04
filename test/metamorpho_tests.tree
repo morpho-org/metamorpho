@@ -283,7 +283,7 @@
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokePendingTimelock(msg.sender, pendingTimelock)
+        ├── it should emit RevokePendingTimelock(msg.sender)
         └── it should delete pendingTimelock
 
 .
@@ -291,7 +291,7 @@
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokePendingCap(msg.sender, id, pendingCap[id])
+        ├── it should emit RevokePendingCap(msg.sender, id)
         └── it should delete pendingCap[id]
 
 .
@@ -299,7 +299,7 @@
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokePendingGuardian(msg.sender, pendingGuardian);
+        ├── it should emit RevokePendingGuardian(msg.sender);
         └── it should delete pendingGuardian
 
 
