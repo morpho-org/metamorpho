@@ -76,7 +76,7 @@ contract MetaMorphoInternalTest is InternalTest {
         assertEq(withdrawable, expectedWithdrawable, "withdrawable");
     }
 
-    function testStaticWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
+    function testSimulateWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 
@@ -95,7 +95,7 @@ contract MetaMorphoInternalTest is InternalTest {
         morpho.borrow(allMarkets[0], borrowedAmount, 0, BORROWER, BORROWER);
         vm.stopPrank();
 
-        uint256 remaining = _staticWithdrawMorpho(assets);
+        uint256 remaining = _simulateWithdrawMorpho(assets);
 
         uint256 supplyShares = MORPHO.supplyShares(id, address(this));
         (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(allMarkets[0]);

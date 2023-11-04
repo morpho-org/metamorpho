@@ -6,15 +6,11 @@ pragma solidity ^0.8.0;
 /// @custom:contact security@morpho.org
 /// @notice Library exposing constants.
 library ConstantsLib {
-    /// @dev The delay after a timelock ends after which the owner must submit a parameter again.
-    /// It guarantees users that the owner only accepts parameters submitted recently.
-    uint256 internal constant TIMELOCK_EXPIRATION = 3 days;
-
     /// @dev The maximum delay of a timelock.
     uint256 internal constant MAX_TIMELOCK = 2 weeks;
 
     /// @dev The minimum delay of a timelock.
-    uint256 internal constant MIN_TIMELOCK = 12 hours;
+    uint256 internal constant MIN_TIMELOCK = 1 days;
 
     /// @dev OpenZeppelin's decimals offset used in MetaMorpho's ERC4626 implementation.
     uint8 internal constant DECIMALS_OFFSET = 6;
