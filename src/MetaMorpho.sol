@@ -351,21 +351,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 totalWithdrawn;
         for (uint256 i; i < withdrawn.length; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
+            Id id = allocation.marketParams.id();
 
-            if (allocation.marketParams.loanToken != asset()) {
-                revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
-            }
+            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
 
             // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            if (allocation.shares == type(uint256).max) {
-                allocation.shares = MORPHO.supplyShares(allocation.marketParams.id(), address(this));
-            }
+            if (allocation.shares == type(uint256).max) allocation.shares = MORPHO.supplyShares(id, address(this));
 
-            (uint256 withdrawnAssets,) = MORPHO.withdraw(
+            (uint256 withdrawnAssets, uint256 withdrawnShares) = MORPHO.withdraw(
                 allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
             );
 
             totalWithdrawn += withdrawnAssets;
+
+            emit EventsLib.ReallocateWithdraw(id, withdrawnAssets, withdrawnShares);
         }
 
         uint256 totalSupplied;
@@ -376,7 +375,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
 
-            (uint256 suppliedAssets,) =
+            (uint256 suppliedAssets, uint256 suppliedShares) =
                 MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
 
             if (_supplyBalance(allocation.marketParams) > supplyCap) {
@@ -384,16 +383,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             }
 
             totalSupplied += suppliedAssets;
+
+            emit EventsLib.ReallocateSupply(id, suppliedAssets, suppliedShares);
         }
 
+        uint256 newIdle;
         if (totalWithdrawn > totalSupplied) {
-            idle += totalWithdrawn - totalSupplied;
+            newIdle = idle + totalWithdrawn - totalSupplied;
         } else {
             uint256 idleSupplied = totalSupplied - totalWithdrawn;
             if (idle < idleSupplied) revert ErrorsLib.InsufficientIdle();
 
-            idle -= idleSupplied;
+            newIdle = idle - idleSupplied;
         }
+
+        idle = newIdle;
+
+        emit EventsLib.ReallocateIdle(newIdle);
     }
 
     /* ONLY GUARDIAN FUNCTIONS */
