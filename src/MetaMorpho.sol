@@ -329,7 +329,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                     revert ErrorsLib.InvalidMarketRemoval(id);
                 }
 
-                config[id].inWithdrawQueue = false;
+                config[id].enabled = false;
             }
         }
 
@@ -674,7 +674,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setCap(Id id, uint192 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
-        if (supplyCap > 0 && !marketConfig.inWithdrawQueue) {
+        if (supplyCap > 0 && !marketConfig.enabled) {
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
@@ -685,7 +685,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 revert ErrorsLib.MaxQueueLengthExceeded();
             }
 
-            marketConfig.inWithdrawQueue = true;
+            marketConfig.enabled = true;
         }
 
         marketConfig.cap = supplyCap;

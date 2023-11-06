@@ -8,7 +8,7 @@ struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
     uint192 cap;
     /// @notice Whether the market is in the withdraw queue.
-    bool inWithdrawQueue;
+    bool enabled;
 }
 
 struct PendingUint192 {
@@ -50,7 +50,7 @@ interface IMetaMorpho is IERC4626 {
     function supplyQueueLength() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueLength() external view returns (uint256);
-    function config(Id) external view returns (uint192 cap, uint64 inWithdrawQueue);
+    function config(Id) external view returns (uint192 cap, uint64 enabled);
 
     function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);
