@@ -65,29 +65,29 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(allMarkets[2].id()));
     }
 
-    function testSetSupplyQueueMaxQueueSizeExceeded() public {
-        Id[] memory supplyQueue = new Id[](ConstantsLib.MAX_QUEUE_SIZE + 1);
+    function testSetSupplyQueueMaxQueueLengthExceeded() public {
+        Id[] memory supplyQueue = new Id[](ConstantsLib.MAX_QUEUE_LENGTH + 1);
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(ErrorsLib.MaxQueueSizeExceeded.selector);
+        vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
         vault.setSupplyQueue(supplyQueue);
     }
 
-    function testAcceptCapMaxQueueSizeExceeded() public {
-        for (uint256 i; i < ConstantsLib.MAX_QUEUE_SIZE; ++i) {
+    function testAcceptCapMaxQueueLengthExceeded() public {
+        for (uint256 i; i < ConstantsLib.MAX_QUEUE_LENGTH; ++i) {
             _setCap(allMarkets[i], CAP);
         }
 
         _setTimelock(1 weeks);
 
-        MarketParams memory marketParams = allMarkets[ConstantsLib.MAX_QUEUE_SIZE];
+        MarketParams memory marketParams = allMarkets[ConstantsLib.MAX_QUEUE_LENGTH];
 
         vm.prank(CURATOR);
         vault.submitCap(marketParams, CAP);
 
         vm.warp(block.timestamp + 1 weeks);
 
-        vm.expectRevert(ErrorsLib.MaxQueueSizeExceeded.selector);
+        vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
         vault.acceptCap(marketParams.id());
     }
 
