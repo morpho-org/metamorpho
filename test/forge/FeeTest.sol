@@ -44,7 +44,7 @@ contract FeeTest is IntegrationTest {
         fee = bound(fee, 0, ConstantsLib.MAX_FEE);
 
         vm.expectEmit();
-        emit EventsLib.SetFee(fee);
+        emit EventsLib.SetFee(OWNER, fee);
         vm.prank(OWNER);
         vault.setFee(fee);
 
