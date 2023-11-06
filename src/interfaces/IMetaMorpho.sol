@@ -79,7 +79,7 @@ interface IMetaMorpho is IERC4626 {
     function setRewardsRecipient(address) external;
 
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
-    function sortWithdrawQueue(uint256[] calldata indexes) external;
+    function updateWithdrawQueue(uint256[] calldata indexes) external;
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
 
