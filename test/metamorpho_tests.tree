@@ -279,27 +279,27 @@
 
 
 .
-└── revokeTimelock() external
+└── revokePendingTimelock() external
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokeTimelock(msg.sender, pendingTimelock)
+        ├── it should emit RevokePendingTimelock(msg.sender)
         └── it should delete pendingTimelock
 
 .
-└── revokeCap(Id id) external
+└── revokePendingCap(Id id) external
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokeCap(msg.sender, id, pendingCap[id])
+        ├── it should emit RevokePendingCap(msg.sender, id)
         └── it should delete pendingCap[id]
 
 .
-└── revokeGuardian() external
+└── revokePendingGuardian() external
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokeGuardian(msg.sender, pendingGuardian);
+        ├── it should emit RevokePendingGuardian(msg.sender);
         └── it should delete pendingGuardian
 
 
