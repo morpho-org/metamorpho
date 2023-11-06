@@ -331,10 +331,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
                 if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
 
-                try this.expectedSupplyAssets(_marketParams(id)) {
-                    if (MORPHO.supplyShares(id, address(this)) != 0) {
-                        revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
-                    }
+                try this.expectedSupplyAssets(_marketParams(id)) returns (uint256 supplyAssets) {
+                    // Assumes that a market with a non-zero vault's supply shares but zero supply assets can be safely
+                    // removed.
+                    if (supplyAssets != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
                 } catch {}
 
                 delete config[id].withdrawRank;
