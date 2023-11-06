@@ -30,7 +30,7 @@ For more information about this use case, see the [Rewards](#rewards) section.
 
 All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
 If set, the `guardian` can revoke the action during the timelock except for the fee increase.
-After the timelock, the action can be executed by anyone until 3 days have passed.
+After the timelock, the action can be executed by anyone.
 
 ### Roles
 
@@ -70,10 +70,10 @@ Multiple addresses can have this role.
 It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
-  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
-  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
-  - The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
-  - The `withdrawQueue` contains all enabled markets.
+  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue`` in the order set. The remaining funds are left as idle supply on the vault (uncapped).
+  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
+  - The `supplyQueue` only contains markets which cap has previously been non-zero.
+  - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
 - Instantaneously reallocate funds across enabled markets at any moment.
 
 #### Guardian
@@ -83,10 +83,8 @@ Only one address can have this role.
 It can:
 
 - Revoke the pending timelock.
-- Revoke the pending guardian.
+- Revoke the pending guardian (in particular, it can revoke any submission of another guardian).
 - Revoke the pending cap of any market.
-
-In particular, the guardian **can revoke any guardian change**.
 
 ### Rewards
 
@@ -106,10 +104,10 @@ Below is a typical example of how this use case would take place:
 
 - Transfer rewards from the vault to the rewards distributor using the `transferRewards` function.
 
-  NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
-  Thus, this step might be already performed by some third-party.
-  Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
-  In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
+NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
+Thus, this step might be already performed by some third-party.
+Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
+In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
 
