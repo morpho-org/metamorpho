@@ -32,6 +32,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
+    using SafeERC20 for IERC20;
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
@@ -113,12 +114,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         string memory _name,
         string memory _symbol
     ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
+        if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
+
         MORPHO = IMorpho(morpho);
 
         _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
 
-        SafeERC20.safeIncreaseAllowance(IERC20(_asset), morpho, type(uint256).max);
+        IERC20(_asset).forceApprove(morpho, type(uint256).max);
     }
 
     /* MODIFIERS */
@@ -151,14 +154,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Makes sure conditions are met to accept a pending value.
     /// @dev Reverts if:
     /// - there's no pending value;
-    /// - the timelock has not elapsed since the pending value has been submitted;
-    /// - the timelock has expired since the pending value has been submitted.
-    modifier withinTimelockWindow(uint256 submittedAt) {
+    /// - the timelock has not elapsed since the pending value has been submitted.
+    modifier afterTimelock(uint256 submittedAt) {
         if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
         if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
-        if (block.timestamp > submittedAt + timelock + ConstantsLib.TIMELOCK_EXPIRATION) {
-            revert ErrorsLib.TimelockExpirationExceeded();
-        }
 
         _;
     }
@@ -240,7 +239,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a `newGuardian`.
-    /// @notice Warning: the guardian has the power to revoke any pending guardian.
+    /// @notice Warning: a malicious guardian could disrupt the vault's operation, and would have the power to revoke
+    /// any pending guardian.
     /// @dev In case there is no guardian, the gardian is set immediately.
     /// @dev Warning: Submitting a gardian will overwrite the current pending gardian.
     function submitGuardian(address newGuardian) external onlyOwner {
@@ -273,19 +273,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         } else {
             pendingCap[id] = PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp));
 
-            emit EventsLib.SubmitCap(id, newSupplyCap);
+            emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
         }
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
 
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
-    /// @dev The supply queue can be a set containing duplicate markets, but it would only increase the cost of
-    /// depositing to the vault.
+    /// @param newSupplyQueue is an array of enabled markets, and can contain duplicate markets, but it would only
+    /// increase the cost of depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
         uint256 length = newSupplyQueue.length;
 
-        if (length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+        if (length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
 
         for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
@@ -296,13 +296,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetSupplyQueue(_msgSender(), newSupplyQueue);
     }
 
-    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with zero cap and zero
-    /// vault's supply can be removed.
+    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
+    /// zero vault's supply can be removed from the permutation.
+    /// @notice This is the only entry point to disable a market.
     /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
     /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
-    function sortWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
+    function updateWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
         uint256 newLength = indexes.length;
         uint256 currLength = withdrawQueue.length;
 
@@ -325,7 +326,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 Id id = withdrawQueue[i];
 
                 if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
-                    revert ErrorsLib.MissingMarket(id);
+                    revert ErrorsLib.InvalidMarketRemoval(id);
                 }
 
                 config[id].inWithdrawQueue = false;
@@ -348,21 +349,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 totalWithdrawn;
         for (uint256 i; i < withdrawn.length; ++i) {
             MarketAllocation memory allocation = withdrawn[i];
+            Id id = allocation.marketParams.id();
 
-            if (allocation.marketParams.loanToken != asset()) {
-                revert ErrorsLib.InconsistentAsset(allocation.marketParams.id());
-            }
+            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
 
             // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            if (allocation.shares == type(uint256).max) {
-                allocation.shares = MORPHO.supplyShares(allocation.marketParams.id(), address(this));
-            }
+            if (allocation.shares == type(uint256).max) allocation.shares = MORPHO.supplyShares(id, address(this));
 
-            (uint256 withdrawnAssets,) = MORPHO.withdraw(
+            (uint256 withdrawnAssets, uint256 withdrawnShares) = MORPHO.withdraw(
                 allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
             );
 
             totalWithdrawn += withdrawnAssets;
+
+            emit EventsLib.ReallocateWithdraw(_msgSender(), id, withdrawnAssets, withdrawnShares);
         }
 
         uint256 totalSupplied;
@@ -373,7 +373,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
 
-            (uint256 suppliedAssets,) =
+            (uint256 suppliedAssets, uint256 suppliedShares) =
                 MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
 
             if (_supplyBalance(allocation.marketParams) > supplyCap) {
@@ -381,70 +381,77 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             }
 
             totalSupplied += suppliedAssets;
+
+            emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
         }
 
+        uint256 newIdle;
         if (totalWithdrawn > totalSupplied) {
-            idle += totalWithdrawn - totalSupplied;
+            newIdle = idle + totalWithdrawn - totalSupplied;
         } else {
             uint256 idleSupplied = totalSupplied - totalWithdrawn;
             if (idle < idleSupplied) revert ErrorsLib.InsufficientIdle();
 
-            idle -= idleSupplied;
+            newIdle = idle - idleSupplied;
         }
+
+        idle = newIdle;
+
+        emit EventsLib.ReallocateIdle(_msgSender(), newIdle);
     }
 
     /* ONLY GUARDIAN FUNCTIONS */
 
     /// @notice Revokes the `pendingTimelock`.
-    function revokeTimelock() external onlyGuardian {
-        emit EventsLib.RevokeTimelock(_msgSender(), pendingTimelock);
-
+    function revokePendingTimelock() external onlyGuardian {
         delete pendingTimelock;
+
+        emit EventsLib.RevokePendingTimelock(_msgSender());
     }
 
     /// @notice Revokes the `pendingGuardian`.
-    function revokeGuardian() external onlyGuardian {
-        emit EventsLib.RevokeGuardian(_msgSender(), pendingGuardian);
-
+    function revokePendingGuardian() external onlyGuardian {
         delete pendingGuardian;
+
+        emit EventsLib.RevokePendingGuardian(_msgSender());
     }
 
     /// @notice Revokes the pending cap of the market defined by `id`.
-    function revokeCap(Id id) external onlyGuardian {
-        emit EventsLib.RevokeCap(_msgSender(), id, pendingCap[id]);
-
+    function revokePendingCap(Id id) external onlyGuardian {
         delete pendingCap[id];
+
+        emit EventsLib.RevokePendingCap(_msgSender(), id);
     }
 
     /* EXTERNAL */
 
-    /// @notice Returns the size of the supply queue.
-    function supplyQueueSize() external view returns (uint256) {
+    /// @notice Returns the length of the supply queue.
+    function supplyQueueLength() external view returns (uint256) {
         return supplyQueue.length;
     }
 
-    /// @notice Returns the size of the withdraw queue.
-    function withdrawQueueSize() external view returns (uint256) {
+    /// @notice Returns the length of the withdraw queue.
+    function withdrawQueueLength() external view returns (uint256) {
         return withdrawQueue.length;
     }
 
     /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external withinTimelockWindow(pendingTimelock.submittedAt) {
+    function acceptTimelock() external afterTimelock(pendingTimelock.submittedAt) {
         _setTimelock(pendingTimelock.value);
     }
 
     /// @notice Accepts the `pendingFee`.
-    function acceptFee() external withinTimelockWindow(pendingFee.submittedAt) {
+    function acceptFee() external afterTimelock(pendingFee.submittedAt) {
         _setFee(pendingFee.value);
     }
 
     /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external withinTimelockWindow(pendingGuardian.submittedAt) {
+    function acceptGuardian() external afterTimelock(pendingGuardian.submittedAt) {
         _setGuardian(pendingGuardian.value);
     }
 
     /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external withinTimelockWindow(pendingCap[id].submittedAt) {
+    function acceptCap(Id id) external afterTimelock(pendingCap[id].submittedAt) {
         _setCap(id, pendingCap[id].value);
     }
 
@@ -456,9 +463,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        SafeERC20.safeTransfer(IERC20(token), rewardsRecipient, amount);
+        IERC20(token).safeTransfer(rewardsRecipient, amount);
 
-        emit EventsLib.TransferRewards(_msgSender(), rewardsRecipient, token, amount);
+        emit EventsLib.TransferRewards(_msgSender(), token, amount);
     }
 
     /* ERC4626 (PUBLIC) */
@@ -469,11 +476,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May be lower than the actual amount of assets that can be withdrawn by `owner` due to conversion
+    /// roundings between shares and assets.
     function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
         (assets,,) = _maxWithdraw(owner);
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May be lower than the actual amount of shares that can be redeemed by `owner` due to conversion
+    /// roundings between shares and assets.
     function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
         (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
@@ -552,7 +563,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         newTotalSupply = totalSupply() + feeShares;
 
         assets = _convertToAssetsWithTotals(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Floor);
-        assets -= _staticWithdrawMorpho(assets);
+        assets -= _simulateWithdrawMorpho(assets);
     }
 
     /// @inheritdoc ERC4626
@@ -645,7 +656,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setTimelock(uint256 newTimelock) internal {
         timelock = newTimelock;
 
-        emit EventsLib.SetTimelock(newTimelock);
+        emit EventsLib.SetTimelock(_msgSender(), newTimelock);
 
         delete pendingTimelock;
     }
@@ -654,7 +665,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _setGuardian(address newGuardian) internal {
         guardian = newGuardian;
 
-        emit EventsLib.SetGuardian(newGuardian);
+        emit EventsLib.SetGuardian(_msgSender(), newGuardian);
 
         delete pendingGuardian;
     }
@@ -667,9 +678,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            if (supplyQueue.length > ConstantsLib.MAX_QUEUE_SIZE || withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE)
-            {
-                revert ErrorsLib.MaxQueueSizeExceeded();
+            if (
+                supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                    || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+            ) {
+                revert ErrorsLib.MaxQueueLengthExceeded();
             }
 
             marketConfig.inWithdrawQueue = true;
@@ -677,7 +690,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         marketConfig.cap = supplyCap;
 
-        emit EventsLib.SetCap(id, supplyCap);
+        emit EventsLib.SetCap(_msgSender(), id, supplyCap);
 
         delete pendingCap[id];
     }
@@ -692,7 +705,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Safe "unchecked" cast because newFee <= MAX_FEE.
         fee = uint96(newFee);
 
-        emit EventsLib.SetFee(newFee);
+        emit EventsLib.SetFee(_msgSender(), newFee);
 
         delete pendingFee;
     }
@@ -744,9 +757,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    /// @dev Fakes a withdraw of `assets` from the idle liquidity and Morpho if necessary.
+    /// @dev Simulates a withdraw of `assets` from the idle liquidity and Morpho if necessary.
     /// @return remaining The assets left to be withdrawn.
-    function _staticWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
+    function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
         (remaining,) = _withdrawIdle(assets);
 
         if (remaining == 0) return 0;
@@ -788,6 +801,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
             MORPHO.expectedMarketBalances(marketParams);
 
+        // Inside a flashloan callback, liquidity on Morpho Blue may be limited to the singleton's balance.
         uint256 availableLiquidity = UtilsLib.min(
             totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
         );
