@@ -74,7 +74,7 @@ It can:
   - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
   - The `supplyQueue` only contains markets which cap has previously been non-zero.
   - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
-- Instantaneously reallocate funds across enabled markets at any moment.
+- Instantaneously reallocate funds across markets of the `withdrawQueue` at any moment.
 
 #### Guardian
 

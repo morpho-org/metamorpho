@@ -17,11 +17,11 @@ library ErrorsLib {
     /// @notice Thrown when the caller doesn't have the allocator role.
     error NotAllocatorRole();
 
-    /// @notice Thrown when the caller doesn't have the guardian's privilege.
-    error NotGuardian();
+    /// @notice Thrown when the caller doesn't have the guardian role.
+    error NotGuardianRole();
 
-    /// @notice Thrown when the caller doesn't have the curator's privilege nor the guardian's privilege.
-    error NotCuratorNorGuardian();
+    /// @notice Thrown when the caller doesn't have the curator nor the guardian role.
+    error NotCuratorNorGuardianRole();
 
     /// @notice Thrown when the market `id` cannot be set in the supply queue.
     error UnauthorizedMarket(Id id);
