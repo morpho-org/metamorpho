@@ -444,6 +444,6 @@
 .
 └── totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets)
     ├── for each market withdrawQueue[i] in withdrawQueue
-    │   └── it should add _supplyAssetsBalance(_marketParams(withdrawQueue[i])) to assets
+    │   └── it should add expectedSupplyAssets(_marketParams(withdrawQueue[i])) to assets
     ├── it should add idle to assets
     └── it should return assets

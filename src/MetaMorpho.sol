@@ -384,7 +384,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             (uint256 suppliedAssets,) =
                 MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
 
-            if (_supplyAssetsBalance(allocation.marketParams) > supplyCap) {
+            if (expectedSupplyAssets(allocation.marketParams) > supplyCap) {
                 revert ErrorsLib.SupplyCapExceeded(id);
             }
 
@@ -472,7 +472,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* MORPHO GETTERS */
 
     /// @notice Returns the expected supply asset balance of the vault on the market defined by `marketParams`.
-    function expectedSupplyAssets(MarketParams memory marketParams) external view returns (uint256) {
+    function expectedSupplyAssets(MarketParams memory marketParams) public view returns (uint256) {
         return MORPHO.expectedSupplyAssets(marketParams, address(this));
     }
 
@@ -557,7 +557,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// role can remove the market from `withdrawQueue` to realize the loss and unlock the vault.
     function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
-            assets += _supplyAssetsBalance(_marketParams(withdrawQueue[i]));
+            assets += expectedSupplyAssets(_marketParams(withdrawQueue[i]));
         }
 
         assets += idle;
@@ -658,11 +658,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Returns the market params of the market defined by `id`.
     function _marketParams(Id id) internal view returns (MarketParams memory) {
         return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
-    }
-
-    /// @dev Returns the vault's supply assets balance on the market defined by `marketParams`.
-    function _supplyAssetsBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyAssets(marketParams, address(this));
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
@@ -809,7 +804,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 supplyCap = config[id].cap;
         if (supplyCap == 0) return 0;
 
-        return supplyCap.zeroFloorSub(_supplyAssetsBalance(marketParams));
+        return supplyCap.zeroFloorSub(expectedSupplyAssets(marketParams));
     }
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
