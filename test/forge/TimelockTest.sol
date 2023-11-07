@@ -473,11 +473,12 @@ contract TimelockTest is IntegrationTest {
         emit EventsLib.SetCap(address(this), id, cap);
         vault.acceptCap(id);
 
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 newCap, bool enabled, uint48 removableAt) = vault.config(id);
         (uint192 pendingCapAfter, uint64 validAtAfter) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
-        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(enabled, true, "enabled");
+        assertEq(removableAt, 0, "removableAt");
         assertEq(pendingCapAfter, 0, "pendingCapAfter");
         assertEq(validAtAfter, 0, "validAtAfter");
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");

@@ -36,6 +36,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
+    using PendingLib for MarketConfig;
     using PendingLib for PendingUint192;
     using PendingLib for PendingAddress;
 
@@ -285,11 +286,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     function disableMarket(Id id) external onlyCuratorRole {
-        if (config[id].disabledAt != 0) revert ErrorsLib.AlreadySet();
+        if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
         if (config[id].cap == 0) revert ErrorsLib.MarketNotEnabled();
 
-        config[id].cap = 0;
-        config[id].disabledAt = uint64(block.timestamp) + uint64(timelock); // TODO: use PendingLib to update it
+        config[id].disable(timelock);
 
         emit EventsLib.DisableMarket(_msgSender(), id);
     }
@@ -344,8 +344,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
                 if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
 
-                if (config[id].disabledAt != 0) {
-                    if (block.timestamp < config[id].disabledAt) {
+                if (config[id].removableAt != 0) {
+                    if (block.timestamp < config[id].removableAt) {
                         revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
                     }
                 } else if (MORPHO.supplyShares(id, address(this)) != 0) {
@@ -712,7 +712,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         marketConfig.cap = supplyCap;
-        marketConfig.disabledAt = 0;
+        marketConfig.removableAt = 0;
 
         emit EventsLib.SetCap(_msgSender(), id, supplyCap);
 
