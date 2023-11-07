@@ -22,7 +22,7 @@ struct PendingAddress {
     /// @notice The pending value to set.
     address value;
     /// @notice The timestamp at which the value was submitted.
-    uint96 submittedAt;
+    uint64 submittedAt;
 }
 
 /// @dev Either `assets` or `shares` should be zero.
@@ -45,9 +45,9 @@ interface IMetaMorpho is IERC4626 {
     function rewardsRecipient() external view returns (address);
     function timelock() external view returns (uint256);
     function supplyQueue(uint256) external view returns (Id);
-    function supplyQueueSize() external view returns (uint256);
+    function supplyQueueLength() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
-    function withdrawQueueSize() external view returns (uint256);
+    function withdrawQueueLength() external view returns (uint256);
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
 
     function idle() external view returns (uint256);
@@ -55,12 +55,12 @@ interface IMetaMorpho is IERC4626 {
 
     function submitTimelock(uint256 newTimelock) external;
     function acceptTimelock() external;
-    function revokeTimelock() external;
+    function revokePendingTimelock() external;
     function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
 
     function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
     function acceptCap(Id id) external;
-    function revokeCap(Id id) external;
+    function revokePendingCap(Id id) external;
     function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
 
     function submitFee(uint256 newFee) external;
@@ -69,8 +69,8 @@ interface IMetaMorpho is IERC4626 {
 
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
-    function revokeGuardian() external;
-    function pendingGuardian() external view returns (address guardian, uint96 submittedAt);
+    function revokePendingGuardian() external;
+    function pendingGuardian() external view returns (address guardian, uint64 submittedAt);
 
     function transferRewards(address) external;
 
@@ -80,7 +80,7 @@ interface IMetaMorpho is IERC4626 {
     function setRewardsRecipient(address) external;
 
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
-    function sortWithdrawQueue(uint256[] calldata indexes) external;
+    function updateWithdrawQueue(uint256[] calldata indexes) external;
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 

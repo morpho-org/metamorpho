@@ -53,8 +53,8 @@ contract UrdTest is IntegrationTest {
         uint256 vaultBalanceBefore = collateralToken.balanceOf(address(vault));
         assertEq(vaultBalanceBefore, amount, "vaultBalanceBefore");
 
-        vm.expectEmit();
-        emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(collateralToken), amount);
+        vm.expectEmit(address(vault));
+        emit EventsLib.TransferRewards(address(this), address(collateralToken), amount);
         vault.transferRewards(address(collateralToken));
         uint256 vaultBalanceAfter = collateralToken.balanceOf(address(vault));
 
@@ -83,8 +83,8 @@ contract UrdTest is IntegrationTest {
         uint256 vaultBalanceBefore = loanToken.balanceOf(address(vault));
         assertEq(vaultBalanceBefore, idle + rewards, "vaultBalanceBefore");
 
-        vm.expectEmit();
-        emit EventsLib.TransferRewards(address(this), address(rewardsDistributor), address(loanToken), rewards);
+        vm.expectEmit(address(vault));
+        emit EventsLib.TransferRewards(address(this), address(loanToken), rewards);
         vault.transferRewards(address(loanToken));
         uint256 vaultBalanceAfter = loanToken.balanceOf(address(vault));
 
