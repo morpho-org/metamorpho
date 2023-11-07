@@ -468,12 +468,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IERC4626
     function maxDeposit(address) public view override(IERC4626, ERC4626) returns (uint256) {
-        return _maxSupply();
+        return _maxDeposit();
     }
 
     /// @inheritdoc IERC4626
     function maxMint(address) public view override(IERC4626, ERC4626) returns (uint256) {
-        uint256 suppliable = _maxSupply();
+        uint256 suppliable = _maxDeposit();
 
         return _convertToShares(suppliable, Math.Rounding.Floor);
     }
@@ -567,10 +567,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         assets -= _simulateWithdrawMorpho(assets);
     }
 
-    /// @dev Returns the maximum amount of assets that the vault can withdraw from Morpho.
-    function _maxSupply() internal view returns (uint256 totalSuppliable) {
+    /// @dev Returns the maximum amount of assets that the vault can supply on Morpho.
+    function _maxDeposit() internal view returns (uint256 totalSuppliable) {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
+
             totalSuppliable += _suppliable(_marketParams(id), id);
         }
     }
