@@ -23,7 +23,7 @@ library ErrorsLib {
     /// @notice Thrown when the market `id` cannot be set in the supply queue.
     error UnauthorizedMarket(Id id);
 
-    /// @notice Thrown when submitting a cap for a market `id` whose loan token does not correspond to the underlyin
+    /// @notice Thrown when submitting a cap for a market `id` whose loan token does not correspond to the underlying.
     /// asset.
     error InconsistentAsset(Id id);
 
@@ -40,7 +40,7 @@ library ErrorsLib {
     error DuplicateMarket(Id id);
 
     /// @notice Thrown when market `id` is missing in the new withdraw queue to set.
-    error MissingMarket(Id id);
+    error InvalidMarketRemoval(Id id);
 
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();
@@ -61,7 +61,7 @@ library ErrorsLib {
     error TimelockNotElapsed();
 
     /// @notice Thrown when too many markets are in the withdraw queue.
-    error MaxQueueSizeExceeded();
+    error MaxQueueLengthExceeded();
 
     /// @notice Thrown when setting the fee to a non zero value while the fee recipient is the zero address.
     error ZeroFeeRecipient();

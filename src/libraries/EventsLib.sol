@@ -14,7 +14,7 @@ library EventsLib {
     event SubmitTimelock(uint256 newTimelock);
 
     /// @notice Emitted `timelock` is set to `newTimelock`.
-    event SetTimelock(uint256 newTimelock);
+    event SetTimelock(address indexed caller, uint256 newTimelock);
 
     /// @notice Emitted `rewardsDistibutor` is set to `newRewardsRecipient`.
     event SetRewardsRecipient(address indexed newRewardsRecipient);
@@ -23,7 +23,7 @@ library EventsLib {
     event SubmitFee(uint256 newFee);
 
     /// @notice Emitted `fee` is set to `newFee`.
-    event SetFee(uint256 newFee);
+    event SetFee(address indexed caller, uint256 newFee);
 
     /// @notice Emitted when a new `newFeeRecipient` is set.
     event SetFeeRecipient(address indexed newFeeRecipient);
@@ -32,13 +32,13 @@ library EventsLib {
     event SubmitGuardian(address indexed newGuardian);
 
     /// @notice Emitted when `guardian` is set to `newGuardian`.
-    event SetGuardian(address indexed guardian);
+    event SetGuardian(address indexed caller, address indexed guardian);
 
     /// @notice Emitted when a pending `cap` is submitted for market identified by `id`.
-    event SubmitCap(Id indexed id, uint256 cap);
+    event SubmitCap(address indexed caller, Id indexed id, uint256 cap);
 
     /// @notice Emitted when a new `cap` is set for market identified by `id`.
-    event SetCap(Id indexed id, uint256 cap);
+    event SetCap(address indexed caller, Id indexed id, uint256 cap);
 
     /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
     event UpdateLastTotalAssets(uint256 newTotalAssets);
@@ -49,28 +49,41 @@ library EventsLib {
     /// @notice Emitted when an `allocator` is set to `isAllocator`.
     event SetIsAllocator(address indexed allocator, bool isAllocator);
 
-    /// @notice Emitted when a `pendingTimelock` is revoked by `guardian`.
-    event RevokeTimelock(address indexed guardian, PendingUint192 pendingTimelock);
+    /// @notice Emitted when a `pendingTimelock` is revoked.
+    event RevokePendingTimelock(address indexed caller);
 
-    /// @notice Emitted when a `pendingCap` for the market identified by `id` is revoked by `guardian`.
-    event RevokeCap(address indexed guardian, Id indexed id, PendingUint192 pendingCap);
+    /// @notice Emitted when a `pendingCap` for the market identified by `id` is revoked.
+    event RevokePendingCap(address indexed caller, Id indexed id);
 
-    /// @notice Emitted when a `pendingGuardian` is revoked by `guardian`.
-    event RevokeGuardian(address indexed guardian, PendingAddress pendingGuardian);
+    /// @notice Emitted when a `pendingGuardian` is revoked.
+    event RevokePendingGuardian(address indexed caller);
 
     /// @notice Emitted when the `supplyQgueue` is set to `newSupplyQueue`.
-    event SetSupplyQueue(address indexed allocator, Id[] newSupplyQueue);
+    event SetSupplyQueue(address indexed caller, Id[] newSupplyQueue);
 
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.
-    event SetWithdrawQueue(address indexed allocator, Id[] newWithdrawQueue);
+    event SetWithdrawQueue(address indexed caller, Id[] newWithdrawQueue);
+
+    /// @notice Emitted when a reallocation supplies assets to the market identified by `id`.
+    /// @param id The id of the market.
+    /// @param suppliedAssets The amount of assets supplied to the market.
+    /// @param suppliedShares The amount of shares minted.
+    event ReallocateSupply(address indexed caller, Id indexed id, uint256 suppliedAssets, uint256 suppliedShares);
+
+    /// @notice Emitted when a reallocation withdraws assets from the market identified by `id`.
+    /// @param id The id of the market.
+    /// @param withdrawnAssets The amount of assets withdrawn from the market.
+    /// @param withdrawnShares The amount of shares burned.
+    event ReallocateWithdraw(address indexed caller, Id indexed id, uint256 withdrawnAssets, uint256 withdrawnShares);
+
+    /// @notice Emitted when a reallocation added or removed assets from idle.
+    event ReallocateIdle(address indexed caller, uint256 idle);
 
     /// @notice Emitted when fees are accrued.
     event AccrueFee(uint256 feeShares);
 
     /// @notice Emitted when an `amount` of `token` is transferred to the `rewardsRecipient` by `caller`.
-    event TransferRewards(
-        address indexed caller, address indexed rewardsRecipient, address indexed token, uint256 amount
-    );
+    event TransferRewards(address indexed caller, address indexed token, uint256 amount);
 
     /// @notice Emitted when a new MetaMorpho vault is created.
     /// @param metaMorpho The address of the MetaMorpho vault.
