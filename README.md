@@ -30,7 +30,7 @@ For more information about this use case, see the [Rewards](#rewards) section.
 
 All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
 If set, the `guardian` can revoke the action during the timelock except for the fee increase.
-After the timelock, the action can be executed by anyone until 3 days have passed.
+After the timelock, the action can be executed by anyone.
 
 ### Roles
 

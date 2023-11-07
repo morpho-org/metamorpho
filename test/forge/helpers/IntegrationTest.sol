@@ -119,7 +119,7 @@ contract IntegrationTest is BaseTest {
     }
 
     function _sortSupplyQueueIdleLast() internal {
-        Id[] memory supplyQueue = new Id[](vault.supplyQueueSize());
+        Id[] memory supplyQueue = new Id[](vault.supplyQueueLength());
 
         uint256 supplyIndex;
         for (uint256 i; i < supplyQueue.length; ++i) {

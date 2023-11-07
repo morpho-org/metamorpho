@@ -239,7 +239,7 @@ describe("MetaMorpho", () => {
       // Set idle market last.
       allMarketParams.map(identifier).concat([identifier(idleParams)]),
     );
-    await metaMorpho.connect(curator).sortWithdrawQueue(
+    await metaMorpho.connect(curator).updateWithdrawQueue(
       // Keep idle market first.
       [0].concat(allMarketParams.map((_, i) => nbMarkets - i)),
     );
