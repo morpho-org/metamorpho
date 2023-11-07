@@ -499,6 +499,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalAssets = _accrueFee();
 
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
+
+        // `newTotalAssets + assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets + assets);
+
         _deposit(_msgSender(), receiver, assets, shares);
     }
 
@@ -507,6 +511,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalAssets = _accrueFee();
 
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
+
+        // `newTotalAssets + assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets + assets);
+
         _deposit(_msgSender(), receiver, assets, shares);
     }
 
@@ -521,6 +529,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
+
+        // `newTotalAssets - assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets.zeroFloorSub(assets));
+
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
@@ -535,6 +547,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
+
+        // `newTotalAssets - assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets.zeroFloorSub(assets));
+
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
@@ -613,9 +629,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         super._deposit(caller, receiver, assets, shares);
 
         _supplyMorpho(assets);
-
-        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc ERC4626
@@ -632,9 +645,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (_withdrawMorpho(assets) != 0) revert ErrorsLib.WithdrawMorphoFailed();
 
         super._withdraw(caller, receiver, owner, assets, shares);
-
-        // `newTotalAssets - assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
     }
 
     /* INTERNAL */
