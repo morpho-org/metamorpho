@@ -341,8 +341,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetWithdrawQueue(_msgSender(), newWithdrawQueue);
     }
 
-    /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on
-    /// `supplied`).
+    /// @notice Reallocates the vault's liquidity so as to reach a given allocation of assets on each given market.
     /// @dev The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
     /// token of the market is the same as the vault's asset.
     function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
@@ -352,16 +351,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
 
-            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
+            MORPHO.accrueInterest(allocation.marketParams);
 
-            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) =
-                MORPHO.expectedMarketBalances(allocation.marketParams);
+            Market memory market = MORPHO.market(id);
 
             uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-            uint256 supplyAssets = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+            uint256 supplyAssets = supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
             uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
             if (withdrawn > 0) {
+                if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
+
                 // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
                 uint256 shares;
                 if (allocation.assets == 0) {
