@@ -9,6 +9,8 @@ struct MarketConfig {
     uint192 cap;
     /// @notice Whether the market is in the withdraw queue.
     bool enabled;
+    /// @notice Whether the market is pending to be disabled.
+    uint64 disabledAt; // TODO: uint48 to pack it
 }
 
 struct PendingUint192 {
@@ -50,7 +52,7 @@ interface IMetaMorpho is IERC4626 {
     function supplyQueueLength() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueLength() external view returns (uint256);
-    function config(Id) external view returns (uint192 cap, bool enabled);
+    function config(Id) external view returns (uint192 cap, bool enabled, uint64 disabledAt);
 
     function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);

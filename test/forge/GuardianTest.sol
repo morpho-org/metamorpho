@@ -67,11 +67,12 @@ contract GuardianTest is IntegrationTest {
         vm.prank(GUARDIAN);
         vault.revokePendingCap(id);
 
-        (uint192 newCap, bool enabled) = vault.config(id);
+        (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
         (uint256 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
         assertEq(newCap, 0, "newCap");
         assertEq(enabled, false, "enabled");
+        assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCap, 0, "pendingCap");
         assertEq(submittedAt, 0, "submittedAt");
     }

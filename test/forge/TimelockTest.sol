@@ -301,11 +301,12 @@ contract TimelockTest is IntegrationTest {
         vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
-        (uint192 newCap, bool enabled) = vault.config(id);
+        (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
         assertEq(enabled, true, "enabled");
+        assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCap, 0, "pendingCap");
         assertEq(submittedAt, 0, "submittedAt");
     }
@@ -321,11 +322,12 @@ contract TimelockTest is IntegrationTest {
         vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
 
-        (uint192 newCap, bool enabled) = vault.config(id);
+        (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
         (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
 
         assertEq(newCap, 0, "newCap");
         assertEq(enabled, false, "enabled");
+        assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCap, cap, "pendingCap");
         assertEq(submittedAt, block.timestamp, "submittedAt");
         assertEq(vault.supplyQueueLength(), 1, "supplyQueueLength");
@@ -347,11 +349,12 @@ contract TimelockTest is IntegrationTest {
         emit EventsLib.SetCap(address(this), id, cap);
         vault.acceptCap(id);
 
-        (uint192 newCap, bool enabled) = vault.config(id);
+        (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
         (uint192 pendingCapAfter, uint64 submittedAtAfter) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
         assertEq(enabled, true, "enabled");
+        assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCapAfter, 0, "pendingCapAfter");
         assertEq(submittedAtAfter, 0, "submittedAtAfter");
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");

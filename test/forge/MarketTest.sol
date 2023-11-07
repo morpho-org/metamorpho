@@ -100,7 +100,7 @@ contract MarketTest is IntegrationTest {
         vault.setSupplyQueue(supplyQueue);
     }
 
-    function testSortWithdrawQueue() public {
+    function testUpdateWithdrawQueue() public {
         _setCaps();
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[0].id()));
@@ -127,7 +127,7 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(expectedWithdrawQueue[2]));
     }
 
-    function testSortWithdrawQueueRemovingDisabledMarket() public {
+    function testUpdateWithdrawQueueRemovingDisabledMarket() public {
         _setCaps();
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[0].id()));
@@ -153,7 +153,7 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
     }
 
-    function testSortWithdrawQueueInvalidIndex() public {
+    function testUpdateWithdrawQueueInvalidIndex() public {
         _setCaps();
 
         uint256[] memory indexes = new uint256[](3);
@@ -166,7 +166,7 @@ contract MarketTest is IntegrationTest {
         vault.updateWithdrawQueue(indexes);
     }
 
-    function testSortWithdrawQueueDuplicateMarket() public {
+    function testUpdateWithdrawQueueDuplicateMarket() public {
         _setCaps();
 
         uint256[] memory indexes = new uint256[](3);
@@ -179,7 +179,7 @@ contract MarketTest is IntegrationTest {
         vault.updateWithdrawQueue(indexes);
     }
 
-    function testSortWithdrawQueueMissingMarketWithNonZeroSupply() public {
+    function testUpdateWithdrawQueueInvalidMarketRemovalNonZeroSupply() public {
         _setCaps();
 
         loanToken.setBalance(SUPPLIER, 1);
@@ -191,12 +191,16 @@ contract MarketTest is IntegrationTest {
         indexes[0] = 1;
         indexes[1] = 2;
 
+        _setCap(allMarkets[0], 0);
+
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, allMarkets[0].id()));
+        vm.expectRevert(
+            abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalNonZeroSupply.selector, allMarkets[0].id())
+        );
         vault.updateWithdrawQueue(indexes);
     }
 
-    function testSortWithdrawQueueMissingMarketWithNonZeroCap() public {
+    function testUpdateWithdrawQueueInvalidMarketRemovalNonZeroCap() public {
         _setCaps();
 
         uint256[] memory indexes = new uint256[](2);
@@ -204,7 +208,7 @@ contract MarketTest is IntegrationTest {
         indexes[1] = 2;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, allMarkets[1].id()));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalNonZeroCap.selector, allMarkets[1].id()));
         vault.updateWithdrawQueue(indexes);
     }
 

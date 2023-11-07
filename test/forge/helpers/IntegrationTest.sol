@@ -89,7 +89,7 @@ contract IntegrationTest is BaseTest {
 
     function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
         Id id = marketParams.id();
-        (uint256 cap,) = vault.config(id);
+        (uint256 cap,,) = vault.config(id);
         if (newCap == cap) return;
 
         vm.prank(CURATOR);
@@ -102,7 +102,7 @@ contract IntegrationTest is BaseTest {
 
         vault.acceptCap(id);
 
-        (cap,) = vault.config(id);
+        (cap,,) = vault.config(id);
 
         assertEq(cap, newCap, "_setCap");
     }

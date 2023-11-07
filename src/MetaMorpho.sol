@@ -277,6 +277,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
+    function disableMarket(Id id) external onlyCuratorRole {
+        if (config[id].disabledAt != 0) revert ErrorsLib.AlreadySet();
+        if (config[id].cap == 0) revert ErrorsLib.MarketNotEnabled();
+
+        config[id].cap = 0;
+        config[id].disabledAt = uint64(block.timestamp) + uint64(timelock); // TODO: use PendingLib to update it
+
+        emit EventsLib.DisableMarket(_msgSender(), id);
+    }
+
     /* ONLY ALLOCATOR FUNCTIONS */
 
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
@@ -325,8 +335,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
-                    revert ErrorsLib.InvalidMarketRemoval(id);
+                if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
+
+                if (config[id].disabledAt != 0) {
+                    if (block.timestamp < config[id].disabledAt) {
+                        revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
+                    }
+                } else if (MORPHO.supplyShares(id, address(this)) != 0) {
+                    revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
                 }
 
                 config[id].enabled = false;
@@ -689,6 +705,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         marketConfig.cap = supplyCap;
+        marketConfig.disabledAt = 0;
 
         emit EventsLib.SetCap(_msgSender(), id, supplyCap);
 
