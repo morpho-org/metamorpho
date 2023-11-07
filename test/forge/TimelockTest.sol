@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "./helpers/IntegrationTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
-uint256 constant TIMELOCK = 1 weeks;
 
 contract TimelockTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
@@ -16,7 +15,6 @@ contract TimelockTest is IntegrationTest {
         vault.setFeeRecipient(FEE_RECIPIENT);
 
         _setFee(FEE);
-        _setTimelock(TIMELOCK);
         _setGuardian(GUARDIAN);
 
         _setCap(allMarkets[0], CAP);

@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./helpers/IntegrationTest.sol";
 
-uint256 constant TIMELOCK = 1 weeks;
-
 contract GuardianTest is IntegrationTest {
     using Math for uint256;
     using MathLib for uint256;
@@ -13,7 +11,6 @@ contract GuardianTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        _setTimelock(TIMELOCK);
         _setGuardian(GUARDIAN);
     }
 

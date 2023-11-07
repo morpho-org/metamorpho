@@ -127,7 +127,7 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(expectedWithdrawQueue[2]));
     }
 
-    function testUpdateWithdrawQueueRemovingDisabledMarket() public {
+    function testUpdateWithdrawQueueRemovingEmptyMarket() public {
         _setCaps();
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(allMarkets[0].id()));
@@ -135,6 +135,31 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(allMarkets[2].id()));
 
         _setCap(allMarkets[2], 0);
+
+        uint256[] memory indexes = new uint256[](2);
+        indexes[0] = 1;
+        indexes[1] = 0;
+
+        Id[] memory expectedWithdrawQueue = new Id[](2);
+        expectedWithdrawQueue[0] = allMarkets[1].id();
+        expectedWithdrawQueue[1] = allMarkets[0].id();
+
+        vm.expectEmit();
+        emit EventsLib.SetWithdrawQueue(ALLOCATOR, expectedWithdrawQueue);
+        vm.prank(ALLOCATOR);
+        vault.updateWithdrawQueue(indexes);
+
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(expectedWithdrawQueue[0]));
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
+    }
+
+    function testUpdateWithdrawQueueRemovingDisabledMarket() public {
+        _setCaps();
+
+        vm.prank(CURATOR);
+        vault.disableMarket(allMarkets[2].id());
+
+        vm.warp(block.timestamp + TIMELOCK);
 
         uint256[] memory indexes = new uint256[](2);
         indexes[0] = 1;
@@ -209,6 +234,27 @@ contract MarketTest is IntegrationTest {
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalNonZeroCap.selector, allMarkets[1].id()));
+        vault.updateWithdrawQueue(indexes);
+    }
+
+    function testUpdateWithdrawQueueInvalidMarketRemovalTimelockNotElapsed(uint256 elapsed) public {
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        _setCaps();
+
+        vm.prank(CURATOR);
+        vault.disableMarket(allMarkets[0].id());
+
+        vm.warp(block.timestamp + elapsed);
+
+        uint256[] memory indexes = new uint256[](2);
+        indexes[0] = 1;
+        indexes[1] = 2;
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(
+            abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalTimelockNotElapsed.selector, allMarkets[0].id())
+        );
         vault.updateWithdrawQueue(indexes);
     }
 

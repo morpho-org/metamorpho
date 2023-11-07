@@ -75,6 +75,7 @@ interface IMetaMorphoBase {
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
     function updateWithdrawQueue(uint256[] calldata indexes) external;
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
+    function disableMarket(Id id) external;
 }
 
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
