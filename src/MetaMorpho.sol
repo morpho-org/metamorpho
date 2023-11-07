@@ -208,11 +208,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
-            pendingTimelock.update(
-                // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-                uint192(newTimelock),
-                timelock
-            );
+            // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
+            pendingTimelock.update(uint192(newTimelock), timelock);
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -228,11 +225,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee < fee) {
             _setFee(newFee);
         } else {
-            pendingFee.update(
-                // Safe "unchecked" cast because newFee <= MAX_FEE.
-                uint192(newFee),
-                timelock
-            );
+            // Safe "unchecked" cast because newFee <= MAX_FEE.
+            pendingFee.update(uint192(newFee), timelock);
 
             emit EventsLib.SubmitFee(newFee);
         }
