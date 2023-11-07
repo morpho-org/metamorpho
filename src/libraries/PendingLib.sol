@@ -12,7 +12,7 @@ struct PendingAddress {
     /// @notice The pending value to set.
     address value;
     /// @notice The timestamp at which the pending value becomes valid.
-    uint96 validAt;
+    uint64 validAt;
 }
 
 /// @title PendingLib
