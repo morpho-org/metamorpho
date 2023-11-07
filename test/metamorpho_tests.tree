@@ -64,12 +64,9 @@
         ├── when block.timestamp < pendingTimelock.submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingTimelock.submittedAt + timelock
-            ├── when block.timestamp > pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingTimelock.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should set timelock to pendingTimelock.value
-                ├── it should emit SetTimelock(pendingTimelock.value)
-                └── it should delete pendingTimelock
+            ├── it should set timelock to pendingTimelock.value
+            ├── it should emit SetTimelock(pendingTimelock.value)
+            └── it should delete pendingTimelock
 
 .
 └── submitFee(uint256 newFee) external
@@ -99,13 +96,10 @@
         ├── when block.timestamp < pendingFee.submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingFee.submittedAt + timelock
-            ├── when block.timestamp > pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingFee.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should accrue fees
-                ├── it should set fee to pendingFee.value
-                ├── it should emit SetFee(pendingFee.value)
-                └── it should delete pendingFee
+            ├── it should accrue fees
+            ├── it should set fee to pendingFee.value
+            ├── it should emit SetFee(pendingFee.value)
+            └── it should delete pendingFee
 
 .
 └── setFeeRecipient(address newFeeRecipient) external
@@ -146,12 +140,9 @@
         ├── when block.timestamp < pendingGuardian.submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingGuardian.submittedAt + timelock
-            ├── when block.timestamp > pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingGuardian.submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── it should set guardian to pendingGuardian
-                ├── it should emit SetGuardian(pendingGuardian)
-                └── it should delete pendingGuardian
+            ├── it should set guardian to pendingGuardian
+            ├── it should emit SetGuardian(pendingGuardian)
+            └── it should delete pendingGuardian
 
 
 /* ONLY CURATOR FUNCTIONS */
@@ -176,8 +167,8 @@
                     │   ├── when newSupplyCap > 0 and marketConfig.withdrawRank == 0
                     │   │   ├── it should push id to supplyQueue
                     │   │   ├── it should push id to withdrawQueue
-                    │   │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                    │   │       └── revert with MaxQueueSizeExceeded()
+                    │   │   └── if withdrawQueue.length > MAX_QUEUE_LENGTH
+                    │   │       └── revert with MaxQueueLengthExceeded()
                     │   ├── it should set config[id].cap to newSupplyCap
                     │   ├── it should emit SetCap(id, newSupplyCap)
                     │   └── it should delete pendingCap[id]
@@ -193,19 +184,16 @@
         ├── when block.timestamp < pendingCap[id].submittedAt + timelock
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingCap[id].submittedAt + timelock
-            ├── when block.timestamp > pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-            │   └── revert with TIMELOCK_EXPIRATION_EXCEEDED
-            └── whenblock.timestamp <= pendingCap[id].submittedAt + timelock + TIMELOCK_EXPIRATION
-                ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
-                │   ├── it should push id to supplyQueue
-                │   ├── it should push id to withdrawQueue
-                │   ├── if supplyQueue.length > MAX_QUEUE_SIZE
-                │   │   └── revert with MaxQueueSizeExceeded()
-                │   └── if withdrawQueue.length > MAX_QUEUE_SIZE
-                │       └── revert with MaxQueueSizeExceeded()
-                ├── it should set config[id].cap to pendingCap[id].value
-                ├── it should emit SetCap(id, pendingCap[id].value)
-                └── it should delete pendingCap[id]
+            ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
+            │   ├── it should push id to supplyQueue
+            │   ├── it should push id to withdrawQueue
+            │   ├── if supplyQueue.length > MAX_QUEUE_LENGTH
+            │   │   └── revert with MaxQueueLengthExceeded()
+            │   └── if withdrawQueue.length > MAX_QUEUE_LENGTH
+            │       └── revert with MaxQueueLengthExceeded()
+            ├── it should set config[id].cap to pendingCap[id].value
+            ├── it should emit SetCap(id, pendingCap[id].value)
+            └── it should delete pendingCap[id]
 
 
 /* ONLY ALLOCATOR FUNCTIONS */
@@ -216,9 +204,9 @@
     ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
-        ├── when newSupplyQueue.length > MAX_QUEUE_SIZE
-        │   └── revert with MaxQueueSizeExceeded()
-        └── when newSupplyQueue.length <= MAX_QUEUE_SIZE
+        ├── when newSupplyQueue.length > MAX_QUEUE_LENGTH
+        │   └── revert with MaxQueueLengthExceeded()
+        └── when newSupplyQueue.length <= MAX_QUEUE_LENGTH
             ├── when some markets of newSupplyQueue have a zero cap
             │   └── revert with UnauthorizedMarket()
             └── when all the markets of newSupplyQueue have non zero cap
@@ -226,7 +214,7 @@
                 └── it shoud emit SetSupplyQueue(msg.sender, newSupplyQueue)
 
 .
-└── sortWithdrawQueue(uint256[] calldata indexes) external
+└── updateWithdrawQueue(uint256[] calldata indexes) external
     ├── when msg.sender not owner or curator or allocator
     │   └── revert with NotAllocatorRole()
     └── when msg.sender is owner or curator or allocator
@@ -238,7 +226,7 @@
             ├── when markets of withdrawQueue are missing in newWithdrawQueue
             │   ├── when one of these markets has non zero cap or vault's supply
             │   │   ├── it should compute the id of this market
-            │   │   └── revert with MissingMarket(id)
+            │   │   └── revert with InvalidMarketRemoval(id)
             │   └── when all these markets have zero cap and zero vault's supply
             │       └── it should delete the withdrawRank of these markets
             ├── it should set withdrawQueue to newWithdrawQueue
@@ -252,23 +240,25 @@
     └── when msg.sender is owner or curator or allocator
         ├── for each market withdrawn[i] from withdrawn
         │   ├── it should withdraw withdrawn[i].assets or withdrawn[i].shares
-        │   └── it should add the withdrawn amount to totalWithdrawn
+        │   ├── it should add the withdrawnAssets amount to totalWithdrawn
+        │   └── it should emit ReallocateWithdraw(id, withdrawnAssets, withdrawnShares)
         ├── for each market supplied[i] from supplied
         │   ├── if config[id].cap == 0
         │   │   └── revert with UnauthorizedMarket(id)
         │   ├── it should supply supplied[i].assets or supplied[i].shares
-        │   ├── it should add the supplied amount to totalSupplied
-        │   └── if supplyBalance(supplied[i].marketParams) > config[supplied[i].marketParams.id()].cap
-        │       └── revert with SupplyCapExceeded(id)
+        │   ├── it should add the suppliedAssets amount to totalSupplied
+        │   ├── if supplyBalance(supplied[i].marketParams) > config[supplied[i].marketParams.id()].cap
+        │   │   └── revert with SupplyCapExceeded(id)
+        │   └── it should emit ReallocateSupply(id, suppliedAssets, suppliedShares)
         ├── when totalWithdrawn > totalSupplied
         │   └── it should add totalWithdrawn - totalSupplied to idle
-        └── when totalWithdrawn <= totalSupplied
-            └── it should compute idleSupplied = totalSupplied - totalWithdrawn
-                ├── when idle < idleSupplied
-                │   └── revert with InsufficientIdle()
-                └── when idle >= idleSupplied
-                    └── it should remove idleSupplied from idle
-
+        ├── when totalWithdrawn <= totalSupplied
+        │   └── it should compute idleSupplied = totalSupplied - totalWithdrawn
+        │       ├── when idle < idleSupplied
+        │       │   └── revert with InsufficientIdle()
+        │       └── when idle >= idleSupplied
+        │           └── it should remove idleSupplied from idle
+        └── it should emit ReallocateIdle(idle)
 
 /* EXTERNAL */
 
@@ -289,27 +279,27 @@
 
 
 .
-└── revokeTimelock() external
+└── revokePendingTimelock() external
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokeTimelock(msg.sender, pendingTimelock)
+        ├── it should emit RevokePendingTimelock(msg.sender)
         └── it should delete pendingTimelock
 
 .
-└── revokeCap(Id id) external
+└── revokePendingCap(Id id) external
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokeCap(msg.sender, id, pendingCap[id])
+        ├── it should emit RevokePendingCap(msg.sender, id)
         └── it should delete pendingCap[id]
 
 .
-└── revokeGuardian() external
+└── revokePendingGuardian() external
     ├── when msg.sender not guardian
     │   └── revert with NotGuardian()
     └── when msg.sender is guardian
-        ├── it should emit RevokeGuardian(msg.sender, pendingGuardian);
+        ├── it should emit RevokePendingGuardian(msg.sender);
         └── it should delete pendingGuardian
 
 
