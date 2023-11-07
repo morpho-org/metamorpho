@@ -2,7 +2,13 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {IMetaMorpho, MarketConfig, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
+import {
+    MarketConfig,
+    PendingUint192,
+    PendingAddress,
+    MarketAllocation,
+    IMetaMorphoStaticTyping
+} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
 import {PendingUint192, PendingAddress, PendingLib} from "./libraries/PendingLib.sol";
@@ -27,7 +33,7 @@ import {IERC20, IERC4626, ERC20, ERC4626, Math, SafeERC20} from "@openzeppelin/t
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org
 /// @notice ERC4626 compliant vault allowing users to deposit assets to Morpho.
-contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorpho {
+contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorphoStaticTyping {
     using Math for uint256;
     using UtilsLib for uint256;
     using SafeCast for uint256;
@@ -203,11 +209,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
-            pendingTimelock.update(
-                // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-                uint192(newTimelock),
-                timelock
-            );
+            // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
+            pendingTimelock.update(uint192(newTimelock), timelock);
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -223,11 +226,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee < fee) {
             _setFee(newFee);
         } else {
-            pendingFee.update(
-                // Safe "unchecked" cast because newFee <= MAX_FEE.
-                uint192(newFee),
-                timelock
-            );
+            // Safe "unchecked" cast because newFee <= MAX_FEE.
+            pendingFee.update(uint192(newFee), timelock);
 
             emit EventsLib.SubmitFee(newFee);
         }
@@ -494,28 +494,28 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ERC4626 (PUBLIC) */
 
     /// @inheritdoc IERC20Metadata
-    function decimals() public view override(IERC20Metadata, ERC20, ERC4626) returns (uint8) {
+    function decimals() public view override(ERC20, ERC4626) returns (uint8) {
         return ERC4626.decimals();
     }
 
     /// @inheritdoc IERC4626
     /// @dev Warning: May be lower than the actual amount of assets that can be withdrawn by `owner` due to conversion
     /// roundings between shares and assets.
-    function maxWithdraw(address owner) public view override(IERC4626, ERC4626) returns (uint256 assets) {
+    function maxWithdraw(address owner) public view override returns (uint256 assets) {
         (assets,,) = _maxWithdraw(owner);
     }
 
     /// @inheritdoc IERC4626
     /// @dev Warning: May be lower than the actual amount of shares that can be redeemed by `owner` due to conversion
     /// roundings between shares and assets.
-    function maxRedeem(address owner) public view override(IERC4626, ERC4626) returns (uint256) {
+    function maxRedeem(address owner) public view override returns (uint256) {
         (uint256 assets, uint256 newTotalSupply, uint256 newTotalAssets) = _maxWithdraw(owner);
 
         return _convertToSharesWithTotals(assets, newTotalSupply, newTotalAssets, Math.Rounding.Floor);
     }
 
     /// @inheritdoc IERC4626
-    function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
+    function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
@@ -523,7 +523,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
+    function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
@@ -531,11 +531,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function withdraw(uint256 assets, address receiver, address owner)
-        public
-        override(IERC4626, ERC4626)
-        returns (uint256 shares)
-    {
+    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
@@ -545,11 +541,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function redeem(uint256 shares, address receiver, address owner)
-        public
-        override(IERC4626, ERC4626)
-        returns (uint256 assets)
-    {
+    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
@@ -559,7 +551,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function totalAssets() public view override(IERC4626, ERC4626) returns (uint256 assets) {
+    function totalAssets() public view override returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
             assets += _supplyBalance(_marketParams(withdrawQueue[i]));
         }

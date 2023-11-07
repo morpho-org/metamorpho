@@ -3,6 +3,7 @@ pragma solidity >=0.5.0;
 
 import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
+import {IERC20Permit} from "@openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
 
 import {MarketConfig, PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
 
@@ -16,7 +17,21 @@ struct MarketAllocation {
     uint256 shares;
 }
 
-interface IMetaMorpho is IERC4626 {
+interface IMulticall {
+    function multicall(bytes[] calldata) external returns (bytes[] memory);
+}
+
+interface IOwnable {
+    function owner() external returns (address);
+    function transferOwnership(address) external;
+    function renounceOwnership() external;
+    function acceptOwnership() external;
+    function pendingOwner() external view returns (address);
+}
+
+/// @dev This interface is used for factorizing IMetaMorphoStaticTyping and IMetaMorpho.
+/// @dev Consider using the IMetaMorpho interface instead of this one.
+interface IMetaMorphoBase {
     function MORPHO() external view returns (IMorpho);
 
     function curator() external view returns (address);
@@ -31,7 +46,6 @@ interface IMetaMorpho is IERC4626 {
     function supplyQueueLength() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueLength() external view returns (uint256);
-    function config(Id) external view returns (uint192 cap, bool enabled, uint48 disabledAt);
 
     function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);
@@ -39,21 +53,17 @@ interface IMetaMorpho is IERC4626 {
     function submitTimelock(uint256 newTimelock) external;
     function acceptTimelock() external;
     function revokePendingTimelock() external;
-    function pendingTimelock() external view returns (uint192 value, uint48 validAt);
 
     function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
     function acceptCap(Id id) external;
     function revokePendingCap(Id id) external;
-    function pendingCap(Id) external view returns (uint192 value, uint48 validAt);
 
     function submitFee(uint256 newFee) external;
     function acceptFee() external;
-    function pendingFee() external view returns (uint192 value, uint48 validAt);
 
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokePendingGuardian() external;
-    function pendingGuardian() external view returns (address guardian, uint48 validAt);
 
     function transferRewards(address) external;
 
@@ -67,8 +77,24 @@ interface IMetaMorpho is IERC4626 {
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
 }
 
-interface IPending {
-    function pendingTimelock() external view returns (PendingUint192 memory);
-    function pendingCap(Id) external view returns (PendingUint192 memory);
+/// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
+/// @dev Consider using the IMetaMorpho interface instead of this one.
+interface IMetaMorphoStaticTyping is IMetaMorphoBase {
+    function config(Id) external view returns (uint192 cap, bool enabled, uint48 disabledAt);
+    function pendingGuardian() external view returns (address guardian, uint48 validAt);
+    function pendingCap(Id) external view returns (uint192 value, uint48 validAt);
+    function pendingTimelock() external view returns (uint192 value, uint48 validAt);
+    function pendingFee() external view returns (uint192 value, uint48 validAt);
+}
+
+/// @title IMetaMorpho
+/// @author Morpho Labs
+/// @custom:contact security@morpho.org
+/// @dev Use this interface for MetaMorpho to have access to all the functions with the appropriate function signatures.
+interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMulticall {
+    function config(Id) external view returns (MarketConfig memory);
     function pendingGuardian() external view returns (PendingAddress memory);
+    function pendingCap(Id) external view returns (PendingUint192 memory);
+    function pendingTimelock() external view returns (PendingUint192 memory);
+    function pendingFee() external view returns (PendingUint192 memory);
 }

@@ -43,11 +43,11 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingTimelock();
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 validAt) = vault.pendingTimelock();
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
-        assertEq(pendingTimelock, 0, "pendingTimelock");
-        assertEq(validAt, 0, "validAt");
+        assertEq(pendingTimelock.value, 0, "pendingTimelock.value");
+        assertEq(pendingTimelock.validAt, 0, "pendingTimelock.validAt");
     }
 
     function testRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
@@ -67,14 +67,14 @@ contract GuardianTest is IntegrationTest {
         vm.prank(GUARDIAN);
         vault.revokePendingCap(id);
 
-        (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
-        (uint256 pendingCap, uint64 validAt) = vault.pendingCap(id);
+        MarketConfig memory marketConfig = vault.config(id);
+        PendingUint192 memory pendingCap = vault.pendingCap(id);
 
-        assertEq(newCap, 0, "newCap");
-        assertEq(enabled, false, "enabled");
-        assertEq(disabledAt, 0, "disabledAt");
-        assertEq(pendingCap, 0, "pendingCap");
-        assertEq(validAt, 0, "validAt");
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
+        assertEq(marketConfig.enabled, false, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
+        assertEq(pendingCap.value, 0, "pendingCap.value");
+        assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
     }
 
     function testRevokePendingGuardian(uint256 elapsed) public {
@@ -93,10 +93,10 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingGuardian();
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
+        PendingAddress memory pendingGuardian = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
-        assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(validAt, 0, "validAt");
+        assertEq(pendingGuardian.value, address(0), "pendingGuardian.value");
+        assertEq(pendingGuardian.validAt, 0, "pendingGuardian.validAt");
     }
 }
