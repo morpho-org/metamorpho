@@ -43,11 +43,11 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingTimelock();
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        (uint256 pendingTimelock, uint64 validAt) = vault.pendingTimelock();
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
         assertEq(pendingTimelock, 0, "pendingTimelock");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
@@ -68,13 +68,13 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingCap(id);
 
         (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
-        (uint256 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+        (uint256 pendingCap, uint64 validAt) = vault.pendingCap(id);
 
         assertEq(newCap, 0, "newCap");
         assertEq(enabled, false, "enabled");
         assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCap, 0, "pendingCap");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testRevokePendingGuardian(uint256 elapsed) public {
@@ -93,10 +93,10 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingGuardian();
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 }

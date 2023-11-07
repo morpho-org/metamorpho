@@ -21,7 +21,7 @@ contract MetaMorphoFactory {
     /// @notice Whether a MetaMorpho vault was created with the factory.
     mapping(address => bool) public isMetaMorpho;
 
-    /* CONSTRCUTOR */
+    /* CONSTRUCTOR */
 
     /// @dev Initializes the contract.
     /// @param morpho The address of the Morpho contract.

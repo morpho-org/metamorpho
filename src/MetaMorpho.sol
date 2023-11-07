@@ -2,11 +2,10 @@
 pragma solidity 0.8.21;
 
 import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
-import {
-    IMetaMorpho, MarketConfig, PendingUint192, PendingAddress, MarketAllocation
-} from "./interfaces/IMetaMorpho.sol";
+import {IMetaMorpho, MarketConfig, MarketAllocation} from "./interfaces/IMetaMorpho.sol";
 import {Id, MarketParams, Market, IMorpho} from "@morpho-blue/interfaces/IMorpho.sol";
 
+import {PendingUint192, PendingAddress, PendingLib} from "./libraries/PendingLib.sol";
 import {ConstantsLib} from "./libraries/ConstantsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 import {EventsLib} from "./libraries/EventsLib.sol";
@@ -37,6 +36,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
+    using PendingLib for PendingUint192;
+    using PendingLib for PendingAddress;
 
     /* IMMUTABLES */
 
@@ -155,9 +156,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Reverts if:
     /// - there's no pending value;
     /// - the timelock has not elapsed since the pending value has been submitted.
-    modifier afterTimelock(uint256 submittedAt) {
-        if (submittedAt == 0) revert ErrorsLib.NoPendingValue();
-        if (block.timestamp < submittedAt + timelock) revert ErrorsLib.TimelockNotElapsed();
+    modifier afterTimelock(uint256 validAt) {
+        if (validAt == 0) revert ErrorsLib.NoPendingValue();
+        if (block.timestamp < validAt) revert ErrorsLib.TimelockNotElapsed();
 
         _;
     }
@@ -201,8 +202,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
-            // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-            pendingTimelock = PendingUint192(uint192(newTimelock), uint64(block.timestamp));
+            pendingTimelock.update(
+                // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
+                uint192(newTimelock),
+                timelock
+            );
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -218,8 +222,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee < fee) {
             _setFee(newFee);
         } else {
-            // Safe "unchecked" cast because newFee <= MAX_FEE.
-            pendingFee = PendingUint192(uint192(newFee), uint64(block.timestamp));
+            pendingFee.update(
+                // Safe "unchecked" cast because newFee <= MAX_FEE.
+                uint192(newFee),
+                timelock
+            );
 
             emit EventsLib.SubmitFee(newFee);
         }
@@ -249,7 +256,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
-            pendingGuardian = PendingAddress(newGuardian, uint64(block.timestamp));
+            pendingGuardian.update(newGuardian, timelock);
 
             emit EventsLib.SubmitGuardian(newGuardian);
         }
@@ -271,7 +278,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap < supplyCap) {
             _setCap(id, newSupplyCap.toUint192());
         } else {
-            pendingCap[id] = PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp));
+            pendingCap[id].update(newSupplyCap.toUint192(), timelock);
 
             emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
         }
@@ -452,22 +459,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Accepts the `pendingTimelock`.
-    function acceptTimelock() external afterTimelock(pendingTimelock.submittedAt) {
+    function acceptTimelock() external afterTimelock(pendingTimelock.validAt) {
         _setTimelock(pendingTimelock.value);
     }
 
     /// @notice Accepts the `pendingFee`.
-    function acceptFee() external afterTimelock(pendingFee.submittedAt) {
+    function acceptFee() external afterTimelock(pendingFee.validAt) {
         _setFee(pendingFee.value);
     }
 
     /// @notice Accepts the `pendingGuardian`.
-    function acceptGuardian() external afterTimelock(pendingGuardian.submittedAt) {
+    function acceptGuardian() external afterTimelock(pendingGuardian.validAt) {
         _setGuardian(pendingGuardian.value);
     }
 
     /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external afterTimelock(pendingCap[id].submittedAt) {
+    function acceptCap(Id id) external afterTimelock(pendingCap[id].validAt) {
         _setCap(id, pendingCap[id].value);
     }
 

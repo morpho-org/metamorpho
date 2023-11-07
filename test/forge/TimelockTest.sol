@@ -31,11 +31,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitTimelock(timelock);
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        (uint256 pendingTimelock, uint64 validAt) = vault.pendingTimelock();
 
         assertEq(newTimelock, timelock, "newTimelock");
         assertEq(pendingTimelock, 0, "pendingTimelock");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testSubmitTimelockDecreased(uint256 timelock) public {
@@ -47,11 +47,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitTimelock(timelock);
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        (uint256 pendingTimelock, uint64 validAt) = vault.pendingTimelock();
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
         assertEq(pendingTimelock, timelock, "pendingTimelock");
-        assertEq(submittedAt, block.timestamp, "submittedAt");
+        assertEq(validAt, block.timestamp + TIMELOCK, "validAt");
     }
 
     function testSubmitTimelockNotOwner(uint256 timelock) public {
@@ -110,11 +110,11 @@ contract TimelockTest is IntegrationTest {
         vault.acceptTimelock();
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        (uint256 pendingTimelock, uint64 validAt) = vault.pendingTimelock();
 
         assertEq(newTimelock, timelock, "newTimelock");
         assertEq(pendingTimelock, 0, "pendingTimelock");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testAcceptTimelockNoPendingValue() public {
@@ -145,11 +145,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitFee(fee);
 
         uint256 newFee = vault.fee();
-        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+        (uint256 pendingFee, uint64 validAt) = vault.pendingFee();
 
         assertEq(newFee, fee, "newFee");
         assertEq(pendingFee, 0, "pendingFee");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testSubmitFeeIncreased(uint256 fee) public {
@@ -161,11 +161,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitFee(fee);
 
         uint256 newFee = vault.fee();
-        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+        (uint256 pendingFee, uint64 validAt) = vault.pendingFee();
 
         assertEq(newFee, FEE, "newFee");
         assertEq(pendingFee, fee, "pendingFee");
-        assertEq(submittedAt, block.timestamp, "submittedAt");
+        assertEq(validAt, block.timestamp + TIMELOCK, "validAt");
     }
 
     function testAcceptFee(uint256 fee) public {
@@ -182,11 +182,57 @@ contract TimelockTest is IntegrationTest {
         vault.acceptFee();
 
         uint256 newFee = vault.fee();
-        (uint256 pendingFee, uint64 submittedAt) = vault.pendingFee();
+        (uint256 pendingFee, uint64 validAt) = vault.pendingFee();
 
         assertEq(newFee, fee, "newFee");
         assertEq(pendingFee, 0, "pendingFee");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
+    }
+
+    function testAcceptFeeTimelockIncreased(uint256 fee, uint256 timelock, uint256 elapsed) public {
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
+        timelock = bound(timelock, TIMELOCK + 1, ConstantsLib.MAX_TIMELOCK);
+        elapsed = bound(elapsed, TIMELOCK + 1, timelock);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        _setTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
+        emit EventsLib.SetFee(address(this), fee);
+        vault.acceptFee();
+
+        uint256 newFee = vault.fee();
+        (uint256 pendingFee, uint64 validAt) = vault.pendingFee();
+
+        assertEq(newFee, fee, "newFee");
+        assertEq(pendingFee, 0, "pendingFee");
+        assertEq(validAt, 0, "validAt");
+    }
+
+    function testAcceptFeeTimelockDecreased(uint256 fee, uint256 timelock, uint256 elapsed) public {
+        fee = bound(fee, FEE + 1, ConstantsLib.MAX_FEE);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+        elapsed = bound(elapsed, 1, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.prank(OWNER);
+        vault.submitFee(fee);
+
+        vm.warp(block.timestamp + TIMELOCK - elapsed);
+
+        vault.acceptTimelock();
+
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
+        vault.acceptFee();
     }
 
     function testAcceptFeeNoPendingValue() public {
@@ -216,11 +262,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitGuardian(guardian);
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian, guardian, "pendingGuardian");
-        assertEq(submittedAt, block.timestamp, "submittedAt");
+        assertEq(validAt, block.timestamp + TIMELOCK, "validAt");
     }
 
     function testSubmitGuardianFromZero() public {
@@ -232,11 +278,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitGuardian(GUARDIAN);
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testSubmitGuardianZero() public {
@@ -244,11 +290,11 @@ contract TimelockTest is IntegrationTest {
         vault.submitGuardian(address(0));
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, block.timestamp, "submittedAt");
+        assertEq(validAt, block.timestamp + TIMELOCK, "validAt");
     }
 
     function testAcceptGuardian() public {
@@ -264,11 +310,58 @@ contract TimelockTest is IntegrationTest {
         vault.acceptGuardian();
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
 
         assertEq(newGuardian, guardian, "newGuardian");
         assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
+    }
+
+    function testAcceptGuardianTimelockIncreased(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, TIMELOCK + 1, ConstantsLib.MAX_TIMELOCK);
+        elapsed = bound(elapsed, TIMELOCK + 1, timelock);
+
+        address guardian = makeAddr("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        _setTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.SetGuardian(address(this), guardian);
+        vault.acceptGuardian();
+
+        address newGuardian = vault.guardian();
+        (address pendingGuardian, uint96 validAt) = vault.pendingGuardian();
+
+        assertEq(newGuardian, guardian, "newGuardian");
+        assertEq(pendingGuardian, address(0), "pendingGuardian");
+        assertEq(validAt, 0, "validAt");
+    }
+
+    function testAcceptGuardianTimelockDecreased(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+        elapsed = bound(elapsed, 1, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        address guardian = makeAddr("Guardian2");
+
+        vm.prank(OWNER);
+        vault.submitGuardian(guardian);
+
+        vm.warp(block.timestamp + TIMELOCK - elapsed);
+
+        vault.acceptTimelock();
+
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
+        vault.acceptGuardian();
     }
 
     function testAcceptGuardianNoPendingValue() public {
@@ -302,13 +395,13 @@ contract TimelockTest is IntegrationTest {
         vault.submitCap(marketParams, cap);
 
         (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
-        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+        (uint192 pendingCap, uint64 validAt) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
         assertEq(enabled, true, "enabled");
         assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCap, 0, "pendingCap");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(validAt, 0, "validAt");
     }
 
     function testSubmitCapIncreased(uint256 cap) public {
@@ -323,13 +416,13 @@ contract TimelockTest is IntegrationTest {
         vault.submitCap(marketParams, cap);
 
         (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
-        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+        (uint192 pendingCap, uint64 validAt) = vault.pendingCap(id);
 
         assertEq(newCap, 0, "newCap");
         assertEq(enabled, false, "enabled");
         assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCap, cap, "pendingCap");
-        assertEq(submittedAt, block.timestamp, "submittedAt");
+        assertEq(validAt, block.timestamp + TIMELOCK, "validAt");
         assertEq(vault.supplyQueueLength(), 1, "supplyQueueLength");
         assertEq(vault.withdrawQueueLength(), 1, "withdrawQueueLength");
     }
@@ -350,15 +443,69 @@ contract TimelockTest is IntegrationTest {
         vault.acceptCap(id);
 
         (uint192 newCap, bool enabled, uint64 disabledAt) = vault.config(id);
-        (uint192 pendingCapAfter, uint64 submittedAtAfter) = vault.pendingCap(id);
+        (uint192 pendingCapAfter, uint64 validAtAfter) = vault.pendingCap(id);
 
         assertEq(newCap, cap, "newCap");
         assertEq(enabled, true, "enabled");
         assertEq(disabledAt, 0, "disabledAt");
         assertEq(pendingCapAfter, 0, "pendingCapAfter");
-        assertEq(submittedAtAfter, 0, "submittedAtAfter");
+        assertEq(validAtAfter, 0, "validAtAfter");
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+    }
+
+    function testAcceptCapIncreasedTimelockIncreased(uint256 cap, uint256 timelock, uint256 elapsed) public {
+        cap = bound(cap, CAP + 1, type(uint192).max);
+        timelock = bound(timelock, TIMELOCK + 1, ConstantsLib.MAX_TIMELOCK);
+        elapsed = bound(elapsed, TIMELOCK + 1, timelock);
+
+        MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
+
+        vm.prank(CURATOR);
+        vault.submitCap(marketParams, cap);
+
+        _setTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit();
+        emit EventsLib.SetCap(address(this), id, cap);
+        vault.acceptCap(id);
+
+        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
+        (uint192 pendingCapAfter, uint64 validAtAfter) = vault.pendingCap(id);
+
+        assertEq(newCap, cap, "newCap");
+        assertEq(withdrawRank, 1, "withdrawRank");
+        assertEq(pendingCapAfter, 0, "pendingCapAfter");
+        assertEq(validAtAfter, 0, "validAtAfter");
+        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
+        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+    }
+
+    function testAcceptCapIncreasedTimelockDecreased(uint256 cap, uint256 timelock, uint256 elapsed) public {
+        cap = bound(cap, CAP + 1, type(uint192).max);
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+        elapsed = bound(elapsed, 1, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
+
+        vm.prank(CURATOR);
+        vault.submitCap(marketParams, cap);
+
+        vm.warp(block.timestamp + TIMELOCK - elapsed);
+
+        vault.acceptTimelock();
+
+        vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
+        vault.acceptCap(id);
     }
 
     function testAcceptCapNoPendingValue() public {
