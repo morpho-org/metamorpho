@@ -95,6 +95,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     uint256 public idle;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
+    /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
     uint256 public lastTotalAssets;
 
     /* CONSTRUCTOR */
