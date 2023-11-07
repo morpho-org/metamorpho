@@ -82,9 +82,20 @@ contract ReallocateWithdrawTest is IntegrationTest {
             withdrawnAssets[2].toSharesUp(totalSupplyAssets[2], totalSupplyShares[2])
         ];
 
-        if (withdrawnAssets[0] > 0) withdrawn.push(MarketAllocation(allMarkets[0], withdrawnAssets[0]));
-        if (withdrawnAssets[1] > 0) withdrawn.push(MarketAllocation(allMarkets[1], withdrawnAssets[1]));
-        if (withdrawnAssets[2] > 0) withdrawn.push(MarketAllocation(allMarkets[2], withdrawnAssets[2]));
+        vm.expectEmit(true, true, true, false, address(vault));
+
+        if (withdrawnAssets[0] > 0) {
+            withdrawn.push(MarketAllocation(allMarkets[0], withdrawnAssets[0]));
+            emit EventsLib.ReallocateWithdraw(ALLOCATOR, allMarkets[0].id(), 0, 0);
+        }
+        if (withdrawnAssets[1] > 0) {
+            withdrawn.push(MarketAllocation(allMarkets[1], withdrawnAssets[1]));
+            emit EventsLib.ReallocateWithdraw(ALLOCATOR, allMarkets[1].id(), 0, 0);
+        }
+        if (withdrawnAssets[2] > 0) {
+            withdrawn.push(MarketAllocation(allMarkets[2], withdrawnAssets[2]));
+            emit EventsLib.ReallocateWithdraw(ALLOCATOR, allMarkets[2].id(), 0, 0);
+        }
 
         totalSupplyAssets[0] -= withdrawnAssets[0];
         totalSupplyAssets[1] -= withdrawnAssets[1];
@@ -111,9 +122,20 @@ contract ReallocateWithdrawTest is IntegrationTest {
             suppliedAssets[2].toSharesDown(totalSupplyAssets[2], totalSupplyShares[2])
         ];
 
-        if (suppliedAssets[0] > 0) supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
-        if (suppliedAssets[1] > 0) supplied.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
-        if (suppliedAssets[2] > 0) supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
+        if (suppliedAssets[0] > 0) {
+            supplied.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
+            emit EventsLib.ReallocateSupply(ALLOCATOR, allMarkets[0].id(), 0, 0);
+        }
+        if (suppliedAssets[1] > 0) {
+            supplied.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
+            emit EventsLib.ReallocateSupply(ALLOCATOR, allMarkets[1].id(), 0, 0);
+        }
+        if (suppliedAssets[2] > 0) {
+            supplied.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
+            emit EventsLib.ReallocateSupply(ALLOCATOR, allMarkets[2].id(), 0, 0);
+        }
+
+        emit EventsLib.ReallocateIdle(ALLOCATOR, 0);
 
         vm.prank(ALLOCATOR);
         vault.reallocate(withdrawn, supplied);
