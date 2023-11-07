@@ -50,7 +50,7 @@ interface IMetaMorpho is IERC4626 {
     function supplyQueueLength() external view returns (uint256);
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueLength() external view returns (uint256);
-    function config(Id) external view returns (uint192 cap, uint64 enabled);
+    function config(Id) external view returns (uint192 cap, bool enabled);
 
     function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);
