@@ -226,7 +226,7 @@ contract FeeTest is IntegrationTest {
         emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
         _setFee(fee);
 
-        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
+        assertEq(vault.lastTotalAssets(), totalAssetsAfter, "lastTotalAssets");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
