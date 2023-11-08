@@ -46,9 +46,19 @@ contract ReallocateWithdrawTest is IntegrationTest {
     }
 
     function testReallocateWithdrawInconsistentAsset() public {
-        allMarkets[0].loanToken = address(1);
+        ERC20Mock loanToken2 = new ERC20Mock("loan2", "B2");
+        allMarkets[0].loanToken = address(loanToken2);
 
-        allocations.push(MarketAllocation(allMarkets[0], 1));
+        morpho.createMarket(allMarkets[0]);
+
+        loanToken2.setBalance(SUPPLIER, 1);
+
+        vm.startPrank(SUPPLIER);
+        loanToken2.approve(address(morpho), type(uint256).max);
+        morpho.supply(allMarkets[0], 1, 0, address(vault), hex"");
+        vm.stopPrank();
+
+        allocations.push(MarketAllocation(allMarkets[0], 0));
 
         vm.prank(ALLOCATOR);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, allMarkets[0].id()));
