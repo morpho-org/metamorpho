@@ -61,8 +61,8 @@ It can:
 - Decrease the supply cap of any market.
   - To softly remove a market, it is expected from the allocator role to reallocate the supplied liquidity to another enabled market first.
 - [Timelocked] Increase the supply cap of any market.
-- [Timelocked] Submits the forced removal of a market.
-  - This action is typically designed to force the removal of a market that keeps reverting thus locks the vault.
+- [Timelocked] Submit the forced removal of a market.
+  - This action is typically designed to force the removal of a market that keeps reverting thus locking the vault.
   - After the timelock has elapsed, the allocator role is free to remove the market from the withdraw queue. The funds supplied to this market will be lost.
   - If the market ever functions again, the allocator role can withdraw the funds that were previously lost.
 

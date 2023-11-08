@@ -354,7 +354,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                     revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
                 }
 
-                config[id].enabled = false;
+                delete config[id];
             }
         }
 
@@ -448,6 +448,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.RevokePendingCap(_msgSender(), id);
     }
 
+    /// @notice Revokes the pending removal of the market defined by `id`.
     function revokePendingMarketRemoval(Id id) external onlyGuardian {
         delete config[id].removableAt;
 
