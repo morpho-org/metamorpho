@@ -40,8 +40,8 @@ library EventsLib {
     /// @notice Emitted when a new `cap` is set for market identified by `id`.
     event SetCap(address indexed caller, Id indexed id, uint256 cap);
 
-    /// @notice Emitted when the market identified by `id` is disabled.
-    event DisableMarket(address indexed caller, Id indexed id);
+    /// @notice Emitted when the market identified by `id` is submitted for removal.
+    event SubmitMarketRemoval(address indexed caller, Id indexed id);
 
     /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
     event UpdateLastTotalAssets(uint256 newTotalAssets);

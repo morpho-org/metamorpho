@@ -157,7 +157,7 @@ contract MarketTest is IntegrationTest {
         _setCaps();
 
         vm.prank(CURATOR);
-        vault.disableMarket(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2].id());
 
         vm.warp(block.timestamp + TIMELOCK);
 
@@ -243,7 +243,7 @@ contract MarketTest is IntegrationTest {
         _setCaps();
 
         vm.prank(CURATOR);
-        vault.disableMarket(allMarkets[0].id());
+        vault.submitMarketRemoval(allMarkets[0].id());
 
         vm.warp(block.timestamp + elapsed);
 

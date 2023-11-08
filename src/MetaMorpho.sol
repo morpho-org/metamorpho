@@ -285,13 +285,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
     }
 
-    function disableMarket(Id id) external onlyCuratorRole {
+    /// @notice Submits a forced market removal from the vault, losing all funds supplied to the market.
+    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
+    function submitMarketRemoval(Id id) external onlyCuratorRole {
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
         if (config[id].cap == 0) revert ErrorsLib.MarketNotEnabled();
 
         config[id].disable(timelock);
 
-        emit EventsLib.DisableMarket(_msgSender(), id);
+        emit EventsLib.SubmitMarketRemoval(_msgSender(), id);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
