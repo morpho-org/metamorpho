@@ -58,6 +58,9 @@ interface IMetaMorphoBase {
     function acceptCap(Id id) external;
     function revokePendingCap(Id id) external;
 
+    function submitMarketRemoval(Id id) external;
+    function revokePendingMarketRemoval(Id id) external;
+
     function submitFee(uint256 newFee) external;
     function acceptFee() external;
 
@@ -75,7 +78,6 @@ interface IMetaMorphoBase {
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
     function updateWithdrawQueue(uint256[] calldata indexes) external;
     function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
-    function submitMarketRemoval(Id id) external;
 }
 
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.

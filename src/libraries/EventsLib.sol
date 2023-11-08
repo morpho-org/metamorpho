@@ -61,6 +61,9 @@ library EventsLib {
     /// @notice Emitted when a `pendingGuardian` is revoked.
     event RevokePendingGuardian(address indexed caller);
 
+    /// @notice Emitted when a pending market removal is revoked.
+    event RevokePendingMarketRemoval(address indexed caller, Id indexed id);
+
     /// @notice Emitted when the `supplyQgueue` is set to `newSupplyQueue`.
     event SetSupplyQueue(address indexed caller, Id[] newSupplyQueue);
 

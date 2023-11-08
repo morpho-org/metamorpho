@@ -156,6 +156,8 @@ contract MarketTest is IntegrationTest {
     function testUpdateWithdrawQueueRemovingDisabledMarket() public {
         _setCaps();
 
+        _setCap(allMarkets[2], 0);
+
         vm.prank(CURATOR);
         vault.submitMarketRemoval(allMarkets[2].id());
 
@@ -241,6 +243,8 @@ contract MarketTest is IntegrationTest {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         _setCaps();
+
+        _setCap(allMarkets[0], 0);
 
         vm.prank(CURATOR);
         vault.submitMarketRemoval(allMarkets[0].id());

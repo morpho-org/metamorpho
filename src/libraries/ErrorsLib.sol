@@ -57,9 +57,6 @@ library ErrorsLib {
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();
 
-    /// @notice Thrown when disabling a market which has not been previously enabled.
-    error MarketNotEnabled();
-
     /// @notice Thrown when the submitted timelock is above the max timelock.
     error AboveMaxTimelock();
 

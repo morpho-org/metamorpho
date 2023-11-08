@@ -96,4 +96,29 @@ contract GuardianTest is IntegrationTest {
         assertEq(pendingGuardian.value, address(0), "pendingGuardian.value");
         assertEq(pendingGuardian.validAt, 0, "pendingGuardian.validAt");
     }
+
+    function testRevokePendingMarketRemoval(uint256 elapsed) public {
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
+
+        _setCap(marketParams, CAP);
+
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(id);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.RevokePendingMarketRemoval(GUARDIAN, id);
+        vm.prank(GUARDIAN);
+        vault.revokePendingMarketRemoval(id);
+
+        MarketConfig memory marketConfig = vault.config(id);
+
+        assertEq(marketConfig.cap, CAP, "marketConfig.cap");
+        assertEq(marketConfig.enabled, true, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
+    }
 }

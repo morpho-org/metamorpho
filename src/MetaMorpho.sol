@@ -286,10 +286,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a forced market removal from the vault, losing all funds supplied to the market.
+    /// @dev To remove it from the withdraw queue after the timelock, the market also needs to have a zero cap.
     /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
     function submitMarketRemoval(Id id) external onlyCuratorRole {
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
-        if (config[id].cap == 0) revert ErrorsLib.MarketNotEnabled();
 
         config[id].disable(timelock);
 
@@ -355,6 +355,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 }
 
                 config[id].enabled = false;
+                config[id].removableAt = 0;
             }
         }
 
@@ -446,6 +447,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         delete pendingCap[id];
 
         emit EventsLib.RevokePendingCap(_msgSender(), id);
+    }
+
+    function revokePendingMarketRemoval(Id id) external onlyGuardian {
+        delete config[id].removableAt;
+
+        emit EventsLib.RevokePendingMarketRemoval(_msgSender(), id);
     }
 
     /* EXTERNAL */
@@ -706,7 +713,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         marketConfig.cap = supplyCap;
-        marketConfig.removableAt = 0;
 
         emit EventsLib.SetCap(_msgSender(), id, supplyCap);
 

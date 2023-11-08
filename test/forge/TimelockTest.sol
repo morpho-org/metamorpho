@@ -533,7 +533,7 @@ contract TimelockTest is IntegrationTest {
 
         MarketConfig memory marketConfig = vault.config(id);
 
-        assertEq(marketConfig.cap, 0, "marketConfig.cap");
+        assertEq(marketConfig.cap, CAP, "marketConfig.cap");
         assertEq(marketConfig.enabled, true, "marketConfig.enabled");
         assertEq(marketConfig.removableAt, block.timestamp + TIMELOCK, "marketConfig.removableAt");
     }
