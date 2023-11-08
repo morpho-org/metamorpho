@@ -104,6 +104,7 @@ contract GuardianTest is IntegrationTest {
         Id id = marketParams.id();
 
         _setCap(marketParams, CAP);
+        _setCap(marketParams, 0);
 
         vm.prank(CURATOR);
         vault.submitMarketRemoval(id);
@@ -117,7 +118,7 @@ contract GuardianTest is IntegrationTest {
 
         MarketConfig memory marketConfig = vault.config(id);
 
-        assertEq(marketConfig.cap, CAP, "marketConfig.cap");
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
         assertEq(marketConfig.enabled, true, "marketConfig.enabled");
         assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
     }

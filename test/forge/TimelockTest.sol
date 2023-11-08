@@ -528,13 +528,21 @@ contract TimelockTest is IntegrationTest {
         MarketParams memory marketParams = allMarkets[0];
         Id id = marketParams.id();
 
+        _setCap(marketParams, 0);
+
         vm.prank(CURATOR);
         vault.submitMarketRemoval(id);
 
         MarketConfig memory marketConfig = vault.config(id);
 
-        assertEq(marketConfig.cap, CAP, "marketConfig.cap");
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
         assertEq(marketConfig.enabled, true, "marketConfig.enabled");
         assertEq(marketConfig.removableAt, block.timestamp + TIMELOCK, "marketConfig.removableAt");
+    }
+
+    function testSubmitMarketRemovalMarketNotEnabled() public {
+        vm.expectRevert(ErrorsLib.MarketNotEnabled.selector);
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[1].id());
     }
 }

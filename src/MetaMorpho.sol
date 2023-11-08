@@ -290,6 +290,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
     function submitMarketRemoval(Id id) external onlyCuratorRole {
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
+        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
 
         config[id].disable(timelock);
 
@@ -344,14 +345,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
-
                 if (config[id].removableAt != 0) {
                     if (block.timestamp < config[id].removableAt) {
                         revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
                     }
-                } else if (MORPHO.supplyShares(id, address(this)) != 0) {
-                    revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
+                } else {
+                    if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
+
+                    if (MORPHO.supplyShares(id, address(this)) != 0) {
+                        revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
+                    }
                 }
 
                 delete config[id];

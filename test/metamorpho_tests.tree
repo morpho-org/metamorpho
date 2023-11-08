@@ -205,6 +205,8 @@
     └── when msg.sender is owner or curator
         ├── when config[id].removableAt != 0
         │   └── revert with AlreadySet()
+        ├── when !config[id].enabled
+        │   └── revert with MarketNotEnabled()
         └── when config[id].removableAt == 0
             ├── it should set config[id].removableAt to uint56(block.timestamp + timelock)
             └── it should emit EventsLib.SubmitMarketRemoval(msg.sender, id)
