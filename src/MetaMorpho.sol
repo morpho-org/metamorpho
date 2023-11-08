@@ -351,12 +351,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
 
-            MORPHO.accrueInterest(allocation.marketParams);
-
-            Market memory market = MORPHO.market(id);
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) =
+                MORPHO.expectedMarketBalances(allocation.marketParams);
 
             uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-            uint256 supplyAssets = supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
+            uint256 supplyAssets = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
             uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
             if (withdrawn > 0) {
