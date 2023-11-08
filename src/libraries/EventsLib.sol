@@ -79,7 +79,10 @@ library EventsLib {
     event ReallocateIdle(address indexed caller, uint256 idle);
 
     /// @notice Emitted when fees are accrued.
-    event AccrueFee(uint256 feeShares);
+    /// @param lastTotalAssets The assets of the vault before the interaction.
+    /// @param newTotalAssets The assets of the vault after accruing the interest but before the interaction.
+    /// @param feeShares The shares minted to the fee recipient.
+    event AccrueInterest(uint256 lastTotalAssets, uint256 newTotalAssets, uint256 feeShares);
 
     /// @notice Emitted when an `amount` of `token` is transferred to the `rewardsRecipient` by `caller`.
     event TransferRewards(address indexed caller, address indexed token, uint256 amount);
