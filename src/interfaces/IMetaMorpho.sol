@@ -84,6 +84,7 @@ interface IMetaMorpho is IERC4626 {
 }
 
 interface IPending {
+    function pendingFee() external view returns (PendingUint192 memory);
     function pendingTimelock() external view returns (PendingUint192 memory);
     function pendingCap(Id) external view returns (PendingUint192 memory);
     function pendingGuardian() external view returns (PendingAddress memory);

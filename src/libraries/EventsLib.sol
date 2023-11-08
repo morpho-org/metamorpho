@@ -54,7 +54,7 @@ library EventsLib {
     /// @notice Emitted when a `pendingGuardian` is revoked.
     event RevokeGuardian(address indexed caller, PendingAddress pendingGuardian);
 
-    /// @notice Emitted when the `supplyQgueue` is set to `newSupplyQueue`.
+    /// @notice Emitted when the `supplyQueue` is set to `newSupplyQueue`.
     event SetSupplyQueue(address indexed caller, Id[] newSupplyQueue);
 
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.
