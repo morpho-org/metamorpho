@@ -7,21 +7,21 @@ struct MarketConfig {
     /// @notice Whether the market is in the withdraw queue.
     bool enabled;
     /// @notice The timestamp at which the market can be instantly removed from the withdraw queue.
-    uint48 removableAt;
+    uint56 removableAt;
 }
 
 struct PendingUint192 {
     /// @notice The pending value to set.
     uint192 value;
     /// @notice The timestamp at which the pending value becomes valid.
-    uint48 validAt;
+    uint56 validAt;
 }
 
 struct PendingAddress {
     /// @notice The pending value to set.
     address value;
     /// @notice The timestamp at which the pending value becomes valid.
-    uint48 validAt;
+    uint56 validAt;
 }
 
 /// @title PendingLib
@@ -34,7 +34,7 @@ library PendingLib {
     function update(PendingUint192 storage pending, uint192 newValue, uint256 timelock) internal {
         pending.value = newValue;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        pending.validAt = uint48(block.timestamp) + uint48(timelock);
+        pending.validAt = uint56(block.timestamp + timelock);
     }
 
     /// @dev Updates `pending`'s value to `newValue` and its corresponding `validAt` timestamp.
@@ -42,7 +42,7 @@ library PendingLib {
     function update(PendingAddress storage pending, address newValue, uint256 timelock) internal {
         pending.value = newValue;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        pending.validAt = uint48(block.timestamp) + uint48(timelock);
+        pending.validAt = uint56(block.timestamp + timelock);
     }
 
     /// @dev Marks the market associated to the given config as removable starting `timelock` seconds in the future.
@@ -50,6 +50,6 @@ library PendingLib {
     function disable(MarketConfig storage config, uint256 timelock) internal {
         config.cap = 0;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        config.removableAt = uint48(block.timestamp) + uint48(timelock);
+        config.removableAt = uint56(block.timestamp + timelock);
     }
 }

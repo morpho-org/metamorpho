@@ -81,11 +81,11 @@ interface IMetaMorphoBase {
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoStaticTyping is IMetaMorphoBase {
-    function config(Id) external view returns (uint192 cap, bool enabled, uint48 disabledAt);
-    function pendingGuardian() external view returns (address guardian, uint48 validAt);
-    function pendingCap(Id) external view returns (uint192 value, uint48 validAt);
-    function pendingTimelock() external view returns (uint192 value, uint48 validAt);
-    function pendingFee() external view returns (uint192 value, uint48 validAt);
+    function config(Id) external view returns (uint192 cap, bool enabled, uint56 disabledAt);
+    function pendingGuardian() external view returns (address guardian, uint56 validAt);
+    function pendingCap(Id) external view returns (uint192 value, uint56 validAt);
+    function pendingTimelock() external view returns (uint192 value, uint56 validAt);
+    function pendingFee() external view returns (uint192 value, uint56 validAt);
 }
 
 /// @title IMetaMorpho
