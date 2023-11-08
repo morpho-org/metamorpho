@@ -376,16 +376,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
                 totalWithdrawn += withdrawnAssets;
             } else {
-                uint256 supplied = allocation.assets.zeroFloorSub(supplyAssets);
-                if (supplied == 0) continue;
+                uint256 suppliedAssets = allocation.assets.zeroFloorSub(supplyAssets);
+                if (suppliedAssets == 0) continue;
 
                 uint256 supplyCap = config[id].cap;
                 if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
 
-                if (supplyAssets + supplied > supplyCap) revert ErrorsLib.SupplyCapExceeded(id);
+                if (supplyAssets + suppliedAssets > supplyCap) revert ErrorsLib.SupplyCapExceeded(id);
 
-                (uint256 suppliedAssets, uint256 suppliedShares) =
-                    MORPHO.supply(allocation.marketParams, supplied, 0, address(this), hex"");
+                // The market's loan asset is guaranteed to be the vault's asset because it has a non-zero supply cap.
+                (, uint256 suppliedShares) =
+                    MORPHO.supply(allocation.marketParams, suppliedAssets, 0, address(this), hex"");
 
                 emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
 
