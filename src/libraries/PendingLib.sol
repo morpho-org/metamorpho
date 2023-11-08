@@ -25,7 +25,7 @@ library PendingLib {
     function update(PendingUint192 storage pending, uint192 newValue, uint256 timelock) internal {
         pending.value = newValue;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        pending.validAt = uint64(block.timestamp) + uint64(timelock);
+        pending.validAt = uint64(block.timestamp + timelock);
     }
 
     /// @dev Updates `pending`'s value to `newValue` and its corresponding `validAt` timestamp.
@@ -33,6 +33,6 @@ library PendingLib {
     function update(PendingAddress storage pending, address newValue, uint256 timelock) internal {
         pending.value = newValue;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        pending.validAt = uint64(block.timestamp) + uint64(timelock);
+        pending.validAt = uint64(block.timestamp + timelock);
     }
 }
