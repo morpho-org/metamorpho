@@ -652,7 +652,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the vault's balance the market defined by `marketParams`.
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyBalance(marketParams, address(this));
+        return MORPHO.expectedSupplyAssets(marketParams, address(this));
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
