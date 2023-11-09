@@ -280,7 +280,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function setSupplyQueue(Id[] calldata newSupplyQueue) external onlyAllocatorRole {
         uint256 length = newSupplyQueue.length;
 
-        if (length > ConstantsLib.MAX_QUEUE_SIZE) revert ErrorsLib.MaxQueueSizeExceeded();
+        if (length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
 
         for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
@@ -401,35 +401,35 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ONLY GUARDIAN FUNCTIONS */
 
     /// @notice Revokes the `pendingTimelock`.
-    function revokeTimelock() external onlyGuardian {
-        emit EventsLib.RevokeTimelock(_msgSender(), pendingTimelock);
-
+    function revokePendingTimelock() external onlyGuardian {
         delete pendingTimelock;
+
+        emit EventsLib.RevokePendingTimelock(_msgSender());
     }
 
     /// @notice Revokes the `pendingGuardian`.
-    function revokeGuardian() external onlyGuardian {
-        emit EventsLib.RevokeGuardian(_msgSender(), pendingGuardian);
-
+    function revokePendingGuardian() external onlyGuardian {
         delete pendingGuardian;
+
+        emit EventsLib.RevokePendingGuardian(_msgSender());
     }
 
     /// @notice Revokes the pending cap of the market defined by `id`.
-    function revokeCap(Id id) external onlyGuardian {
-        emit EventsLib.RevokeCap(_msgSender(), id, pendingCap[id]);
-
+    function revokePendingCap(Id id) external onlyGuardian {
         delete pendingCap[id];
+
+        emit EventsLib.RevokePendingCap(_msgSender(), id);
     }
 
     /* EXTERNAL */
 
-    /// @notice Returns the size of the supply queue.
-    function supplyQueueSize() external view returns (uint256) {
+    /// @notice Returns the length of the supply queue.
+    function supplyQueueLength() external view returns (uint256) {
         return supplyQueue.length;
     }
 
-    /// @notice Returns the size of the withdraw queue.
-    function withdrawQueueSize() external view returns (uint256) {
+    /// @notice Returns the length of the withdraw queue.
+    function withdrawQueueLength() external view returns (uint256) {
         return withdrawQueue.length;
     }
 
@@ -671,12 +671,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             supplyQueue.push(id);
             withdrawQueue.push(id);
 
-            if (supplyQueue.length > ConstantsLib.MAX_QUEUE_SIZE || withdrawQueue.length > ConstantsLib.MAX_QUEUE_SIZE)
-            {
-                revert ErrorsLib.MaxQueueSizeExceeded();
+            if (
+                supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                    || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+            ) {
+                revert ErrorsLib.MaxQueueLengthExceeded();
             }
 
-            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_SIZE.
+            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_LENGTH.
             marketConfig.withdrawRank = uint64(withdrawQueue.length);
         }
 

@@ -61,7 +61,7 @@ library ErrorsLib {
     error TimelockNotElapsed();
 
     /// @notice Thrown when too many markets are in the withdraw queue.
-    error MaxQueueSizeExceeded();
+    error MaxQueueLengthExceeded();
 
     /// @notice Thrown when setting the fee to a non zero value while the fee recipient is the zero address.
     error ZeroFeeRecipient();

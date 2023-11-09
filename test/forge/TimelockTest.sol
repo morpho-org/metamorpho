@@ -256,8 +256,8 @@ contract TimelockTest is IntegrationTest {
         assertEq(withdrawRank, 0, "withdrawRank");
         assertEq(pendingCap, cap, "pendingCap");
         assertEq(submittedAt, block.timestamp, "submittedAt");
-        assertEq(vault.supplyQueueSize(), 1, "supplyQueueSize");
-        assertEq(vault.withdrawQueueSize(), 1, "withdrawQueueSize");
+        assertEq(vault.supplyQueueLength(), 1, "supplyQueueLength");
+        assertEq(vault.withdrawQueueLength(), 1, "withdrawQueueLength");
     }
 
     function testAcceptCapIncreased(uint256 cap) public {

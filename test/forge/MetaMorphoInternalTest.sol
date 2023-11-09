@@ -14,14 +14,14 @@ contract MetaMorphoInternalTest is InternalTest {
     using SharesMathLib for uint256;
     using UtilsLib for uint256;
 
-    function testSetCapMaxQueueSizeExcedeed() public {
+    function testSetCapMaxQueueLengthExcedeed() public {
         for (uint256 i; i < NB_MARKETS - 1; ++i) {
             Id id = allMarkets[i].id();
             _setCap(id, CAP);
         }
 
         Id lastId = allMarkets[NB_MARKETS - 1].id();
-        vm.expectRevert(ErrorsLib.MaxQueueSizeExceeded.selector);
+        vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
         _setCap(lastId, CAP);
     }
 
