@@ -261,32 +261,38 @@
         └── it should emit TransferRewards(msg.sender, rewardsRecipient, token, amount)
 
 
-/* ONLY GUARDIAN FUNCTIONS */
+/* REVOKE FUNCTIONS */
 
 
 .
 └── revokePendingTimelock() external
-    ├── when msg.sender not guardian
-    │   └── revert with NotGuardian()
+    ├── when msg.sender not guardian nor owner
+    │   └── revert with NotGuardianRole()
+    ├── when pending timelock's submittedAt is zero
+    │   └── revert with NoPendingValue()
     └── when msg.sender is guardian
-        ├── it should emit RevokePendingTimelock(msg.sender)
-        └── it should delete pendingTimelock
+        ├── it should delete pendingTimelock
+        └── it should emit RevokePendingTimelock(msg.sender)
+
+.
+└── revokeGuardian() external
+    ├── when msg.sender not guardian nor owner
+    │   └── revert with NotGuardianRole()
+    ├── when pending guardian's submittedAt is zero
+    │   └── revert with NoPendingValue()
+    └── when msg.sender is guardian
+        ├── it should delete pendingGuardian
+        └── it should emit RevokePendingGuardian(msg.sender)
 
 .
 └── revokePendingCap(Id id) external
-    ├── when msg.sender not guardian
-    │   └── revert with NotGuardian()
-    └── when msg.sender is guardian
-        ├── it should emit RevokePendingCap(msg.sender, id)
-        └── it should delete pendingCap[id]
-
-.
-└── revokePendingGuardian() external
-    ├── when msg.sender not guardian
-    │   └── revert with NotGuardian()
-    └── when msg.sender is guardian
-        ├── it should emit RevokePendingGuardian(msg.sender);
-        └── it should delete pendingGuardian
+    ├── when msg.sender not curator nor guardian nor owner
+    │   └── revert with NotCuratorNorGuardian()
+    ├── when pending cap's submittedAt is zero
+    │   └── revert with NoPendingValue()
+    └── when msg.sender is curator or guardian or owner
+        ├── it should delete pendingCap[id]
+        └── it should emit RevokePendingCap(msg.sender, id, pendingCap[id])
 
 
 /* PUBLIC */
