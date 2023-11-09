@@ -41,6 +41,7 @@ contract FeeTest is IntegrationTest {
     }
 
     function testSetFee(uint256 fee) public {
+        vm.assume(fee != vault.fee());
         fee = bound(fee, 0, ConstantsLib.MAX_FEE);
 
         vm.expectEmit(address(vault));
