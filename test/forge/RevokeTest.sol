@@ -41,7 +41,7 @@ contract RevokeTest is IntegrationTest {
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
         assertEq(pendingTimelock.value, 0, "value");
-        assertEq(pendingTimelock.submittedAt, 0, "submittedAt");
+        assertEq(pendingTimelock.validAt, 0, "validAt");
     }
 
     function testCuratorRevokeCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
@@ -67,7 +67,7 @@ contract RevokeTest is IntegrationTest {
         assertEq(marketConfig.cap, 0, "cap");
         assertEq(marketConfig.withdrawRank, 0, "withdrawRank");
         assertEq(pendingCap.value, 0, "value");
-        assertEq(pendingCap.submittedAt, 0, "submittedAt");
+        assertEq(pendingCap.validAt, 0, "validAt");
     }
 
     function testOwnerRevokeCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
@@ -93,7 +93,7 @@ contract RevokeTest is IntegrationTest {
         assertEq(marketConfig.cap, 0, "cap");
         assertEq(marketConfig.withdrawRank, 0, "withdrawRank");
         assertEq(pendingCap.value, 0, "value");
-        assertEq(pendingCap.submittedAt, 0, "submittedAt");
+        assertEq(pendingCap.validAt, 0, "validAt");
     }
 
     function testOwnerRevokeGuardian(uint256 elapsed) public {
@@ -116,7 +116,7 @@ contract RevokeTest is IntegrationTest {
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian.value, address(0), "value");
-        assertEq(pendingGuardian.submittedAt, 0, "submittedAt");
+        assertEq(pendingGuardian.validAt, 0, "validAt");
     }
 
     function testOwnerRevokePendingCapNoPendingValue(uint256 seed) public {

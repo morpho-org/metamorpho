@@ -74,7 +74,7 @@ contract GuardianTest is IntegrationTest {
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
         assertEq(pendingTimelock.value, 0, "value");
-        assertEq(pendingTimelock.submittedAt, 0, "submittedAt");
+        assertEq(pendingTimelock.validAt, 0, "validAt");
     }
 
     function testGuardianRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
