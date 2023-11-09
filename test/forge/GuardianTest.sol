@@ -43,11 +43,11 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingTimelock();
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
-        assertEq(pendingTimelock, 0, "pendingTimelock");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(pendingTimelock.value, 0, "pendingTimelock.value");
+        assertEq(pendingTimelock.submittedAt, 0, "pendingTimelock.submittedAt");
     }
 
     function testRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
@@ -67,13 +67,13 @@ contract GuardianTest is IntegrationTest {
         vm.prank(GUARDIAN);
         vault.revokePendingCap(id);
 
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
-        (uint256 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+        MarketConfig memory marketConfig = vault.config(id);
+        PendingUint192 memory pendingCap = vault.pendingCap(id);
 
-        assertEq(newCap, 0, "newCap");
-        assertEq(withdrawRank, 0, "withdrawRank");
-        assertEq(pendingCap, 0, "pendingCap");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
+        assertEq(marketConfig.withdrawRank, 0, "marketConfig.withdrawRank");
+        assertEq(pendingCap.value, 0, "pendingCap.value");
+        assertEq(pendingCap.submittedAt, 0, "pendingCap.submittedAt");
     }
 
     function testRevokePendingGuardian(uint256 elapsed) public {
@@ -92,10 +92,10 @@ contract GuardianTest is IntegrationTest {
         vault.revokePendingGuardian();
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        PendingAddress memory pendingGuardian = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
-        assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(pendingGuardian.value, address(0), "pendingGuardian.value");
+        assertEq(pendingGuardian.submittedAt, 0, "pendingGuardian.submittedAt");
     }
 }
