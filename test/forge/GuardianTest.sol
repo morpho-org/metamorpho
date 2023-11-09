@@ -47,7 +47,7 @@ contract GuardianTest is IntegrationTest {
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
         assertEq(pendingTimelock.value, 0, "pendingTimelock.value");
-        assertEq(pendingTimelock.submittedAt, 0, "pendingTimelock.submittedAt");
+        assertEq(pendingTimelock.validAt, 0, "pendingTimelock.validAt");
     }
 
     function testRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
@@ -73,7 +73,7 @@ contract GuardianTest is IntegrationTest {
         assertEq(marketConfig.cap, 0, "marketConfig.cap");
         assertEq(marketConfig.withdrawRank, 0, "marketConfig.withdrawRank");
         assertEq(pendingCap.value, 0, "pendingCap.value");
-        assertEq(pendingCap.submittedAt, 0, "pendingCap.submittedAt");
+        assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
     }
 
     function testRevokePendingGuardian(uint256 elapsed) public {
@@ -96,6 +96,6 @@ contract GuardianTest is IntegrationTest {
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
         assertEq(pendingGuardian.value, address(0), "pendingGuardian.value");
-        assertEq(pendingGuardian.submittedAt, 0, "pendingGuardian.submittedAt");
+        assertEq(pendingGuardian.validAt, 0, "pendingGuardian.validAt");
     }
 }

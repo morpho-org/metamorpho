@@ -58,12 +58,12 @@
 
 .
 └── acceptTimelock() external
-    ├── when pendingTimelock.submittedAt == 0
+    ├── when pendingTimelock.validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingTimelock.submittedAt != 0
-        ├── when block.timestamp < pendingTimelock.submittedAt + timelock
+    └── when pendingTimelock.validAt != 0
+        ├── when block.timestamp < pendingTimelock.validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingTimelock.submittedAt + timelock
+        └── when block.timestamp >= pendingTimelock.validAt
             ├── it should set timelock to pendingTimelock.value
             ├── it should emit SetTimelock(pendingTimelock.value)
             └── it should delete pendingTimelock
@@ -90,12 +90,12 @@
 
 .
 └── acceptFee() external
-    ├── when pendingFee.submittedAt == 0
+    ├── when pendingFee.validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingFee.submittedAt != 0
-        ├── when block.timestamp < pendingFee.submittedAt + timelock
+    └── when pendingFee.validAt != 0
+        ├── when block.timestamp < pendingFee.validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingFee.submittedAt + timelock
+        └── when block.timestamp >= pendingFee.validAt
             ├── it should accrue fees
             ├── it should set fee to pendingFee.value
             ├── it should emit SetFee(pendingFee.value)
@@ -134,12 +134,12 @@
 
 .
 └── acceptGuardian() external
-    ├── when pendingGuardian.submittedAt == 0
+    ├── when pendingGuardian.validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingGuardian.submittedAt != 0
-        ├── when block.timestamp < pendingGuardian.submittedAt + timelock
+    └── when pendingGuardian.validAt != 0
+        ├── when block.timestamp < pendingGuardian.validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingGuardian.submittedAt + timelock
+        └── when block.timestamp >= pendingGuardian.validAt
             ├── it should set guardian to pendingGuardian
             ├── it should emit SetGuardian(pendingGuardian)
             └── it should delete pendingGuardian
@@ -178,12 +178,12 @@
 
 .
 └── acceptCap(Id id) external
-    ├── when pendingCap[id].submittedAt == 0
+    ├── when pendingCap[id].validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingCap[id].submittedAt != 0
-        ├── when block.timestamp < pendingCap[id].submittedAt + timelock
+    └── when pendingCap[id].validAt != 0
+        ├── when block.timestamp < pendingCap[id].validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingCap[id].submittedAt + timelock
+        └── when block.timestamp >= pendingCap[id].validAt
             ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
             │   ├── it should push id to supplyQueue
             │   ├── it should push id to withdrawQueue
