@@ -68,11 +68,14 @@ Multiple addresses can have this role.
 It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
-  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
-  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
+  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set.
+  - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
   - The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
   - The `withdrawQueue` contains all enabled markets.
 - Instantaneously reallocate funds among the enabled market at any moment.
+
+> **Warning**
+> If `supplyQueue` is empty, depositing to the vault is disabled.
 
 #### Guardian
 
@@ -81,6 +84,22 @@ Only one address can have this role.
 It can:
 
 - Revoke any timelocked action except it cannot revoke a pending fee.
+
+### Idle Supply
+
+In some cases, the vault's curator or allocators may want to keep some funds "idle", to guarantee lenders some extent of liquidity from the vault (beyond the liquidity of each of the vault's markets).
+
+To achieve this, it is advised to allocate "idle" funds to any market on Morpho Blue having:
+
+- The vault's asset as loan token.
+- No collateral token (`address(0)`).
+- An arbitrary IRM (`address(0)` to save gas).
+- No oracle (`address(0)`).
+- An arbitrary LLTV (`0`).
+
+Thus, these funds cannot be borrowed on Morpho Blue and is guaranteed to be liquid ; though it won't generate interest.
+
+Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho. It is advised to enable an infinite cap (`type(uint256).max`).
 
 ### Rewards
 
@@ -102,8 +121,7 @@ Below is a typical example of how this use case would take place:
 
   NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
   Thus, this step might be already performed by some third-party.
-  Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
-  In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
+  Note: the amount of rewards transferred corresponds to the vault's balance of reward asset.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
 
