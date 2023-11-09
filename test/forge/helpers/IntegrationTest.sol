@@ -7,13 +7,16 @@ contract IntegrationTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
 
-    MetaMorpho internal vault;
+    IMetaMorpho internal vault;
 
     function setUp() public virtual override {
         super.setUp();
 
-        vault =
-        new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
+        vault = IMetaMorpho(
+            address(
+                new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV")
+            )
+        );
 
         vm.startPrank(OWNER);
         vault.setCurator(CURATOR);
@@ -41,8 +44,8 @@ contract IntegrationTest is BaseTest {
         // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
         if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
 
-        (uint192 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
-        if (submittedAt == 0 || newTimelock != pendingTimelock) {
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
+        if (pendingTimelock.validAt == 0 || newTimelock != pendingTimelock.value) {
             vm.prank(OWNER);
             vault.submitTimelock(newTimelock);
         }
@@ -60,8 +63,8 @@ contract IntegrationTest is BaseTest {
         address guardian = vault.guardian();
         if (newGuardian == guardian) return;
 
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
-        if (submittedAt == 0 || newGuardian != pendingGuardian) {
+        PendingAddress memory pendingGuardian = vault.pendingGuardian();
+        if (pendingGuardian.validAt == 0 || newGuardian != pendingGuardian.value) {
             vm.prank(OWNER);
             vault.submitGuardian(newGuardian);
         }
@@ -79,8 +82,8 @@ contract IntegrationTest is BaseTest {
         uint256 fee = vault.fee();
         if (newFee == fee) return;
 
-        (uint192 pendingFee, uint64 submittedAt) = vault.pendingFee();
-        if (submittedAt == 0 || newFee != pendingFee) {
+        PendingUint192 memory pendingFee = vault.pendingFee();
+        if (pendingFee.validAt == 0 || newFee != pendingFee.value) {
             vm.prank(OWNER);
             vault.submitFee(newFee);
         }
@@ -96,11 +99,11 @@ contract IntegrationTest is BaseTest {
 
     function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
         Id id = marketParams.id();
-        (uint256 cap,) = vault.config(id);
+        uint256 cap = vault.config(id).cap;
         if (newCap == cap) return;
 
-        (uint192 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
-        if (submittedAt == 0 || newCap != pendingCap) {
+        PendingUint192 memory pendingCap = vault.pendingCap(id);
+        if (pendingCap.validAt == 0 || newCap != pendingCap.value) {
             vm.prank(CURATOR);
             vault.submitCap(marketParams, newCap);
         }
@@ -111,8 +114,6 @@ contract IntegrationTest is BaseTest {
 
         vault.acceptCap(id);
 
-        (cap,) = vault.config(id);
-
-        assertEq(cap, newCap, "_setCap");
+        assertEq(vault.config(id).cap, newCap, "_setCap");
     }
 }

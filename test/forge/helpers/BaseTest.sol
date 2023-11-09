@@ -9,7 +9,7 @@ import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
 import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
 import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
 
-import {IPending} from "src/interfaces/IMetaMorpho.sol";
+import "src/interfaces/IMetaMorpho.sol";
 
 import "src/libraries/ConstantsLib.sol";
 import {ErrorsLib} from "src/libraries/ErrorsLib.sol";
@@ -30,7 +30,7 @@ uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
 uint192 constant CAP = type(uint128).max;
-uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_SIZE + 1;
+uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_LENGTH + 1;
 
 contract BaseTest is Test {
     using MathLib for uint256;

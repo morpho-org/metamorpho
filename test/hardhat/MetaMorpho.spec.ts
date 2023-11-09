@@ -218,7 +218,7 @@ describe("MetaMorpho", () => {
     }
 
     await metaMorpho.connect(curator).setSupplyQueue(allMarketParams.map(identifier));
-    await metaMorpho.connect(curator).sortWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
+    await metaMorpho.connect(curator).updateWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
