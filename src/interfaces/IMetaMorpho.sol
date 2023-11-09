@@ -5,25 +5,13 @@ import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
 import {IERC20Permit} from "@openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
 
+import {PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
+
 struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
     uint192 cap;
     /// @notice The rank of the market in the withdraw queue.
     uint64 withdrawRank;
-}
-
-struct PendingUint192 {
-    /// @notice The pending value to set.
-    uint192 value;
-    /// @notice The timestamp at which the value was submitted.
-    uint64 submittedAt;
-}
-
-struct PendingAddress {
-    /// @notice The pending value to set.
-    address value;
-    /// @notice The timestamp at which the value was submitted.
-    uint64 submittedAt;
 }
 
 /// @dev Either `assets` or `shares` should be zero.
@@ -98,9 +86,9 @@ interface IMetaMorphoBase {
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoStaticTyping is IMetaMorphoBase {
     function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
-    function pendingGuardian() external view returns (address guardian, uint64 submittedAt);
-    function pendingCap(Id) external view returns (uint192 value, uint64 submittedAt);
-    function pendingTimelock() external view returns (uint192 value, uint64 submittedAt);
+    function pendingGuardian() external view returns (address guardian, uint64 validAt);
+    function pendingCap(Id) external view returns (uint192 value, uint64 validAt);
+    function pendingTimelock() external view returns (uint192 value, uint64 validAt);
 }
 
 /// @title IMetaMorpho
