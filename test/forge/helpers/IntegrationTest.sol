@@ -78,14 +78,7 @@ contract IntegrationTest is BaseTest {
         if (newFee == fee) return;
 
         vm.prank(OWNER);
-        vault.submitFee(newFee);
-
-        uint256 timelock = vault.timelock();
-        if (newFee < fee || timelock == 0) return;
-
-        vm.warp(block.timestamp + timelock);
-
-        vault.acceptFee();
+        vault.setFee(newFee);
 
         assertEq(vault.fee(), newFee, "_setFee");
     }

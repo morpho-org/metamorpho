@@ -64,7 +64,7 @@ contract RoleTest is IntegrationTest {
         vault.submitTimelock(1);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
-        vault.submitFee(1);
+        vault.setFee(1);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(caller)));
         vault.submitGuardian(address(1));
