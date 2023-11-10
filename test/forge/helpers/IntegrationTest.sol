@@ -82,17 +82,8 @@ contract IntegrationTest is BaseTest {
         uint256 fee = vault.fee();
         if (newFee == fee) return;
 
-        PendingUint192 memory pendingFee = vault.pendingFee();
-        if (pendingFee.validAt == 0 || newFee != pendingFee.value) {
-            vm.prank(OWNER);
-            vault.submitFee(newFee);
-        }
-
-        if (newFee < fee) return;
-
-        vm.warp(block.timestamp + vault.timelock());
-
-        vault.acceptFee();
+        vm.prank(OWNER);
+        vault.setFee(newFee);
 
         assertEq(vault.fee(), newFee, "_setFee");
     }
