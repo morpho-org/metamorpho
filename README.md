@@ -41,6 +41,7 @@ Only one address can have this role.
 It can:
 
 - Do what the curator can do.
+- Do what the guardian can do.
 - Transfer or renounce the ownership.
 - Set the curator.
 - Set allocators.
@@ -56,9 +57,9 @@ Only one address can have this role.
 
 It can:
 
-- Do what the allocators can do.
-- [Timelocked] Enable or disable a market by setting a cap to a specific market.
-  - The cap must be set to 0 to disable the market.
+- Do what allocators can do.
+- [Timelocked] Enable or disable a market by setting a supply cap to a specific market.
+  - The supply cap must be set to 0 to disable the market.
   - Disabling a market can then only be done if the vault has no liquidity supplied on the market.
 
 #### Allocator
@@ -68,11 +69,11 @@ Multiple addresses can have this role.
 It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
-  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set.
-  - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
-  - The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
-  - The `withdrawQueue` contains all enabled markets.
-- Instantaneously reallocate funds among the enabled market at any moment.
+  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue` in the order set.
+  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
+  - The `supplyQueue` only contains markets which cap has previously been non-zero.
+  - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
+- Instantaneously reallocate funds by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
 
 > **Warning**
 > If `supplyQueue` is empty, depositing to the vault is disabled.
@@ -83,7 +84,9 @@ Only one address can have this role.
 
 It can:
 
-- Revoke any timelocked action except it cannot revoke a pending fee.
+- Revoke the pending timelock.
+- Revoke the pending guardian (which means it can revoke any attempt to change the guardian).
+- Revoke the pending cap of any market.
 
 ### Idle Supply
 
