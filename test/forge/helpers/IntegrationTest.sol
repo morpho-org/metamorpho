@@ -45,7 +45,7 @@ contract IntegrationTest is BaseTest {
     }
 
     function _idle() internal view returns (uint256) {
-        return morpho.expectedSupplyBalance(_idleParams(), address(vault));
+        return morpho.expectedSupplyAssets(_idleParams(), address(vault));
     }
 
     function _setTimelock(uint256 newTimelock) internal {

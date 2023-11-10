@@ -97,7 +97,7 @@ contract MetaMorphoInternalTest is InternalTest {
 
         uint256 remaining = _simulateWithdrawMorpho(assets);
 
-        uint256 expectedWithdrawable = MORPHO.expectedSupplyBalance(allMarkets[0], address(this)) - borrowedAmount;
+        uint256 expectedWithdrawable = MORPHO.expectedSupplyAssets(allMarkets[0], address(this)) - borrowedAmount;
         uint256 expectedRemaining = assets.zeroFloorSub(expectedWithdrawable);
 
         assertEq(remaining, expectedRemaining, "remaining");
