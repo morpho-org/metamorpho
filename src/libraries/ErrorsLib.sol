@@ -17,8 +17,11 @@ library ErrorsLib {
     /// @notice Thrown when the caller doesn't have the allocator role.
     error NotAllocatorRole();
 
-    /// @notice Thrown when the caller is not the guardian.
-    error NotGuardian();
+    /// @notice Thrown when the caller doesn't have the guardian role.
+    error NotGuardianRole();
+
+    /// @notice Thrown when the caller doesn't have the curator nor the guardian role.
+    error NotCuratorNorGuardianRole();
 
     /// @notice Thrown when the market `id` cannot be set in the supply queue.
     error UnauthorizedMarket(Id id);
@@ -35,6 +38,9 @@ library ErrorsLib {
 
     /// @notice Thrown when the value is already set.
     error AlreadySet();
+
+    /// @notice Thrown when the value is already pending.
+    error AlreadyPending();
 
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);
