@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "./helpers/IntegrationTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
-uint256 constant TIMELOCK = 1 weeks;
 
 contract RevokeTest is IntegrationTest {
     using Math for uint256;
@@ -65,7 +64,7 @@ contract RevokeTest is IntegrationTest {
         PendingUint192 memory pendingCap = vault.pendingCap(id);
 
         assertEq(marketConfig.cap, 0, "cap");
-        assertEq(marketConfig.withdrawRank, 0, "withdrawRank");
+        assertEq(marketConfig.enabled, false, "enabled");
         assertEq(pendingCap.value, 0, "value");
         assertEq(pendingCap.validAt, 0, "validAt");
     }
@@ -91,7 +90,7 @@ contract RevokeTest is IntegrationTest {
         PendingUint192 memory pendingCap = vault.pendingCap(id);
 
         assertEq(marketConfig.cap, 0, "cap");
-        assertEq(marketConfig.withdrawRank, 0, "withdrawRank");
+        assertEq(marketConfig.enabled, false, "enabled");
         assertEq(pendingCap.value, 0, "value");
         assertEq(pendingCap.validAt, 0, "validAt");
     }

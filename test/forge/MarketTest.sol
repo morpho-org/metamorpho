@@ -186,43 +186,4 @@ contract MarketTest is IntegrationTest {
         vm.expectRevert(stdError.indexOOBError);
         vault.updateWithdrawQueue(indexes);
     }
-
-    function testUpdateWithdrawQueueDuplicateMarket() public {
-        uint256[] memory indexes = new uint256[](4);
-        indexes[0] = 1;
-        indexes[1] = 2;
-        indexes[2] = 1;
-        indexes[3] = 3;
-
-        vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.DuplicateMarket.selector, allMarkets[0].id()));
-        vault.updateWithdrawQueue(indexes);
-    }
-
-    function testUpdateWithdrawQueueMissingMarketWithNonZeroSupply() public {
-        loanToken.setBalance(SUPPLIER, 1);
-
-        vm.prank(SUPPLIER);
-        vault.deposit(1, RECEIVER);
-
-        uint256[] memory indexes = new uint256[](3);
-        indexes[0] = 1;
-        indexes[1] = 2;
-        indexes[2] = 3;
-
-        vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, idleParams.id()));
-        vault.updateWithdrawQueue(indexes);
-    }
-
-    function testUpdateWithdrawQueueMissingMarketWithNonZeroCap() public {
-        uint256[] memory indexes = new uint256[](3);
-        indexes[0] = 0;
-        indexes[1] = 2;
-        indexes[2] = 3;
-
-        vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, allMarkets[0].id()));
-        vault.updateWithdrawQueue(indexes);
-    }
 }

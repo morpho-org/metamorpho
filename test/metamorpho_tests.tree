@@ -149,16 +149,19 @@
                 │   └── revert with AlreadySet()
                 └── when newSupplyCap != supplyCap
                     ├── when newSupplyCap < supplyCap
-                    │   ├── when newSupplyCap > 0 and marketConfig.withdrawRank == 0
-                    │   │   ├── it should push id to supplyQueue
-                    │   │   ├── it should push id to withdrawQueue
-                    │   │   └── if withdrawQueue.length > MAX_QUEUE_LENGTH
-                    │   │       └── revert with MaxQueueLengthExceeded()
+                    │   ├── when newSupplyCap > 0
+                    │   │   ├── when !marketConfig.enabled
+                    │   │   │   ├── it should push id to supplyQueue
+                    │   │   │   ├── it should push id to withdrawQueue
+                    │   │   │   ├── if withdrawQueue.length > MAX_QUEUE_LENGTH
+                    │   │   │   │   └── revert with MaxQueueLengthExceeded()
+                    │   │   │   └── it should set config[id].enabled to true
+                    │   │   └── it should set config[id].removableAt to block.timestamp + timelock
                     │   ├── it should set config[id].cap to newSupplyCap
                     │   ├── it should emit SetCap(id, newSupplyCap)
                     │   └── it should delete pendingCap[id]
                     └── when newSupplyCap > supplyCap
-                        ├── it should it should set pendingCap[id] to PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp))
+                        ├── it should set pendingCap[id] to PendingUint192(newSupplyCap.toUint192(), uint64(block.timestamp))
                         └── it should emit EventsLib.SubmitCap(id, newSupplyCap)
 
 .
@@ -169,7 +172,7 @@
         ├── when block.timestamp < pendingCap[id].validAt
         │   └── revert with TimelockNotElapsed()
         └── when block.timestamp >= pendingCap[id].validAt
-            ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
+            ├── when supplyCap > 0 and !marketConfig.enabled
             │   ├── it should push id to supplyQueue
             │   ├── it should push id to withdrawQueue
             │   ├── if supplyQueue.length > MAX_QUEUE_LENGTH
@@ -179,6 +182,19 @@
             ├── it should set config[id].cap to pendingCap[id].value
             ├── it should emit SetCap(id, pendingCap[id].value)
             └── it should delete pendingCap[id]
+
+.
+└── submitMarketRemoval(Id id) external
+    ├── when msg.sender not owner or curator
+    │   └── revert with NotCuratorRole()
+    └── when msg.sender is owner or curator
+        ├── when config[id].removableAt != 0
+        │   └── revert with AlreadySet()
+        ├── when !config[id].enabled
+        │   └── revert with MarketNotEnabled()
+        └── when config[id].removableAt == 0
+            ├── it should set config[id].removableAt to uint56(block.timestamp + timelock)
+            └── it should emit EventsLib.SubmitMarketRemoval(msg.sender, id)
 
 
 /* ONLY ALLOCATOR FUNCTIONS */
@@ -213,7 +229,7 @@
             │   │   ├── it should compute the id of this market
             │   │   └── revert with InvalidMarketRemoval(id)
             │   └── when all these markets have zero cap and zero vault's supply
-            │       └── it should delete the withdrawRank of these markets
+            │       └── it should set the enabled flag of these markets to false
             ├── it should set withdrawQueue to newWithdrawQueue
             └── it shoud emit SetWithdrawQueue(msg.sender, newWithdrawQueue)
 

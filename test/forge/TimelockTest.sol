@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "./helpers/IntegrationTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
-uint256 constant TIMELOCK = 1 weeks;
 
 contract TimelockTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
@@ -16,7 +15,6 @@ contract TimelockTest is IntegrationTest {
         vault.setFeeRecipient(FEE_RECIPIENT);
 
         _setFee(FEE);
-        _setTimelock(TIMELOCK);
         _setGuardian(GUARDIAN);
 
         _setCap(allMarkets[0], CAP);
@@ -302,7 +300,8 @@ contract TimelockTest is IntegrationTest {
         PendingUint192 memory pendingCap = vault.pendingCap(id);
 
         assertEq(marketConfig.cap, cap, "marketConfig.cap");
-        assertEq(marketConfig.withdrawRank, 2, "marketConfig.withdrawRank");
+        assertEq(marketConfig.enabled, true, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, 0, "pendingCap.value");
         assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
     }
@@ -322,7 +321,8 @@ contract TimelockTest is IntegrationTest {
         PendingUint192 memory pendingCap = vault.pendingCap(id);
 
         assertEq(marketConfig.cap, 0, "marketConfig.cap");
-        assertEq(marketConfig.withdrawRank, 0, "marketConfig.withdrawRank");
+        assertEq(marketConfig.enabled, false, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, cap, "pendingCap.value");
         assertEq(pendingCap.validAt, block.timestamp + TIMELOCK, "pendingCap.validAt");
         assertEq(vault.supplyQueueLength(), 2, "supplyQueueLength");
@@ -361,7 +361,8 @@ contract TimelockTest is IntegrationTest {
         PendingUint192 memory pendingCap = vault.pendingCap(id);
 
         assertEq(marketConfig.cap, cap, "marketConfig.cap");
-        assertEq(marketConfig.withdrawRank, 2, "marketConfig.withdrawRank");
+        assertEq(marketConfig.enabled, true, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, 0, "pendingCap.value");
         assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
         assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(id), "supplyQueue");
@@ -391,7 +392,8 @@ contract TimelockTest is IntegrationTest {
         PendingUint192 memory pendingCap = vault.pendingCap(id);
 
         assertEq(marketConfig.cap, cap, "marketConfig.cap");
-        assertEq(marketConfig.withdrawRank, 1, "marketConfig.withdrawRank");
+        assertEq(marketConfig.enabled, true, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, 0, "pendingCap.value");
         assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
         assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
@@ -437,5 +439,27 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
         vault.acceptCap(allMarkets[1].id());
+    }
+
+    function testSubmitMarketRemoval() public {
+        MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
+
+        _setCap(marketParams, 0);
+
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(id);
+
+        MarketConfig memory marketConfig = vault.config(id);
+
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
+        assertEq(marketConfig.enabled, true, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, block.timestamp + TIMELOCK, "marketConfig.removableAt");
+    }
+
+    function testSubmitMarketRemovalMarketNotEnabled() public {
+        vm.expectRevert(ErrorsLib.MarketNotEnabled.selector);
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[1].id());
     }
 }
