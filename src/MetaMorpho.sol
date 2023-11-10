@@ -214,6 +214,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
+            // newTimelock >= MIN_TIMELOCK > 0 so there's no need to check `pendingTimelock.validAt != 0`.
+            if (newTimelock == pendingTimelock.value) revert ErrorsLib.AlreadyPending();
+
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
             pendingTimelock.update(uint192(newTimelock), timelock);
 
@@ -260,6 +263,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
+            if (pendingGuardian.validAt != 0 && newGuardian == pendingGuardian.value) {
+                revert ErrorsLib.AlreadyPending();
+            }
+
             pendingGuardian.update(newGuardian, timelock);
 
             emit EventsLib.SubmitGuardian(newGuardian);
@@ -282,6 +289,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap < supplyCap) {
             _setCap(id, newSupplyCap.toUint192());
         } else {
+            // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
+            if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
+
             pendingCap[id].update(newSupplyCap.toUint192(), timelock);
 
             emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);

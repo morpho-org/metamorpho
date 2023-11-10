@@ -44,10 +44,13 @@ contract IntegrationTest is BaseTest {
         // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
         if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
 
-        vm.prank(OWNER);
-        vault.submitTimelock(newTimelock);
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
+        if (pendingTimelock.validAt == 0 || newTimelock != pendingTimelock.value) {
+            vm.prank(OWNER);
+            vault.submitTimelock(newTimelock);
+        }
 
-        if (newTimelock > timelock || timelock == 0) return;
+        if (newTimelock > timelock) return;
 
         vm.warp(block.timestamp + timelock);
 
@@ -60,13 +63,15 @@ contract IntegrationTest is BaseTest {
         address guardian = vault.guardian();
         if (newGuardian == guardian) return;
 
-        vm.prank(OWNER);
-        vault.submitGuardian(newGuardian);
+        PendingAddress memory pendingGuardian = vault.pendingGuardian();
+        if (pendingGuardian.validAt == 0 || newGuardian != pendingGuardian.value) {
+            vm.prank(OWNER);
+            vault.submitGuardian(newGuardian);
+        }
 
-        uint256 timelock = vault.timelock();
-        if (guardian == address(0) || timelock == 0) return;
+        if (guardian == address(0)) return;
 
-        vm.warp(block.timestamp + timelock);
+        vm.warp(block.timestamp + vault.timelock());
 
         vault.acceptGuardian();
 
@@ -88,13 +93,15 @@ contract IntegrationTest is BaseTest {
         uint256 cap = vault.config(id).cap;
         if (newCap == cap) return;
 
-        vm.prank(CURATOR);
-        vault.submitCap(marketParams, newCap);
+        PendingUint192 memory pendingCap = vault.pendingCap(id);
+        if (pendingCap.validAt == 0 || newCap != pendingCap.value) {
+            vm.prank(CURATOR);
+            vault.submitCap(marketParams, newCap);
+        }
 
-        uint256 timelock = vault.timelock();
         if (newCap < cap) return;
 
-        vm.warp(block.timestamp + timelock);
+        vm.warp(block.timestamp + vault.timelock());
 
         vault.acceptCap(id);
 
