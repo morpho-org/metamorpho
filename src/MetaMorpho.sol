@@ -499,10 +499,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function deposit(uint256 assets, address receiver) public override(IERC4626, ERC4626) returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
-        shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
-
         // `newTotalAssets + assets` may be a little off from `totalAssets()`.
         _updateLastTotalAssets(newTotalAssets + assets);
+
+        shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
 
         _deposit(_msgSender(), receiver, assets, shares);
     }
@@ -511,10 +511,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override(IERC4626, ERC4626) returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
-        assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
-
         // `newTotalAssets + assets` may be a little off from `totalAssets()`.
         _updateLastTotalAssets(newTotalAssets + assets);
+
+        assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
 
         _deposit(_msgSender(), receiver, assets, shares);
     }
@@ -630,6 +630,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         super._deposit(caller, receiver, assets, shares);
 
         _supplyMorpho(assets);
+
+        // Update `lastTotalAssets` again to avoid inconsistent state due to a reentrancy for instance.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /// @inheritdoc ERC4626
