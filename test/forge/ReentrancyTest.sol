@@ -45,9 +45,7 @@ contract MetaMorphoTest is IntegrationTest, IERC1820Implementer {
         uint256 fee = 0.5 ether; // 50%
         vm.startPrank(OWNER);
         newVault.setFeeRecipient(FEE_RECIPIENT);
-        newVault.submitFee(fee);
-        vm.warp(block.timestamp + ConstantsLib.MIN_TIMELOCK);
-        newVault.acceptFee();
+        newVault.setFee(fee);
 
         reentrantToken.setBalance(SUPPLIER, 100_000 ether); // SUPPLIER supplies 100_000e18 tokens to MetaMorpho.
         console2.log("Supplier starting with %s tokens.", loanToken.balanceOf(SUPPLIER));
