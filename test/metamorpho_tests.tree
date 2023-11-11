@@ -58,18 +58,18 @@
 
 .
 └── acceptTimelock() external
-    ├── when pendingTimelock.submittedAt == 0
+    ├── when pendingTimelock.validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingTimelock.submittedAt != 0
-        ├── when block.timestamp < pendingTimelock.submittedAt + timelock
+    └── when pendingTimelock.validAt != 0
+        ├── when block.timestamp < pendingTimelock.validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingTimelock.submittedAt + timelock
+        └── when block.timestamp >= pendingTimelock.validAt
             ├── it should set timelock to pendingTimelock.value
             ├── it should emit SetTimelock(pendingTimelock.value)
             └── it should delete pendingTimelock
 
 .
-└── submitFee(uint256 newFee) external
+└── setFee(uint256 newFee) external
     ├── when msg.sender not owner
     │   └── revert with NOT_OWNER
     └── when msg.sender is owner
@@ -79,27 +79,12 @@
             ├── when newFee == fee
             │   └── revert with AlreadySet()
             └── when newFee != fee
-                ├── when newFee < fee
-                │   ├── it should accrue fees
-                │   ├── it should set fee to newFee
-                │   ├── it should emit SetFee(newFee)
-                │   └── it should delete pendingFee
-                └── when newFee > fee
-                    ├── it should set pendingFee to PendingUint192(uint192(newFee), uint64(block.timestamp))
-                    └── it should emit SubmitFee(newFee)
-
-.
-└── acceptFee() external
-    ├── when pendingFee.submittedAt == 0
-    │   └── revert with NoPendingValue()
-    └── when pendingFee.submittedAt != 0
-        ├── when block.timestamp < pendingFee.submittedAt + timelock
-        │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingFee.submittedAt + timelock
-            ├── it should accrue fees
-            ├── it should set fee to pendingFee.value
-            ├── it should emit SetFee(pendingFee.value)
-            └── it should delete pendingFee
+                ├── when newFee != 0 and feeRecipient == address(0)
+                │   └── revert with ZeroFeeRecipient()
+                └── when newFee == 0 or feeRecipient != address(0)
+                    ├── it should accrue fees
+                    ├── it should set fee to newFee
+                    ├── it should emit SetFee(caller, newFee)
 
 .
 └── setFeeRecipient(address newFeeRecipient) external
@@ -134,12 +119,12 @@
 
 .
 └── acceptGuardian() external
-    ├── when pendingGuardian.submittedAt == 0
+    ├── when pendingGuardian.validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingGuardian.submittedAt != 0
-        ├── when block.timestamp < pendingGuardian.submittedAt + timelock
+    └── when pendingGuardian.validAt != 0
+        ├── when block.timestamp < pendingGuardian.validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingGuardian.submittedAt + timelock
+        └── when block.timestamp >= pendingGuardian.validAt
             ├── it should set guardian to pendingGuardian
             ├── it should emit SetGuardian(pendingGuardian)
             └── it should delete pendingGuardian
@@ -178,12 +163,12 @@
 
 .
 └── acceptCap(Id id) external
-    ├── when pendingCap[id].submittedAt == 0
+    ├── when pendingCap[id].validAt == 0
     │   └── revert with NoPendingValue()
-    └── when pendingCap[id].submittedAt != 0
-        ├── when block.timestamp < pendingCap[id].submittedAt + timelock
+    └── when pendingCap[id].validAt != 0
+        ├── when block.timestamp < pendingCap[id].validAt
         │   └── revert with TimelockNotElapsed()
-        └── when block.timestamp >= pendingCap[id].submittedAt + timelock
+        └── when block.timestamp >= pendingCap[id].validAt
             ├── when supplyCap > 0 and marketConfig.withdrawRank == 0
             │   ├── it should push id to supplyQueue
             │   ├── it should push id to withdrawQueue
@@ -275,32 +260,38 @@
         └── it should emit TransferRewards(msg.sender, rewardsRecipient, token, amount)
 
 
-/* ONLY GUARDIAN FUNCTIONS */
+/* REVOKE FUNCTIONS */
 
 
 .
 └── revokePendingTimelock() external
-    ├── when msg.sender not guardian
-    │   └── revert with NotGuardian()
+    ├── when msg.sender not guardian nor owner
+    │   └── revert with NotGuardianRole()
+    ├── when pending timelock's validAt is zero
+    │   └── revert with NoPendingValue()
     └── when msg.sender is guardian
-        ├── it should emit RevokePendingTimelock(msg.sender)
-        └── it should delete pendingTimelock
+        ├── it should delete pendingTimelock
+        └── it should emit RevokePendingTimelock(msg.sender)
+
+.
+└── revokeGuardian() external
+    ├── when msg.sender not guardian nor owner
+    │   └── revert with NotGuardianRole()
+    ├── when pending guardian's validAt is zero
+    │   └── revert with NoPendingValue()
+    └── when msg.sender is guardian
+        ├── it should delete pendingGuardian
+        └── it should emit RevokePendingGuardian(msg.sender)
 
 .
 └── revokePendingCap(Id id) external
-    ├── when msg.sender not guardian
-    │   └── revert with NotGuardian()
-    └── when msg.sender is guardian
-        ├── it should emit RevokePendingCap(msg.sender, id)
-        └── it should delete pendingCap[id]
-
-.
-└── revokePendingGuardian() external
-    ├── when msg.sender not guardian
-    │   └── revert with NotGuardian()
-    └── when msg.sender is guardian
-        ├── it should emit RevokePendingGuardian(msg.sender);
-        └── it should delete pendingGuardian
+    ├── when msg.sender not curator nor guardian nor owner
+    │   └── revert with NotCuratorNorGuardian()
+    ├── when pending cap's validAt is zero
+    │   └── revert with NoPendingValue()
+    └── when msg.sender is curator or guardian or owner
+        ├── it should delete pendingCap[id]
+        └── it should emit RevokePendingCap(msg.sender, id, pendingCap[id])
 
 
 /* PUBLIC */
