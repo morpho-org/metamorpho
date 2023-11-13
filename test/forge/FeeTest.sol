@@ -102,7 +102,7 @@ contract FeeTest is IntegrationTest {
 
         vm.prank(SUPPLIER);
         vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
+        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
 
         vault.deposit(newDeposit, ONBEHALF);
 
@@ -135,7 +135,7 @@ contract FeeTest is IntegrationTest {
 
         vm.prank(SUPPLIER);
         vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
+        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
 
         vault.mint(shares, ONBEHALF);
 
@@ -166,7 +166,7 @@ contract FeeTest is IntegrationTest {
 
         vm.prank(ONBEHALF);
         vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
+        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
 
         vault.redeem(shares, RECEIVER, ONBEHALF);
 
@@ -195,7 +195,7 @@ contract FeeTest is IntegrationTest {
 
         vm.prank(ONBEHALF);
         vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
+        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
 
         vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
@@ -223,7 +223,7 @@ contract FeeTest is IntegrationTest {
         vm.assume(feeShares != 0);
 
         vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
+        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
         _setFee(fee);
 
         assertEq(vault.lastTotalAssets(), totalAssetsAfter, "lastTotalAssets");
@@ -249,7 +249,7 @@ contract FeeTest is IntegrationTest {
         vm.assume(feeShares != 0);
 
         vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsBefore, totalAssetsAfter, feeShares);
+        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
         emit EventsLib.UpdateLastTotalAssets(totalAssetsAfter);
         emit EventsLib.SetFeeRecipient(address(1));
         vm.prank(OWNER);
