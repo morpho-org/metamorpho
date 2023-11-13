@@ -39,8 +39,8 @@ library EventsLib {
     /// @notice Emitted when a new `cap` is set for market identified by `id`.
     event SetCap(address indexed caller, Id indexed id, uint256 cap);
 
-    /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
-    event UpdateLastTotalAssets(uint256 newTotalAssets);
+    /// @notice Emitted when the vault's last total assets is updated to `updatedTotalAssets`.
+    event UpdateLastTotalAssets(uint256 updatedTotalAssets);
 
     /// @notice Emitted when `curator` is set to `newCurator`.
     event SetCurator(address indexed newCurator);
@@ -80,9 +80,9 @@ library EventsLib {
 
     /// @notice Emitted when fees are accrued.
     /// @param lastTotalAssets The assets of the vault before the interaction.
-    /// @param accruedTotalAssets The assets of the vault after accruing the interest but before the interaction.
+    /// @param newTotalAssets The assets of the vault after accruing the interest but before the interaction.
     /// @param feeShares The shares minted to the fee recipient.
-    event AccrueInterest(uint256 lastTotalAssets, uint256 accruedTotalAssets, uint256 feeShares);
+    event AccrueInterest(uint256 lastTotalAssets, uint256 newTotalAssets, uint256 feeShares);
 
     /// @notice Emitted when an `amount` of `token` is transferred to the `rewardsRecipient` by `caller`.
     event TransferRewards(address indexed caller, address indexed token, uint256 amount);
