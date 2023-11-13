@@ -78,7 +78,7 @@ library EventsLib {
     /// @notice Emitted when a reallocation added or removed assets from idle.
     event ReallocateIdle(address indexed caller, uint256 idle);
 
-    /// @notice Emitted when fees are accrued.
+    /// @notice Emitted when interest are accrued.
     /// @param lastTotalAssets The assets of the vault before the interaction.
     /// @param newTotalAssets The assets of the vault after accruing the interest but before the interaction.
     /// @param feeShares The shares minted to the fee recipient.
