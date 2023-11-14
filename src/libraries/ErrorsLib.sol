@@ -45,8 +45,14 @@ library ErrorsLib {
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);
 
-    /// @notice Thrown when market `id` is missing in the new withdraw queue to set.
-    error InvalidMarketRemoval(Id id);
+    /// @notice Thrown when market `id` is missing in the updated withdraw queue and the market has a non-zero cap set.
+    error InvalidMarketRemovalNonZeroCap(Id id);
+
+    /// @notice Thrown when market `id` is missing in the updated withdraw queue and the market has a non-zero supply.
+    error InvalidMarketRemovalNonZeroSupply(Id id);
+
+    /// @notice Thrown when market `id` is missing in the updated withdraw queue and the market is not yet disabled.
+    error InvalidMarketRemovalTimelockNotElapsed(Id id);
 
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();
@@ -56,6 +62,9 @@ library ErrorsLib {
 
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();
+
+    /// @notice Thrown when submitting a non previously enabled market for removal.
+    error MarketNotEnabled();
 
     /// @notice Thrown when the submitted timelock is above the max timelock.
     error AboveMaxTimelock();
