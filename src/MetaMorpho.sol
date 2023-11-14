@@ -219,7 +219,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (newTimelock == pendingTimelock.value) revert ErrorsLib.AlreadyPending();
 
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-            pendingTimelock.update(uint192(newTimelock), timelock);
+            pendingTimelock.update(uint184(newTimelock), timelock);
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -288,12 +288,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
         if (newSupplyCap < supplyCap) {
-            _setCap(id, newSupplyCap.toUint192());
+            _setCap(id, newSupplyCap.toUint184());
         } else {
             // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
             if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
 
-            pendingCap[id].update(newSupplyCap.toUint192(), timelock);
+            pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 
             emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
         }
@@ -513,7 +513,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Accepts the pending cap of the market defined by `id`.
     function acceptCap(Id id) external afterTimelock(pendingCap[id].validAt) {
-        _setCap(id, pendingCap[id].value);
+        // Safe "unchecked" cast because pendingCap <= type(uint184).max.
+        _setCap(id, uint184(pendingCap[id].value));
     }
 
     /// @notice Transfers `token` rewards collected by the vault to the `rewardsRecipient`.
@@ -724,7 +725,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Sets the cap of the market defined by `id` to `supplyCap`.
-    function _setCap(Id id, uint192 supplyCap) internal {
+    function _setCap(Id id, uint184 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
         if (supplyCap > 0) {

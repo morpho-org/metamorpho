@@ -3,25 +3,25 @@ pragma solidity ^0.8.0;
 
 struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
-    uint192 cap;
+    uint184 cap;
     /// @notice Whether the market is in the withdraw queue.
     bool enabled;
     /// @notice The timestamp at which the market can be instantly removed from the withdraw queue.
-    uint56 removableAt;
+    uint64 removableAt;
 }
 
 struct PendingUint192 {
     /// @notice The pending value to set.
     uint192 value;
     /// @notice The timestamp at which the pending value becomes valid.
-    uint56 validAt;
+    uint64 validAt;
 }
 
 struct PendingAddress {
     /// @notice The pending value to set.
     address value;
     /// @notice The timestamp at which the pending value becomes valid.
-    uint56 validAt;
+    uint64 validAt;
 }
 
 /// @title PendingLib
@@ -31,10 +31,10 @@ struct PendingAddress {
 library PendingLib {
     /// @dev Updates `pending`'s value to `newValue` and its corresponding `validAt` timestamp.
     /// @dev Assumes `timelock` <= `MAX_TIMELOCK`.
-    function update(PendingUint192 storage pending, uint192 newValue, uint256 timelock) internal {
+    function update(PendingUint192 storage pending, uint184 newValue, uint256 timelock) internal {
         pending.value = newValue;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        pending.validAt = uint56(block.timestamp + timelock);
+        pending.validAt = uint64(block.timestamp + timelock);
     }
 
     /// @dev Updates `pending`'s value to `newValue` and its corresponding `validAt` timestamp.
@@ -42,7 +42,7 @@ library PendingLib {
     function update(PendingAddress storage pending, address newValue, uint256 timelock) internal {
         pending.value = newValue;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        pending.validAt = uint56(block.timestamp + timelock);
+        pending.validAt = uint64(block.timestamp + timelock);
     }
 
     /// @dev Marks the market associated to the given config as removable starting `timelock` seconds in the future.
@@ -50,6 +50,6 @@ library PendingLib {
     function disable(MarketConfig storage config, uint256 timelock) internal {
         config.cap = 0;
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        config.removableAt = uint56(block.timestamp + timelock);
+        config.removableAt = uint64(block.timestamp + timelock);
     }
 }

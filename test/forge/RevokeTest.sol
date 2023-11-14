@@ -45,7 +45,7 @@ contract RevokeTest is IntegrationTest {
     function testCuratorRevokeCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
-        cap = bound(cap, 1, type(uint192).max);
+        cap = bound(cap, 1, type(uint184).max);
 
         vm.prank(OWNER);
         vault.submitCap(marketParams, cap);
@@ -72,7 +72,7 @@ contract RevokeTest is IntegrationTest {
     function testOwnerRevokeCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
-        cap = bound(cap, 1, type(uint192).max);
+        cap = bound(cap, 1, type(uint184).max);
 
         vm.prank(OWNER);
         vault.submitCap(marketParams, cap);

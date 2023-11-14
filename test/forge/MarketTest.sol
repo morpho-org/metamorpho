@@ -12,10 +12,10 @@ contract MarketTest is IntegrationTest {
 
     function testSubmitCapOverflow(uint256 seed, uint256 cap) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
-        cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
+        cap = bound(cap, uint256(type(uint184).max) + 1, type(uint256).max);
 
         vm.prank(CURATOR);
-        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, uint8(192), cap));
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, uint8(184), cap));
         vault.submitCap(marketParams, cap);
     }
 

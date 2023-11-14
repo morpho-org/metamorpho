@@ -307,7 +307,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitCapIncreased(uint256 cap) public {
-        cap = bound(cap, 1, type(uint192).max);
+        cap = bound(cap, 1, type(uint184).max);
 
         MarketParams memory marketParams = allMarkets[1];
         Id id = marketParams.id();
@@ -330,7 +330,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitCapAlreadyPending(uint256 cap) public {
-        cap = bound(cap, 1, type(uint192).max);
+        cap = bound(cap, 1, type(uint184).max);
 
         MarketParams memory marketParams = allMarkets[1];
 
@@ -343,7 +343,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptCapIncreased(uint256 cap) public {
-        cap = bound(cap, CAP + 1, type(uint192).max);
+        cap = bound(cap, CAP + 1, type(uint184).max);
 
         MarketParams memory marketParams = allMarkets[0];
         Id id = marketParams.id();
@@ -370,7 +370,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptCapIncreasedTimelockIncreased(uint256 cap, uint256 timelock, uint256 elapsed) public {
-        cap = bound(cap, CAP + 1, type(uint192).max);
+        cap = bound(cap, CAP + 1, type(uint184).max);
         timelock = bound(timelock, TIMELOCK + 1, ConstantsLib.MAX_TIMELOCK);
         elapsed = bound(elapsed, TIMELOCK + 1, timelock);
 
@@ -401,7 +401,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testAcceptCapIncreasedTimelockDecreased(uint256 cap, uint256 timelock, uint256 elapsed) public {
-        cap = bound(cap, CAP + 1, type(uint192).max);
+        cap = bound(cap, CAP + 1, type(uint184).max);
         timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 1, TIMELOCK - 1);
 
