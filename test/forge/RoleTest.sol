@@ -102,7 +102,7 @@ contract RoleTest is IntegrationTest {
         vault.updateWithdrawQueue(withdrawQueueFromRanks);
 
         vm.expectRevert(ErrorsLib.NotAllocatorRole.selector);
-        vault.reallocate(allocation, allocation);
+        vault.reallocate(allocation);
 
         vm.stopPrank();
     }
@@ -129,17 +129,17 @@ contract RoleTest is IntegrationTest {
         vm.startPrank(OWNER);
         vault.setSupplyQueue(supplyQueue);
         vault.updateWithdrawQueue(withdrawQueueFromRanks);
-        vault.reallocate(allocation, allocation);
+        vault.reallocate(allocation);
 
         vm.startPrank(CURATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.updateWithdrawQueue(withdrawQueueFromRanks);
-        vault.reallocate(allocation, allocation);
+        vault.reallocate(allocation);
 
         vm.startPrank(ALLOCATOR);
         vault.setSupplyQueue(supplyQueue);
         vault.updateWithdrawQueue(withdrawQueueFromRanks);
-        vault.reallocate(allocation, allocation);
+        vault.reallocate(allocation);
         vm.stopPrank();
     }
 }
