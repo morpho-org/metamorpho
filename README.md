@@ -90,19 +90,20 @@ It can:
 
 ### Idle Supply
 
-In some cases, the vault's curator or allocators may want to keep some funds "idle", to guarantee lenders some extent of liquidity from the vault (beyond the liquidity of each of the vault's markets).
+In some cases, the vault's curator or allocators may want to keep some funds "idle", to guarantee lenders that some liquidity can be withdrawn from the vault (beyond the liquidity of each of the vault's markets).
 
 To achieve this, it is advised to allocate "idle" funds to any market on Morpho Blue having:
 
 - The vault's asset as loan token.
 - No collateral token (`address(0)`).
-- An arbitrary IRM (`address(0)` to save gas).
+- An arbitrary IRM.
 - No oracle (`address(0)`).
 - An arbitrary LLTV (`0`).
 
-Thus, these funds cannot be borrowed on Morpho Blue and is guaranteed to be liquid ; though it won't generate interest.
+Thus, these funds cannot be borrowed on Morpho Blue and are guaranteed to be liquid ; though it won't generate interest.
 
-Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho. It is advised to enable an infinite cap (`type(uint256).max`).
+Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
+It is advised to enable an infinite cap (`type(uint256).max`) to always allow users to deposit on the vault, but any other desired cap can be used to limit the quantity of funds left idle that has to be manually reallocated by the allocator role to earn interest.
 
 ### Rewards
 
