@@ -521,8 +521,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
-        // Update `lastTotalAssets` a first time to prevent reentrancy attacks.
-        // It is re-updated in `_deposit`.
+        // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context. It is updated again in `_deposit`.
         lastTotalAssets = newTotalAssets;
 
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
@@ -534,8 +533,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
-        // Update `lastTotalAssets` a first time to prevent reentrancy attacks.
-        // It is re-updated in `_deposit`.
+        // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context. It is updated again in `_deposit`.
         lastTotalAssets = newTotalAssets;
 
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
@@ -647,8 +645,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         _supplyMorpho(assets);
 
-        // Update `lastTotalAssets` again to avoid inconsistent state due to a reentrancy for instance.
-        _updateLastTotalAssets(totalAssets());
+        // `lastTotalAssets + assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(lastTotalAssets + assets);
     }
 
     /// @inheritdoc ERC4626
