@@ -398,11 +398,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
 
-            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) =
-                MORPHO.expectedMarketBalances(allocation.marketParams);
-
-            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-            uint256 supplyAssets = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+            (uint256 supplyAssets, uint256 supplyShares,) = _accruedSupplyBalance(allocation.marketParams, id);
             uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
             if (withdrawn > 0) {
@@ -612,7 +608,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IERC4626
     function totalAssets() public view override returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
-            assets += _supplyBalance(_marketParams(withdrawQueue[i]));
+            assets += MORPHO.expectedSupplyAssets(_marketParams(withdrawQueue[i]), address(this));
         }
 
         assets += idle;
@@ -712,9 +708,18 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
     }
 
-    /// @dev Returns the vault's balance the market defined by `marketParams`.
-    function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyAssets(marketParams, address(this));
+    /// @dev Accrues interest on Morpho Blue and returns the vault's assets & corresponding shares supplied on the
+    /// market defined by `marketParams`, as well as the market's state.
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _accruedSupplyBalance(MarketParams memory marketParams, Id id)
+        internal
+        returns (uint256 assets, uint256 shares, Market memory market)
+    {
+        MORPHO.accrueInterest(marketParams);
+
+        market = MORPHO.market(id);
+        shares = MORPHO.supplyShares(id, address(this));
+        assets = shares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
@@ -776,9 +781,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _supplyMorpho(uint256 assets) internal {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
+            uint256 supplyCap = config[id].cap;
+            if (supplyCap == 0) continue;
+
+            MarketParams memory marketParams = _marketParams(id);
+            (uint256 supplyAssets,,) = _accruedSupplyBalance(marketParams, id);
+
+            uint256 toSupply = UtilsLib.min(supplyCap.zeroFloorSub(supplyAssets), assets);
 
             if (toSupply > 0) {
                 // Using try/catch to skip markets that revert.
@@ -803,8 +813,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
+            (uint256 supplyAssets,, Market memory market) = _accruedSupplyBalance(marketParams, id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining);
+            uint256 toWithdraw = UtilsLib.min(
+                _withdrawable(marketParams, market.totalSupplyAssets, market.totalBorrowAssets, supplyAssets), remaining
+            );
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
@@ -828,11 +841,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
+                MORPHO.expectedMarketBalances(marketParams);
+
             // The vault withdrawing from Morpho cannot fail because:
             // 1. oracle.price() is never called (the vault doesn't borrow)
-            // 2. `_withdrawable` caps to the liquidity available on Morpho
-            // 3. virtually accruing interest didn't fail in `_withdrawable`
-            remaining -= UtilsLib.min(_withdrawable(marketParams, id), remaining);
+            // 2. the amount is capped to the liquidity available on Morpho
+            // 3. virtually accruing interest didn't fail
+            remaining -= UtilsLib.min(
+                _withdrawable(
+                    marketParams,
+                    totalSupplyAssets,
+                    totalBorrowAssets,
+                    supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares)
+                ),
+                remaining
+            );
 
             if (remaining == 0) return 0;
         }
@@ -845,28 +870,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
     }
 
-    /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyCap = config[id].cap;
-        if (supplyCap == 0) return 0;
-
-        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
-    }
-
-    /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-        (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
-            MORPHO.expectedMarketBalances(marketParams);
-
+    /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`, given the market's
+    /// total supply and borrow assets and the vault's assets supplied.
+    function _withdrawable(
+        MarketParams memory marketParams,
+        uint256 totalSupplyAssets,
+        uint256 totalBorrowAssets,
+        uint256 supplyAssets
+    ) internal view returns (uint256) {
         // Inside a flashloan callback, liquidity on Morpho Blue may be limited to the singleton's balance.
         uint256 availableLiquidity = UtilsLib.min(
             totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
         );
 
-        return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
+        return UtilsLib.min(supplyAssets, availableLiquidity);
     }
 
     /* FEE MANAGEMENT */
