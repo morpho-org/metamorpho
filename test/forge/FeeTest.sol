@@ -40,9 +40,21 @@ contract FeeTest is IntegrationTest {
         _setCap(allMarkets[0], CAP);
     }
 
-    function _feeShares(uint256 totalAssetsBefore) internal view returns (uint256) {
+    function testSetFee(uint256 fee) public {
+        fee = bound(fee, 0, ConstantsLib.MAX_FEE);
+        vm.assume(fee != vault.fee());
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.SetFee(OWNER, fee);
+        vm.prank(OWNER);
+        vault.setFee(fee);
+
+        assertEq(vault.fee(), fee, "fee");
+    }
+
+    function _feeShares() internal view returns (uint256) {
         uint256 totalAssetsAfter = vault.totalAssets();
-        uint256 interest = totalAssetsAfter - totalAssetsBefore;
+        uint256 interest = totalAssetsAfter - vault.lastTotalAssets();
         uint256 feeAssets = interest.mulDiv(FEE, WAD);
 
         return feeAssets.mulDiv(
@@ -50,17 +62,6 @@ contract FeeTest is IntegrationTest {
             totalAssetsAfter - feeAssets + 1,
             Math.Rounding.Floor
         );
-    }
-
-    function testLastTotalAssets(uint256 deposited) public {
-        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-
-        loanToken.setBalance(SUPPLIER, deposited);
-
-        vm.prank(SUPPLIER);
-        vault.deposit(deposited, ONBEHALF);
-
-        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
     }
 
     function testAccrueFeeWithinABlock(uint256 deposited, uint256 withdrawn) public {
@@ -73,9 +74,12 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
+
         vm.prank(ONBEHALF);
         vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertApproxEqAbs(vault.balanceOf(FEE_RECIPIENT), 0, 1, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
@@ -89,24 +93,22 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
 
         _forward(blocks);
 
-        uint256 totalAssetsAfter = vault.totalAssets();
-
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
-        vm.prank(SUPPLIER);
-        vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(SUPPLIER);
         vault.deposit(newDeposit, ONBEHALF);
 
-        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
@@ -120,26 +122,24 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
 
         _forward(blocks);
 
-        uint256 totalAssetsAfter = vault.totalAssets();
-
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
         uint256 shares = vault.convertToShares(newDeposit);
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
-        vm.prank(SUPPLIER);
-        vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(SUPPLIER);
         vault.mint(shares, ONBEHALF);
 
-        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
@@ -153,24 +153,22 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
 
         _forward(blocks);
 
-        uint256 totalAssetsAfter = vault.totalAssets();
-
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
         uint256 shares = vault.convertToShares(withdrawn);
 
-        vm.prank(ONBEHALF);
-        vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(ONBEHALF);
         vault.redeem(shares, RECEIVER, ONBEHALF);
 
-        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
@@ -184,22 +182,20 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
 
         _forward(blocks);
 
-        uint256 totalAssetsAfter = vault.totalAssets();
-
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
-        vm.prank(ONBEHALF);
-        vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(ONBEHALF);
         vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
-        assertEq(vault.lastTotalAssets(), vault.totalAssets(), "lastTotalAssets");
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
@@ -213,20 +209,19 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
 
         _forward(blocks);
 
-        uint256 totalAssetsAfter = vault.totalAssets();
-
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
-        vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
+
         _setFee(fee);
 
-        assertEq(vault.lastTotalAssets(), totalAssetsAfter, "lastTotalAssets");
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
     }
 
@@ -239,44 +234,57 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets1");
 
         _forward(blocks);
 
-        uint256 totalAssetsAfter = vault.totalAssets();
-
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
-        vm.expectEmit();
-        emit EventsLib.AccrueInterest(totalAssetsAfter, feeShares);
-        emit EventsLib.UpdateLastTotalAssets(totalAssetsAfter);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
+        emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
         emit EventsLib.SetFeeRecipient(address(1));
+
         vm.prank(OWNER);
         vault.setFeeRecipient(address(1));
 
-        assertEq(vault.lastTotalAssets(), totalAssetsAfter, "lastTotalAssets");
+        assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeShares, "vault.balanceOf(FEE_RECIPIENT)");
         assertEq(vault.balanceOf(address(1)), 0, "vault.balanceOf(address(1))");
     }
 
-    function testSubmitFeeNotOwner(uint256 fee) public {
+    function testSetFeeNotOwner(uint256 fee) public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        vault.submitFee(fee);
+        vault.setFee(fee);
     }
 
-    function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
+    function testSetFeeMaxFeeExceeded(uint256 fee) public {
         fee = bound(fee, ConstantsLib.MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
-        vault.submitFee(fee);
+        vault.setFee(fee);
     }
 
-    function testSubmitFeeAlreadySet() public {
+    function testSetFeeAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitFee(FEE);
+        vault.setFee(FEE);
+    }
+
+    function testSetFeeZeroFeeRecipient(uint256 fee) public {
+        fee = bound(fee, 1, ConstantsLib.MAX_FEE);
+
+        vm.startPrank(OWNER);
+
+        vault.setFee(0);
+        vault.setFeeRecipient(address(0));
+
+        vm.expectRevert(ErrorsLib.ZeroFeeRecipient.selector);
+        vault.setFee(fee);
+
+        vm.stopPrank();
     }
 
     function testSetFeeRecipientAlreadySet() public {
@@ -301,12 +309,11 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
         uint256 sharesBefore = vault.convertToShares(assets);
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         uint256 expectedShares = assets.mulDiv(
             vault.totalSupply() + feeShares + 10 ** ConstantsLib.DECIMALS_OFFSET,
             vault.totalAssets() + 1,
@@ -328,12 +335,11 @@ contract FeeTest is IntegrationTest {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        uint256 totalAssetsBefore = vault.totalAssets();
         uint256 assetsBefore = vault.convertToAssets(shares);
 
         _forward(blocks);
 
-        uint256 feeShares = _feeShares(totalAssetsBefore);
+        uint256 feeShares = _feeShares();
         uint256 expectedAssets = shares.mulDiv(
             vault.totalAssets() + 1,
             vault.totalSupply() + feeShares + 10 ** ConstantsLib.DECIMALS_OFFSET,

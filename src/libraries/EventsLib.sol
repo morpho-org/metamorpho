@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
-import {PendingUint192, PendingAddress} from "../interfaces/IMetaMorpho.sol";
+
+import {PendingAddress} from "./PendingLib.sol";
 
 /// @title EventsLib
 /// @author Morpho Labs
@@ -17,9 +18,6 @@ library EventsLib {
 
     /// @notice Emitted `rewardsDistibutor` is set to `newRewardsRecipient`.
     event SetRewardsRecipient(address indexed newRewardsRecipient);
-
-    /// @notice Emitted when a pending `newFee` is submitted.
-    event SubmitFee(uint256 newFee);
 
     /// @notice Emitted `fee` is set to `newFee`.
     event SetFee(address indexed caller, uint256 newFee);
@@ -42,6 +40,9 @@ library EventsLib {
     /// @notice Emitted when the vault's last total assets is updated to `updatedTotalAssets`.
     event UpdateLastTotalAssets(uint256 updatedTotalAssets);
 
+    /// @notice Emitted when the market identified by `id` is submitted for removal.
+    event SubmitMarketRemoval(address indexed caller, Id indexed id);
+
     /// @notice Emitted when `curator` is set to `newCurator`.
     event SetCurator(address indexed newCurator);
 
@@ -57,7 +58,10 @@ library EventsLib {
     /// @notice Emitted when a `pendingGuardian` is revoked.
     event RevokePendingGuardian(address indexed caller);
 
-    /// @notice Emitted when the `supplyQgueue` is set to `newSupplyQueue`.
+    /// @notice Emitted when a pending market removal is revoked.
+    event RevokePendingMarketRemoval(address indexed caller, Id indexed id);
+
+    /// @notice Emitted when the `supplyQueue` is set to `newSupplyQueue`.
     event SetSupplyQueue(address indexed caller, Id[] newSupplyQueue);
 
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.

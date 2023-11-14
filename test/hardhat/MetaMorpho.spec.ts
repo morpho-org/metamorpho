@@ -201,10 +201,7 @@ describe("MetaMorpho", () => {
     await metaMorpho.setIsAllocator(allocator.address, true);
 
     await metaMorpho.setFeeRecipient(admin.address);
-    await metaMorpho.submitFee(BigInt.WAD / 10n);
-
-    await forwardTimestamp(timelock);
-    await metaMorpho.connect(admin).acceptFee();
+    await metaMorpho.setFee(BigInt.WAD / 10n);
 
     supplyCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
     for (const marketParams of allMarketParams) {
@@ -250,45 +247,39 @@ describe("MetaMorpho", () => {
           const market = await expectedMarket(marketParams);
           const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
 
-          const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-          const liquidityShares = liquidity.toSharesDown(market.totalSupplyAssets, market.totalSupplyShares);
-
           return {
             marketParams,
             market,
-            liquidShares: position.supplyShares.min(liquidityShares),
+            liquidity: market.totalSupplyAssets - market.totalBorrowAssets,
+            supplyAssets: position.supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
           };
         }),
       );
 
-      const withdrawn = allocation
-        .map(({ marketParams, liquidShares }) => ({
+      const withdrawnAllocation = allocation.map(({ marketParams, liquidity, supplyAssets }) => {
+        // Always withdraw all, up to the liquidity.
+        const withdrawn = supplyAssets.min(liquidity);
+        const remaining = supplyAssets - withdrawn;
+
+        return {
           marketParams,
-          assets: 0n,
-          // Always withdraw all, up to the liquidity.
-          shares: liquidShares,
-        }))
-        .filter(({ shares }) => shares > 0n);
+          supplyAssets,
+          remaining,
+          withdrawn,
+        };
+      });
 
-      const withdrawnAssets = allocation.reduce(
-        (total, { market, liquidShares }) =>
-          total + liquidShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
-        0n,
-      );
+      const withdrawnAssets = withdrawnAllocation.reduce((total, { withdrawn }) => total + withdrawn, 0n);
 
-      // Always consider 90% of withdrawn assets because rates go brrrr.
       const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
 
-      const supplied = allocation
-        .map(({ marketParams }) => ({
-          marketParams,
-          // Always supply evenly on each market 90% of what the vault withdrawn in total.
-          assets: marketAssets,
-          shares: 0n,
-        }))
-        .filter(({ assets }) => assets > 0n);
+      const allocations = withdrawnAllocation.map(({ marketParams, remaining }) => ({
+        marketParams,
+        // Always supply evenly on each market 90% of what the vault withdrawn in total.
+        assets: remaining + marketAssets,
+      }));
 
-      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+      await metaMorpho.connect(allocator).reallocate(allocations);
 
       // Borrow liquidity to generate interest.
 
