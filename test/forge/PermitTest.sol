@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./helpers/SigUtils.sol";
 
-import {ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
+import {ERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "./helpers/IntegrationTest.sol";
 
 contract PermitTest is IntegrationTest {
