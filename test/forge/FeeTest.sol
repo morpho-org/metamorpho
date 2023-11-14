@@ -40,6 +40,18 @@ contract FeeTest is IntegrationTest {
         _setCap(allMarkets[0], CAP);
     }
 
+    function testSetFee(uint256 fee) public {
+        fee = bound(fee, 0, ConstantsLib.MAX_FEE);
+        vm.assume(fee != vault.fee());
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.SetFee(OWNER, fee);
+        vm.prank(OWNER);
+        vault.setFee(fee);
+
+        assertEq(vault.fee(), fee, "fee");
+    }
+
     function _feeShares(uint256 totalAssetsBefore) internal view returns (uint256) {
         uint256 totalAssetsAfter = vault.totalAssets();
         uint256 interest = totalAssetsAfter - totalAssetsBefore;
@@ -248,23 +260,37 @@ contract FeeTest is IntegrationTest {
         assertEq(vault.balanceOf(address(1)), 0, "vault.balanceOf(address(1))");
     }
 
-    function testSubmitFeeNotOwner(uint256 fee) public {
+    function testSetFeeNotOwner(uint256 fee) public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        vault.submitFee(fee);
+        vault.setFee(fee);
     }
 
-    function testSubmitFeeMaxFeeExceeded(uint256 fee) public {
+    function testSetFeeMaxFeeExceeded(uint256 fee) public {
         fee = bound(fee, ConstantsLib.MAX_FEE + 1, type(uint256).max);
 
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.MaxFeeExceeded.selector);
-        vault.submitFee(fee);
+        vault.setFee(fee);
     }
 
-    function testSubmitFeeAlreadySet() public {
+    function testSetFeeAlreadySet() public {
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitFee(FEE);
+        vault.setFee(FEE);
+    }
+
+    function testSetFeeZeroFeeRecipient(uint256 fee) public {
+        fee = bound(fee, 1, ConstantsLib.MAX_FEE);
+
+        vm.startPrank(OWNER);
+
+        vault.setFee(0);
+        vault.setFeeRecipient(address(0));
+
+        vm.expectRevert(ErrorsLib.ZeroFeeRecipient.selector);
+        vault.setFee(fee);
+
+        vm.stopPrank();
     }
 
     function testSetFeeRecipientAlreadySet() public {

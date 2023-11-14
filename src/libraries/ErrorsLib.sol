@@ -17,13 +17,16 @@ library ErrorsLib {
     /// @notice Thrown when the caller doesn't have the allocator role.
     error NotAllocatorRole();
 
-    /// @notice Thrown when the caller is not the guardian.
-    error NotGuardian();
+    /// @notice Thrown when the caller doesn't have the guardian role.
+    error NotGuardianRole();
+
+    /// @notice Thrown when the caller doesn't have the curator nor the guardian role.
+    error NotCuratorNorGuardianRole();
 
     /// @notice Thrown when the market `id` cannot be set in the supply queue.
     error UnauthorizedMarket(Id id);
 
-    /// @notice Thrown when submitting a cap for a market `id` whose loan token does not correspond to the underlyin
+    /// @notice Thrown when submitting a cap for a market `id` whose loan token does not correspond to the underlying.
     /// asset.
     error InconsistentAsset(Id id);
 
@@ -36,11 +39,20 @@ library ErrorsLib {
     /// @notice Thrown when the value is already set.
     error AlreadySet();
 
+    /// @notice Thrown when the value is already pending.
+    error AlreadyPending();
+
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);
 
-    /// @notice Thrown when market `id` is missing in the new withdraw queue to set.
-    error MissingMarket(Id id);
+    /// @notice Thrown when market `id` is missing in the updated withdraw queue and the market has a non-zero cap set.
+    error InvalidMarketRemovalNonZeroCap(Id id);
+
+    /// @notice Thrown when market `id` is missing in the updated withdraw queue and the market has a non-zero supply.
+    error InvalidMarketRemovalNonZeroSupply(Id id);
+
+    /// @notice Thrown when market `id` is missing in the updated withdraw queue and the market is not yet disabled.
+    error InvalidMarketRemovalTimelockNotElapsed(Id id);
 
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();
@@ -51,6 +63,9 @@ library ErrorsLib {
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();
 
+    /// @notice Thrown when submitting a non previously enabled market for removal.
+    error MarketNotEnabled();
+
     /// @notice Thrown when the submitted timelock is above the max timelock.
     error AboveMaxTimelock();
 
@@ -60,11 +75,8 @@ library ErrorsLib {
     /// @notice Thrown when the timelock is not elapsed.
     error TimelockNotElapsed();
 
-    /// @notice Thrown when the timelock expiration is exceeded.
-    error TimelockExpirationExceeded();
-
     /// @notice Thrown when too many markets are in the withdraw queue.
-    error MaxQueueSizeExceeded();
+    error MaxQueueLengthExceeded();
 
     /// @notice Thrown when setting the fee to a non zero value while the fee recipient is the zero address.
     error ZeroFeeRecipient();
