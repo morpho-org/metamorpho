@@ -48,10 +48,10 @@ contract MarketTest is IntegrationTest {
 
     function testSubmitCapOverflow(uint256 seed, uint256 cap) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
-        cap = bound(cap, uint256(type(uint192).max) + 1, type(uint256).max);
+        cap = bound(cap, uint256(type(uint184).max) + 1, type(uint256).max);
 
         vm.prank(CURATOR);
-        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, uint8(192), cap));
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, uint8(184), cap));
         vault.submitCap(marketParams, cap);
     }
 
@@ -155,6 +155,11 @@ contract MarketTest is IntegrationTest {
     function testUpdateWithdrawQueueRemovingDisabledMarket() public {
         _setCap(allMarkets[2], 0);
 
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[2].id());
+
+        vm.warp(block.timestamp + TIMELOCK);
+
         uint256[] memory indexes = new uint256[](3);
         indexes[0] = 0;
         indexes[1] = 2;
@@ -199,7 +204,7 @@ contract MarketTest is IntegrationTest {
         vault.updateWithdrawQueue(indexes);
     }
 
-    function testUpdateWithdrawQueueMissingMarketWithNonZeroSupply() public {
+    function testUpdateWithdrawQueueInvalidMarketRemovalNonZeroSupply() public {
         loanToken.setBalance(SUPPLIER, 1);
 
         vm.prank(SUPPLIER);
@@ -210,19 +215,49 @@ contract MarketTest is IntegrationTest {
         indexes[1] = 2;
         indexes[2] = 3;
 
+        _setCap(idleParams, 0);
+
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, idleParams.id()));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalNonZeroSupply.selector, idleParams.id()));
         vault.updateWithdrawQueue(indexes);
     }
 
-    function testUpdateWithdrawQueueMissingMarketWithNonZeroCap() public {
+    function testUpdateWithdrawQueueInvalidMarketRemovalNonZeroCap() public {
         uint256[] memory indexes = new uint256[](3);
-        indexes[0] = 0;
+        indexes[0] = 1;
+        indexes[1] = 2;
+        indexes[2] = 3;
+
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalNonZeroCap.selector, idleParams.id()));
+
+        vm.prank(ALLOCATOR);
+        vault.updateWithdrawQueue(indexes);
+    }
+
+    function testUpdateWithdrawQueueInvalidMarketRemovalTimelockNotElapsed(uint256 elapsed) public {
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        loanToken.setBalance(SUPPLIER, 1);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(1, RECEIVER);
+
+        _setCap(idleParams, 0);
+
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(idleParams.id());
+
+        vm.warp(block.timestamp + elapsed);
+
+        uint256[] memory indexes = new uint256[](3);
+        indexes[0] = 1;
         indexes[1] = 2;
         indexes[2] = 3;
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InvalidMarketRemoval.selector, allMarkets[0].id()));
+        vm.expectRevert(
+            abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalTimelockNotElapsed.selector, idleParams.id())
+        );
         vault.updateWithdrawQueue(indexes);
     }
 }

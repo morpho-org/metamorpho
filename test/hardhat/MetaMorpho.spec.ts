@@ -3,7 +3,6 @@ import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IrmMock } from "types";
 import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
-import { MarketAllocationStruct } from "types/src/MetaMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
@@ -222,7 +221,7 @@ describe("MetaMorpho", () => {
       await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);
     }
 
-    await metaMorpho.connect(curator).submitCap(idleParams, 2n ** 192n - 1n);
+    await metaMorpho.connect(curator).submitCap(idleParams, 2n ** 184n - 1n);
 
     await forwardTimestamp(timelock);
 
@@ -271,59 +270,45 @@ describe("MetaMorpho", () => {
           const market = await expectedMarket(marketParams);
           const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
 
-          const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-          const liquidityShares = liquidity.toSharesDown(market.totalSupplyAssets, market.totalSupplyShares);
-
           return {
             marketParams,
             market,
-            liquidShares: position.supplyShares.min(liquidityShares),
+            liquidity: market.totalSupplyAssets - market.totalBorrowAssets,
+            supplyAssets: position.supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
           };
         }),
       );
 
-      const idlePosition = await morpho.position(identifier(idleParams), metaMorphoAddress);
+      const withdrawnAllocation = allocation.map(({ marketParams, liquidity, supplyAssets }) => {
+        // Always withdraw all, up to the liquidity.
+        const withdrawn = supplyAssets.min(liquidity);
+        const remaining = supplyAssets - withdrawn;
 
-      const withdrawn: MarketAllocationStruct[] = [];
-
-      // Always withdraw half from idle.
-      if (idlePosition.supplyShares > 1n)
-        withdrawn.push({ marketParams: idleParams, assets: 0n, shares: idlePosition.supplyShares / 2n });
-
-      for (const { marketParams, liquidShares } of allocation) {
-        if (liquidShares === 0n) continue;
-
-        withdrawn.push({
+        return {
           marketParams,
-          assets: 0n,
-          // Always withdraw all, up to the liquidity.
-          shares: liquidShares,
-        });
-      }
+          supplyAssets,
+          remaining,
+          withdrawn,
+        };
+      });
 
-      const withdrawnAssets = allocation.reduce(
-        (total, { market, liquidShares }) =>
-          total + liquidShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
-        0n,
-      );
+      const withdrawnAssets = withdrawnAllocation.reduce((total, { withdrawn }) => total + withdrawn, 0n);
 
-      // Always consider 90% of withdrawn assets because rates go brrrr.
       const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
 
-      const supplied: MarketAllocationStruct[] = [];
-      for (const { marketParams } of allocation) {
-        supplied.push({
-          marketParams,
-          // Always supply evenly on each market 90% of what the vault withdrawn in total.
-          assets: marketAssets,
-          shares: 0n,
-        });
-      }
+      const allocations = withdrawnAllocation.map(({ marketParams, remaining }) => ({
+        marketParams,
+        // Always supply evenly on each market 90% of what the vault withdrawn in total.
+        assets: remaining + marketAssets,
+      }));
 
-      // Always supply remaining to idle.
-      supplied.push({ marketParams: idleParams, assets: MaxUint256, shares: 0n });
-
-      await metaMorpho.connect(allocator).reallocate(withdrawn, supplied);
+      await metaMorpho.connect(allocator).reallocate(
+        // Always withdraw all from idle first.
+        [{ marketParams: idleParams, assets: 0n }]
+          .concat(allocations)
+          // Always supply remaining to idle last.
+          .concat([{ marketParams: idleParams, assets: MaxUint256 }]),
+      );
 
       // Borrow liquidity to generate interest.
 

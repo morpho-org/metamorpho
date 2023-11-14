@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "./BaseTest.sol";
 
+uint256 constant TIMELOCK = 1 weeks;
+
 contract IntegrationTest is BaseTest {
     using MathLib for uint256;
     using MorphoBalancesLib for IMorpho;
@@ -14,17 +16,16 @@ contract IntegrationTest is BaseTest {
         super.setUp();
 
         vault = IMetaMorpho(
-            address(
-                new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV")
-            )
+            address(new MetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV"))
         );
 
         vm.startPrank(OWNER);
         vault.setCurator(CURATOR);
         vault.setIsAllocator(ALLOCATOR, true);
+        vault.setFeeRecipient(FEE_RECIPIENT);
         vm.stopPrank();
 
-        _setCap(idleParams, type(uint192).max);
+        _setCap(idleParams, type(uint184).max);
 
         loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
@@ -40,12 +41,8 @@ contract IntegrationTest is BaseTest {
         vm.stopPrank();
     }
 
-    function _idleParams() internal view returns (MarketParams memory) {
-        return allMarkets[allMarkets.length - 1];
-    }
-
     function _idle() internal view returns (uint256) {
-        return morpho.expectedSupplyBalance(_idleParams(), address(vault));
+        return morpho.expectedSupplyAssets(idleParams, address(vault));
     }
 
     function _setTimelock(uint256 newTimelock) internal {

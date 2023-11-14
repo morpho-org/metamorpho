@@ -29,7 +29,7 @@ import "@forge-std/console2.sol";
 uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
-uint192 constant CAP = type(uint128).max;
+uint184 constant CAP = type(uint128).max;
 uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_LENGTH + 1;
 
 contract BaseTest is Test {
@@ -76,7 +76,7 @@ contract BaseTest is Test {
             loanToken: address(loanToken),
             collateralToken: address(0),
             oracle: address(0),
-            irm: address(irm),
+            irm: address(0),
             lltv: 0
         });
 
@@ -86,8 +86,9 @@ contract BaseTest is Test {
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
 
         morpho.enableLltv(0);
-        morpho.createMarket(idleParams);
         vm.stopPrank();
+
+        morpho.createMarket(idleParams);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
@@ -100,10 +101,10 @@ contract BaseTest is Test {
                 lltv: lltv
             });
 
-            vm.startPrank(MORPHO_OWNER);
+            vm.prank(MORPHO_OWNER);
             morpho.enableLltv(lltv);
+
             morpho.createMarket(marketParams);
-            vm.stopPrank();
 
             allMarkets.push(marketParams);
         }

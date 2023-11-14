@@ -42,6 +42,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
+    using PendingLib for MarketConfig;
     using PendingLib for PendingUint192;
     using PendingLib for PendingAddress;
 
@@ -95,6 +96,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     Id[] public withdrawQueue;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
+    /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
     uint256 public lastTotalAssets;
 
     /* CONSTRUCTOR */
@@ -214,7 +216,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (newTimelock == pendingTimelock.value) revert ErrorsLib.AlreadyPending();
 
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-            pendingTimelock.update(uint192(newTimelock), timelock);
+            pendingTimelock.update(uint184(newTimelock), timelock);
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -283,15 +285,29 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
         if (newSupplyCap < supplyCap) {
-            _setCap(id, newSupplyCap.toUint192());
+            _setCap(id, newSupplyCap.toUint184());
         } else {
             // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
             if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
 
-            pendingCap[id].update(newSupplyCap.toUint192(), timelock);
+            pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 
             emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
         }
+    }
+
+    /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
+    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
+    function submitMarketRemoval(Id id) external onlyCuratorRole {
+        if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
+        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
+
+        _setCap(id, 0);
+
+        // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
+        config[id].removableAt = uint64(block.timestamp + timelock);
+
+        emit EventsLib.SubmitMarketRemoval(_msgSender(), id);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
@@ -336,20 +352,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             seen[prevIndex] = true;
 
             newWithdrawQueue[i] = id;
-
-            // Safe "unchecked" cast because i < currLength.
-            config[id].withdrawRank = uint64(i + 1);
         }
 
         for (uint256 i; i < currLength; ++i) {
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
-                    revert ErrorsLib.InvalidMarketRemoval(id);
+                if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
+
+                if (MORPHO.supplyShares(id, address(this)) != 0) {
+                    if (config[id].removableAt == 0) revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
+
+                    if (block.timestamp < config[id].removableAt) {
+                        revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
+                    }
                 }
 
-                delete config[id].withdrawRank;
+                delete config[id];
             }
         }
 
@@ -358,57 +377,62 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetWithdrawQueue(_msgSender(), newWithdrawQueue);
     }
 
-    /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on
-    /// `supplied`).
-    /// @dev The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
+    /// @notice Reallocates the vault's liquidity so as to reach a given allocation of assets on each given market.
+    /// @notice The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
     /// token of the market is the same as the vault's asset.
-    function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
-        external
-        onlyAllocatorRole
-    {
-        uint256 totalWithdrawn;
-        for (uint256 i; i < withdrawn.length; ++i) {
-            MarketAllocation memory allocation = withdrawn[i];
-            Id id = allocation.marketParams.id();
-
-            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
-
-            // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            if (allocation.shares == type(uint256).max) allocation.shares = MORPHO.supplyShares(id, address(this));
-
-            (uint256 withdrawnAssets, uint256 withdrawnShares) = MORPHO.withdraw(
-                allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
-            );
-
-            totalWithdrawn += withdrawnAssets;
-
-            emit EventsLib.ReallocateWithdraw(_msgSender(), id, withdrawnAssets, withdrawnShares);
-        }
-
+    /// @dev The behavior of the reallocation can be altered by state changes, including:
+    /// - Deposits on the vault that supplies to markets that are expected to be supplied to during reallocation.
+    /// - Withdrawals from the vault that withdraws from markets that are expected to be withdrawn from during
+    /// reallocation.
+    /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
+    /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
+    /// @dev Any additional liquidity withdrawn during reallocation will be kept idle.
+    function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
         uint256 totalSupplied;
-        for (uint256 i; i < supplied.length; ++i) {
-            MarketAllocation memory allocation = supplied[i];
+        uint256 totalWithdrawn;
+        for (uint256 i; i < allocations.length; ++i) {
+            MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
-            uint256 supplyCap = config[id].cap;
 
-            if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
+            (uint256 supplyAssets, uint256 supplyShares,) = _accruedSupplyBalance(allocation.marketParams, id);
+            uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
-            if (allocation.assets == type(uint256).max) {
-                allocation.assets = totalWithdrawn.zeroFloorSub(totalSupplied);
+            if (withdrawn > 0) {
+                if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
 
-                if (allocation.assets == 0) continue;
+                // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
+                uint256 shares;
+                if (allocation.assets == 0) {
+                    shares = supplyShares;
+                    withdrawn = 0;
+                }
+
+                (uint256 withdrawnAssets, uint256 withdrawnShares) =
+                    MORPHO.withdraw(allocation.marketParams, withdrawn, shares, address(this), address(this));
+
+                emit EventsLib.ReallocateWithdraw(_msgSender(), id, withdrawnAssets, withdrawnShares);
+
+                totalWithdrawn += withdrawnAssets;
+            } else {
+                uint256 suppliedAssets = allocation.assets == type(uint256).max
+                    ? totalWithdrawn.zeroFloorSub(totalSupplied)
+                    : allocation.assets.zeroFloorSub(supplyAssets);
+
+                if (suppliedAssets == 0) continue;
+
+                uint256 supplyCap = config[id].cap;
+                if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
+
+                if (supplyAssets + suppliedAssets > supplyCap) revert ErrorsLib.SupplyCapExceeded(id);
+
+                // The market's loan asset is guaranteed to be the vault's asset because it has a non-zero supply cap.
+                (, uint256 suppliedShares) =
+                    MORPHO.supply(allocation.marketParams, suppliedAssets, 0, address(this), hex"");
+
+                emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
+
+                totalSupplied += suppliedAssets;
             }
-
-            (uint256 suppliedAssets, uint256 suppliedShares) =
-                MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
-
-            if (_supplyBalance(allocation.marketParams) > supplyCap) {
-                revert ErrorsLib.SupplyCapExceeded(id);
-            }
-
-            totalSupplied += suppliedAssets;
-
-            emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
         }
 
         if (totalWithdrawn != totalSupplied) revert ErrorsLib.InconsistentReallocation();
@@ -443,6 +467,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.RevokePendingCap(_msgSender(), id);
     }
 
+    /// @notice Revokes the pending removal of the market defined by `id`.
+    function revokePendingMarketRemoval(Id id) external onlyCuratorOrGuardianRole {
+        delete config[id].removableAt;
+
+        emit EventsLib.RevokePendingMarketRemoval(_msgSender(), id);
+    }
+
     /* EXTERNAL */
 
     /// @notice Returns the length of the supply queue.
@@ -467,7 +498,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Accepts the pending cap of the market defined by `id`.
     function acceptCap(Id id) external afterTimelock(pendingCap[id].validAt) {
-        _setCap(id, pendingCap[id].value);
+        // Safe "unchecked" cast because pendingCap <= type(uint184).max.
+        _setCap(id, uint184(pendingCap[id].value));
     }
 
     /// @notice Skims the vault `token` balance to `skimRecipient`.
@@ -520,7 +552,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
+        // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context.
+        // It is updated again in `_deposit`.
+        lastTotalAssets = newTotalAssets;
+
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
+
         _deposit(_msgSender(), receiver, assets, shares);
     }
 
@@ -528,7 +565,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
+        // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context.
+        // It is updated again in `_deposit`.
+        lastTotalAssets = newTotalAssets;
+
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
+
         _deposit(_msgSender(), receiver, assets, shares);
     }
 
@@ -539,6 +581,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
+
+        // `newTotalAssets - assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets.zeroFloorSub(assets));
+
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
@@ -549,13 +595,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
+
+        // `newTotalAssets - assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets.zeroFloorSub(assets));
+
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
     /// @inheritdoc IERC4626
     function totalAssets() public view override returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
-            assets += _supplyBalance(_marketParams(withdrawQueue[i]));
+            assets += MORPHO.expectedSupplyAssets(_marketParams(withdrawQueue[i]), address(this));
         }
     }
 
@@ -586,7 +636,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
 
-            totalSuppliable += _suppliable(_marketParams(id), id);
+            uint256 supplyCap = config[id].cap;
+            if (supplyCap == 0) continue;
+
+            uint256 supplyAssets = MORPHO.expectedSupplyAssets(_marketParams(id), address(this));
+
+            totalSuppliable += supplyCap.zeroFloorSub(supplyAssets);
         }
     }
 
@@ -635,8 +690,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         _supplyMorpho(assets);
 
-        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
+        // `lastTotalAssets + assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(lastTotalAssets + assets);
     }
 
     /// @inheritdoc ERC4626
@@ -653,9 +708,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _withdrawMorpho(assets);
 
         super._withdraw(caller, receiver, owner, assets, shares);
-
-        // `newTotalAssets - assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
     }
 
     /* INTERNAL */
@@ -665,9 +717,18 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
     }
 
-    /// @dev Returns the vault's balance the market defined by `marketParams`.
-    function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyBalance(marketParams, address(this));
+    /// @dev Accrues interest on Morpho Blue and returns the vault's assets & corresponding shares supplied on the
+    /// market defined by `marketParams`, as well as the market's state.
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _accruedSupplyBalance(MarketParams memory marketParams, Id id)
+        internal
+        returns (uint256 assets, uint256 shares, Market memory market)
+    {
+        MORPHO.accrueInterest(marketParams);
+
+        market = MORPHO.market(id);
+        shares = MORPHO.supplyShares(id, address(this));
+        assets = shares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
@@ -695,22 +756,25 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Sets the cap of the market defined by `id` to `supplyCap`.
-    function _setCap(Id id, uint192 supplyCap) internal {
+    function _setCap(Id id, uint184 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
-        if (supplyCap > 0 && marketConfig.withdrawRank == 0) {
-            supplyQueue.push(id);
-            withdrawQueue.push(id);
+        if (supplyCap > 0) {
+            if (!marketConfig.enabled) {
+                supplyQueue.push(id);
+                withdrawQueue.push(id);
 
-            if (
-                supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
-                    || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
-            ) {
-                revert ErrorsLib.MaxQueueLengthExceeded();
+                if (
+                    supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                        || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                ) {
+                    revert ErrorsLib.MaxQueueLengthExceeded();
+                }
+
+                marketConfig.enabled = true;
             }
 
-            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_LENGTH.
-            marketConfig.withdrawRank = uint64(withdrawQueue.length);
+            marketConfig.removableAt = 0;
         }
 
         marketConfig.cap = supplyCap;
@@ -726,9 +790,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _supplyMorpho(uint256 assets) internal {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
+            uint256 supplyCap = config[id].cap;
+            if (supplyCap == 0) continue;
+
+            MarketParams memory marketParams = _marketParams(id);
+            (uint256 supplyAssets,,) = _accruedSupplyBalance(marketParams, id);
+
+            uint256 toSupply = UtilsLib.min(supplyCap.zeroFloorSub(supplyAssets), assets);
 
             if (toSupply > 0) {
                 // Using try/catch to skip markets that revert.
@@ -748,8 +817,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
+            (uint256 supplyAssets,, Market memory market) = _accruedSupplyBalance(marketParams, id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), assets);
+            uint256 toWithdraw = UtilsLib.min(
+                _withdrawable(marketParams, market.totalSupplyAssets, market.totalBorrowAssets, supplyAssets), assets
+            );
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
@@ -771,11 +843,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
+                MORPHO.expectedMarketBalances(marketParams);
+
             // The vault withdrawing from Morpho cannot fail because:
             // 1. oracle.price() is never called (the vault doesn't borrow)
-            // 2. `_withdrawable` caps to the liquidity available on Morpho
-            // 3. virtually accruing interest didn't fail in `_withdrawable`
-            assets = assets.zeroFloorSub(_withdrawable(marketParams, id));
+            // 2. the amount is capped to the liquidity available on Morpho
+            // 3. virtually accruing interest didn't fail
+            assets = assets.zeroFloorSub(
+                _withdrawable(
+                    marketParams,
+                    totalSupplyAssets,
+                    totalBorrowAssets,
+                    supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares)
+                )
+            );
 
             if (assets == 0) break;
         }
@@ -783,28 +866,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return assets;
     }
 
-    /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyCap = config[id].cap;
-        if (supplyCap == 0) return 0;
-
-        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
-    }
-
-    /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-        (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
-            MORPHO.expectedMarketBalances(marketParams);
-
+    /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`, given the market's
+    /// total supply and borrow assets and the vault's assets supplied.
+    function _withdrawable(
+        MarketParams memory marketParams,
+        uint256 totalSupplyAssets,
+        uint256 totalBorrowAssets,
+        uint256 supplyAssets
+    ) internal view returns (uint256) {
         // Inside a flashloan callback, liquidity on Morpho Blue may be limited to the singleton's balance.
         uint256 availableLiquidity = UtilsLib.min(
             totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
         );
 
-        return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
+        return UtilsLib.min(supplyAssets, availableLiquidity);
     }
 
     /* FEE MANAGEMENT */
