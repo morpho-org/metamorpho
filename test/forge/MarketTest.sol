@@ -244,6 +244,11 @@ contract MarketTest is IntegrationTest {
 
         _setCaps();
 
+        loanToken.setBalance(SUPPLIER, 1);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(1, RECEIVER);
+
         _setCap(allMarkets[0], 0);
 
         vm.prank(CURATOR);
