@@ -887,24 +887,22 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* FEE MANAGEMENT */
 
-    /// @dev Updates `lastTotalAssets` to `newTotalAssets`.
-    function _updateLastTotalAssets(uint256 newTotalAssets) internal {
-        lastTotalAssets = newTotalAssets;
+    /// @dev Updates `lastTotalAssets` to `updatedTotalAssets`.
+    function _updateLastTotalAssets(uint256 updatedTotalAssets) internal {
+        lastTotalAssets = updatedTotalAssets;
 
-        emit EventsLib.UpdateLastTotalAssets(newTotalAssets);
+        emit EventsLib.UpdateLastTotalAssets(updatedTotalAssets);
     }
 
     /// @dev Accrues the fee and mints the fee shares to the fee recipient.
-    /// @return newTotalAssets The new vault's total assets.
+    /// @return newTotalAssets The vaults total assets after accruing the interest.
     function _accrueFee() internal returns (uint256 newTotalAssets) {
         uint256 feeShares;
         (feeShares, newTotalAssets) = _accruedFeeShares();
 
-        if (feeShares != 0) {
-            _mint(feeRecipient, feeShares);
+        if (feeShares != 0) _mint(feeRecipient, feeShares);
 
-            emit EventsLib.AccrueFee(feeShares);
-        }
+        emit EventsLib.AccrueInterest(newTotalAssets, feeShares);
     }
 
     /// @dev Computes and returns the fee shares (`feeShares`) to mint and the new vault's total assets

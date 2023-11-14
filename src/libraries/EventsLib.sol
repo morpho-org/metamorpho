@@ -37,11 +37,11 @@ library EventsLib {
     /// @notice Emitted when a new `cap` is set for market identified by `id`.
     event SetCap(address indexed caller, Id indexed id, uint256 cap);
 
+    /// @notice Emitted when the vault's last total assets is updated to `updatedTotalAssets`.
+    event UpdateLastTotalAssets(uint256 updatedTotalAssets);
+
     /// @notice Emitted when the market identified by `id` is submitted for removal.
     event SubmitMarketRemoval(address indexed caller, Id indexed id);
-
-    /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
-    event UpdateLastTotalAssets(uint256 newTotalAssets);
 
     /// @notice Emitted when `curator` is set to `newCurator`.
     event SetCurator(address indexed newCurator);
@@ -82,8 +82,10 @@ library EventsLib {
     /// @notice Emitted when a reallocation added or removed assets from idle.
     event ReallocateIdle(address indexed caller, uint256 idle);
 
-    /// @notice Emitted when fees are accrued.
-    event AccrueFee(uint256 feeShares);
+    /// @notice Emitted when interest are accrued.
+    /// @param newTotalAssets The assets of the vault after accruing the interest but before the interaction.
+    /// @param feeShares The shares minted to the fee recipient.
+    event AccrueInterest(uint256 newTotalAssets, uint256 feeShares);
 
     /// @notice Emitted when an `amount` of `token` is transferred to the skim recipient by `caller`.
     event Skim(address indexed caller, address indexed token, uint256 amount);
