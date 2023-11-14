@@ -362,55 +362,63 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetWithdrawQueue(_msgSender(), newWithdrawQueue);
     }
 
-    /// @notice Reallocates the vault's liquidity by withdrawing some (based on `withdrawn`) then supplying (based on
-    /// `supplied`).
-    /// @dev The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
+    /// @notice Reallocates the vault's liquidity so as to reach a given allocation of assets on each given market.
+    /// @notice The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
     /// token of the market is the same as the vault's asset.
-    function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied)
-        external
-        onlyAllocatorRole
-    {
-        uint256 totalWithdrawn;
-        for (uint256 i; i < withdrawn.length; ++i) {
-            MarketAllocation memory allocation = withdrawn[i];
-            Id id = allocation.marketParams.id();
-
-            if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
-
-            // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            uint256 shares;
-            if (allocation.assets == type(uint256).max) {
-                shares = MORPHO.supplyShares(id, address(this));
-
-                allocation.assets = 0;
-            }
-
-            (uint256 withdrawnAssets, uint256 withdrawnShares) =
-                MORPHO.withdraw(allocation.marketParams, allocation.assets, shares, address(this), address(this));
-
-            totalWithdrawn += withdrawnAssets;
-
-            emit EventsLib.ReallocateWithdraw(_msgSender(), id, withdrawnAssets, withdrawnShares);
-        }
-
+    /// @dev The behavior of the reallocation can be altered by state changes, including:
+    /// - Deposits on the vault that supplies to markets that are expected to be supplied to during reallocation.
+    /// - Withdrawals from the vault that withdraws from markets that are expected to be withdrawn from during
+    /// reallocation.
+    /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
+    /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
+    /// @dev Any additional liquidity withdrawn during reallocation will be kept idle.
+    function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
         uint256 totalSupplied;
-        for (uint256 i; i < supplied.length; ++i) {
-            MarketAllocation memory allocation = supplied[i];
+        uint256 totalWithdrawn;
+        for (uint256 i; i < allocations.length; ++i) {
+            MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
-            uint256 supplyCap = config[id].cap;
 
-            if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) =
+                MORPHO.expectedMarketBalances(allocation.marketParams);
 
-            (uint256 suppliedAssets, uint256 suppliedShares) =
-                MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            uint256 supplyAssets = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+            uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
-            if (_supplyBalance(allocation.marketParams) > supplyCap) {
-                revert ErrorsLib.SupplyCapExceeded(id);
+            if (withdrawn > 0) {
+                if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
+
+                // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
+                uint256 shares;
+                if (allocation.assets == 0) {
+                    shares = supplyShares;
+                    withdrawn = 0;
+                }
+
+                (uint256 withdrawnAssets, uint256 withdrawnShares) =
+                    MORPHO.withdraw(allocation.marketParams, withdrawn, shares, address(this), address(this));
+
+                emit EventsLib.ReallocateWithdraw(_msgSender(), id, withdrawnAssets, withdrawnShares);
+
+                totalWithdrawn += withdrawnAssets;
+            } else {
+                uint256 suppliedAssets = allocation.assets.zeroFloorSub(supplyAssets);
+                if (suppliedAssets == 0) continue;
+
+                uint256 supplyCap = config[id].cap;
+                if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
+
+                if (supplyAssets + suppliedAssets > supplyCap) revert ErrorsLib.SupplyCapExceeded(id);
+
+                // The market's loan asset is guaranteed to be the vault's asset because it has a non-zero supply cap.
+                (, uint256 suppliedShares) =
+                    MORPHO.supply(allocation.marketParams, suppliedAssets, 0, address(this), hex"");
+
+                emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
+
+                totalSupplied += suppliedAssets;
             }
-
-            totalSupplied += suppliedAssets;
-
-            emit EventsLib.ReallocateSupply(_msgSender(), id, suppliedAssets, suppliedShares);
         }
 
         uint256 newIdle;
@@ -664,7 +672,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the vault's balance the market defined by `marketParams`.
     function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyBalance(marketParams, address(this));
+        return MORPHO.expectedSupplyAssets(marketParams, address(this));
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
