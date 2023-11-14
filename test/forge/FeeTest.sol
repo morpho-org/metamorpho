@@ -100,8 +100,8 @@ contract FeeTest is IntegrationTest {
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
-        vm.expectEmit(true, true, true, false, address(vault));
-        emit EventsLib.AccrueFee(0);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
         vm.prank(SUPPLIER);
         vault.deposit(newDeposit, ONBEHALF);
@@ -131,10 +131,10 @@ contract FeeTest is IntegrationTest {
 
         loanToken.setBalance(SUPPLIER, newDeposit);
 
-        vm.prank(SUPPLIER);
-        vm.expectEmit();
-        emit EventsLib.AccrueFee(feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(SUPPLIER);
         vault.mint(shares, ONBEHALF);
 
         assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
@@ -160,10 +160,10 @@ contract FeeTest is IntegrationTest {
 
         uint256 shares = vault.convertToShares(withdrawn);
 
-        vm.prank(ONBEHALF);
-        vm.expectEmit();
-        emit EventsLib.AccrueFee(feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(ONBEHALF);
         vault.redeem(shares, RECEIVER, ONBEHALF);
 
         assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
@@ -187,10 +187,10 @@ contract FeeTest is IntegrationTest {
         uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
-        vm.prank(ONBEHALF);
-        vm.expectEmit();
-        emit EventsLib.AccrueFee(feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
 
+        vm.prank(ONBEHALF);
         vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
         assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
@@ -214,8 +214,9 @@ contract FeeTest is IntegrationTest {
         uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
-        vm.expectEmit();
-        emit EventsLib.AccrueFee(feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
+
         _setFee(fee);
 
         assertApproxEqAbs(vault.lastTotalAssets(), vault.totalAssets(), 1, "lastTotalAssets2");
@@ -238,8 +239,8 @@ contract FeeTest is IntegrationTest {
         uint256 feeShares = _feeShares();
         vm.assume(feeShares != 0);
 
-        vm.expectEmit();
-        emit EventsLib.AccrueFee(feeShares);
+        vm.expectEmit(address(vault));
+        emit EventsLib.AccrueInterest(vault.totalAssets(), feeShares);
         emit EventsLib.UpdateLastTotalAssets(vault.totalAssets());
         emit EventsLib.SetFeeRecipient(address(1));
 
