@@ -378,11 +378,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
 
             // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
-            if (allocation.shares == type(uint256).max) allocation.shares = MORPHO.supplyShares(id, address(this));
+            uint256 shares;
+            if (allocation.assets == type(uint256).max) {
+                shares = MORPHO.supplyShares(id, address(this));
 
-            (uint256 withdrawnAssets, uint256 withdrawnShares) = MORPHO.withdraw(
-                allocation.marketParams, allocation.assets, allocation.shares, address(this), address(this)
-            );
+                allocation.assets = 0;
+            }
+
+            (uint256 withdrawnAssets, uint256 withdrawnShares) =
+                MORPHO.withdraw(allocation.marketParams, allocation.assets, shares, address(this), address(this));
 
             totalWithdrawn += withdrawnAssets;
 
@@ -398,7 +402,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (supplyCap == 0) revert ErrorsLib.UnauthorizedMarket(id);
 
             (uint256 suppliedAssets, uint256 suppliedShares) =
-                MORPHO.supply(allocation.marketParams, allocation.assets, allocation.shares, address(this), hex"");
+                MORPHO.supply(allocation.marketParams, allocation.assets, 0, address(this), hex"");
 
             if (_supplyBalance(allocation.marketParams) > supplyCap) {
                 revert ErrorsLib.SupplyCapExceeded(id);
