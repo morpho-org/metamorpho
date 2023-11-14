@@ -25,7 +25,7 @@ contract GuardianTest is IntegrationTest {
         vault.submitGuardian(GUARDIAN);
     }
 
-    function testRevokePendingTimelockDecreased(uint256 timelock, uint256 elapsed) public {
+    function testGuardianRevokePendingTimelockDecreased(uint256 timelock, uint256 elapsed) public {
         timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
@@ -47,7 +47,29 @@ contract GuardianTest is IntegrationTest {
         assertEq(pendingTimelock.validAt, 0, "pendingTimelock.validAt");
     }
 
-    function testRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
+    function testOwnerRevokePendingTimelockDecreased(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit();
+        emit EventsLib.RevokePendingTimelock(OWNER);
+        vm.prank(OWNER);
+        vault.revokePendingTimelock();
+
+        uint256 newTimelock = vault.timelock();
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
+
+        assertEq(newTimelock, TIMELOCK, "newTimelock");
+        assertEq(pendingTimelock.value, 0, "value");
+        assertEq(pendingTimelock.validAt, 0, "validAt");
+    }
+
+    function testGuardianRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
         cap = bound(cap, 1, type(uint192).max);
@@ -74,7 +96,7 @@ contract GuardianTest is IntegrationTest {
         assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
     }
 
-    function testRevokePendingGuardian(uint256 elapsed) public {
+    function testGuardianRevokePendingGuardian(uint256 elapsed) public {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         address guardian = makeAddr("Guardian2");

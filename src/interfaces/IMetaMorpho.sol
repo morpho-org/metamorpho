@@ -61,9 +61,6 @@ interface IMetaMorphoBase {
     function submitMarketRemoval(Id id) external;
     function revokePendingMarketRemoval(Id id) external;
 
-    function submitFee(uint256 newFee) external;
-    function acceptFee() external;
-
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokePendingGuardian() external;
@@ -72,6 +69,7 @@ interface IMetaMorphoBase {
 
     function setIsAllocator(address newAllocator, bool newIsAllocator) external;
     function setCurator(address newCurator) external;
+    function setFee(uint256 newFee) external;
     function setFeeRecipient(address newFeeRecipient) external;
     function setRewardsRecipient(address) external;
 
@@ -83,11 +81,10 @@ interface IMetaMorphoBase {
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoStaticTyping is IMetaMorphoBase {
-    function config(Id) external view returns (uint192 cap, bool enabled, uint56 disabledAt);
+    function config(Id) external view returns (uint192 cap, bool enabled, uint56 removableAt);
     function pendingGuardian() external view returns (address guardian, uint56 validAt);
     function pendingCap(Id) external view returns (uint192 value, uint56 validAt);
     function pendingTimelock() external view returns (uint192 value, uint56 validAt);
-    function pendingFee() external view returns (uint192 value, uint56 validAt);
 }
 
 /// @title IMetaMorpho
@@ -99,5 +96,4 @@ interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMul
     function pendingGuardian() external view returns (PendingAddress memory);
     function pendingCap(Id) external view returns (PendingUint192 memory);
     function pendingTimelock() external view returns (PendingUint192 memory);
-    function pendingFee() external view returns (PendingUint192 memory);
 }

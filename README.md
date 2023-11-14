@@ -41,6 +41,7 @@ Only one address can have this role.
 It can:
 
 - Do what the curator can do.
+- Do what the guardian can do.
 - Transfer or renounce the ownership.
 - Set the curator.
 - Set allocators.
@@ -57,7 +58,7 @@ Only one address can have this role.
 
 It can:
 
-- Do what the allocators can do.
+- Do what allocators can do.
 - Decrease the supply cap of any market.
   - To softly remove a market, it is expected from the allocator role to reallocate the supplied liquidity to another enabled market first.
 - [Timelocked] Increase the supply cap of any market.
@@ -65,6 +66,7 @@ It can:
   - This action is typically designed to force the removal of a market that keeps reverting thus locking the vault.
   - After the timelock has elapsed, the allocator role is free to remove the market from the withdraw queue. The funds supplied to this market will be lost.
   - If the market ever functions again, the allocator role can withdraw the funds that were previously lost.
+- Revoke the pending cap of any market.
 
 #### Allocator
 
@@ -73,13 +75,11 @@ Multiple addresses can have this role.
 It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
-  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the supply queue in the order set. The remaining funds are left as idle supply on the vault (uncapped).
-  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the withdrawal queue in the order set.
-  - The `supplyQueue` contains only enabled markets (enabled market are markets with non-zero cap or with non-zero vault's supply).
-  - The `withdrawQueue` contains all enabled markets.
-- Instantaneously reallocate funds. In particular:
-  - It is always possible to withdraw liquidity from any market the vault has supply on.
-  - It is only possible to supply liquidity to an enabled market.
+  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue` in the order set. The remaining funds are left as idle supply on the vault (uncapped).
+  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
+  - The `supplyQueue` only contains markets which cap has previously been non-zero.
+  - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
+- Instantaneously reallocate funds by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
 
 #### Guardian
 
@@ -87,7 +87,9 @@ Only one address can have this role.
 
 It can:
 
-- Revoke any timelocked action except it cannot revoke a pending fee.
+- Revoke the pending timelock.
+- Revoke the pending guardian (which means it can revoke any attempt to change the guardian).
+- Revoke the pending cap of any market.
 
 ### Rewards
 

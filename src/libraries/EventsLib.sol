@@ -19,9 +19,6 @@ library EventsLib {
     /// @notice Emitted `rewardsDistibutor` is set to `newRewardsRecipient`.
     event SetRewardsRecipient(address indexed newRewardsRecipient);
 
-    /// @notice Emitted when a pending `newFee` is submitted.
-    event SubmitFee(uint256 newFee);
-
     /// @notice Emitted `fee` is set to `newFee`.
     event SetFee(address indexed caller, uint256 newFee);
 
@@ -64,7 +61,7 @@ library EventsLib {
     /// @notice Emitted when a pending market removal is revoked.
     event RevokePendingMarketRemoval(address indexed caller, Id indexed id);
 
-    /// @notice Emitted when the `supplyQgueue` is set to `newSupplyQueue`.
+    /// @notice Emitted when the `supplyQueue` is set to `newSupplyQueue`.
     event SetSupplyQueue(address indexed caller, Id[] newSupplyQueue);
 
     /// @notice Emitted when the `withdrawQueue` is set to `newWithdrawQueue`.
