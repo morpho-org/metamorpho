@@ -13,8 +13,6 @@ struct MarketAllocation {
     MarketParams marketParams;
     /// @notice The amount of assets to allocate.
     uint256 assets;
-    /// @notice The amount of shares to allocate.
-    uint256 shares;
 }
 
 interface IMulticall {
@@ -75,7 +73,7 @@ interface IMetaMorphoBase {
 
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
     function updateWithdrawQueue(uint256[] calldata indexes) external;
-    function reallocate(MarketAllocation[] calldata withdrawn, MarketAllocation[] calldata supplied) external;
+    function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
