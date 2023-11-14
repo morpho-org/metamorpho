@@ -44,12 +44,4 @@ library PendingLib {
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
         pending.validAt = uint64(block.timestamp + timelock);
     }
-
-    /// @dev Marks the market associated to the given config as removable starting `timelock` seconds in the future.
-    /// @dev Assumes `timelock` <= `MAX_TIMELOCK`.
-    function disable(MarketConfig storage config, uint256 timelock) internal {
-        config.cap = 0;
-        // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
-        config.removableAt = uint64(block.timestamp + timelock);
-    }
 }

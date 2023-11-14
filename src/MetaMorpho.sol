@@ -305,7 +305,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
         if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
 
-        config[id].disable(timelock);
+        _setCap(id, 0);
+
+        // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
+        config[id].removableAt = uint64(block.timestamp + timelock);
 
         emit EventsLib.SubmitMarketRemoval(_msgSender(), id);
     }
