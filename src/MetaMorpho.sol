@@ -42,6 +42,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
+    using PendingLib for MarketConfig;
     using PendingLib for PendingUint192;
     using PendingLib for PendingAddress;
 
@@ -218,7 +219,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (newTimelock == pendingTimelock.value) revert ErrorsLib.AlreadyPending();
 
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
-            pendingTimelock.update(uint192(newTimelock), timelock);
+            pendingTimelock.update(uint184(newTimelock), timelock);
 
             emit EventsLib.SubmitTimelock(newTimelock);
         }
@@ -287,15 +288,29 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
         if (newSupplyCap < supplyCap) {
-            _setCap(id, newSupplyCap.toUint192());
+            _setCap(id, newSupplyCap.toUint184());
         } else {
             // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
             if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
 
-            pendingCap[id].update(newSupplyCap.toUint192(), timelock);
+            pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 
             emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
         }
+    }
+
+    /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
+    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
+    function submitMarketRemoval(Id id) external onlyCuratorRole {
+        if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
+        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
+
+        _setCap(id, 0);
+
+        // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
+        config[id].removableAt = uint64(block.timestamp + timelock);
+
+        emit EventsLib.SubmitMarketRemoval(_msgSender(), id);
     }
 
     /* ONLY ALLOCATOR FUNCTIONS */
@@ -340,20 +355,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             seen[prevIndex] = true;
 
             newWithdrawQueue[i] = id;
-
-            // Safe "unchecked" cast because i < currLength.
-            config[id].withdrawRank = uint64(i + 1);
         }
 
         for (uint256 i; i < currLength; ++i) {
             if (!seen[i]) {
                 Id id = withdrawQueue[i];
 
-                if (MORPHO.supplyShares(id, address(this)) != 0 || config[id].cap != 0) {
-                    revert ErrorsLib.InvalidMarketRemoval(id);
+                if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
+
+                if (MORPHO.supplyShares(id, address(this)) != 0) {
+                    if (config[id].removableAt == 0) revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
+
+                    if (block.timestamp < config[id].removableAt) {
+                        revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
+                    }
                 }
 
-                delete config[id].withdrawRank;
+                delete config[id];
             }
         }
 
@@ -465,6 +483,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.RevokePendingCap(_msgSender(), id);
     }
 
+    /// @notice Revokes the pending removal of the market defined by `id`.
+    function revokePendingMarketRemoval(Id id) external onlyCuratorOrGuardianRole {
+        delete config[id].removableAt;
+
+        emit EventsLib.RevokePendingMarketRemoval(_msgSender(), id);
+    }
+
     /* EXTERNAL */
 
     /// @notice Returns the length of the supply queue.
@@ -489,7 +514,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @notice Accepts the pending cap of the market defined by `id`.
     function acceptCap(Id id) external afterTimelock(pendingCap[id].validAt) {
-        _setCap(id, pendingCap[id].value);
+        // Safe "unchecked" cast because pendingCap <= type(uint184).max.
+        _setCap(id, uint184(pendingCap[id].value));
     }
 
     /// @notice Transfers `token` rewards collected by the vault to the `rewardsRecipient`.
@@ -700,22 +726,25 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Sets the cap of the market defined by `id` to `supplyCap`.
-    function _setCap(Id id, uint192 supplyCap) internal {
+    function _setCap(Id id, uint184 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
-        if (supplyCap > 0 && marketConfig.withdrawRank == 0) {
-            supplyQueue.push(id);
-            withdrawQueue.push(id);
+        if (supplyCap > 0) {
+            if (!marketConfig.enabled) {
+                supplyQueue.push(id);
+                withdrawQueue.push(id);
 
-            if (
-                supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
-                    || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
-            ) {
-                revert ErrorsLib.MaxQueueLengthExceeded();
+                if (
+                    supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                        || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
+                ) {
+                    revert ErrorsLib.MaxQueueLengthExceeded();
+                }
+
+                marketConfig.enabled = true;
             }
 
-            // Safe "unchecked" cast because withdrawQueue.length <= MAX_QUEUE_LENGTH.
-            marketConfig.withdrawRank = uint64(withdrawQueue.length);
+            marketConfig.removableAt = 0;
         }
 
         marketConfig.cap = supplyCap;

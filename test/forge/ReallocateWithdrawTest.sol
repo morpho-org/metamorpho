@@ -144,7 +144,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         vm.prank(rewardDonator);
         loanToken.transfer(address(vault), rewards);
 
-        _setCap(allMarkets[0], type(uint192).max);
+        _setCap(allMarkets[0], type(uint184).max);
 
         allocations.push(MarketAllocation(allMarkets[0], 2 * CAP2 + rewards));
 

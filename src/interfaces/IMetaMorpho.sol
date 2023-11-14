@@ -5,14 +5,7 @@ import {IMorpho, Id, MarketParams} from "@morpho-blue/interfaces/IMorpho.sol";
 import {IERC4626} from "@openzeppelin/interfaces/IERC4626.sol";
 import {IERC20Permit} from "@openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
 
-import {PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
-
-struct MarketConfig {
-    /// @notice The maximum amount of assets that can be allocated to the market.
-    uint192 cap;
-    /// @notice The rank of the market in the withdraw queue.
-    uint64 withdrawRank;
-}
+import {MarketConfig, PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
 
 /// @dev Either `assets` or `shares` should be zero.
 struct MarketAllocation {
@@ -63,6 +56,9 @@ interface IMetaMorphoBase {
     function acceptCap(Id id) external;
     function revokePendingCap(Id id) external;
 
+    function submitMarketRemoval(Id id) external;
+    function revokePendingMarketRemoval(Id id) external;
+
     function submitGuardian(address newGuardian) external;
     function acceptGuardian() external;
     function revokePendingGuardian() external;
@@ -83,7 +79,7 @@ interface IMetaMorphoBase {
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoStaticTyping is IMetaMorphoBase {
-    function config(Id) external view returns (uint192 cap, uint64 withdrawRank);
+    function config(Id) external view returns (uint184 cap, bool enabled, uint64 removableAt);
     function pendingGuardian() external view returns (address guardian, uint64 validAt);
     function pendingCap(Id) external view returns (uint192 value, uint64 validAt);
     function pendingTimelock() external view returns (uint192 value, uint64 validAt);
