@@ -12,8 +12,7 @@ contract ReallocateIdleTest is IntegrationTest {
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 
-    MarketAllocation[] internal withdrawn;
-    MarketAllocation[] internal supplied;
+    MarketAllocation[] internal allocations;
 
     function setUp() public override {
         super.setUp();
@@ -31,26 +30,37 @@ contract ReallocateIdleTest is IntegrationTest {
         vault.deposit(INITIAL_DEPOSIT, ONBEHALF);
     }
 
-    function testReallocateSupplyIdle(uint256[3] memory suppliedShares) public {
-        suppliedShares[0] = bound(suppliedShares[0], SharesMathLib.VIRTUAL_SHARES, CAP2 * SharesMathLib.VIRTUAL_SHARES);
-        suppliedShares[1] = bound(suppliedShares[1], SharesMathLib.VIRTUAL_SHARES, CAP2 * SharesMathLib.VIRTUAL_SHARES);
-        suppliedShares[2] = bound(suppliedShares[2], SharesMathLib.VIRTUAL_SHARES, CAP2 * SharesMathLib.VIRTUAL_SHARES);
+    function testReallocateSupplyIdle(uint256[3] memory suppliedAssets) public {
+        suppliedAssets[0] = bound(suppliedAssets[0], 1, CAP2);
+        suppliedAssets[1] = bound(suppliedAssets[1], 1, CAP2);
+        suppliedAssets[2] = bound(suppliedAssets[2], 1, CAP2);
 
-        supplied.push(MarketAllocation(allMarkets[0], 0, suppliedShares[0]));
-        supplied.push(MarketAllocation(allMarkets[1], 0, suppliedShares[1]));
-        supplied.push(MarketAllocation(allMarkets[2], 0, suppliedShares[2]));
+        allocations.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
+        allocations.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
+        allocations.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
 
         uint256 idleBefore = vault.idle();
 
         vm.prank(ALLOCATOR);
-        vault.reallocate(withdrawn, supplied);
+        vault.reallocate(allocations);
 
-        assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), suppliedShares[0], "morpho.supplyShares(0)");
-        assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), suppliedShares[1], "morpho.supplyShares(1)");
-        assertEq(morpho.supplyShares(allMarkets[2].id(), address(vault)), suppliedShares[2], "morpho.supplyShares(2)");
+        assertEq(
+            morpho.supplyShares(allMarkets[0].id(), address(vault)),
+            suppliedAssets[0] * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(0)"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[1].id(), address(vault)),
+            suppliedAssets[1] * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(1)"
+        );
+        assertEq(
+            morpho.supplyShares(allMarkets[2].id(), address(vault)),
+            suppliedAssets[2] * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(2)"
+        );
 
-        uint256 expectedIdle = idleBefore - suppliedShares[0] / SharesMathLib.VIRTUAL_SHARES
-            - suppliedShares[1] / SharesMathLib.VIRTUAL_SHARES - suppliedShares[2] / SharesMathLib.VIRTUAL_SHARES;
+        uint256 expectedIdle = idleBefore - suppliedAssets[0] - suppliedAssets[1] - suppliedAssets[2];
         assertApproxEqAbs(vault.idle(), expectedIdle, 3, "vault.idle() 1");
     }
 }

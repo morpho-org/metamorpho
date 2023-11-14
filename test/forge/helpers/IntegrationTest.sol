@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "./BaseTest.sol";
 
+uint256 constant TIMELOCK = 1 weeks;
+
 contract IntegrationTest is BaseTest {
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
@@ -13,9 +15,7 @@ contract IntegrationTest is BaseTest {
         super.setUp();
 
         vault = IMetaMorpho(
-            address(
-                new MetaMorpho(OWNER, address(morpho), ConstantsLib.MIN_TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV")
-            )
+            address(new MetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV"))
         );
 
         vm.startPrank(OWNER);

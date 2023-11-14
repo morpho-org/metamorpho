@@ -16,7 +16,7 @@ The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) is deploying immutable on
 
 Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
-Each market has a supply cap that guarantees lenders a maximum absolute exposure to the specific market.
+Each market has a supply cap that guarantees lenders a maximum absolute exposure to the specific market. By default, the supply cap of a market is set to 0.
 
 There are 4 different roles for a MetaMorpho vault: owner, curator, guardian & allocator.
 
@@ -46,7 +46,8 @@ It can:
 - Set the curator.
 - Set allocators.
 - Set the rewards recipient.
-- [Timelocked] Set the timelock.
+- Increase the timelock.
+- [Timelocked] Decrease the timelock.
 - [Timelocked with no possible veto] Set the performance fee (capped to 50%).
 - [Timelocked] Set the guardian.
 - Set the fee recipient.
@@ -58,9 +59,13 @@ Only one address can have this role.
 It can:
 
 - Do what allocators can do.
-- [Timelocked] Enable or disable a market by setting a supply cap to a specific market.
-  - The supply cap must be set to 0 to disable the market.
-  - Disabling a market can then only be done if the vault has no liquidity supplied on the market.
+- Decrease the supply cap of any market.
+  - To softly remove a market after the curator has set the supply cap to 0, it is expected from the allocator role to reallocate the supplied liquidity to another enabled market and then to update the withdraw queue.
+- [Timelocked] Increase the supply cap of any market.
+- [Timelocked] Submit the forced removal of a market.
+  - This action is typically designed to force the removal of a market that keeps reverting thus locking the vault.
+  - After the timelock has elapsed, the allocator role is free to remove the market from the withdraw queue. The funds supplied to this market will be lost.
+  - If the market ever functions again, the allocator role can withdraw the funds that were previously lost.
 - Revoke the pending cap of any market.
 
 #### Allocator
@@ -70,7 +75,7 @@ Multiple addresses can have this role.
 It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
-  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue`` in the order set. The remaining funds are left as idle supply on the vault (uncapped).
+  - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue` in the order set. The remaining funds are left as idle supply on the vault (uncapped).
   - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
   - The `supplyQueue` only contains markets which cap has previously been non-zero.
   - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
@@ -104,10 +109,10 @@ Below is a typical example of how this use case would take place:
 
 - Transfer rewards from the vault to the rewards distributor using the `transferRewards` function.
 
-NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
-Thus, this step might be already performed by some third-party.
-Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
-In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
+  NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
+  Thus, this step might be already performed by some third-party.
+  Note: the amount of rewards transferred is calculated based on the balance in the reward asset of the vault.
+  In case the reward asset is the vault’s asset, the vault’s idle liquidity is automatically subtracted to prevent stealing idle liquidity.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
 
