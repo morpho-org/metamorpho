@@ -60,7 +60,7 @@ It can:
 
 - Do what allocators can do.
 - Decrease the supply cap of any market.
-  - To softly remove a market, it is expected from the allocator role to reallocate the supplied liquidity to another enabled market first.
+  - To softly remove a market after the curator has set the supply cap to 0, it is expected from the allocator role to reallocate the supplied liquidity to another enabled market and then to update the withdraw queue.
 - [Timelocked] Increase the supply cap of any market.
 - [Timelocked] Submit the forced removal of a market.
   - This action is typically designed to force the removal of a market that keeps reverting thus locking the vault.
