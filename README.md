@@ -109,7 +109,7 @@ To achieve this, it is advised to allocate "idle" funds to any market on Morpho 
 Thus, these funds cannot be borrowed on Morpho Blue and are guaranteed to be liquid ; though it won't generate interest.
 
 Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
-It is advised to enable an infinite cap (`type(uint256).max`) to always allow users to deposit on the vault, but any other desired cap can be used to limit the quantity of funds left idle that has to be manually reallocated by the allocator role to earn interest.
+Enabling an infinite cap (`type(uint184).max`) will always allow users to deposit on the vault.
 
 ### Rewards
 
