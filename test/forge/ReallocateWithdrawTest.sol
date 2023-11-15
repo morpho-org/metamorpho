@@ -39,6 +39,17 @@ contract ReallocateWithdrawTest is IntegrationTest {
         allocations.push(MarketAllocation(allMarkets[2], 0));
         allocations.push(MarketAllocation(idleParams, type(uint256).max));
 
+        vm.expectEmit();
+        emit EventsLib.ReallocateWithdraw(
+            ALLOCATOR, allMarkets[0].id(), CAP2, morpho.supplyShares(allMarkets[0].id(), address(vault))
+        );
+        emit EventsLib.ReallocateWithdraw(
+            ALLOCATOR, allMarkets[1].id(), CAP2, morpho.supplyShares(allMarkets[1].id(), address(vault))
+        );
+        emit EventsLib.ReallocateWithdraw(
+            ALLOCATOR, allMarkets[2].id(), CAP2, morpho.supplyShares(allMarkets[2].id(), address(vault))
+        );
+
         vm.prank(ALLOCATOR);
         vault.reallocate(allocations);
 
@@ -125,6 +136,36 @@ contract ReallocateWithdrawTest is IntegrationTest {
             "morpho.supplyShares(2)"
         );
         assertApproxEqAbs(_idle(), expectedIdle, 1, "idle");
+    }
+
+    function testReallocateWithdrawIncreaseSupply() public {
+        _setCap(allMarkets[2], 3 * CAP2);
+
+        allocations.push(MarketAllocation(allMarkets[0], 0));
+        allocations.push(MarketAllocation(allMarkets[1], 0));
+        allocations.push(MarketAllocation(allMarkets[2], 3 * CAP2));
+
+        vm.expectEmit();
+        emit EventsLib.ReallocateWithdraw(
+            ALLOCATOR, allMarkets[0].id(), CAP2, morpho.supplyShares(allMarkets[0].id(), address(vault))
+        );
+        emit EventsLib.ReallocateWithdraw(
+            ALLOCATOR, allMarkets[1].id(), CAP2, morpho.supplyShares(allMarkets[1].id(), address(vault))
+        );
+        emit EventsLib.ReallocateSupply(
+            ALLOCATOR, allMarkets[2].id(), 3 * CAP2, 3 * morpho.supplyShares(allMarkets[2].id(), address(vault))
+        );
+
+        vm.prank(ALLOCATOR);
+        vault.reallocate(allocations);
+
+        assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), 0, "morpho.supplyShares(0)");
+        assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), 0, "morpho.supplyShares(1)");
+        assertEq(
+            morpho.supplyShares(allMarkets[2].id(), address(vault)),
+            3 * CAP2 * SharesMathLib.VIRTUAL_SHARES,
+            "morpho.supplyShares(2)"
+        );
     }
 
     function testReallocateUnauthorizedMarket(uint256[3] memory suppliedAssets) public {
