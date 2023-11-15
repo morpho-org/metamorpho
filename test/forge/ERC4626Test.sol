@@ -34,6 +34,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         uint256 deposited = vault.mint(shares, ONBEHALF);
 
         assertGt(deposited, 0, "deposited");
+        assertEq(loanToken.balanceOf(address(vault)), 0, "balanceOf(vault)");
         assertEq(vault.balanceOf(ONBEHALF), shares, "balanceOf(ONBEHALF)");
         assertEq(morpho.expectedSupplyAssets(allMarkets[0], address(vault)), assets, "expectedSupplyAssets(vault)");
     }
@@ -49,6 +50,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         uint256 shares = vault.deposit(assets, ONBEHALF);
 
         assertGt(shares, 0, "shares");
+        assertEq(loanToken.balanceOf(address(vault)), 0, "balanceOf(vault)");
         assertEq(vault.balanceOf(ONBEHALF), shares, "balanceOf(ONBEHALF)");
         assertEq(morpho.expectedSupplyAssets(allMarkets[0], address(vault)), assets, "expectedSupplyAssets(vault)");
     }
@@ -68,6 +70,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(ONBEHALF);
         vault.redeem(redeemed, RECEIVER, ONBEHALF);
 
+        assertEq(loanToken.balanceOf(address(vault)), 0, "balanceOf(vault)");
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
     }
 
@@ -85,6 +88,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(ONBEHALF);
         uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
+        assertEq(loanToken.balanceOf(address(vault)), 0, "balanceOf(vault)");
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
     }
 
@@ -104,6 +108,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(ONBEHALF);
         uint256 redeemed = vault.withdraw(withdrawn, RECEIVER, ONBEHALF);
 
+        assertEq(loanToken.balanceOf(address(vault)), 0, "balanceOf(vault)");
         assertEq(vault.balanceOf(ONBEHALF), shares - redeemed, "balanceOf(ONBEHALF)");
         assertEq(_idle(), deposited - withdrawn, "idle");
     }
@@ -268,7 +273,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
 
         vm.prank(ONBEHALF);
-        vm.expectRevert(ErrorsLib.WithdrawMorphoFailed.selector);
+        vm.expectRevert(ErrorsLib.NotEnoughLiquidity.selector);
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
@@ -290,7 +295,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         morpho.borrow(allMarkets[0], 1, 0, BORROWER, BORROWER);
 
         vm.startPrank(ONBEHALF);
-        vm.expectRevert(ErrorsLib.WithdrawMorphoFailed.selector);
+        vm.expectRevert(ErrorsLib.NotEnoughLiquidity.selector);
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
