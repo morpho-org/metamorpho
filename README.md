@@ -24,7 +24,7 @@ The vault owner can set a performance fee, cutting up to 50% of the generated in
 The `feeRecipient` can then withdraw the accumulated fee at any time.
 
 The vault may be entitled to some rewards emitted on Morpho Blue markets the vault has supplied to.
-Those rewards can be transferred to the `rewardsRecipient`.
+Those rewards can be transferred to the `skimRecipient`.
 The vault's owner has the choice to distribute back these rewards to vault depositors however they want.
 For more information about this use case, see the [Rewards](#rewards) section.
 
@@ -100,14 +100,14 @@ Below is a typical example of how this use case would take place:
 - If not already done:
 
   - Create a rewards distributor using the [UrdFactory](https://github.com/morpho-org/universal-rewards-distributor/blob/main/src/UrdFactory.sol) (can be done by anyone).
-  - Set the vault’s rewards recipient address to the created URD using `setRewardsRecipient`.
+  - Set the vault’s rewards recipient address to the created URD using `setSkimRecipient`.
 
 - Claim tokens from the Morpho Blue distribution to the vault.
 
   NB: Anyone can claim tokens on behalf of the vault and automatically transfer them to the vault.
   Thus, this step might be already performed by some third-party.
 
-- Transfer rewards from the vault to the rewards distributor using the `transferRewards` function.
+- Transfer rewards from the vault to the rewards distributor using the `skim` function.
 
   NB: Anyone can transfer rewards from the vault to the rewards distributor unless it is unset.
   Thus, this step might be already performed by some third-party.

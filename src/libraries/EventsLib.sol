@@ -16,8 +16,8 @@ library EventsLib {
     /// @notice Emitted `timelock` is set to `newTimelock`.
     event SetTimelock(address indexed caller, uint256 newTimelock);
 
-    /// @notice Emitted `rewardsDistibutor` is set to `newRewardsRecipient`.
-    event SetRewardsRecipient(address indexed newRewardsRecipient);
+    /// @notice Emitted when `skimRecipient` is set to `newSkimRecipient`.
+    event SetSkimRecipient(address indexed newSkimRecipient);
 
     /// @notice Emitted `fee` is set to `newFee`.
     event SetFee(address indexed caller, uint256 newFee);
@@ -37,11 +37,11 @@ library EventsLib {
     /// @notice Emitted when a new `cap` is set for market identified by `id`.
     event SetCap(address indexed caller, Id indexed id, uint256 cap);
 
+    /// @notice Emitted when the vault's last total assets is updated to `updatedTotalAssets`.
+    event UpdateLastTotalAssets(uint256 updatedTotalAssets);
+
     /// @notice Emitted when the market identified by `id` is submitted for removal.
     event SubmitMarketRemoval(address indexed caller, Id indexed id);
-
-    /// @notice Emitted when the vault's last total assets is updated to `newTotalAssets`.
-    event UpdateLastTotalAssets(uint256 newTotalAssets);
 
     /// @notice Emitted when `curator` is set to `newCurator`.
     event SetCurator(address indexed newCurator);
@@ -82,11 +82,13 @@ library EventsLib {
     /// @notice Emitted when a reallocation added or removed assets from idle.
     event ReallocateIdle(address indexed caller, uint256 idle);
 
-    /// @notice Emitted when fees are accrued.
-    event AccrueFee(uint256 feeShares);
+    /// @notice Emitted when interest are accrued.
+    /// @param newTotalAssets The assets of the vault after accruing the interest but before the interaction.
+    /// @param feeShares The shares minted to the fee recipient.
+    event AccrueInterest(uint256 newTotalAssets, uint256 feeShares);
 
-    /// @notice Emitted when an `amount` of `token` is transferred to the `rewardsRecipient` by `caller`.
-    event TransferRewards(address indexed caller, address indexed token, uint256 amount);
+    /// @notice Emitted when an `amount` of `token` is transferred to the skim recipient by `caller`.
+    event Skim(address indexed caller, address indexed token, uint256 amount);
 
     /// @notice Emitted when a new MetaMorpho vault is created.
     /// @param metaMorpho The address of the MetaMorpho vault.

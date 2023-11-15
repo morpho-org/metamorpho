@@ -83,8 +83,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The fee recipient.
     address public feeRecipient;
 
-    /// @notice The rewards recipient.
-    address public rewardsRecipient;
+    /// @notice The skim recipient.
+    address public skimRecipient;
 
     /// @dev Stores the order of markets on which liquidity is supplied upon deposit.
     /// @dev Can contain any market. A market is skipped as soon as its supply cap is reached.
@@ -100,6 +100,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     uint256 public idle;
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
+    /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
     uint256 public lastTotalAssets;
 
     /* CONSTRUCTOR */
@@ -196,13 +197,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         emit EventsLib.SetIsAllocator(newAllocator, newIsAllocator);
     }
 
-    /// @notice Sets `rewardsRecipient` to `newRewardsRecipient`.
-    function setRewardsRecipient(address newRewardsRecipient) external onlyOwner {
-        if (newRewardsRecipient == rewardsRecipient) revert ErrorsLib.AlreadySet();
+    /// @notice Sets `skimRecipient` to `newSkimRecipient`.
+    function setSkimRecipient(address newSkimRecipient) external onlyOwner {
+        if (newSkimRecipient == skimRecipient) revert ErrorsLib.AlreadySet();
 
-        rewardsRecipient = newRewardsRecipient;
+        skimRecipient = newSkimRecipient;
 
-        emit EventsLib.SetRewardsRecipient(newRewardsRecipient);
+        emit EventsLib.SetSkimRecipient(newSkimRecipient);
     }
 
     /// @notice Submits a `newTimelock`.
@@ -397,11 +398,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             MarketAllocation memory allocation = allocations[i];
             Id id = allocation.marketParams.id();
 
-            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) =
-                MORPHO.expectedMarketBalances(allocation.marketParams);
-
-            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-            uint256 supplyAssets = supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
+            (uint256 supplyAssets, uint256 supplyShares,) = _accruedSupplyBalance(allocation.marketParams, id);
             uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
             if (withdrawn > 0) {
@@ -518,17 +515,16 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         _setCap(id, uint184(pendingCap[id].value));
     }
 
-    /// @notice Transfers `token` rewards collected by the vault to the `rewardsRecipient`.
-    /// @dev Can be used to extract any token that would be stuck on the contract as well.
-    function transferRewards(address token) external {
-        if (rewardsRecipient == address(0)) revert ErrorsLib.ZeroAddress();
+    /// @notice Skims the vault `token` balance to `skimRecipient`.
+    function skim(address token) external {
+        if (skimRecipient == address(0)) revert ErrorsLib.ZeroAddress();
 
         uint256 amount = IERC20(token).balanceOf(address(this));
         if (token == asset()) amount -= idle;
 
-        IERC20(token).safeTransfer(rewardsRecipient, amount);
+        IERC20(token).safeTransfer(skimRecipient, amount);
 
-        emit EventsLib.TransferRewards(_msgSender(), token, amount);
+        emit EventsLib.Skim(_msgSender(), token, amount);
     }
 
     /* ERC4626 (PUBLIC) */
@@ -558,7 +554,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
+        // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context.
+        // It is updated again in `_deposit`.
+        lastTotalAssets = newTotalAssets;
+
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Floor);
+
         _deposit(_msgSender(), receiver, assets, shares);
     }
 
@@ -566,7 +567,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         uint256 newTotalAssets = _accrueFee();
 
+        // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context.
+        // It is updated again in `_deposit`.
+        lastTotalAssets = newTotalAssets;
+
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
+
         _deposit(_msgSender(), receiver, assets, shares);
     }
 
@@ -577,6 +583,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
 
         shares = _convertToSharesWithTotals(assets, totalSupply(), newTotalAssets, Math.Rounding.Ceil);
+
+        // `newTotalAssets - assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets.zeroFloorSub(assets));
+
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
@@ -587,13 +597,17 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         // Do not call expensive `maxRedeem` and optimistically redeem shares.
 
         assets = _convertToAssetsWithTotals(shares, totalSupply(), newTotalAssets, Math.Rounding.Floor);
+
+        // `newTotalAssets - assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(newTotalAssets.zeroFloorSub(assets));
+
         _withdraw(_msgSender(), receiver, owner, assets, shares);
     }
 
     /// @inheritdoc IERC4626
     function totalAssets() public view override returns (uint256 assets) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
-            assets += _supplyBalance(_marketParams(withdrawQueue[i]));
+            assets += MORPHO.expectedSupplyAssets(_marketParams(withdrawQueue[i]), address(this));
         }
 
         assets += idle;
@@ -666,8 +680,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         _supplyMorpho(assets);
 
-        // `newTotalAssets + assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
+        // `lastTotalAssets + assets` may be a little off from `totalAssets()`.
+        _updateLastTotalAssets(lastTotalAssets + assets);
     }
 
     /// @inheritdoc ERC4626
@@ -684,9 +698,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (_withdrawMorpho(assets) != 0) revert ErrorsLib.WithdrawMorphoFailed();
 
         super._withdraw(caller, receiver, owner, assets, shares);
-
-        // `newTotalAssets - assets` cannot be used as input because of rounding errors so we must use `totalAssets`.
-        _updateLastTotalAssets(totalAssets());
     }
 
     /* INTERNAL */
@@ -696,9 +707,18 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
     }
 
-    /// @dev Returns the vault's balance the market defined by `marketParams`.
-    function _supplyBalance(MarketParams memory marketParams) internal view returns (uint256) {
-        return MORPHO.expectedSupplyAssets(marketParams, address(this));
+    /// @dev Accrues interest on Morpho Blue and returns the vault's assets & corresponding shares supplied on the
+    /// market defined by `marketParams`, as well as the market's state.
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _accruedSupplyBalance(MarketParams memory marketParams, Id id)
+        internal
+        returns (uint256 assets, uint256 shares, Market memory market)
+    {
+        MORPHO.accrueInterest(marketParams);
+
+        market = MORPHO.market(id);
+        shares = MORPHO.supplyShares(id, address(this));
+        assets = shares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
     }
 
     /// @dev Reverts if `newTimelock` is not within the bounds.
@@ -760,9 +780,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function _supplyMorpho(uint256 assets) internal {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
-            MarketParams memory marketParams = _marketParams(id);
 
-            uint256 toSupply = UtilsLib.min(_suppliable(marketParams, id), assets);
+            uint256 supplyCap = config[id].cap;
+            if (supplyCap == 0) continue;
+
+            MarketParams memory marketParams = _marketParams(id);
+            (uint256 supplyAssets,,) = _accruedSupplyBalance(marketParams, id);
+
+            uint256 toSupply = UtilsLib.min(supplyCap.zeroFloorSub(supplyAssets), assets);
 
             if (toSupply > 0) {
                 // Using try/catch to skip markets that revert.
@@ -787,8 +812,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
+            (uint256 supplyAssets,, Market memory market) = _accruedSupplyBalance(marketParams, id);
 
-            uint256 toWithdraw = UtilsLib.min(_withdrawable(marketParams, id), remaining);
+            uint256 toWithdraw = UtilsLib.min(
+                _withdrawable(marketParams, market.totalSupplyAssets, market.totalBorrowAssets, supplyAssets), remaining
+            );
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
@@ -812,11 +840,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
 
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
+                MORPHO.expectedMarketBalances(marketParams);
+
             // The vault withdrawing from Morpho cannot fail because:
             // 1. oracle.price() is never called (the vault doesn't borrow)
-            // 2. `_withdrawable` caps to the liquidity available on Morpho
-            // 3. virtually accruing interest didn't fail in `_withdrawable`
-            remaining -= UtilsLib.min(_withdrawable(marketParams, id), remaining);
+            // 2. the amount is capped to the liquidity available on Morpho
+            // 3. virtually accruing interest didn't fail
+            remaining -= UtilsLib.min(
+                _withdrawable(
+                    marketParams,
+                    totalSupplyAssets,
+                    totalBorrowAssets,
+                    supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares)
+                ),
+                remaining
+            );
 
             if (remaining == 0) return 0;
         }
@@ -829,50 +869,40 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
     }
 
-    /// @dev Returns the suppliable amount of assets on the market defined by `marketParams`.
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _suppliable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyCap = config[id].cap;
-        if (supplyCap == 0) return 0;
-
-        return supplyCap.zeroFloorSub(_supplyBalance(marketParams));
-    }
-
-    /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`.
-    /// @dev Assumes that the inputs `marketParams` and `id` match.
-    function _withdrawable(MarketParams memory marketParams, Id id) internal view returns (uint256) {
-        uint256 supplyShares = MORPHO.supplyShares(id, address(this));
-        (uint256 totalSupplyAssets, uint256 totalSupplyShares, uint256 totalBorrowAssets,) =
-            MORPHO.expectedMarketBalances(marketParams);
-
+    /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`, given the market's
+    /// total supply and borrow assets and the vault's assets supplied.
+    function _withdrawable(
+        MarketParams memory marketParams,
+        uint256 totalSupplyAssets,
+        uint256 totalBorrowAssets,
+        uint256 supplyAssets
+    ) internal view returns (uint256) {
         // Inside a flashloan callback, liquidity on Morpho Blue may be limited to the singleton's balance.
         uint256 availableLiquidity = UtilsLib.min(
             totalSupplyAssets - totalBorrowAssets, ERC20(marketParams.loanToken).balanceOf(address(MORPHO))
         );
 
-        return UtilsLib.min(supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares), availableLiquidity);
+        return UtilsLib.min(supplyAssets, availableLiquidity);
     }
 
     /* FEE MANAGEMENT */
 
-    /// @dev Updates `lastTotalAssets` to `newTotalAssets`.
-    function _updateLastTotalAssets(uint256 newTotalAssets) internal {
-        lastTotalAssets = newTotalAssets;
+    /// @dev Updates `lastTotalAssets` to `updatedTotalAssets`.
+    function _updateLastTotalAssets(uint256 updatedTotalAssets) internal {
+        lastTotalAssets = updatedTotalAssets;
 
-        emit EventsLib.UpdateLastTotalAssets(newTotalAssets);
+        emit EventsLib.UpdateLastTotalAssets(updatedTotalAssets);
     }
 
     /// @dev Accrues the fee and mints the fee shares to the fee recipient.
-    /// @return newTotalAssets The new vault's total assets.
+    /// @return newTotalAssets The vaults total assets after accruing the interest.
     function _accrueFee() internal returns (uint256 newTotalAssets) {
         uint256 feeShares;
         (feeShares, newTotalAssets) = _accruedFeeShares();
 
-        if (feeShares != 0) {
-            _mint(feeRecipient, feeShares);
+        if (feeShares != 0) _mint(feeRecipient, feeShares);
 
-            emit EventsLib.AccrueFee(feeShares);
-        }
+        emit EventsLib.AccrueInterest(newTotalAssets, feeShares);
     }
 
     /// @dev Computes and returns the fee shares (`feeShares`) to mint and the new vault's total assets
