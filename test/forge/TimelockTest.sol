@@ -11,9 +11,6 @@ contract TimelockTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        vm.prank(OWNER);
-        vault.setFeeRecipient(FEE_RECIPIENT);
-
         _setFee(FEE);
         _setGuardian(GUARDIAN);
 
@@ -325,8 +322,8 @@ contract TimelockTest is IntegrationTest {
         assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, cap, "pendingCap.value");
         assertEq(pendingCap.validAt, block.timestamp + TIMELOCK, "pendingCap.validAt");
-        assertEq(vault.supplyQueueLength(), 1, "supplyQueueLength");
-        assertEq(vault.withdrawQueueLength(), 1, "withdrawQueueLength");
+        assertEq(vault.supplyQueueLength(), 2, "supplyQueueLength");
+        assertEq(vault.withdrawQueueLength(), 2, "withdrawQueueLength");
     }
 
     function testSubmitCapAlreadyPending(uint256 cap) public {
@@ -365,8 +362,8 @@ contract TimelockTest is IntegrationTest {
         assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, 0, "pendingCap.value");
         assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
-        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
-        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+        assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(id), "supplyQueue");
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(id), "withdrawQueue");
     }
 
     function testAcceptCapIncreasedTimelockIncreased(uint256 cap, uint256 timelock, uint256 elapsed) public {
@@ -396,8 +393,8 @@ contract TimelockTest is IntegrationTest {
         assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
         assertEq(pendingCap.value, 0, "pendingCap.value");
         assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
-        assertEq(Id.unwrap(vault.supplyQueue(0)), Id.unwrap(id), "supplyQueue");
-        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(id), "withdrawQueue");
+        assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(id), "supplyQueue");
+        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(id), "withdrawQueue");
     }
 
     function testAcceptCapIncreasedTimelockDecreased(uint256 cap, uint256 timelock, uint256 elapsed) public {

@@ -17,17 +17,16 @@ contract ReallocateIdleTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        _setCap(allMarkets[0], CAP2);
-        _setCap(allMarkets[1], CAP2);
-        _setCap(allMarkets[2], CAP2);
-
-        vm.prank(ALLOCATOR);
-        vault.setSupplyQueue(new Id[](0));
-
         loanToken.setBalance(SUPPLIER, INITIAL_DEPOSIT);
 
         vm.prank(SUPPLIER);
         vault.deposit(INITIAL_DEPOSIT, ONBEHALF);
+
+        _setCap(allMarkets[0], CAP2);
+        _setCap(allMarkets[1], CAP2);
+        _setCap(allMarkets[2], CAP2);
+
+        _sortSupplyQueueIdleLast();
     }
 
     function testReallocateSupplyIdle(uint256[3] memory suppliedAssets) public {
@@ -35,11 +34,13 @@ contract ReallocateIdleTest is IntegrationTest {
         suppliedAssets[1] = bound(suppliedAssets[1], 1, CAP2);
         suppliedAssets[2] = bound(suppliedAssets[2], 1, CAP2);
 
+        allocations.push(MarketAllocation(idleParams, 0));
         allocations.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
         allocations.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
         allocations.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
+        allocations.push(MarketAllocation(idleParams, type(uint256).max));
 
-        uint256 idleBefore = vault.idle();
+        uint256 idleBefore = _idle();
 
         vm.prank(ALLOCATOR);
         vault.reallocate(allocations);
@@ -61,6 +62,6 @@ contract ReallocateIdleTest is IntegrationTest {
         );
 
         uint256 expectedIdle = idleBefore - suppliedAssets[0] - suppliedAssets[1] - suppliedAssets[2];
-        assertApproxEqAbs(vault.idle(), expectedIdle, 3, "vault.idle() 1");
+        assertApproxEqAbs(_idle(), expectedIdle, 3, "idle");
     }
 }

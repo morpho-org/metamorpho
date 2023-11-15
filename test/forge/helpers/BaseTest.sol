@@ -59,6 +59,7 @@ contract BaseTest is Test {
     IrmMock internal irm = new IrmMock();
 
     MarketParams[] internal allMarkets;
+    MarketParams internal idleParams;
 
     function setUp() public virtual {
         vm.label(address(morpho), "Morpho");
@@ -71,10 +72,23 @@ contract BaseTest is Test {
 
         irm.setApr(0.5 ether); // 50%.
 
+        idleParams = MarketParams({
+            loanToken: address(loanToken),
+            collateralToken: address(0),
+            oracle: address(0),
+            irm: address(0),
+            lltv: 0
+        });
+
         vm.startPrank(MORPHO_OWNER);
+        morpho.enableIrm(address(0));
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
+
+        morpho.enableLltv(0);
         vm.stopPrank();
+
+        morpho.createMarket(idleParams);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
@@ -87,13 +101,15 @@ contract BaseTest is Test {
                 lltv: lltv
             });
 
-            vm.startPrank(MORPHO_OWNER);
+            vm.prank(MORPHO_OWNER);
             morpho.enableLltv(lltv);
+
             morpho.createMarket(marketParams);
-            vm.stopPrank();
 
             allMarkets.push(marketParams);
         }
+
+        allMarkets.push(idleParams); // Must be pushed last.
 
         vm.startPrank(SUPPLIER);
         loanToken.approve(address(morpho), type(uint256).max);
@@ -131,8 +147,9 @@ contract BaseTest is Test {
         morpho.withdrawCollateral(market, 1, address(this), address(10));
     }
 
+    /// @dev Returns a random market params from the list of markets enabled on Blue (except the idle market).
     function _randomMarketParams(uint256 seed) internal view returns (MarketParams memory) {
-        return allMarkets[seed % allMarkets.length];
+        return allMarkets[seed % (allMarkets.length - 1)];
     }
 
     function _randomCandidate(address[] memory candidates, uint256 seed) internal pure returns (address) {

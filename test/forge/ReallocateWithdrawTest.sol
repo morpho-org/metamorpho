@@ -25,6 +25,8 @@ contract ReallocateWithdrawTest is IntegrationTest {
         _setCap(allMarkets[1], CAP2);
         _setCap(allMarkets[2], CAP2);
 
+        _sortSupplyQueueIdleLast();
+
         loanToken.setBalance(SUPPLIER, INITIAL_DEPOSIT);
 
         vm.prank(SUPPLIER);
@@ -35,6 +37,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         allocations.push(MarketAllocation(allMarkets[0], 0));
         allocations.push(MarketAllocation(allMarkets[1], 0));
         allocations.push(MarketAllocation(allMarkets[2], 0));
+        allocations.push(MarketAllocation(idleParams, type(uint256).max));
 
         vm.prank(ALLOCATOR);
         vault.reallocate(allocations);
@@ -42,7 +45,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), 0, "morpho.supplyShares(0)");
         assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), 0, "morpho.supplyShares(1)");
         assertEq(morpho.supplyShares(allMarkets[2].id(), address(vault)), 0, "morpho.supplyShares(2)");
-        assertEq(vault.idle(), INITIAL_DEPOSIT, "vault.idle() 1");
+        assertEq(_idle(), INITIAL_DEPOSIT, "idle");
     }
 
     function testReallocateWithdrawInconsistentAsset() public {
@@ -65,43 +68,63 @@ contract ReallocateWithdrawTest is IntegrationTest {
         vault.reallocate(allocations);
     }
 
-    function testReallocateWithdrawSupply(uint256[3] memory assets) public {
+    function testReallocateWithdrawSupply(uint256[3] memory newAssets) public {
         uint256[3] memory totalSupplyAssets;
         uint256[3] memory totalSupplyShares;
         (totalSupplyAssets[0], totalSupplyShares[0],,) = morpho.expectedMarketBalances(allMarkets[0]);
         (totalSupplyAssets[1], totalSupplyShares[1],,) = morpho.expectedMarketBalances(allMarkets[1]);
         (totalSupplyAssets[2], totalSupplyShares[2],,) = morpho.expectedMarketBalances(allMarkets[2]);
 
-        assets[0] = bound(assets[0], 0, CAP2);
-        assets[1] = bound(assets[1], 0, CAP2);
-        assets[2] = bound(assets[2], 0, CAP2);
+        newAssets[0] = bound(newAssets[0], 0, CAP2);
+        newAssets[1] = bound(newAssets[1], 0, CAP2);
+        newAssets[2] = bound(newAssets[2], 0, CAP2);
 
-        allocations.push(MarketAllocation(allMarkets[0], assets[0]));
-        allocations.push(MarketAllocation(allMarkets[1], assets[1]));
-        allocations.push(MarketAllocation(allMarkets[2], assets[2]));
+        uint256[3] memory assets;
+        assets[0] = morpho.expectedSupplyAssets(allMarkets[0], address(vault));
+        assets[1] = morpho.expectedSupplyAssets(allMarkets[1], address(vault));
+        assets[2] = morpho.expectedSupplyAssets(allMarkets[2], address(vault));
 
-        uint256 expectedIdle = vault.idle() + 3 * CAP2 - assets[0] - assets[1] - assets[2];
+        allocations.push(MarketAllocation(idleParams, 0));
+        allocations.push(MarketAllocation(allMarkets[0], newAssets[0]));
+        allocations.push(MarketAllocation(allMarkets[1], newAssets[1]));
+        allocations.push(MarketAllocation(allMarkets[2], newAssets[2]));
+        allocations.push(MarketAllocation(idleParams, type(uint256).max));
+
+        uint256 expectedIdle = _idle() + 3 * CAP2 - newAssets[0] - newAssets[1] - newAssets[2];
+
+        emit EventsLib.ReallocateWithdraw(ALLOCATOR, idleParams.id(), 0, 0);
+
+        if (newAssets[0] < assets[0]) emit EventsLib.ReallocateWithdraw(ALLOCATOR, allMarkets[0].id(), 0, 0);
+        else if (newAssets[0] > assets[0]) emit EventsLib.ReallocateSupply(ALLOCATOR, allMarkets[0].id(), 0, 0);
+
+        if (newAssets[1] < assets[1]) emit EventsLib.ReallocateWithdraw(ALLOCATOR, allMarkets[1].id(), 0, 0);
+        else if (newAssets[1] > assets[1]) emit EventsLib.ReallocateSupply(ALLOCATOR, allMarkets[1].id(), 0, 0);
+
+        if (newAssets[2] < assets[2]) emit EventsLib.ReallocateWithdraw(ALLOCATOR, allMarkets[2].id(), 0, 0);
+        else if (newAssets[2] > assets[2]) emit EventsLib.ReallocateSupply(ALLOCATOR, allMarkets[2].id(), 0, 0);
+
+        emit EventsLib.ReallocateSupply(ALLOCATOR, idleParams.id(), 0, 0);
 
         vm.prank(ALLOCATOR);
         vault.reallocate(allocations);
 
         assertEq(
             morpho.supplyShares(allMarkets[0].id(), address(vault)),
-            assets[0] * SharesMathLib.VIRTUAL_SHARES,
+            newAssets[0] * SharesMathLib.VIRTUAL_SHARES,
             "morpho.supplyShares(0)"
         );
         assertApproxEqAbs(
             morpho.supplyShares(allMarkets[1].id(), address(vault)),
-            assets[1] * SharesMathLib.VIRTUAL_SHARES,
+            newAssets[1] * SharesMathLib.VIRTUAL_SHARES,
             SharesMathLib.VIRTUAL_SHARES,
             "morpho.supplyShares(1)"
         );
         assertEq(
             morpho.supplyShares(allMarkets[2].id(), address(vault)),
-            assets[2] * SharesMathLib.VIRTUAL_SHARES,
+            newAssets[2] * SharesMathLib.VIRTUAL_SHARES,
             "morpho.supplyShares(2)"
         );
-        assertApproxEqAbs(vault.idle(), expectedIdle, 1, "vault.idle() 1");
+        assertApproxEqAbs(_idle(), expectedIdle, 1, "idle");
     }
 
     function testReallocateUnauthorizedMarket(uint256[3] memory suppliedAssets) public {
@@ -136,20 +159,18 @@ contract ReallocateWithdrawTest is IntegrationTest {
         vault.reallocate(allocations);
     }
 
-    function testReallocateInsufficientIdle(uint256 rewards) public {
+    function testReallocateInconsistentReallocation(uint256 rewards) public {
         rewards = bound(rewards, 1, MAX_TEST_ASSETS);
 
-        address rewardDonator = makeAddr("reward donator");
-        loanToken.setBalance(rewardDonator, rewards);
-        vm.prank(rewardDonator);
-        loanToken.transfer(address(vault), rewards);
+        loanToken.setBalance(address(vault), rewards);
 
         _setCap(allMarkets[0], type(uint184).max);
 
+        allocations.push(MarketAllocation(idleParams, 0));
         allocations.push(MarketAllocation(allMarkets[0], 2 * CAP2 + rewards));
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(ErrorsLib.InsufficientIdle.selector);
+        vm.expectRevert(ErrorsLib.InconsistentReallocation.selector);
         vault.reallocate(allocations);
     }
 }

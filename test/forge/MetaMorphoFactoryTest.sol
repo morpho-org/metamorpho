@@ -14,7 +14,7 @@ contract MetaMorphoFactoryTest is IntegrationTest {
         factory = new MetaMorphoFactory(address(morpho));
     }
 
-    function testFactoryAddresssZero() public {
+    function testFactoryAddressZero() public {
         vm.expectRevert(ErrorsLib.ZeroAddress.selector);
         new MetaMorphoFactory(address(0));
     }

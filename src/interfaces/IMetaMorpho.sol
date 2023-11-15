@@ -45,7 +45,6 @@ interface IMetaMorphoBase {
     function withdrawQueue(uint256) external view returns (Id);
     function withdrawQueueLength() external view returns (uint256);
 
-    function idle() external view returns (uint256);
     function lastTotalAssets() external view returns (uint256);
 
     function submitTimelock(uint256 newTimelock) external;
