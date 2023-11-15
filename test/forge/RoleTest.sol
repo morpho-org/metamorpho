@@ -101,7 +101,7 @@ contract RoleTest is IntegrationTest {
     }
 
     function testGuardianFunctionsShouldRevertWhenNotGuardianRole(address caller) public {
-        vm.assume(caller != vault.guardian());
+        vm.assume(caller != vault.owner() && caller != vault.guardian());
 
         vm.startPrank(caller);
 
