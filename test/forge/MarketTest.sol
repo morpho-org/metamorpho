@@ -151,6 +151,29 @@ contract MarketTest is IntegrationTest {
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(expectedWithdrawQueue[0]));
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
+        assertFalse(vault.config(allMarkets[2].id()).enabled);
+    }
+
+    function testSubmitMarketRemoval() public {
+        _setCaps();
+
+        vm.expectEmit();
+        emit EventsLib.SubmitMarketRemoval(CURATOR, allMarkets[2].id());
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[2].id());
+
+        assertEq(vault.config(allMarkets[2].id()).cap, 0);
+        assertEq(vault.config(allMarkets[2].id()).removableAt, block.timestamp + TIMELOCK);
+    }
+
+    function testSubmitMarketRemovalAlreadySet() public {
+        _setCaps();
+
+        vm.startPrank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[2].id());
+        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vault.submitMarketRemoval(allMarkets[2].id());
+        vm.stopPrank();
     }
 
     function testUpdateWithdrawQueueRemovingDisabledMarket() public {
@@ -178,6 +201,7 @@ contract MarketTest is IntegrationTest {
 
         assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(expectedWithdrawQueue[0]));
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
+        assertFalse(vault.config(allMarkets[2].id()).enabled);
     }
 
     function testUpdateWithdrawQueueInvalidIndex() public {

@@ -86,6 +86,34 @@ contract RoleTest is IntegrationTest {
         vm.stopPrank();
     }
 
+    function testCuratorOrGuardianFunctionsShouldRevertWhenNotCuratorOrGuardianRole(address caller, Id id) public {
+        vm.assume(caller != vault.owner() && caller != vault.curator() && caller != vault.guardian());
+
+        vm.startPrank(caller);
+
+        vm.expectRevert(ErrorsLib.NotCuratorNorGuardianRole.selector);
+        vault.revokePendingCap(id);
+
+        vm.expectRevert(ErrorsLib.NotCuratorNorGuardianRole.selector);
+        vault.revokePendingMarketRemoval(id);
+
+        vm.stopPrank();
+    }
+
+    function testGuardianFunctionsShouldRevertWhenNotGuardianRole(address caller) public {
+        vm.assume(caller != vault.guardian());
+
+        vm.startPrank(caller);
+
+        vm.expectRevert(ErrorsLib.NotGuardianRole.selector);
+        vault.revokePendingTimelock();
+
+        vm.expectRevert(ErrorsLib.NotGuardianRole.selector);
+        vault.revokePendingGuardian();
+
+        vm.stopPrank();
+    }
+
     function testAllocatorFunctionsShouldRevertWhenNotAllocatorRole(address caller) public {
         vm.assume(!vault.isAllocator(caller) && caller != vault.owner() && caller != vault.curator());
 
