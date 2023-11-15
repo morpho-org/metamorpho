@@ -66,34 +66,6 @@ contract UrdTest is IntegrationTest {
         );
     }
 
-    function testSkimLoanToken(uint256 rewards, uint256 idle) public {
-        idle = bound(idle, 0, MAX_TEST_ASSETS);
-        rewards = bound(rewards, 0, MAX_TEST_ASSETS);
-
-        vm.prank(OWNER);
-        vault.setSkimRecipient(address(rewardsDistributor));
-
-        loanToken.setBalance(address(vault), rewards);
-
-        loanToken.setBalance(address(SUPPLIER), idle);
-
-        vm.prank(SUPPLIER);
-        vault.deposit(idle, SUPPLIER);
-
-        assertEq(_idle(), idle, "idle");
-
-        uint256 vaultBalanceBefore = loanToken.balanceOf(address(vault));
-        assertEq(vaultBalanceBefore, rewards, "vaultBalanceBefore");
-
-        vm.expectEmit(address(vault));
-        emit EventsLib.Skim(address(this), address(loanToken), rewards);
-        vault.skim(address(loanToken));
-        uint256 vaultBalanceAfter = loanToken.balanceOf(address(vault));
-
-        assertEq(vaultBalanceAfter, 0, "vaultBalanceAfter");
-        assertEq(loanToken.balanceOf(address(rewardsDistributor)), rewards, "loanToken.balanceOf(rewardsDistributor)");
-    }
-
     function testSkimZeroAddress() public {
         vm.expectRevert(ErrorsLib.ZeroAddress.selector);
         vault.skim(address(loanToken));

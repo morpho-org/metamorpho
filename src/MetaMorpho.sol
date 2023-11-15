@@ -699,8 +699,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Depending on 4 cases, reverts when withdrawing "too much" with:
     /// 1. ERC20InsufficientAllowance when withdrawing more than `caller`'s allowance.
     /// 2. ERC20InsufficientBalance when withdrawing more than `owner`'s balance but less than vault's total assets.
-    /// 3. WithdrawMorphoFailed when withdrawing more than vault's total assets.
-    /// 4. WithdrawMorphoFailed when withdrawing more than `owner`'s balance but less than the available liquidity.
+    /// 3. NotEnoughLiquidity when withdrawing more than vault's total assets.
+    /// 4. NotEnoughLiquidity when withdrawing more than `owner`'s balance but less than the available liquidity.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
@@ -833,10 +833,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (assets == 0) return;
         }
 
-        if (assets != 0) revert ErrorsLib.WithdrawMorphoFailed();
+        if (assets != 0) revert ErrorsLib.NotEnoughLiquidity();
     }
 
-    /// @dev Fakes a withdraw of `assets` from Morpho.
+    /// @dev Simulates a withdraw of `assets` from Morpho.
     /// @return The remaining assets to be withdrawn.
     function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256) {
         for (uint256 i; i < withdrawQueue.length; ++i) {

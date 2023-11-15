@@ -57,8 +57,8 @@ library ErrorsLib {
     /// @notice Thrown when there's no pending value to set.
     error NoPendingValue();
 
-    /// @notice Thrown when the remaining asset to withdraw is not 0.
-    error WithdrawMorphoFailed();
+    /// @notice Thrown when the requested liquidity cannot be withdrawn from Morpho.
+    error NotEnoughLiquidity();
 
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();

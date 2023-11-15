@@ -103,10 +103,10 @@ To achieve this, it is advised to allocate "idle" funds to any market on Morpho 
 - The vault's asset as loan token.
 - No collateral token (`address(0)`).
 - An arbitrary IRM.
-- No oracle (`address(0)`).
+- An arbitrary oracle (`address(0)`).
 - An arbitrary LLTV.
 
-Thus, these funds cannot be borrowed on Morpho Blue and are guaranteed to be liquid ; though it won't generate interest.
+Thus, these funds cannot be borrowed on Morpho Blue and are guaranteed to be liquid; though it won't generate interest.
 
 Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
 Enabling an infinite cap (`type(uint184).max`) will always allow users to deposit on the vault.
