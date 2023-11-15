@@ -145,6 +145,10 @@ Run hardhat tests: `yarn test:hardhat`
 
 You will find other useful commands in the [`package.json`](./package.json) file.
 
+## Audits
+
+All audits are stored in the [audits](./audits/)' folder.
+
 ## License
 
 MetaMorpho is licensed under `GPL-2.0-or-later`, see [`LICENSE`](./LICENSE).
