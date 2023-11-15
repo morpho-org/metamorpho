@@ -34,7 +34,7 @@ contract ReentrancyTest is IntegrationTest, IERC1820Implementer {
             loanToken: address(reentrantToken),
             collateralToken: address(0),
             oracle: address(0),
-            irm: address(0),
+            irm: address(irm),
             lltv: 0
         });
 

@@ -77,12 +77,11 @@ contract BaseTest is Test {
             loanToken: address(loanToken),
             collateralToken: address(0),
             oracle: address(0),
-            irm: address(0),
+            irm: address(irm),
             lltv: 0
         });
 
         vm.startPrank(MORPHO_OWNER);
-        morpho.enableIrm(address(0));
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
 

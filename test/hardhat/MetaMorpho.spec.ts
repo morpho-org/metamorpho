@@ -163,7 +163,7 @@ describe("MetaMorpho", () => {
       loanToken: loanAddress,
       collateralToken: ZeroAddress,
       oracle: ZeroAddress,
-      irm: ZeroAddress,
+      irm: irmAddress,
       lltv: 0n,
     };
 
@@ -182,7 +182,6 @@ describe("MetaMorpho", () => {
       await morpho.createMarket(marketParams);
     }
 
-    await morpho.enableIrm(idleParams.irm);
     await morpho.enableLltv(idleParams.lltv);
     await morpho.createMarket(idleParams);
 
