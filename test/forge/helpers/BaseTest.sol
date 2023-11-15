@@ -77,7 +77,7 @@ contract BaseTest is Test {
             loanToken: address(loanToken),
             collateralToken: address(0),
             oracle: address(0),
-            irm: address(0),
+            irm: address(irm),
             lltv: 0
         });
 
