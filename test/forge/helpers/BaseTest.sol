@@ -82,7 +82,6 @@ contract BaseTest is Test {
         });
 
         vm.startPrank(MORPHO_OWNER);
-        morpho.enableIrm(address(0));
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
 
