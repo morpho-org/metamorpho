@@ -39,7 +39,6 @@ contract ReallocateWithdrawTest is IntegrationTest {
         allocations.push(MarketAllocation(allMarkets[2], 0));
         allocations.push(MarketAllocation(idleParams, type(uint256).max));
 
-        vm.startPrank(ALLOCATOR);
         vm.expectEmit();
         emit EventsLib.ReallocateWithdraw(
             ALLOCATOR, allMarkets[0].id(), CAP2, morpho.supplyShares(allMarkets[0].id(), address(vault))
@@ -50,8 +49,9 @@ contract ReallocateWithdrawTest is IntegrationTest {
         emit EventsLib.ReallocateWithdraw(
             ALLOCATOR, allMarkets[2].id(), CAP2, morpho.supplyShares(allMarkets[2].id(), address(vault))
         );
+
+        vm.prank(ALLOCATOR);
         vault.reallocate(allocations);
-        vm.stopPrank();
 
         assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), 0, "morpho.supplyShares(0)");
         assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), 0, "morpho.supplyShares(1)");
@@ -145,7 +145,6 @@ contract ReallocateWithdrawTest is IntegrationTest {
         allocations.push(MarketAllocation(allMarkets[1], 0));
         allocations.push(MarketAllocation(allMarkets[2], 3 * CAP2));
 
-        vm.startPrank(ALLOCATOR);
         vm.expectEmit();
         emit EventsLib.ReallocateWithdraw(
             ALLOCATOR, allMarkets[0].id(), CAP2, morpho.supplyShares(allMarkets[0].id(), address(vault))
@@ -156,8 +155,9 @@ contract ReallocateWithdrawTest is IntegrationTest {
         emit EventsLib.ReallocateSupply(
             ALLOCATOR, allMarkets[2].id(), 3 * CAP2, 3 * morpho.supplyShares(allMarkets[2].id(), address(vault))
         );
+
+        vm.prank(ALLOCATOR);
         vault.reallocate(allocations);
-        vm.stopPrank();
 
         assertEq(morpho.supplyShares(allMarkets[0].id(), address(vault)), 0, "morpho.supplyShares(0)");
         assertEq(morpho.supplyShares(allMarkets[1].id(), address(vault)), 0, "morpho.supplyShares(1)");
