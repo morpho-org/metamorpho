@@ -1,31 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {UtilsLib} from "@morpho-blue/libraries/UtilsLib.sol";
-
-import {UrdFactory} from "@universal-rewards-distributor/UrdFactory.sol";
-import {IUniversalRewardsDistributor} from "@universal-rewards-distributor/UniversalRewardsDistributor.sol";
+import {UtilsLib} from "../../lib/morpho-blue/src/libraries/UtilsLib.sol";
 
 import "./helpers/IntegrationTest.sol";
 
 contract UrdTest is IntegrationTest {
     using UtilsLib for uint256;
 
-    UrdFactory internal urdFactory;
-    IUniversalRewardsDistributor internal rewardsDistributor;
-
-    function setUp() public override {
-        super.setUp();
-
-        urdFactory = new UrdFactory();
-        rewardsDistributor = urdFactory.createUrd(OWNER, 0, bytes32(0), bytes32(0), bytes32(0));
-    }
-
     function testSetSkimRecipient(address newSkimRecipient) public {
-        vm.assume(newSkimRecipient != vault.skimRecipient());
+        vm.assume(newSkimRecipient != SKIM_RECIPIENT);
 
         vm.expectEmit();
         emit EventsLib.SetSkimRecipient(newSkimRecipient);
+
         vm.prank(OWNER);
         vault.setSkimRecipient(newSkimRecipient);
 
@@ -33,11 +21,9 @@ contract UrdTest is IntegrationTest {
     }
 
     function testAlreadySetSkimRecipient() public {
-        address currentSkimRecipient = vault.skimRecipient();
-
         vm.prank(OWNER);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.setSkimRecipient(currentSkimRecipient);
+        vault.setSkimRecipient(SKIM_RECIPIENT);
     }
 
     function testSetSkimRecipientNotOwner() public {
@@ -46,12 +32,7 @@ contract UrdTest is IntegrationTest {
     }
 
     function testSkimNotLoanToken(uint256 amount) public {
-        vm.prank(OWNER);
-        vault.setSkimRecipient(address(rewardsDistributor));
-
         collateralToken.setBalance(address(vault), amount);
-        uint256 vaultBalanceBefore = collateralToken.balanceOf(address(vault));
-        assertEq(vaultBalanceBefore, amount, "vaultBalanceBefore");
 
         vm.expectEmit(address(vault));
         emit EventsLib.Skim(address(this), address(collateralToken), amount);
@@ -59,14 +40,13 @@ contract UrdTest is IntegrationTest {
         uint256 vaultBalanceAfter = collateralToken.balanceOf(address(vault));
 
         assertEq(vaultBalanceAfter, 0, "vaultBalanceAfter");
-        assertEq(
-            collateralToken.balanceOf(address(rewardsDistributor)),
-            amount,
-            "collateralToken.balanceOf(rewardsDistributor)"
-        );
+        assertEq(collateralToken.balanceOf(SKIM_RECIPIENT), amount, "collateralToken.balanceOf(SKIM_RECIPIENT)");
     }
 
     function testSkimZeroAddress() public {
+        vm.prank(OWNER);
+        vault.setSkimRecipient(address(0));
+
         vm.expectRevert(ErrorsLib.ZeroAddress.selector);
         vault.skim(address(loanToken));
     }

@@ -23,6 +23,7 @@ contract IntegrationTest is BaseTest {
         vault.setCurator(CURATOR);
         vault.setIsAllocator(ALLOCATOR, true);
         vault.setFeeRecipient(FEE_RECIPIENT);
+        vault.setSkimRecipient(SKIM_RECIPIENT);
         vm.stopPrank();
 
         _setCap(idleParams, type(uint184).max);

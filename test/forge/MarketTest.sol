@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {stdError} from "@forge-std/StdError.sol";
+import {stdError} from "../../lib/forge-std/src/StdError.sol";
 
-import {SafeCast} from "@openzeppelin/utils/math/SafeCast.sol";
+import {SafeCast} from "../../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
 import "./helpers/IntegrationTest.sol";
 
 contract MarketTest is IntegrationTest {

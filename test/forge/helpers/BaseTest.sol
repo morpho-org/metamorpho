@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "@morpho-blue/interfaces/IMorpho.sol";
+import "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 
-import {WAD, MathLib} from "@morpho-blue/libraries/MathLib.sol";
-import {Math} from "@openzeppelin/utils/math/Math.sol";
-import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
-import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
+import {WAD, MathLib} from "../../../lib/morpho-blue/src/libraries/MathLib.sol";
+import {Math} from "../../../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import {MarketParamsLib} from "../../../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
+import {MorphoLib} from "../../../lib/morpho-blue/src/libraries/periphery/MorphoLib.sol";
+import {MorphoBalancesLib} from "../../../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
 
-import "src/interfaces/IMetaMorpho.sol";
+import "../../../src/interfaces/IMetaMorpho.sol";
 
-import "src/libraries/ConstantsLib.sol";
-import {ErrorsLib} from "src/libraries/ErrorsLib.sol";
-import {EventsLib} from "src/libraries/EventsLib.sol";
-import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
+import "../../../src/libraries/ConstantsLib.sol";
+import {ErrorsLib} from "../../../src/libraries/ErrorsLib.sol";
+import {EventsLib} from "../../../src/libraries/EventsLib.sol";
+import {ORACLE_PRICE_SCALE} from "../../../lib/morpho-blue/src/libraries/ConstantsLib.sol";
 
-import {IrmMock} from "src/mocks/IrmMock.sol";
-import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
-import {OracleMock} from "src/mocks/OracleMock.sol";
+import {IrmMock} from "../../../src/mocks/IrmMock.sol";
+import {ERC20Mock} from "../../../src/mocks/ERC20Mock.sol";
+import {OracleMock} from "../../../src/mocks/OracleMock.sol";
 
-import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "src/MetaMorpho.sol";
+import {Ownable} from "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "../../../src/MetaMorpho.sol";
 
-import "@forge-std/Test.sol";
-import "@forge-std/console2.sol";
+import "../../../lib/forge-std/src/Test.sol";
+import "../../../lib/forge-std/src/console2.sol";
 
 uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
@@ -48,6 +48,7 @@ contract BaseTest is Test {
     address internal CURATOR = makeAddr("Curator");
     address internal GUARDIAN = makeAddr("Guardian");
     address internal FEE_RECIPIENT = makeAddr("FeeRecipient");
+    address internal SKIM_RECIPIENT = makeAddr("SkimRecipient");
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 

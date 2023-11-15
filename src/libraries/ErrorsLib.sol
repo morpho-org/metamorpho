@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {Id} from "@morpho-blue/interfaces/IMorpho.sol";
+import {Id} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 
 /// @title ErrorsLib
 /// @author Morpho Labs
