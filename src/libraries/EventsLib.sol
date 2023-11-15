@@ -13,7 +13,7 @@ library EventsLib {
     /// @notice Emitted when a pending `newTimelock` is submitted.
     event SubmitTimelock(uint256 newTimelock);
 
-    /// @notice Emitted `timelock` is set to `newTimelock`.
+    /// @notice Emitted when `timelock` is set to `newTimelock`.
     event SetTimelock(address indexed caller, uint256 newTimelock);
 
     /// @notice Emitted when `skimRecipient` is set to `newSkimRecipient`.
@@ -78,9 +78,6 @@ library EventsLib {
     /// @param withdrawnAssets The amount of assets withdrawn from the market.
     /// @param withdrawnShares The amount of shares burned.
     event ReallocateWithdraw(address indexed caller, Id indexed id, uint256 withdrawnAssets, uint256 withdrawnShares);
-
-    /// @notice Emitted when a reallocation added or removed assets from idle.
-    event ReallocateIdle(address indexed caller, uint256 idle);
 
     /// @notice Emitted when interest are accrued.
     /// @param newTotalAssets The assets of the vault after accruing the interest but before the interaction.

@@ -13,9 +13,6 @@ contract FeeTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        vm.prank(OWNER);
-        vault.setFeeRecipient(FEE_RECIPIENT);
-
         _setFee(FEE);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
@@ -38,6 +35,7 @@ contract FeeTest is IntegrationTest {
         }
 
         _setCap(allMarkets[0], CAP);
+        _sortSupplyQueueIdleLast();
     }
 
     function testSetFee(uint256 fee) public {

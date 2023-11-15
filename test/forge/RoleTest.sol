@@ -144,10 +144,8 @@ contract RoleTest is IntegrationTest {
     }
 
     function testAllocatorOrCuratorOrOwnerShouldTriggerAllocatorFunctions() public {
-        _setCap(allMarkets[0], CAP);
-
         Id[] memory supplyQueue = new Id[](1);
-        supplyQueue[0] = allMarkets[0].id();
+        supplyQueue[0] = idleParams.id();
 
         uint256[] memory withdrawQueueFromRanks = new uint256[](1);
         withdrawQueueFromRanks[0] = 0;

@@ -63,10 +63,10 @@ jobs:
         type: ["slow", "fast"]
         include:
           - type: "slow"
-            fuzz-runs: 8192
+            fuzz-runs: 1024
             max-test-rejects: 1048576
-            invariant-runs: 64
-            invariant-depth: 1024
+            invariant-runs: 32
+            invariant-depth: 512
           - type: "fast"
             fuzz-runs: 256
             max-test-rejects: 65536

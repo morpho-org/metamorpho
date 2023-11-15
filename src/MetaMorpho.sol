@@ -95,10 +95,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// without duplicate.
     Id[] public withdrawQueue;
 
-    /// @notice Stores the idle liquidity.
-    /// @dev The idle liquidity does not generate any interest.
-    uint256 public idle;
-
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
     /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
     uint256 public lastTotalAssets;
@@ -418,7 +414,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
                 totalWithdrawn += withdrawnAssets;
             } else {
-                uint256 suppliedAssets = allocation.assets.zeroFloorSub(supplyAssets);
+                uint256 suppliedAssets = allocation.assets == type(uint256).max
+                    ? totalWithdrawn.zeroFloorSub(totalSupplied)
+                    : allocation.assets.zeroFloorSub(supplyAssets);
+
                 if (suppliedAssets == 0) continue;
 
                 uint256 supplyCap = config[id].cap;
@@ -436,19 +435,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             }
         }
 
-        uint256 newIdle;
-        if (totalWithdrawn > totalSupplied) {
-            newIdle = idle + totalWithdrawn - totalSupplied;
-        } else {
-            uint256 idleSupplied = totalSupplied - totalWithdrawn;
-            if (idle < idleSupplied) revert ErrorsLib.InsufficientIdle();
-
-            newIdle = idle - idleSupplied;
-        }
-
-        idle = newIdle;
-
-        emit EventsLib.ReallocateIdle(_msgSender(), newIdle);
+        if (totalWithdrawn != totalSupplied) revert ErrorsLib.InconsistentReallocation();
     }
 
     /* REVOKE FUNCTIONS */
@@ -520,7 +507,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (skimRecipient == address(0)) revert ErrorsLib.ZeroAddress();
 
         uint256 amount = IERC20(token).balanceOf(address(this));
-        if (token == asset()) amount -= idle;
 
         IERC20(token).safeTransfer(skimRecipient, amount);
 
@@ -532,6 +518,18 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IERC20Metadata
     function decimals() public view override(ERC20, ERC4626) returns (uint8) {
         return ERC4626.decimals();
+    }
+
+    /// @inheritdoc IERC4626
+    function maxDeposit(address) public view override returns (uint256) {
+        return _maxDeposit();
+    }
+
+    /// @inheritdoc IERC4626
+    function maxMint(address) public view override returns (uint256) {
+        uint256 suppliable = _maxDeposit();
+
+        return _convertToShares(suppliable, Math.Rounding.Floor);
     }
 
     /// @inheritdoc IERC4626
@@ -609,8 +607,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         for (uint256 i; i < withdrawQueue.length; ++i) {
             assets += MORPHO.expectedSupplyAssets(_marketParams(withdrawQueue[i]), address(this));
         }
-
-        assets += idle;
     }
 
     /* ERC4626 (INTERNAL) */
@@ -633,6 +629,20 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         assets = _convertToAssetsWithTotals(balanceOf(owner), newTotalSupply, newTotalAssets, Math.Rounding.Floor);
         assets -= _simulateWithdrawMorpho(assets);
+    }
+
+    /// @dev Returns the maximum amount of assets that the vault can supply on Morpho.
+    function _maxDeposit() internal view returns (uint256 totalSuppliable) {
+        for (uint256 i; i < supplyQueue.length; ++i) {
+            Id id = supplyQueue[i];
+
+            uint256 supplyCap = config[id].cap;
+            if (supplyCap == 0) continue;
+
+            uint256 supplyAssets = MORPHO.expectedSupplyAssets(_marketParams(id), address(this));
+
+            totalSuppliable += supplyCap.zeroFloorSub(supplyAssets);
+        }
     }
 
     /// @inheritdoc ERC4626
@@ -689,13 +699,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev Depending on 4 cases, reverts when withdrawing "too much" with:
     /// 1. ERC20InsufficientAllowance when withdrawing more than `caller`'s allowance.
     /// 2. ERC20InsufficientBalance when withdrawing more than `owner`'s balance but less than vault's total assets.
-    /// 3. WithdrawMorphoFailed when withdrawing more than vault's total assets.
-    /// 4. WithdrawMorphoFailed when withdrawing more than `owner`'s balance but less than the available liquidity.
+    /// 3. NotEnoughLiquidity when withdrawing more than vault's total assets.
+    /// 4. NotEnoughLiquidity when withdrawing more than `owner`'s balance but less than the available liquidity.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
     {
-        if (_withdrawMorpho(assets) != 0) revert ErrorsLib.WithdrawMorphoFailed();
+        _withdrawMorpho(assets);
 
         super._withdraw(caller, receiver, owner, assets, shares);
     }
@@ -776,7 +786,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /* LIQUIDITY ALLOCATION */
 
-    /// @dev Supplies `assets` to Morpho and increase the idle liquidity if necessary.
+    /// @dev Supplies `assets` to Morpho.
     function _supplyMorpho(uint256 assets) internal {
         for (uint256 i; i < supplyQueue.length; ++i) {
             Id id = supplyQueue[i];
@@ -799,43 +809,36 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (assets == 0) return;
         }
 
-        idle += assets;
+        if (assets != 0) revert ErrorsLib.AllCapsReached();
     }
 
-    /// @dev Withdraws `assets` from the idle liquidity and Morpho if necessary.
-    /// @return remaining The assets left to be withdrawn.
-    function _withdrawMorpho(uint256 assets) internal returns (uint256 remaining) {
-        (remaining, idle) = _withdrawIdle(assets);
-
-        if (remaining == 0) return 0;
-
+    /// @dev Withdraws `assets` from Morpho.
+    function _withdrawMorpho(uint256 assets) internal {
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
             (uint256 supplyAssets,, Market memory market) = _accruedSupplyBalance(marketParams, id);
 
             uint256 toWithdraw = UtilsLib.min(
-                _withdrawable(marketParams, market.totalSupplyAssets, market.totalBorrowAssets, supplyAssets), remaining
+                _withdrawable(marketParams, market.totalSupplyAssets, market.totalBorrowAssets, supplyAssets), assets
             );
 
             if (toWithdraw > 0) {
                 // Using try/catch to skip markets that revert.
                 try MORPHO.withdraw(marketParams, toWithdraw, 0, address(this), address(this)) {
-                    remaining -= toWithdraw;
+                    assets -= toWithdraw;
                 } catch {}
             }
 
-            if (remaining == 0) return 0;
+            if (assets == 0) return;
         }
+
+        if (assets != 0) revert ErrorsLib.NotEnoughLiquidity();
     }
 
-    /// @dev Simulates a withdraw of `assets` from the idle liquidity and Morpho if necessary.
-    /// @return remaining The assets left to be withdrawn.
-    function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256 remaining) {
-        (remaining,) = _withdrawIdle(assets);
-
-        if (remaining == 0) return 0;
-
+    /// @dev Simulates a withdraw of `assets` from Morpho.
+    /// @return The remaining assets to be withdrawn.
+    function _simulateWithdrawMorpho(uint256 assets) internal view returns (uint256) {
         for (uint256 i; i < withdrawQueue.length; ++i) {
             Id id = withdrawQueue[i];
             MarketParams memory marketParams = _marketParams(id);
@@ -848,25 +851,19 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             // 1. oracle.price() is never called (the vault doesn't borrow)
             // 2. the amount is capped to the liquidity available on Morpho
             // 3. virtually accruing interest didn't fail
-            remaining -= UtilsLib.min(
+            assets = assets.zeroFloorSub(
                 _withdrawable(
                     marketParams,
                     totalSupplyAssets,
                     totalBorrowAssets,
                     supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares)
-                ),
-                remaining
+                )
             );
 
-            if (remaining == 0) return 0;
+            if (assets == 0) break;
         }
-    }
 
-    /// @dev Withdraws `assets` from the idle liquidity.
-    /// @return The remaining assets to withdraw.
-    /// @return The new `idle` liquidity value.
-    function _withdrawIdle(uint256 assets) internal view returns (uint256, uint256) {
-        return (assets.zeroFloorSub(idle), idle.zeroFloorSub(assets));
+        return assets;
     }
 
     /// @dev Returns the withdrawable amount of assets from the market defined by `marketParams`, given the market's

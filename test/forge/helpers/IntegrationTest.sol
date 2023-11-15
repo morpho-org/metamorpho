@@ -7,6 +7,7 @@ uint256 constant TIMELOCK = 1 weeks;
 
 contract IntegrationTest is BaseTest {
     using MathLib for uint256;
+    using MorphoBalancesLib for IMorpho;
     using MarketParamsLib for MarketParams;
 
     IMetaMorpho internal vault;
@@ -21,7 +22,10 @@ contract IntegrationTest is BaseTest {
         vm.startPrank(OWNER);
         vault.setCurator(CURATOR);
         vault.setIsAllocator(ALLOCATOR, true);
+        vault.setFeeRecipient(FEE_RECIPIENT);
         vm.stopPrank();
+
+        _setCap(idleParams, type(uint184).max);
 
         loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
@@ -35,6 +39,10 @@ contract IntegrationTest is BaseTest {
         loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
+    }
+
+    function _idle() internal view returns (uint256) {
+        return morpho.expectedSupplyAssets(idleParams, address(vault));
     }
 
     function _setTimelock(uint256 newTimelock) internal {
@@ -106,5 +114,28 @@ contract IntegrationTest is BaseTest {
         vault.acceptCap(id);
 
         assertEq(vault.config(id).cap, newCap, "_setCap");
+    }
+
+    function _sortSupplyQueueIdleLast() internal {
+        Id[] memory supplyQueue = new Id[](vault.supplyQueueLength());
+
+        uint256 supplyIndex;
+        for (uint256 i; i < supplyQueue.length; ++i) {
+            Id id = vault.supplyQueue(i);
+            if (Id.unwrap(id) == Id.unwrap(idleParams.id())) continue;
+
+            supplyQueue[supplyIndex] = id;
+            ++supplyIndex;
+        }
+
+        supplyQueue[supplyIndex] = idleParams.id();
+        ++supplyIndex;
+
+        assembly {
+            mstore(supplyQueue, supplyIndex)
+        }
+
+        vm.prank(ALLOCATOR);
+        vault.setSupplyQueue(supplyQueue);
     }
 }

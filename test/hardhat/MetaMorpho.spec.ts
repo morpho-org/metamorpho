@@ -1,4 +1,4 @@
-import { AbiCoder, MaxUint256, ZeroHash, keccak256, toBigInt } from "ethers";
+import { AbiCoder, MaxUint256, ZeroAddress, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IrmMock } from "types";
@@ -79,6 +79,7 @@ describe("MetaMorpho", () => {
 
   let supplyCap: bigint;
   let allMarketParams: MarketParamsStruct[];
+  let idleParams: MarketParamsStruct;
 
   const expectedMarket = async (marketParams: MarketParamsStruct) => {
     const id = identifier(marketParams);
@@ -158,6 +159,14 @@ describe("MetaMorpho", () => {
     const oracleAddress = await oracle.getAddress();
     const irmAddress = await irm.getAddress();
 
+    idleParams = {
+      loanToken: loanAddress,
+      collateralToken: ZeroAddress,
+      oracle: ZeroAddress,
+      irm: ZeroAddress,
+      lltv: 0n,
+    };
+
     allMarketParams = _range(1, 1 + nbMarkets).map((i) => ({
       loanToken: loanAddress,
       collateralToken: collateralAddress,
@@ -172,6 +181,10 @@ describe("MetaMorpho", () => {
       await morpho.enableLltv(marketParams.lltv);
       await morpho.createMarket(marketParams);
     }
+
+    await morpho.enableIrm(idleParams.irm);
+    await morpho.enableLltv(idleParams.lltv);
+    await morpho.createMarket(idleParams);
 
     const MetaMorphoFactoryFactory = await hre.ethers.getContractFactory("MetaMorphoFactory", admin);
 
@@ -208,14 +221,24 @@ describe("MetaMorpho", () => {
       await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);
     }
 
+    await metaMorpho.connect(curator).submitCap(idleParams, 2n ** 184n - 1n);
+
     await forwardTimestamp(timelock);
+
+    await metaMorpho.connect(admin).acceptCap(identifier(idleParams));
 
     for (const marketParams of allMarketParams) {
       await metaMorpho.connect(admin).acceptCap(identifier(marketParams));
     }
 
-    await metaMorpho.connect(curator).setSupplyQueue(allMarketParams.map(identifier));
-    await metaMorpho.connect(curator).updateWithdrawQueue(allMarketParams.map((_, i) => nbMarkets - 1 - i));
+    await metaMorpho.connect(curator).setSupplyQueue(
+      // Set idle market last.
+      allMarketParams.map(identifier).concat([identifier(idleParams)]),
+    );
+    await metaMorpho.connect(curator).updateWithdrawQueue(
+      // Keep idle market first.
+      [0].concat(allMarketParams.map((_, i) => nbMarkets - i)),
+    );
 
     hre.tracer.nameTags[morphoAddress] = "Morpho";
     hre.tracer.nameTags[collateralAddress] = "Collateral";
@@ -279,7 +302,13 @@ describe("MetaMorpho", () => {
         assets: remaining + marketAssets,
       }));
 
-      await metaMorpho.connect(allocator).reallocate(allocations);
+      await metaMorpho.connect(allocator).reallocate(
+        // Always withdraw all from idle first.
+        [{ marketParams: idleParams, assets: 0n }]
+          .concat(allocations)
+          // Always supply remaining to idle last.
+          .concat([{ marketParams: idleParams, assets: MaxUint256 }]),
+      );
 
       // Borrow liquidity to generate interest.
 

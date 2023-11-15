@@ -13,9 +13,6 @@ contract RevokeTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        vm.prank(OWNER);
-        vault.setFeeRecipient(FEE_RECIPIENT);
-
         _setFee(FEE);
         _setGuardian(GUARDIAN);
     }

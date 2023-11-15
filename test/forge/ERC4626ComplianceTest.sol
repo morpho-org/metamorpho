@@ -15,6 +15,7 @@ contract ERC4626ComplianceTest is IntegrationTest, ERC4626Test {
         _vaultMayBeEmpty = true;
         _unlimitedAmount = true;
 
-        _setCap(allMarkets[0], 1e28);
+        _setCap(allMarkets[0], 100e18);
+        _sortSupplyQueueIdleLast();
     }
 }
