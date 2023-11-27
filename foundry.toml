@@ -1,6 +1,7 @@
 [profile.default]
 src = "src"
 test = "test/forge"
+libs = ["lib"]
 evm_version = "paris"
 fs_permissions = [
     { access = "read", path = "./config/"},
