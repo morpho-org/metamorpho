@@ -8,9 +8,9 @@ import {IMetaMorpho} from "./IMetaMorpho.sol";
 /// @custom:contact security@morpho.org
 /// @notice Interface of MetaMorpho's factory.
 interface IMetaMorphoFactory {
-    function MORPHO() external returns (address);
+    function MORPHO() external view returns (address);
 
-    function isMetaMorpho(address target) external returns (bool);
+    function isMetaMorpho(address target) external view returns (bool);
 
     function createMetaMorpho(
         address initialOwner,
