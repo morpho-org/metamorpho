@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import {IMorphoMarketParams} from "./interfaces/IMorphoMarketParams.sol";
 import {
     MarketConfig,
     PendingUint192,
@@ -721,7 +720,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @dev Returns the market params of the market defined by `id`.
     function _marketParams(Id id) internal view returns (MarketParams memory) {
-        return IMorphoMarketParams(address(MORPHO)).idToMarketParams(id);
+        return MORPHO.idToMarketParams(id);
     }
 
     /// @dev Accrues interest on Morpho Blue and returns the vault's assets & corresponding shares supplied on the

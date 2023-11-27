@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
+import {IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
+import {IMetaMorphoFactory} from "./interfaces/IMetaMorphoFactory.sol";
+
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
@@ -10,7 +13,7 @@ import {MetaMorpho} from "./MetaMorpho.sol";
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org
 /// @notice This contract allows to create MetaMorpho vaults, and to index them easily.
-contract MetaMorphoFactory {
+contract MetaMorphoFactory is IMetaMorphoFactory {
     /* IMMUTABLES */
 
     /// @notice The address of the Morpho contract.
@@ -47,8 +50,9 @@ contract MetaMorphoFactory {
         string memory name,
         string memory symbol,
         bytes32 salt
-    ) external returns (MetaMorpho metaMorpho) {
-        metaMorpho = new MetaMorpho{salt: salt}(initialOwner, MORPHO, initialTimelock, asset, name, symbol);
+    ) external returns (IMetaMorpho metaMorpho) {
+        metaMorpho =
+            IMetaMorpho(address(new MetaMorpho{salt: salt}(initialOwner, MORPHO, initialTimelock, asset, name, symbol)));
 
         isMetaMorpho[address(metaMorpho)] = true;
 
