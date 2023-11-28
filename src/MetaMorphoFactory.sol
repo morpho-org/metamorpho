@@ -16,12 +16,12 @@ import {MetaMorpho} from "./MetaMorpho.sol";
 contract MetaMorphoFactory is IMetaMorphoFactory {
     /* IMMUTABLES */
 
-    /// @notice The address of the Morpho contract.
+    /// @inheritdoc IMetaMorphoFactory
     address public immutable MORPHO;
 
     /* STORAGE */
 
-    /// @notice Whether a MetaMorpho vault was created with the factory.
+    /// @inheritdoc IMetaMorphoFactory
     mapping(address => bool) public isMetaMorpho;
 
     /* CONSTRUCTOR */
@@ -36,13 +36,7 @@ contract MetaMorphoFactory is IMetaMorphoFactory {
 
     /* EXTERNAL */
 
-    /// @notice Creates a new MetaMorpho vault.
-    /// @param initialOwner The owner of the vault.
-    /// @param initialTimelock The initial timelock of the vault.
-    /// @param asset The address of the underlying asset.
-    /// @param name The name of the vault.
-    /// @param symbol The symbol of the vault.
-    /// @param salt The salt to use for the MetaMorpho vault's CREATE2 address.
+    /// @inheritdoc IMetaMorphoFactory
     function createMetaMorpho(
         address initialOwner,
         uint256 initialTimelock,
