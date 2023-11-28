@@ -2,7 +2,7 @@ import { AbiCoder, MaxUint256, ZeroAddress, ZeroHash, keccak256, toBigInt } from
 import hre from "hardhat";
 import _range from "lodash/range";
 import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
-import { MarketParamsStruct } from "types/@morpho-blue/interfaces/IMorpho";
+import { MarketParamsStruct } from "types/src/MetaMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { mine } from "@nomicfoundation/hardhat-network-helpers";
@@ -13,19 +13,19 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
-import SpeedJumpIrmArtifact from "../../lib/morpho-blue-irm/out/SpeedJumpIrm.sol/SpeedJumpIrm.json";
+import AdaptiveCurveIrmArtifact from "../../lib/morpho-blue-irm/out/AdaptiveCurveIrm.sol/AdaptiveCurveIrm.json";
 import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
-const nbMarkets = 5;
+const nbMarkets = 10;
 const timelock = 3600 * 24 * 7; // 1 week.
 
-const ln2 = 693147180559945309n;
-const targetUtilization = 800000000000000000n;
-const speedFactor = 277777777777n;
-const initialRate = 317097920n;
+const adjustmentSpeed = 1585489599188n;
+const targetUtilization = 900000000000000000n;
+const curveSteepness = 4000000000000000000n;
+const initialRateAtTarget = 317097919n;
 
 let seed = 42;
 const random = () => {
@@ -149,13 +149,19 @@ describe("MetaMorpho", () => {
 
     const morphoAddress = await morpho.getAddress();
 
-    const SpeedJumpIrmFactory = await hre.ethers.getContractFactory(
-      SpeedJumpIrmArtifact.abi,
-      SpeedJumpIrmArtifact.bytecode.object,
+    const AdaptiveCurveIrmFactory = await hre.ethers.getContractFactory(
+      AdaptiveCurveIrmArtifact.abi,
+      AdaptiveCurveIrmArtifact.bytecode.object,
       admin,
     );
 
-    irm = (await SpeedJumpIrmFactory.deploy(morphoAddress, ln2, speedFactor, targetUtilization, initialRate)) as IIrm;
+    irm = (await AdaptiveCurveIrmFactory.deploy(
+      morphoAddress,
+      curveSteepness,
+      adjustmentSpeed,
+      targetUtilization,
+      initialRateAtTarget,
+    )) as IIrm;
 
     const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
