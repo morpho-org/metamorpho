@@ -1,36 +1,36 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "@morpho-blue/interfaces/IMorpho.sol";
+import "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 
-import {WAD, MathLib} from "@morpho-blue/libraries/MathLib.sol";
-import {Math} from "@openzeppelin/utils/math/Math.sol";
-import {MarketParamsLib} from "@morpho-blue/libraries/MarketParamsLib.sol";
-import {MorphoLib} from "@morpho-blue/libraries/periphery/MorphoLib.sol";
-import {MorphoBalancesLib} from "@morpho-blue/libraries/periphery/MorphoBalancesLib.sol";
+import {WAD, MathLib} from "../../../lib/morpho-blue/src/libraries/MathLib.sol";
+import {Math} from "../../../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import {MarketParamsLib} from "../../../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
+import {MorphoLib} from "../../../lib/morpho-blue/src/libraries/periphery/MorphoLib.sol";
+import {MorphoBalancesLib} from "../../../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
 
-import {IPending} from "src/interfaces/IMetaMorpho.sol";
+import "../../../src/interfaces/IMetaMorpho.sol";
 
-import "src/libraries/ConstantsLib.sol";
-import {ErrorsLib} from "src/libraries/ErrorsLib.sol";
-import {EventsLib} from "src/libraries/EventsLib.sol";
-import {ORACLE_PRICE_SCALE} from "@morpho-blue/libraries/ConstantsLib.sol";
+import "../../../src/libraries/ConstantsLib.sol";
+import {ErrorsLib} from "../../../src/libraries/ErrorsLib.sol";
+import {EventsLib} from "../../../src/libraries/EventsLib.sol";
+import {ORACLE_PRICE_SCALE} from "../../../lib/morpho-blue/src/libraries/ConstantsLib.sol";
 
-import {IrmMock} from "src/mocks/IrmMock.sol";
-import {ERC20Mock} from "src/mocks/ERC20Mock.sol";
-import {OracleMock} from "src/mocks/OracleMock.sol";
+import {IrmMock} from "../../../src/mocks/IrmMock.sol";
+import {ERC20Mock} from "../../../src/mocks/ERC20Mock.sol";
+import {OracleMock} from "../../../src/mocks/OracleMock.sol";
 
-import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "src/MetaMorpho.sol";
+import {Ownable} from "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "../../../src/MetaMorpho.sol";
 
-import "@forge-std/Test.sol";
-import "@forge-std/console2.sol";
+import "../../../lib/forge-std/src/Test.sol";
+import "../../../lib/forge-std/src/console2.sol";
 
 uint256 constant BLOCK_TIME = 1;
 uint256 constant MIN_TEST_ASSETS = 1e8;
 uint256 constant MAX_TEST_ASSETS = 1e28;
-uint192 constant CAP = type(uint128).max;
-uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_SIZE + 1;
+uint184 constant CAP = type(uint128).max;
+uint256 constant NB_MARKETS = ConstantsLib.MAX_QUEUE_LENGTH + 1;
 
 contract BaseTest is Test {
     using MathLib for uint256;
@@ -48,6 +48,7 @@ contract BaseTest is Test {
     address internal CURATOR = makeAddr("Curator");
     address internal GUARDIAN = makeAddr("Guardian");
     address internal FEE_RECIPIENT = makeAddr("FeeRecipient");
+    address internal SKIM_RECIPIENT = makeAddr("SkimRecipient");
     address internal MORPHO_OWNER = makeAddr("MorphoOwner");
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
@@ -59,6 +60,7 @@ contract BaseTest is Test {
     IrmMock internal irm = new IrmMock();
 
     MarketParams[] internal allMarkets;
+    MarketParams internal idleParams;
 
     function setUp() public virtual {
         vm.label(address(morpho), "Morpho");
@@ -71,10 +73,22 @@ contract BaseTest is Test {
 
         irm.setApr(0.5 ether); // 50%.
 
+        idleParams = MarketParams({
+            loanToken: address(loanToken),
+            collateralToken: address(0),
+            oracle: address(0),
+            irm: address(irm),
+            lltv: 0
+        });
+
         vm.startPrank(MORPHO_OWNER);
         morpho.enableIrm(address(irm));
         morpho.setFeeRecipient(MORPHO_FEE_RECIPIENT);
+
+        morpho.enableLltv(0);
         vm.stopPrank();
+
+        morpho.createMarket(idleParams);
 
         for (uint256 i; i < NB_MARKETS; ++i) {
             uint256 lltv = 0.8 ether / (i + 1);
@@ -87,13 +101,15 @@ contract BaseTest is Test {
                 lltv: lltv
             });
 
-            vm.startPrank(MORPHO_OWNER);
+            vm.prank(MORPHO_OWNER);
             morpho.enableLltv(lltv);
+
             morpho.createMarket(marketParams);
-            vm.stopPrank();
 
             allMarkets.push(marketParams);
         }
+
+        allMarkets.push(idleParams); // Must be pushed last.
 
         vm.startPrank(SUPPLIER);
         loanToken.approve(address(morpho), type(uint256).max);
@@ -131,8 +147,9 @@ contract BaseTest is Test {
         morpho.withdrawCollateral(market, 1, address(this), address(10));
     }
 
+    /// @dev Returns a random market params from the list of markets enabled on Blue (except the idle market).
     function _randomMarketParams(uint256 seed) internal view returns (MarketParams memory) {
-        return allMarkets[seed % allMarkets.length];
+        return allMarkets[seed % (allMarkets.length - 1)];
     }
 
     function _randomCandidate(address[] memory candidates, uint256 seed) internal pure returns (address) {

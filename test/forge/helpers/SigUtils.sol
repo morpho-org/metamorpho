@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {MessageHashUtils} from "@openzeppelin/utils/cryptography/MessageHashUtils.sol";
+import {MessageHashUtils} from "../../../lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
 
 struct Permit {
     address owner;

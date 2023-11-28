@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./helpers/IntegrationTest.sol";
 
-uint256 constant TIMELOCK = 1 weeks;
-
 contract GuardianTest is IntegrationTest {
     using Math for uint256;
     using MathLib for uint256;
@@ -13,7 +11,6 @@ contract GuardianTest is IntegrationTest {
     function setUp() public override {
         super.setUp();
 
-        _setTimelock(TIMELOCK);
         _setGuardian(GUARDIAN);
     }
 
@@ -28,7 +25,29 @@ contract GuardianTest is IntegrationTest {
         vault.submitGuardian(GUARDIAN);
     }
 
-    function testRevokeTimelockDecreased(uint256 timelock, uint256 elapsed) public {
+    function testGuardianRevokePendingTimelockDecreased(uint256 timelock, uint256 elapsed) public {
+        timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        vm.prank(OWNER);
+        vault.submitTimelock(timelock);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.RevokePendingTimelock(GUARDIAN);
+        vm.prank(GUARDIAN);
+        vault.revokePendingTimelock();
+
+        uint256 newTimelock = vault.timelock();
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
+
+        assertEq(newTimelock, TIMELOCK, "newTimelock");
+        assertEq(pendingTimelock.value, 0, "pendingTimelock.value");
+        assertEq(pendingTimelock.validAt, 0, "pendingTimelock.validAt");
+    }
+
+    function testOwnerRevokePendingTimelockDecreased(uint256 timelock, uint256 elapsed) public {
         timelock = bound(timelock, ConstantsLib.MIN_TIMELOCK, TIMELOCK - 1);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
@@ -38,22 +57,22 @@ contract GuardianTest is IntegrationTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.expectEmit();
-        emit EventsLib.RevokeTimelock(GUARDIAN, IPending(address(vault)).pendingTimelock());
-        vm.prank(GUARDIAN);
-        vault.revokeTimelock();
+        emit EventsLib.RevokePendingTimelock(OWNER);
+        vm.prank(OWNER);
+        vault.revokePendingTimelock();
 
         uint256 newTimelock = vault.timelock();
-        (uint256 pendingTimelock, uint64 submittedAt) = vault.pendingTimelock();
+        PendingUint192 memory pendingTimelock = vault.pendingTimelock();
 
         assertEq(newTimelock, TIMELOCK, "newTimelock");
-        assertEq(pendingTimelock, 0, "pendingTimelock");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(pendingTimelock.value, 0, "value");
+        assertEq(pendingTimelock.validAt, 0, "validAt");
     }
 
-    function testRevokeCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
+    function testGuardianRevokePendingCapIncreased(uint256 seed, uint256 cap, uint256 elapsed) public {
         MarketParams memory marketParams = _randomMarketParams(seed);
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
-        cap = bound(cap, 1, type(uint192).max);
+        cap = bound(cap, 1, type(uint184).max);
 
         vm.prank(OWNER);
         vault.submitCap(marketParams, cap);
@@ -62,21 +81,22 @@ contract GuardianTest is IntegrationTest {
 
         Id id = marketParams.id();
 
-        vm.expectEmit();
-        emit EventsLib.RevokeCap(GUARDIAN, id, IPending(address(vault)).pendingCap(id));
+        vm.expectEmit(address(vault));
+        emit EventsLib.RevokePendingCap(GUARDIAN, id);
         vm.prank(GUARDIAN);
-        vault.revokeCap(id);
+        vault.revokePendingCap(id);
 
-        (uint192 newCap, uint64 withdrawRank) = vault.config(id);
-        (uint256 pendingCap, uint64 submittedAt) = vault.pendingCap(id);
+        MarketConfig memory marketConfig = vault.config(id);
+        PendingUint192 memory pendingCap = vault.pendingCap(id);
 
-        assertEq(newCap, 0, "newCap");
-        assertEq(withdrawRank, 0, "withdrawRank");
-        assertEq(pendingCap, 0, "pendingCap");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
+        assertEq(marketConfig.enabled, false, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
+        assertEq(pendingCap.value, 0, "pendingCap.value");
+        assertEq(pendingCap.validAt, 0, "pendingCap.validAt");
     }
 
-    function testRevokeGuardian(uint256 elapsed) public {
+    function testGuardianRevokePendingGuardian(uint256 elapsed) public {
         elapsed = bound(elapsed, 0, TIMELOCK - 1);
 
         address guardian = makeAddr("Guardian2");
@@ -86,16 +106,42 @@ contract GuardianTest is IntegrationTest {
 
         vm.warp(block.timestamp + elapsed);
 
-        vm.expectEmit();
-        emit EventsLib.RevokeGuardian(GUARDIAN, IPending(address(vault)).pendingGuardian());
+        vm.expectEmit(address(vault));
+        emit EventsLib.RevokePendingGuardian(GUARDIAN);
         vm.prank(GUARDIAN);
-        vault.revokeGuardian();
+        vault.revokePendingGuardian();
 
         address newGuardian = vault.guardian();
-        (address pendingGuardian, uint96 submittedAt) = vault.pendingGuardian();
+        PendingAddress memory pendingGuardian = vault.pendingGuardian();
 
         assertEq(newGuardian, GUARDIAN, "newGuardian");
-        assertEq(pendingGuardian, address(0), "pendingGuardian");
-        assertEq(submittedAt, 0, "submittedAt");
+        assertEq(pendingGuardian.value, address(0), "pendingGuardian.value");
+        assertEq(pendingGuardian.validAt, 0, "pendingGuardian.validAt");
+    }
+
+    function testRevokePendingMarketRemoval(uint256 elapsed) public {
+        elapsed = bound(elapsed, 0, TIMELOCK - 1);
+
+        MarketParams memory marketParams = allMarkets[0];
+        Id id = marketParams.id();
+
+        _setCap(marketParams, CAP);
+        _setCap(marketParams, 0);
+
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(id);
+
+        vm.warp(block.timestamp + elapsed);
+
+        vm.expectEmit(address(vault));
+        emit EventsLib.RevokePendingMarketRemoval(GUARDIAN, id);
+        vm.prank(GUARDIAN);
+        vault.revokePendingMarketRemoval(id);
+
+        MarketConfig memory marketConfig = vault.config(id);
+
+        assertEq(marketConfig.cap, 0, "marketConfig.cap");
+        assertEq(marketConfig.enabled, true, "marketConfig.enabled");
+        assertEq(marketConfig.removableAt, 0, "marketConfig.removableAt");
     }
 }

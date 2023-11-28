@@ -3,13 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./helpers/SigUtils.sol";
 
-import {ERC20Permit} from "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
+import {ERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "./helpers/IntegrationTest.sol";
 
 contract PermitTest is IntegrationTest {
     uint256 internal constant OWNER_PK = 0xA11CE;
     uint256 internal constant SPENDER_PK = 0xB0B;
-    uint256 internal constant DEADLINE = 1 days;
 
     address internal owner;
     address internal spender;
@@ -23,8 +22,10 @@ contract PermitTest is IntegrationTest {
         deal(address(vault), owner, 1e18);
     }
 
-    function testPermit() public {
-        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: DEADLINE});
+    function testPermit(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
+        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: deadline});
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
@@ -35,22 +36,26 @@ contract PermitTest is IntegrationTest {
         assertEq(vault.nonces(owner), 1);
     }
 
-    function testRevertExpiredPermit() public {
+    function testRevertExpiredPermit(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
         Permit memory permit =
-            Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: DEADLINE});
+            Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: deadline});
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
 
-        vm.warp(DEADLINE + 1 seconds); // fast forward one second past the deadline
+        vm.warp(deadline + 1);
 
-        vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612ExpiredSignature.selector, DEADLINE));
+        vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612ExpiredSignature.selector, deadline));
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertInvalidSigner() public {
+    function testRevertInvalidSigner(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
         Permit memory permit =
-            Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: DEADLINE});
+            Permit({owner: owner, spender: spender, value: 1e18, nonce: vault.nonces(owner), deadline: deadline});
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(SPENDER_PK, digest); // spender signs owner's approval
@@ -59,13 +64,15 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertInvalidNonce() public {
+    function testRevertInvalidNonce(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
         Permit memory permit = Permit({
             owner: owner,
             spender: spender,
             value: 1e18,
             nonce: 1, // owner nonce stored on-chain is 0
-            deadline: DEADLINE
+            deadline: deadline
         });
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
@@ -75,8 +82,10 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertSignatureReplay() public {
-        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: DEADLINE});
+    function testRevertSignatureReplay(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
+        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: deadline});
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
@@ -87,8 +96,10 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testTransferFromLimitedPermit() public {
-        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: DEADLINE});
+    function testTransferFromLimitedPermit(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
+        Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: deadline});
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
@@ -103,9 +114,11 @@ contract PermitTest is IntegrationTest {
         assertEq(vault.allowance(owner, spender), 0);
     }
 
-    function testTransferFromMaxPermit() public {
+    function testTransferFromMaxPermit(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
         Permit memory permit =
-            Permit({owner: owner, spender: spender, value: type(uint256).max, nonce: 0, deadline: DEADLINE});
+            Permit({owner: owner, spender: spender, value: type(uint256).max, nonce: 0, deadline: deadline});
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(OWNER_PK, digest);
@@ -120,13 +133,15 @@ contract PermitTest is IntegrationTest {
         assertEq(vault.allowance(owner, spender), type(uint256).max);
     }
 
-    function testFailInvalidAllowance() public {
+    function testFailInvalidAllowance(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
         Permit memory permit = Permit({
             owner: owner,
             spender: spender,
             value: 5e17, // approve only 0.5 tokens
             nonce: 0,
-            deadline: DEADLINE
+            deadline: deadline
         });
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
@@ -138,13 +153,15 @@ contract PermitTest is IntegrationTest {
         vault.transferFrom(owner, spender, 1e18); // attempt to transfer 1 vault
     }
 
-    function testFailInvalidBalance() public {
+    function testFailInvalidBalance(uint256 deadline) public {
+        deadline = bound(deadline, block.timestamp, type(uint48).max);
+
         Permit memory permit = Permit({
             owner: owner,
             spender: spender,
             value: 2e18, // approve 2 tokens
             nonce: 0,
-            deadline: DEADLINE
+            deadline: deadline
         });
 
         bytes32 digest = SigUtils.toTypedDataHash(vault.DOMAIN_SEPARATOR(), permit);
