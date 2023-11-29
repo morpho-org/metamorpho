@@ -87,7 +87,7 @@ interface IMetaMorphoBase {
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
     /// @dev Warning: Submitting a cap will overwrite the current pending cap.
-    function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
+    function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
     /// @notice Accepts the pending cap of the market defined by `id`.
     function acceptCap(Id id) external;
@@ -95,7 +95,7 @@ interface IMetaMorphoBase {
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokePendingCap(Id id) external;
 
-    /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
+    /// @notice Submits a forced market removal from the vault, potentially losing all funds supplied to the market.
     /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
     function submitMarketRemoval(Id id) external;
 
@@ -131,7 +131,7 @@ interface IMetaMorphoBase {
     function setFeeRecipient(address newFeeRecipient) external;
 
     /// @notice Sets `skimRecipient` to `newSkimRecipient`.
-    function setSkimRecipient(address) external;
+    function setSkimRecipient(address newSkimRecipient) external;
 
     /// @notice Sets `supplyQueue` to `newSupplyQueue`.
     /// @param newSupplyQueue is an array of enabled markets, and can contain duplicate markets, but it would only
@@ -142,8 +142,8 @@ interface IMetaMorphoBase {
     /// zero vault's supply can be removed from the permutation.
     /// @notice This is the only entry point to disable a market.
     /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
-    /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
-    /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
+    /// vault so the call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
+    /// simply bundle a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
@@ -156,23 +156,22 @@ interface IMetaMorphoBase {
     /// reallocation.
     /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
-    /// @dev Any additional liquidity withdrawn during reallocation will be kept idle.
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoStaticTyping is IMetaMorphoBase {
-    /// @notice Stores the current configuration of each market.
+    /// @notice Returns the current configuration of each market.
     function config(Id) external view returns (uint184 cap, bool enabled, uint64 removableAt);
 
-    /// @notice The pending guardian.
+    /// @notice Returns the pending guardian.
     function pendingGuardian() external view returns (address guardian, uint64 validAt);
 
-    /// @notice Stores the pending cap for each market.
+    /// @notice Returns the pending cap for each market.
     function pendingCap(Id) external view returns (uint192 value, uint64 validAt);
 
-    /// @notice The pending timelock.
+    /// @notice Returns the pending timelock.
     function pendingTimelock() external view returns (uint192 value, uint64 validAt);
 }
 
@@ -181,15 +180,15 @@ interface IMetaMorphoStaticTyping is IMetaMorphoBase {
 /// @custom:contact security@morpho.org
 /// @dev Use this interface for MetaMorpho to have access to all the functions with the appropriate function signatures.
 interface IMetaMorpho is IMetaMorphoBase, IERC4626, IERC20Permit, IOwnable, IMulticall {
-    /// @notice Stores the current configuration of each market.
+    /// @notice Returns the current configuration of each market.
     function config(Id) external view returns (MarketConfig memory);
 
-    /// @notice The pending guardian.
+    /// @notice Returns the pending guardian.
     function pendingGuardian() external view returns (PendingAddress memory);
 
-    /// @notice Stores the pending cap for each market.
+    /// @notice Returns the pending cap for each market.
     function pendingCap(Id) external view returns (PendingUint192 memory);
 
-    /// @notice The pending timelock.
+    /// @notice Returns the pending timelock.
     function pendingTimelock() external view returns (PendingUint192 memory);
 }
