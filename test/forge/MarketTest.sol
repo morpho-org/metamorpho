@@ -7,6 +7,7 @@ import {SafeCast} from "../../lib/openzeppelin-contracts/contracts/utils/math/Sa
 import "./helpers/IntegrationTest.sol";
 
 contract MarketTest is IntegrationTest {
+    using MathLib for uint256;
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 
@@ -278,5 +279,40 @@ contract MarketTest is IntegrationTest {
             abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalTimelockNotElapsed.selector, idleParams.id())
         );
         vault.updateWithdrawQueue(indexes);
+    }
+
+    function testenableMarketWithLiquidity(uint256 deposited, uint256 additionalSupply, uint256 blocks) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        additionalSupply = bound(additionalSupply, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        blocks = _boundBlocks(blocks);
+
+        Id[] memory supplyQueue = new Id[](1);
+        supplyQueue[0] = allMarkets[0].id();
+
+        _setCap(allMarkets[0], deposited);
+
+        vm.prank(ALLOCATOR);
+        vault.setSupplyQueue(supplyQueue);
+
+        loanToken.setBalance(SUPPLIER, deposited + additionalSupply);
+
+        vm.startPrank(SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+        morpho.supply(allMarkets[3], additionalSupply, 0, address(vault), hex"");
+        vm.stopPrank();
+
+        uint256 collateral = uint256(MAX_TEST_ASSETS).wDivUp(allMarkets[0].lltv);
+        collateralToken.setBalance(BORROWER, collateral);
+
+        vm.startPrank(BORROWER);
+        morpho.supplyCollateral(allMarkets[0], collateral, BORROWER, hex"");
+        morpho.borrow(allMarkets[0], deposited, 0, BORROWER, BORROWER);
+        vm.stopPrank();
+
+        _forward(blocks);
+
+        _setCap(allMarkets[3], CAP);
+
+        assertEq(vault.lastTotalAssets(), deposited + additionalSupply);
     }
 }

@@ -779,6 +779,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 }
 
                 marketConfig.enabled = true;
+
+                MarketParams memory marketParams = MORPHO.idToMarketParams(id);
+                _updateLastTotalAssets(lastTotalAssets + MORPHO.expectedSupplyAssets(marketParams, address(this)));
             }
 
             marketConfig.removableAt = 0;
