@@ -23,6 +23,7 @@ import {MorphoLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoLib.so
 import {MarketParamsLib} from "../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
 import {IERC20Metadata} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {MorphoBalancesLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
+import {MorphoStorageLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoStorageLib.sol";
 
 import {Multicall} from "../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
 import {Ownable2Step, Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
@@ -48,6 +49,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
+    using MorphoStorageLib for Id;
     using MarketParamsLib for MarketParams;
     using PendingLib for MarketConfig;
     using PendingLib for PendingUint192;
@@ -350,6 +352,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         bool[] memory seen = new bool[](currLength);
         Id[] memory newWithdrawQueue = new Id[](newLength);
 
+        uint256 lostAssets;
+
         for (uint256 i; i < newLength; ++i) {
             uint256 prevIndex = indexes[i];
 
@@ -367,12 +371,23 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
                 if (config[id].cap != 0) revert ErrorsLib.InvalidMarketRemovalNonZeroCap(id);
 
-                if (MORPHO.supplyShares(id, address(this)) != 0) {
+                uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+
+                if (supplyShares != 0) {
                     if (config[id].removableAt == 0) revert ErrorsLib.InvalidMarketRemovalNonZeroSupply(id);
 
                     if (block.timestamp < config[id].removableAt) {
                         revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
                     }
+
+                    bytes32[] memory slot = new bytes32[](1);
+                    slot[0] = id.marketTotalSupplyAssetsAndSharesSlot();
+                    bytes32[] memory res = MORPHO.extSloads(slot);
+
+                    uint256 totalSupplyAssets = uint128(uint256(res[0]));
+                    uint256 totalSupplyShares = uint256(res[0] >> 128);
+
+                    lostAssets += supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
                 }
 
                 delete config[id];
@@ -380,6 +395,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         withdrawQueue = newWithdrawQueue;
+
+        // Accrue interests on all the enabled markets except the removed ones.
+        _updateLastTotalAssets(lastTotalAssets.zeroFloorSub(lostAssets));
 
         emit EventsLib.SetWithdrawQueue(_msgSender(), newWithdrawQueue);
     }
