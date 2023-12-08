@@ -117,7 +117,7 @@ contract MarketTest is IntegrationTest {
         vm.warp(block.timestamp + 1 weeks);
 
         vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
-        vault.acceptCap(marketParams.id());
+        vault.acceptCap(marketParams);
     }
 
     function testSetSupplyQueueUnauthorizedMarket() public {
@@ -157,7 +157,7 @@ contract MarketTest is IntegrationTest {
         _setCap(allMarkets[2], 0);
 
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2]);
 
         vm.warp(block.timestamp + TIMELOCK);
 
@@ -186,7 +186,7 @@ contract MarketTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.SubmitMarketRemoval(CURATOR, allMarkets[2].id());
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2]);
 
         assertEq(vault.config(allMarkets[2].id()).cap, 0);
         assertEq(vault.config(allMarkets[2].id()).removableAt, block.timestamp + TIMELOCK);
@@ -194,9 +194,9 @@ contract MarketTest is IntegrationTest {
 
     function testSubmitMarketRemovalAlreadySet() public {
         vm.startPrank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2]);
         vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2]);
         vm.stopPrank();
     }
 
@@ -265,7 +265,7 @@ contract MarketTest is IntegrationTest {
         _setCap(idleParams, 0);
 
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(idleParams.id());
+        vault.submitMarketRemoval(idleParams);
 
         vm.warp(block.timestamp + elapsed);
 

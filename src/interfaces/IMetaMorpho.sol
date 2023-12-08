@@ -52,10 +52,10 @@ interface IMetaMorphoBase {
     function revokePendingTimelock() external;
 
     function submitCap(MarketParams memory marketParams, uint256 supplyCap) external;
-    function acceptCap(Id id) external;
+    function acceptCap(MarketParams memory marketParams) external;
     function revokePendingCap(Id id) external;
 
-    function submitMarketRemoval(Id id) external;
+    function submitMarketRemoval(MarketParams memory marketParams) external;
     function revokePendingMarketRemoval(Id id) external;
 
     function submitGuardian(address newGuardian) external;
