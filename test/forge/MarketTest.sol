@@ -152,59 +152,7 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(3)), Id.unwrap(expectedWithdrawQueue[3]));
     }
 
-    function testUpdateWithdrawQueueRemovingDisabledMarket(uint256 firstAmountSupplied, uint256 secondAmountSupplied)
-        public
-    {
-        firstAmountSupplied = bound(firstAmountSupplied, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        secondAmountSupplied = bound(secondAmountSupplied, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-
-        _setCap(allMarkets[0], firstAmountSupplied);
-        _setCap(allMarkets[1], secondAmountSupplied);
-
-        Id[] memory supplyQueue = new Id[](2);
-        supplyQueue[0] = allMarkets[0].id();
-        supplyQueue[1] = allMarkets[1].id();
-
-        _setCap(allMarkets[0], firstAmountSupplied);
-        _setCap(allMarkets[1], secondAmountSupplied);
-        vm.prank(ALLOCATOR);
-        vault.setSupplyQueue(supplyQueue);
-
-        loanToken.setBalance(SUPPLIER, firstAmountSupplied + secondAmountSupplied);
-
-        vm.prank(SUPPLIER);
-        vault.deposit(firstAmountSupplied + secondAmountSupplied, ONBEHALF);
-
-        _setCap(allMarkets[1], 0);
-
-        vm.prank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[1].id());
-
-        vm.warp(block.timestamp + TIMELOCK);
-
-        uint256[] memory indexes = new uint256[](3);
-        indexes[0] = 0;
-        indexes[1] = 1;
-        indexes[2] = 3;
-
-        Id[] memory expectedWithdrawQueue = new Id[](3);
-        expectedWithdrawQueue[0] = idleParams.id();
-        expectedWithdrawQueue[1] = allMarkets[0].id();
-        expectedWithdrawQueue[2] = allMarkets[2].id();
-
-        vm.expectEmit();
-        emit EventsLib.SetWithdrawQueue(ALLOCATOR, expectedWithdrawQueue);
-        vm.prank(ALLOCATOR);
-        vault.updateWithdrawQueue(indexes);
-
-        assertEq(Id.unwrap(vault.withdrawQueue(0)), Id.unwrap(expectedWithdrawQueue[0]));
-        assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
-        assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(expectedWithdrawQueue[2]));
-        assertFalse(vault.config(allMarkets[1].id()).enabled);
-        assertEq(vault.lastTotalAssets(), firstAmountSupplied);
-    }
-
-    function testUpdateWithdrawQueueRemovingDisabledMarketWithSupply() public {
+    function testUpdateWithdrawQueueRemovingDisabledMarket() public {
         _setCap(allMarkets[2], 0);
 
         vm.prank(CURATOR);

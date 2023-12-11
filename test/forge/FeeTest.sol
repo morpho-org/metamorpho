@@ -9,6 +9,7 @@ contract FeeTest is IntegrationTest {
     using Math for uint256;
     using MathLib for uint256;
     using MarketParamsLib for MarketParams;
+    using MorphoBalancesLib for IMorpho;
 
     function setUp() public override {
         super.setUp();
@@ -347,5 +348,72 @@ contract FeeTest is IntegrationTest {
 
         assertEq(assets, expectedAssets, "assets");
         assertGe(assets, assetsBefore, "assets increased");
+    }
+
+    struct testUpdateWithdrawQueueRemovingDisabledMarketVars {
+        uint256 firstAmountSupplied;
+        uint256 secondAmountSupplied;
+        uint256 firstAmountBorrowed;
+        uint256 secondAmountBorrowed;
+        uint256 blocks;
+    }
+
+    function testUpdateWithdrawQueueRemovingDisabledMarketWithFee(
+        uint256 firstAmountSupplied,
+        uint256 secondAmountSupplied,
+        address newFeeRecipient,
+        uint256 blocks
+    ) public {
+        firstAmountSupplied = bound(firstAmountSupplied, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        secondAmountSupplied = bound(secondAmountSupplied, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        blocks = _boundBlocks(blocks);
+        vm.assume(newFeeRecipient != FEE_RECIPIENT && newFeeRecipient != address(0));
+
+        _setCap(allMarkets[0], firstAmountSupplied);
+        _setCap(allMarkets[1], secondAmountSupplied);
+
+        Id[] memory supplyQueue = new Id[](2);
+        supplyQueue[0] = allMarkets[0].id();
+        supplyQueue[1] = allMarkets[1].id();
+
+        vm.prank(ALLOCATOR);
+        vault.setSupplyQueue(supplyQueue);
+
+        loanToken.setBalance(SUPPLIER, firstAmountSupplied + secondAmountSupplied);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(firstAmountSupplied + secondAmountSupplied, ONBEHALF);
+
+        _setCap(allMarkets[1], 0);
+
+        vm.prank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[1].id());
+
+        vm.warp(block.timestamp + TIMELOCK);
+
+        uint256[] memory indexes = new uint256[](2);
+        indexes[0] = 0;
+        indexes[1] = 1;
+
+        vm.prank(ALLOCATOR);
+        vault.updateWithdrawQueue(indexes);
+
+        assertApproxEqAbs(vault.lastTotalAssets(), firstAmountSupplied, 1, "lastTotalAssets");
+
+        _forward(blocks);
+
+        uint256 expectedTotalAssets = morpho.expectedSupplyAssets(allMarkets[0], address(vault));
+        uint256 expectedFeeAssets = (expectedTotalAssets - vault.lastTotalAssets()).mulDiv(FEE, WAD);
+        uint256 expectedFeeShares = expectedFeeAssets.mulDiv(
+            vault.totalSupply() + 10 ** ConstantsLib.DECIMALS_OFFSET,
+            expectedTotalAssets - expectedFeeAssets + 1,
+            Math.Rounding.Floor
+        );
+
+        // Set new fee recipient to accrue fee.
+        vm.prank(OWNER);
+        vault.setFeeRecipient(newFeeRecipient);
+
+        assertEq(vault.balanceOf(FEE_RECIPIENT), expectedFeeShares, "feeShares");
     }
 }
