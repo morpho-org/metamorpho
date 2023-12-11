@@ -18,7 +18,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     }
 
     function testDecimals() public {
-        assertEq(vault.decimals(), loanToken.decimals() + ConstantsLib.DECIMALS_OFFSET, "decimals");
+        assertEq(vault.decimals(), 18, "decimals");
     }
 
     function testMint(uint256 assets) public {
@@ -270,7 +270,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 1));
 
         vm.prank(ONBEHALF);
         vm.expectRevert(ErrorsLib.NotEnoughLiquidity.selector);
@@ -285,7 +285,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 1));
 
         collateralToken.setBalance(BORROWER, type(uint128).max);
 

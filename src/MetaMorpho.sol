@@ -58,6 +58,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice The address of the Morpho contract.
     IMorpho public immutable MORPHO;
 
+    /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
+    /// @dev Calculated to be max(0, 18 - underlyingDecimals) at construction, so the initial conversion rate maximizes
+    /// precision between shares and assets.
+    uint8 internal immutable _DECIMALS_OFFSET;
+
     /* STORAGE */
 
     /// @notice The address of the curator.
@@ -126,6 +131,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
 
         MORPHO = IMorpho(morpho);
+        _DECIMALS_OFFSET = uint8(uint256(18).zeroFloorSub(IERC20Metadata(_asset).decimals()));
 
         _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
@@ -619,8 +625,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ERC4626 (INTERNAL) */
 
     /// @inheritdoc ERC4626
-    function _decimalsOffset() internal pure override returns (uint8) {
-        return ConstantsLib.DECIMALS_OFFSET;
+    function _decimalsOffset() internal view override returns (uint8) {
+        return _DECIMALS_OFFSET;
     }
 
     /// @dev Returns the maximum amount of asset (`assets`) that the `owner` can withdraw from the vault, as well as the
@@ -675,7 +681,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalSupply,
         uint256 newTotalAssets,
         Math.Rounding rounding
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         return assets.mulDiv(newTotalSupply + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
 
@@ -686,7 +692,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalSupply,
         uint256 newTotalAssets,
         Math.Rounding rounding
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
 
