@@ -350,14 +350,6 @@ contract FeeTest is IntegrationTest {
         assertGe(assets, assetsBefore, "assets increased");
     }
 
-    struct testUpdateWithdrawQueueRemovingDisabledMarketVars {
-        uint256 firstAmountSupplied;
-        uint256 secondAmountSupplied;
-        uint256 firstAmountBorrowed;
-        uint256 secondAmountBorrowed;
-        uint256 blocks;
-    }
-
     function testUpdateWithdrawQueueRemovingDisabledMarketWithFee(
         uint256 firstAmountSupplied,
         uint256 secondAmountSupplied,
