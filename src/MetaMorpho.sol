@@ -49,7 +49,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     using MorphoLib for IMorpho;
     using SharesMathLib for uint256;
     using MorphoBalancesLib for IMorpho;
-    using MorphoStorageLib for Id;
     using MarketParamsLib for MarketParams;
     using PendingLib for MarketConfig;
     using PendingLib for PendingUint192;
@@ -381,7 +380,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                     }
 
                     bytes32[] memory slot = new bytes32[](1);
-                    slot[0] = id.marketTotalSupplyAssetsAndSharesSlot();
+                    slot[0] = MorphoStorageLib.marketTotalSupplyAssetsAndSharesSlot(id);
                     bytes32[] memory res = MORPHO.extSloads(slot);
 
                     uint256 totalSupplyAssets = uint128(uint256(res[0]));
