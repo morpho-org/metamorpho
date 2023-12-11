@@ -281,7 +281,7 @@ contract MarketTest is IntegrationTest {
         vault.updateWithdrawQueue(indexes);
     }
 
-    function testenableMarketWithLiquidity(uint256 deposited, uint256 additionalSupply, uint256 blocks) public {
+    function testEnableMarketWithLiquidity(uint256 deposited, uint256 additionalSupply, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         additionalSupply = bound(additionalSupply, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
