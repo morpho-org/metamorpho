@@ -20,7 +20,7 @@ interface IMulticall {
 }
 
 interface IOwnable {
-    function owner() external returns (address);
+    function owner() external view returns (address);
     function transferOwnership(address) external;
     function renounceOwnership() external;
     function acceptOwnership() external;
