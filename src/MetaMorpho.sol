@@ -304,7 +304,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
-    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
     function submitMarketRemoval(Id id) external onlyCuratorRole {
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
         if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
@@ -339,9 +338,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
     /// zero vault's supply can be removed from the permutation.
     /// @notice This is the only entry point to disable a market.
-    /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
-    /// vault so the call to `sortWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
-    /// simply bundle a reallocation that withdraws max from this market with a call to `sortWithdrawQueue`.
+    /// @notice Removing a market requires the vault to have 0 supply on it, or to have previously submitted a removal
+    /// for this market (with the function `submitMarketRemoval`); but anyone can supply on behalf of the vault so the
+    /// call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can simply bundle
+    /// a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
         uint256 newLength = indexes.length;
