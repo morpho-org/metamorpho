@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 
-import {UtilsLib} from "../../../lib/morpho-blue/src/libraries/UtilsLib.sol";
 import {WAD, MathLib} from "../../../lib/morpho-blue/src/libraries/MathLib.sol";
 import {Math} from "../../../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {MarketParamsLib} from "../../../lib/morpho-blue/src/libraries/MarketParamsLib.sol";

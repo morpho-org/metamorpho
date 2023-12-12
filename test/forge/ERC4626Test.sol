@@ -18,7 +18,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     }
 
     function testDecimals() public {
-        assertEq(vault.decimals(), UtilsLib.min(18, loanToken.decimals()), "decimals");
+        assertEq(vault.decimals(), Math.max(18, loanToken.decimals()), "decimals");
     }
 
     function testMint(uint256 assets) public {

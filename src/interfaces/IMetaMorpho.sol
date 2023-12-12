@@ -31,6 +31,7 @@ interface IOwnable {
 /// @dev Consider using the IMetaMorpho interface instead of this one.
 interface IMetaMorphoBase {
     function MORPHO() external view returns (IMorpho);
+    function DECIMALS_OFFSET() external view returns (uint8);
 
     function curator() external view returns (address);
     function isAllocator(address target) external view returns (bool);
