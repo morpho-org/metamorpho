@@ -18,7 +18,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     }
 
     function testDecimals() public {
-        assertEq(vault.decimals(), 18, "decimals");
+        assertEq(vault.decimals(), UtilsLib.min(18, loanToken.decimals()), "decimals");
     }
 
     function testMint(uint256 assets) public {
@@ -116,16 +116,18 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        loanToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited * 2);
+
+        vm.startPrank(SUPPLIER);
+        uint256 shares = vault.deposit(deposited, SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+        vm.stopPrank();
 
         vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(deposited, ONBEHALF);
-
-        vm.prank(ONBEHALF);
         vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, shares + 1)
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, SUPPLIER, shares, shares + 1)
         );
-        vault.redeem(shares + 1, RECEIVER, ONBEHALF);
+        vault.redeem(shares + 1, RECEIVER, SUPPLIER);
     }
 
     function testWithdrawAll(uint256 assets) public {
