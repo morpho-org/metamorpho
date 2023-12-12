@@ -23,7 +23,6 @@ import {MorphoLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoLib.so
 import {MarketParamsLib} from "../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
 import {IERC20Metadata} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {MorphoBalancesLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
-import {MorphoStorageLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoStorageLib.sol";
 
 import {Multicall} from "../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
 import {Ownable2Step, Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
@@ -379,12 +378,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                         revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
                     }
 
-                    bytes32[] memory slot = new bytes32[](1);
-                    slot[0] = MorphoStorageLib.marketTotalSupplyAssetsAndSharesSlot(id);
-                    bytes32[] memory res = MORPHO.extSloads(slot);
-
-                    uint256 totalSupplyAssets = uint128(uint256(res[0]));
-                    uint256 totalSupplyShares = uint256(res[0] >> 128);
+                    uint256 totalSupplyAssets = MORPHO.totalSupplyAssets(id);
+                    uint256 totalSupplyShares = MORPHO.totalSupplyShares(id);
 
                     lostAssets += supplyShares.toAssetsDown(totalSupplyAssets, totalSupplyShares);
                 }
@@ -395,7 +390,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         withdrawQueue = newWithdrawQueue;
 
-        // Accrue interests on all the enabled markets except the removed ones.
+        // Accrue interest on all the enabled markets except the removed ones.
         _updateLastTotalAssets(lastTotalAssets.zeroFloorSub(lostAssets));
 
         emit EventsLib.SetWithdrawQueue(_msgSender(), newWithdrawQueue);
