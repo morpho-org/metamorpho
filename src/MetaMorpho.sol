@@ -393,8 +393,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// reallocation.
     /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
-    /// @dev Allocator is expected to pass type(uint256).max as assets for the last MarketAllocation of `allocations` to
-    /// supply all the remaining withdrawn liquidity, which would ensure that totalWithdrawn = totalSupplied.
+    /// @dev Sender is expected to pass `assets = type(uint256).max` with the last MarketAllocation of `allocations` to
+    /// supply all the remaining withdrawn liquidity, which would ensure that `totalWithdrawn` = `totalSupplied`.
     function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
         uint256 totalSupplied;
         uint256 totalWithdrawn;
