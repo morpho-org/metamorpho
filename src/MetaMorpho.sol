@@ -378,6 +378,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                         revert ErrorsLib.InvalidMarketRemovalTimelockNotElapsed(id);
                     }
 
+                    // Not accruing interest to avoid reverting.
                     uint256 totalSupplyAssets = MORPHO.totalSupplyAssets(id);
                     uint256 totalSupplyShares = MORPHO.totalSupplyShares(id);
 
