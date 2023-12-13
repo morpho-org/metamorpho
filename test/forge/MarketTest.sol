@@ -155,8 +155,10 @@ contract MarketTest is IntegrationTest {
     function testUpdateWithdrawQueueRemovingDisabledMarket() public {
         _setCap(allMarkets[2], 0);
 
-        vm.prank(CURATOR);
+        vm.startPrank(CURATOR);
         vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitCap(allMarkets[2], CAP + 1);
+        vm.stopPrank();
 
         vm.warp(block.timestamp + TIMELOCK);
 
@@ -179,6 +181,8 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
         assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(expectedWithdrawQueue[2]));
         assertFalse(vault.config(allMarkets[2].id()).enabled);
+        assertEq(vault.pendingCap(allMarkets[2].id()).value, 0, "Pending cap value");
+        assertEq(vault.pendingCap(allMarkets[2].id()).validAt, 0, "Pending cap validAt");
     }
 
     function testSubmitMarketRemoval() public {
