@@ -339,9 +339,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// zero vault's supply can be removed from the permutation.
     /// @notice This is the only entry point to disable a market.
     /// @notice Removing a market requires the vault to have 0 supply on it, or to have previously submitted a removal
-    /// for this market (with the function `submitMarketRemoval`); but anyone can supply on behalf of the vault so the
-    /// call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can simply bundle
-    /// a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
+    /// for this market (with the function `submitMarketRemoval`).
+    /// @notice Warning: Anyone can supply on behalf of the vault so the call to `updateWithdrawQueue` that expects a
+    /// market to be empty can be griefed by a front-run. To circumvent this, the allocator can simply bundle a
+    /// reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external onlyAllocatorRole {
         uint256 newLength = indexes.length;

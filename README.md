@@ -28,8 +28,8 @@ Those rewards can be transferred to the `skimRecipient`.
 The vault's owner has the choice to distribute back these rewards to vault depositors however they want.
 For more information about this use case, see the [Rewards](#rewards) section.
 
-All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 24 hours.
-If set, the `guardian` can revoke the action during the timelock except for the fee increase.
+All actions that may be against users' interests (e.g. enabling a market with a high exposure) are subject to a timelock of minimum 24 hours.
+If set, the `guardian` can revoke the action during the timelock.
 After the timelock, the action can be executed by anyone.
 
 ### Roles
@@ -48,8 +48,8 @@ It can:
 - Set the rewards recipient.
 - Increase the timelock.
 - [Timelocked] Decrease the timelock.
-- [Timelocked with no possible veto] Set the performance fee (capped to 50%).
 - [Timelocked] Set the guardian.
+- Set the performance fee (capped to 50%).
 - Set the fee recipient.
 
 #### Curator
