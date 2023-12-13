@@ -77,7 +77,7 @@ It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
   - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue` in the order set.
-  - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
+  - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the `withdrawQueue` in the order set.
   - The `supplyQueue` only contains markets which cap has previously been non-zero.
   - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
 - Instantaneously reallocate funds by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
