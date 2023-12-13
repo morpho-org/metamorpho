@@ -277,7 +277,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vault.withdraw(assets, RECEIVER, ONBEHALF);
     }
 
-    function testWithdrawMoreThanBalanceButLessThanLiquidity(uint256 deposited, uint256 assets) public {
+    function testWithdrawMoreThanBalanceAndLiquidity(uint256 deposited, uint256 assets) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
         loanToken.setBalance(SUPPLIER, deposited);
