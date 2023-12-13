@@ -40,7 +40,7 @@ contract MetaMorphoFactoryTest is IntegrationTest {
             expectedAddress, address(this), initialOwner, initialTimelock, address(loanToken), name, symbol, salt
         );
 
-        MetaMorpho metaMorpho =
+        IMetaMorpho metaMorpho =
             factory.createMetaMorpho(initialOwner, initialTimelock, address(loanToken), name, symbol, salt);
 
         assertEq(expectedAddress, address(metaMorpho), "computeCreate2Address");
