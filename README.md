@@ -49,7 +49,7 @@ It can:
 - Increase the timelock.
 - [Timelocked] Decrease the timelock.
 - [Timelocked] Set the guardian.
-- Set the performance fee (capped to 50%).
+- Set the performance fee (capped at 50%).
 - Set the fee recipient.
 
 #### Curator
