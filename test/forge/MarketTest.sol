@@ -182,7 +182,7 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(expectedWithdrawQueue[2]));
         assertFalse(vault.config(allMarkets[2].id()).enabled);
         assertEq(vault.pendingCap(allMarkets[2].id()).value, 0, "pendingCap.value");
-        assertEq(vault.pendingCap(allMarkets[2].id()).validAt, 0, "Pending cap validAt");
+        assertEq(vault.pendingCap(allMarkets[2].id()).validAt, 0, "pendingCap.validAt");
     }
 
     function testSubmitMarketRemoval() public {
