@@ -778,6 +778,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             Market memory market = MORPHO.market(id);
             uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            // `supplyAssets` needs to be rounded up for `toSupply` to be rounded down.
             uint256 supplyAssets = supplyShares.toAssetsUp(market.totalSupplyAssets, market.totalSupplyShares);
 
             uint256 toSupply = UtilsLib.min(supplyCap.zeroFloorSub(supplyAssets), assets);
