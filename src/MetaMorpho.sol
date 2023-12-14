@@ -773,7 +773,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (supplyCap == 0) continue;
 
             MarketParams memory marketParams = _marketParams(id);
-            (uint256 supplyAssets,,) = _accruedSupplyBalance(marketParams, id);
+
+            MORPHO.accrueInterest(marketParams);
+
+            Market memory market = MORPHO.market(id);
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            uint256 supplyAssets = supplyShares.toAssetsUp(market.totalSupplyAssets, market.totalSupplyShares);
 
             uint256 toSupply = UtilsLib.min(supplyCap.zeroFloorSub(supplyAssets), assets);
 
