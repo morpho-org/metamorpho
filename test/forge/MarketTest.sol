@@ -194,7 +194,7 @@ contract MarketTest is IntegrationTest {
     function testSubmitMarketRemovalAlreadySet() public {
         vm.startPrank(CURATOR);
         vault.submitMarketRemoval(allMarkets[2].id());
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
         vault.submitMarketRemoval(allMarkets[2].id());
         vm.stopPrank();
     }
