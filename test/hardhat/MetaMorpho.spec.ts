@@ -22,11 +22,6 @@ const oraclePriceScale = 1000000000000000000000000000000000000n;
 const nbMarkets = 10;
 const timelock = 3600 * 24 * 7; // 1 week.
 
-const adjustmentSpeed = 1585489599188n;
-const targetUtilization = 900000000000000000n;
-const curveSteepness = 4000000000000000000n;
-const initialRateAtTarget = 317097919n;
-
 let seed = 42;
 const random = () => {
   seed = (seed * 16807) % 2147483647;
@@ -155,13 +150,7 @@ describe("MetaMorpho", () => {
       admin,
     );
 
-    irm = (await AdaptiveCurveIrmFactory.deploy(
-      morphoAddress,
-      curveSteepness,
-      adjustmentSpeed,
-      targetUtilization,
-      initialRateAtTarget,
-    )) as IIrm;
+    irm = (await AdaptiveCurveIrmFactory.deploy(morphoAddress)) as IIrm;
 
     const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
