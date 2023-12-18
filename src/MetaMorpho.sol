@@ -268,10 +268,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external onlyCuratorRole {
         Id id = marketParams.id();
-        uint256 supplyCap = config[id].cap;
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
         if (pendingCap[id].validAt != 0) revert ErrorsLib.AlreadyPending();
+        uint256 supplyCap = config[id].cap;
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
         if (newSupplyCap < supplyCap) {

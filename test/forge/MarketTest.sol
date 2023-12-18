@@ -191,7 +191,7 @@ contract MarketTest is IntegrationTest {
         assertEq(vault.config(allMarkets[2].id()).removableAt, block.timestamp + TIMELOCK);
     }
 
-    function testSubmitMarketRemovalAlreadySet() public {
+    function testSubmitMarketRemovalAlreadyPending() public {
         vm.startPrank(CURATOR);
         vault.submitMarketRemoval(allMarkets[2].id());
         vm.expectRevert(ErrorsLib.AlreadyPending.selector);
