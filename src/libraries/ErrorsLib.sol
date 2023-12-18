@@ -42,6 +42,12 @@ library ErrorsLib {
     /// @notice Thrown when a value is already pending.
     error AlreadyPending();
 
+    /// @notice Thrown when submitting a market removal for a market for which a cap is already pending.
+    error PendingCap();
+
+    /// @notice Thrown when submitting a market removal for a market with a non zero cap.abi
+    error NonZeroCap();
+
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);
 

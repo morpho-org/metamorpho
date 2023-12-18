@@ -74,8 +74,8 @@ interface IMetaMorphoBase {
     function lastTotalAssets() external view returns (uint256);
 
     /// @notice Submits a `newTimelock`.
+    /// @dev Warning: Reverts if a timelock is already pending. Revoke the pending timelock to overwrite it.
     /// @dev In case the new timelock is higher than the current one, the timelock is set immediately.
-    /// @dev Warning: Submitting a timelock will overwrite the current pending timelock.
     function submitTimelock(uint256 newTimelock) external;
 
     /// @notice Accepts the pending timelock.
@@ -85,8 +85,8 @@ interface IMetaMorphoBase {
     function revokePendingTimelock() external;
 
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
+    /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
-    /// @dev Warning: Submitting a cap will overwrite the current pending cap.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
     /// @notice Accepts the pending cap of the market defined by `id`.
@@ -96,7 +96,6 @@ interface IMetaMorphoBase {
     function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, potentially losing all funds supplied to the market.
-    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
     function submitMarketRemoval(Id id) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
