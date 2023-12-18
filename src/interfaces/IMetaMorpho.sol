@@ -95,8 +95,12 @@ interface IMetaMorphoBase {
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokePendingCap(Id id) external;
 
-    /// @notice Submits a forced market removal from the vault, potentially losing all funds supplied to the market.
+    /// @notice Submits a forced market removal from the vault, losing all funds supplied to the market.
+    /// @notice This forced removal is expected to be used as an emergency process in case a market constantly reverts.
+    /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
+    /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
     /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
+    /// @dev Warning: Removing a market with non-zero supply will instantly impact the vault's price per share.
     function submitMarketRemoval(Id id) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
