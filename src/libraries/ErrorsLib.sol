@@ -30,6 +30,9 @@ library ErrorsLib {
     /// asset.
     error InconsistentAsset(Id id);
 
+    /// @notice Thrown when submitting a cap for a market `id` which removal has been submitted.
+    error RemovalSubmitted();
+
     /// @notice Thrown when the supply cap has been exceeded on market `id` during a reallocation of funds.
     error SupplyCapExceeded(Id id);
 
