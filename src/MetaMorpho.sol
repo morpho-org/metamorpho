@@ -275,7 +275,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
-        if (config[id].removableAt != 0) revert ErrorsLib.RemovalSubmitted();
 
         uint256 supplyCap = config[id].cap;
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
@@ -285,6 +284,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         } else {
             // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
             if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
+            if (config[id].removableAt != 0) revert ErrorsLib.PendingRemoval();
 
             pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 

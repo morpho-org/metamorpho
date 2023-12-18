@@ -30,9 +30,6 @@ library ErrorsLib {
     /// asset.
     error InconsistentAsset(Id id);
 
-    /// @notice Thrown when submitting a cap for a market `id` which removal has been submitted.
-    error RemovalSubmitted();
-
     /// @notice Thrown when the supply cap has been exceeded on market `id` during a reallocation of funds.
     error SupplyCapExceeded(Id id);
 
@@ -44,6 +41,9 @@ library ErrorsLib {
 
     /// @notice Thrown when the value is already pending.
     error AlreadyPending();
+
+    /// @notice Thrown when submitting a cap for a market `id` with a pending removal.
+    error PendingRemoval();
 
     /// @notice Thrown when market `id` is a duplicate in the new withdraw queue to set.
     error DuplicateMarket(Id id);

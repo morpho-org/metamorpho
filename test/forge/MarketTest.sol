@@ -82,11 +82,10 @@ contract MarketTest is IntegrationTest {
     function testSubmitCapRemovalSubmitted(uint256 cap) public {
         cap = bound(cap, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        _setCap(allMarkets[0], 0);
         vm.startPrank(CURATOR);
         vault.submitMarketRemoval(allMarkets[0].id());
 
-        vm.expectRevert(ErrorsLib.RemovalSubmitted.selector);
+        vm.expectRevert(ErrorsLib.PendingRemoval.selector);
         vault.submitCap(allMarkets[0], cap);
         vm.stopPrank();
     }
