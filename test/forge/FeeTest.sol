@@ -23,7 +23,7 @@ contract FeeTest is IntegrationTest {
             loanToken.setBalance(SUPPLIER, MAX_TEST_ASSETS);
 
             vm.prank(SUPPLIER);
-            morpho.supply(marketParams, MAX_TEST_ASSETS, 0, ONBEHALF, "");
+            morpho.supply(marketParams, MAX_TEST_ASSETS, 0, ONBEHALF, hex"");
 
             uint256 collateral = uint256(MAX_TEST_ASSETS).wDivUp(marketParams.lltv);
             collateralToken.setBalance(BORROWER, collateral);
