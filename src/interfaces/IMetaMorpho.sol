@@ -96,6 +96,8 @@ interface IMetaMorphoBase {
     function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, losing all funds supplied to the market.
+    /// @notice Funds can always be recovered as a donation by withdrawing from this market (using `reallocate`), but
+    /// funds will be distributed pro-rata to the shares at the time of withdrawal, not at the time of market removal.
     /// @notice This forced removal is expected to be used as an emergency process in case a market constantly reverts.
     /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
     /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
