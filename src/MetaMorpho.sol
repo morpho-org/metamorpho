@@ -229,7 +229,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
         if (newFee != 0 && feeRecipient == address(0)) revert ErrorsLib.ZeroFeeRecipient();
 
-        // Accrue interest using the previous fee set before changing it.
+        // Accrue fee using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
         // Safe "unchecked" cast because newFee <= MAX_FEE.
@@ -243,7 +243,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFeeRecipient == feeRecipient) revert ErrorsLib.AlreadySet();
         if (newFeeRecipient == address(0) && fee != 0) revert ErrorsLib.ZeroFeeRecipient();
 
-        // Accrue interest to the previous fee recipient set before changing it.
+        // Accrue fee to the previous fee recipient set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
         feeRecipient = newFeeRecipient;
@@ -365,6 +365,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IMetaMorphoBase
     function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
+        // Accrue fee to avoid taking a fee on withdrawn donations.
+        _accrueFee();
+
         uint256 totalSupplied;
         uint256 totalWithdrawn;
         for (uint256 i; i < allocations.length; ++i) {
@@ -413,6 +416,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         if (totalWithdrawn != totalSupplied) revert ErrorsLib.InconsistentReallocation();
+
+        // Update `lastTotalAssets` to avoid taking a fee on withdrawn donations.
+        _updateLastTotalAssets(totalAssets());
     }
 
     /* REVOKE FUNCTIONS */
