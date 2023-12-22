@@ -294,7 +294,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     function submitMarketRemoval(Id id) external onlyCuratorRole {
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
-        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
+        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled(id);
 
         _setCap(id, 0);
 
@@ -365,9 +365,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IMetaMorphoBase
     function reallocate(MarketAllocation[] calldata allocations) external onlyAllocatorRole {
-        // Accrue fee to avoid taking a fee on withdrawn donations.
-        _accrueFee();
-
         uint256 totalSupplied;
         uint256 totalWithdrawn;
         for (uint256 i; i < allocations.length; ++i) {
@@ -378,7 +375,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
             if (withdrawn > 0) {
-                if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
+                if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled(id);
 
                 // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
                 uint256 shares;
@@ -416,9 +413,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         }
 
         if (totalWithdrawn != totalSupplied) revert ErrorsLib.InconsistentReallocation();
-
-        // Update `lastTotalAssets` to avoid taking a fee on withdrawn donations.
-        _updateLastTotalAssets(totalAssets());
     }
 
     /* REVOKE FUNCTIONS */

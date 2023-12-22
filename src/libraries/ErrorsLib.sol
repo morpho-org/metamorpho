@@ -64,7 +64,7 @@ library ErrorsLib {
     error MarketNotCreated();
 
     /// @notice Thrown when submitting a non previously enabled market for removal.
-    error MarketNotEnabled();
+    error MarketNotEnabled(Id id);
 
     /// @notice Thrown when the submitted timelock is above the max timelock.
     error AboveMaxTimelock();
