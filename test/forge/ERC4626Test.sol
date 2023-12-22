@@ -17,8 +17,14 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         _sortSupplyQueueIdleLast();
     }
 
-    function testDecimals() public {
-        assertEq(vault.decimals(), Math.max(18, loanToken.decimals()), "decimals");
+    function testDecimals(uint8 decimals) public {
+        vm.mockCall(address(loanToken), abi.encodeWithSignature("decimals()"), abi.encode(decimals));
+
+        vault = IMetaMorpho(
+            address(new MetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV"))
+        );
+
+        assertEq(vault.decimals(), Math.max(18, decimals), "decimals");
     }
 
     function testMint(uint256 assets) public {
