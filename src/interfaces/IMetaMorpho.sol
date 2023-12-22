@@ -70,7 +70,7 @@ interface IMetaMorphoBase {
     function withdrawQueueLength() external view returns (uint256);
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
-    /// @dev May be off `totalAssets()` between deposits/withdrawals due to roundings or socialized bad debt.
+    /// @dev May be greater than `totalAssets()` between deposits/withdrawals due to roundings or socialized bad debt.
     /// This difference will decrease the fee accrued between 2 deposits/withdrawals.
     function lastTotalAssets() external view returns (uint256);
 
