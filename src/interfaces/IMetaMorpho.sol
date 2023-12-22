@@ -146,7 +146,7 @@ interface IMetaMorphoBase {
     /// vault so the call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
     /// @dev Warning: Removing a market whith supply (but which removal has been submitted) might prevent fee to accrue
-    /// until the next interaction with the vault.
+    /// until the next user interaction with the vault.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
