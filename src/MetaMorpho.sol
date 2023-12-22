@@ -739,6 +739,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         MarketConfig storage marketConfig = config[id];
 
         if (supplyCap > 0) {
+            if (config[id].removableAt != 0) revert ErrorsLib.PendingRemoval();
+
             if (!marketConfig.enabled) {
                 supplyQueue.push(id);
                 withdrawQueue.push(id);
