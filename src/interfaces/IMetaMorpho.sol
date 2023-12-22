@@ -71,6 +71,7 @@ interface IMetaMorphoBase {
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
     /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
+    /// @dev Warning: Bad debt on an enabled market might prevent fee to accrue.
     function lastTotalAssets() external view returns (uint256);
 
     /// @notice Submits a `newTimelock`.
@@ -144,6 +145,8 @@ interface IMetaMorphoBase {
     /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
     /// vault so the call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
     /// simply bundle a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
+    /// @dev Warning: Removing a market whith supply (but which removal has been submitted) might prevent fee to accrue
+    /// until the next interaction with the vault.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
