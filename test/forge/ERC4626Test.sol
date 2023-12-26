@@ -355,6 +355,36 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         morpho.flashLoan(address(loanToken), loanToken.balanceOf(address(morpho)), hex"");
     }
 
+    function testMaxDeposit() public {
+        _setCap(allMarkets[0], 1 ether);
+
+        Id[] memory supplyQueue = new Id[](1);
+        supplyQueue[0] = allMarkets[0].id();
+
+        vm.prank(ALLOCATOR);
+        vault.setSupplyQueue(supplyQueue);
+
+        loanToken.setBalance(SUPPLIER, 1 ether);
+        collateralToken.setBalance(BORROWER, 2 ether);
+
+        vm.prank(SUPPLIER);
+        morpho.supply(allMarkets[0], 1 ether, 0, SUPPLIER, hex"");
+
+        vm.startPrank(BORROWER);
+        morpho.supplyCollateral(allMarkets[0], 2 ether, BORROWER, hex"");
+        morpho.borrow(allMarkets[0], 1 ether, 0, BORROWER, BORROWER);
+        vm.stopPrank();
+
+        _forward(1_000);
+
+        loanToken.setBalance(SUPPLIER, 1 ether);
+
+        vm.prank(SUPPLIER);
+        vault.deposit(1 ether, ONBEHALF);
+
+        assertEq(vault.maxDeposit(SUPPLIER), 0);
+    }
+
     function onMorphoFlashLoan(uint256, bytes memory) external {
         assertEq(vault.maxWithdraw(ONBEHALF), 0);
     }
