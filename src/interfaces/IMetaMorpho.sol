@@ -89,15 +89,15 @@ interface IMetaMorphoBase {
     /// @dev Warning: Submitting a cap will overwrite the current pending cap.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
-    /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external;
+    /// @notice Accepts the pending cap of the market defined by `marketParams`.
+    function acceptCap(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, potentially losing all funds supplied to the market.
     /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
-    function submitMarketRemoval(Id id) external;
+    function submitMarketRemoval(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
     function revokePendingMarketRemoval(Id id) external;
