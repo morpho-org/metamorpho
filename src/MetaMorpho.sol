@@ -673,11 +673,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc ERC4626
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Morpho markets.
-    /// @dev Depending on 4 cases, reverts when withdrawing "too much" with:
-    /// 1. ERC20InsufficientAllowance when withdrawing more than `caller`'s allowance.
-    /// 2. ERC20InsufficientBalance when withdrawing more than `owner`'s balance but less than vault's total assets.
-    /// 3. NotEnoughLiquidity when withdrawing more than vault's total assets.
-    /// 4. NotEnoughLiquidity when withdrawing more than `owner`'s balance but less than the available liquidity.
+    /// @dev Depending on 3 cases, reverts when withdrawing "too much" with:
+    /// 1. NotEnoughLiquidity when withdrawing more than available liquidity.
+    /// 2. ERC20InsufficientAllowance when withdrawing more than `caller`'s allowance.
+    /// 3. ERC20InsufficientBalance when withdrawing more than `owner`'s balance.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
