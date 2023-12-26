@@ -157,6 +157,8 @@ interface IMetaMorphoBase {
     /// reallocation.
     /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
+    /// @dev Sender is expected to pass `assets = type(uint256).max` with the last MarketAllocation of `allocations` to
+    /// supply all the remaining withdrawn liquidity, which would ensure that `totalWithdrawn` = `totalSupplied`.
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
