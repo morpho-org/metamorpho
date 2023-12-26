@@ -28,8 +28,8 @@ Those rewards can be transferred to the `skimRecipient`.
 The vault's owner has the choice to distribute back these rewards to vault depositors however they want.
 For more information about this use case, see the [Rewards](#rewards) section.
 
-All actions that may be against users' interests (e.g. enabling a market with a high exposure, increasing the fee) are subject to a timelock of minimum 12 hours.
-If set, the `guardian` can revoke the action during the timelock except for the fee increase.
+All actions that may be against users' interests (e.g. enabling a market with a high exposure) are subject to a timelock of minimum 24 hours.
+If set, the `guardian` can revoke the action during the timelock.
 After the timelock, the action can be executed by anyone.
 
 ### Roles
@@ -48,8 +48,8 @@ It can:
 - Set the rewards recipient.
 - Increase the timelock.
 - [Timelocked] Decrease the timelock.
-- [Timelocked with no possible veto] Set the performance fee (capped to 50%).
 - [Timelocked] Set the guardian.
+- Set the performance fee (capped at 50%).
 - Set the fee recipient.
 
 #### Curator
@@ -67,6 +67,7 @@ It can:
   - After the timelock has elapsed, the allocator role is free to remove the market from the withdraw queue. The funds supplied to this market will be lost.
   - If the market ever functions again, the allocator role can withdraw the funds that were previously lost.
 - Revoke the pending cap of any market.
+- Revoke the pending removal of any market.
 
 #### Allocator
 
@@ -76,7 +77,7 @@ It can:
 
 - Set the `supplyQueue` and `withdrawQueue`, i.e. decide on the order of the markets to supply/withdraw from.
   - Upon a deposit, the vault will supply up to the cap of each Morpho Blue market in the `supplyQueue` in the order set.
-  - Upon a withdrawal, the vault will first withdraw from the idle supply and then withdraw up to the liquidity of each Morpho Blue market in the `withdrawalQueue` in the order set.
+  - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the `withdrawQueue` in the order set.
   - The `supplyQueue` only contains markets which cap has previously been non-zero.
   - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
 - Instantaneously reallocate funds by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
@@ -93,6 +94,7 @@ It can:
 - Revoke the pending timelock.
 - Revoke the pending guardian (which means it can revoke any attempt to change the guardian).
 - Revoke the pending cap of any market.
+- Revoke the pending removal of any market.
 
 ### Idle Supply
 
