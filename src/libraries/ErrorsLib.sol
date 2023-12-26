@@ -45,6 +45,9 @@ library ErrorsLib {
     /// @notice Thrown when submitting a market removal for a market for which a cap is already pending.
     error PendingCap();
 
+    /// @notice Thrown when submitting a cap for a market with a pending removal.
+    error PendingRemoval();
+
     /// @notice Thrown when submitting a market removal for a market with a non zero cap.abi
     error NonZeroCap();
 

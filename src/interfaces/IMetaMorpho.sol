@@ -86,6 +86,7 @@ interface IMetaMorphoBase {
 
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
     /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
+    /// @dev Warning: Reverts if a market removal is pending.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 

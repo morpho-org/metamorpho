@@ -79,6 +79,24 @@ contract MarketTest is IntegrationTest {
         vault.submitCap(allMarkets[0], CAP);
     }
 
+    function testSubmitCapAlreadyPending() public {
+        vm.prank(CURATOR);
+        vault.submitCap(allMarkets[0], CAP + 1);
+
+        vm.prank(CURATOR);
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vault.submitCap(allMarkets[0], CAP + 1);
+    }
+
+    function testSubmitCapPendingRemoval() public {
+        vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
+        vault.submitMarketRemoval(allMarkets[2].id());
+
+        vm.expectRevert(ErrorsLib.PendingRemoval.selector);
+        vault.submitCap(allMarkets[2], CAP + 1);
+    }
+
     function testSetSupplyQueue() public {
         Id[] memory supplyQueue = new Id[](2);
         supplyQueue[0] = allMarkets[1].id();
