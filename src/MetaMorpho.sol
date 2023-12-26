@@ -745,19 +745,15 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         if (supplyCap > 0) {
             if (!marketConfig.enabled) {
-                supplyQueue.push(id);
                 withdrawQueue.push(id);
 
-                if (
-                    supplyQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
-                        || withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH
-                ) {
-                    revert ErrorsLib.MaxQueueLengthExceeded();
-                }
+                if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
 
                 marketConfig.enabled = true;
 
                 _updateLastTotalAssets(lastTotalAssets + MORPHO.expectedSupplyAssets(marketParams, address(this)));
+
+                emit EventsLib.SetWithdrawQueue(msg.sender, withdrawQueue);
             }
 
             marketConfig.removableAt = 0;
@@ -895,6 +891,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         uint256 totalInterest = newTotalAssets.zeroFloorSub(lastTotalAssets);
         if (totalInterest != 0 && fee != 0) {
+            // It is acknowledged that `feeAssets` may be rounded down to 0 if `totalInterest * fee < WAD`.
             uint256 feeAssets = totalInterest.mulDiv(fee, WAD);
             // The fee assets is subtracted from the total assets in this calculation to compensate for the fact
             // that total assets is already increased by the total interest (including the fee assets).

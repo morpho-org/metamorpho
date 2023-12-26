@@ -28,6 +28,7 @@ contract MetaMorphoInternalTest is InternalTest {
         borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 
         _setCap(allMarkets[0], allMarkets[0].id(), CAP);
+        supplyQueue = [allMarkets[0].id()];
 
         loanToken.setBalance(SUPPLIER, suppliedAmount);
         vm.prank(SUPPLIER);

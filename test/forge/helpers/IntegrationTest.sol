@@ -100,6 +100,7 @@ contract IntegrationTest is BaseTest {
     function _setCap(MarketParams memory marketParams, uint256 newCap) internal {
         Id id = marketParams.id();
         uint256 cap = vault.config(id).cap;
+        bool isEnabled = vault.config(id).enabled;
         if (newCap == cap) return;
 
         PendingUint192 memory pendingCap = vault.pendingCap(id);
@@ -115,6 +116,18 @@ contract IntegrationTest is BaseTest {
         vault.acceptCap(marketParams);
 
         assertEq(vault.config(id).cap, newCap, "_setCap");
+
+        if (newCap > 0) {
+            if (!isEnabled) {
+                Id[] memory newSupplyQueue = new Id[](vault.supplyQueueLength() + 1);
+                for (uint256 k; k < vault.supplyQueueLength(); k++) {
+                    newSupplyQueue[k] = vault.supplyQueue(k);
+                }
+                newSupplyQueue[vault.supplyQueueLength()] = id;
+                vm.prank(ALLOCATOR);
+                vault.setSupplyQueue(newSupplyQueue);
+            }
+        }
     }
 
     function _sortSupplyQueueIdleLast() internal {

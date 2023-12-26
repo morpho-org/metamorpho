@@ -20,7 +20,7 @@ interface IMulticall {
 }
 
 interface IOwnable {
-    function owner() external returns (address);
+    function owner() external view returns (address);
     function transferOwnership(address) external;
     function renounceOwnership() external;
     function acceptOwnership() external;
@@ -95,8 +95,7 @@ interface IMetaMorphoBase {
     /// @notice Revokes the pending cap of the market defined by `id`.
     function revokePendingCap(Id id) external;
 
-    /// @notice Submits a forced market removal from the vault, potentially losing all funds supplied to the market.
-    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
+    /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
     function submitMarketRemoval(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
@@ -141,9 +140,11 @@ interface IMetaMorphoBase {
     /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
     /// zero vault's supply can be removed from the permutation.
     /// @notice This is the only entry point to disable a market.
-    /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
-    /// vault so the call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
-    /// simply bundle a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
+    /// @notice Removing a market requires the vault to have 0 supply on it, or to have previously submitted a removal
+    /// for this market (with the function `submitMarketRemoval`).
+    /// @notice Warning: Anyone can supply on behalf of the vault so the call to `updateWithdrawQueue` that expects a
+    /// market to be empty can be griefed by a front-run. To circumvent this, the allocator can simply bundle a
+    /// reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
@@ -156,6 +157,8 @@ interface IMetaMorphoBase {
     /// reallocation.
     /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
+    /// @dev Sender is expected to pass `assets = type(uint256).max` with the last MarketAllocation of `allocations` to
+    /// supply all the remaining withdrawn liquidity, which would ensure that `totalWithdrawn` = `totalSupplied`.
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
