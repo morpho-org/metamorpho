@@ -79,6 +79,17 @@ contract MarketTest is IntegrationTest {
         vault.submitCap(allMarkets[0], CAP);
     }
 
+    function testSubmitCapRemovalSubmitted(uint256 cap) public {
+        cap = bound(cap, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        vm.startPrank(CURATOR);
+        vault.submitMarketRemoval(allMarkets[0].id());
+
+        vm.expectRevert(ErrorsLib.PendingRemoval.selector);
+        vault.submitCap(allMarkets[0], cap);
+        vm.stopPrank();
+    }
+
     function testSetSupplyQueue() public {
         Id[] memory supplyQueue = new Id[](2);
         supplyQueue[0] = allMarkets[1].id();
@@ -155,10 +166,8 @@ contract MarketTest is IntegrationTest {
     function testUpdateWithdrawQueueRemovingDisabledMarket() public {
         _setCap(allMarkets[2], 0);
 
-        vm.startPrank(CURATOR);
+        vm.prank(CURATOR);
         vault.submitMarketRemoval(allMarkets[2].id());
-        vault.submitCap(allMarkets[2], CAP + 1);
-        vm.stopPrank();
 
         vm.warp(block.timestamp + TIMELOCK);
 

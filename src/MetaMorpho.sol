@@ -284,6 +284,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         } else {
             // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
             if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
+            if (config[id].removableAt != 0) revert ErrorsLib.PendingRemoval();
 
             pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 
