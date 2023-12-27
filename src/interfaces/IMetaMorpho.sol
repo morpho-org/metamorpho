@@ -104,7 +104,6 @@ interface IMetaMorphoBase {
     /// @notice This forced removal is expected to be used as an emergency process in case a market constantly reverts.
     /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
     /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
-    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
     /// @dev Warning: Removing a market with non-zero supply will instantly impact the vault's price per share.
     function submitMarketRemoval(Id id) external;
 
