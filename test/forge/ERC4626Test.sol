@@ -17,8 +17,14 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         _sortSupplyQueueIdleLast();
     }
 
-    function testDecimals() public {
-        assertEq(vault.decimals(), loanToken.decimals() + ConstantsLib.DECIMALS_OFFSET, "decimals");
+    function testDecimals(uint8 decimals) public {
+        vm.mockCall(address(loanToken), abi.encodeWithSignature("decimals()"), abi.encode(decimals));
+
+        vault = IMetaMorpho(
+            address(new MetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV"))
+        );
+
+        assertEq(vault.decimals(), Math.max(18, decimals), "decimals");
     }
 
     function testMint(uint256 assets) public {
@@ -116,16 +122,18 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     function testRedeemTooMuch(uint256 deposited) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
 
-        loanToken.setBalance(SUPPLIER, deposited);
+        loanToken.setBalance(SUPPLIER, deposited * 2);
+
+        vm.startPrank(SUPPLIER);
+        uint256 shares = vault.deposit(deposited, SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+        vm.stopPrank();
 
         vm.prank(SUPPLIER);
-        uint256 shares = vault.deposit(deposited, ONBEHALF);
-
-        vm.prank(ONBEHALF);
         vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, ONBEHALF, shares, shares + 1)
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, SUPPLIER, shares, shares + 1)
         );
-        vault.redeem(shares + 1, RECEIVER, ONBEHALF);
+        vault.redeem(shares + 1, RECEIVER, SUPPLIER);
     }
 
     function testWithdrawAll(uint256 assets) public {
@@ -270,7 +278,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 1));
 
         vm.prank(ONBEHALF);
         vm.expectRevert(ErrorsLib.NotEnoughLiquidity.selector);
@@ -285,7 +293,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         vm.prank(SUPPLIER);
         vault.deposit(deposited, ONBEHALF);
 
-        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 10 ** ConstantsLib.DECIMALS_OFFSET));
+        assets = bound(assets, deposited + 1, type(uint256).max / (deposited + 1));
 
         collateralToken.setBalance(BORROWER, type(uint128).max);
 
