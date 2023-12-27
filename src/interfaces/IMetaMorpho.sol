@@ -32,6 +32,7 @@ interface IOwnable {
 interface IMetaMorphoBase {
     /// @notice The address of the Morpho contract.
     function MORPHO() external view returns (IMorpho);
+    function DECIMALS_OFFSET() external view returns (uint8);
 
     /// @notice The address of the curator.
     function curator() external view returns (address);
