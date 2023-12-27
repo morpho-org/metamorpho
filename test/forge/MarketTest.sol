@@ -315,4 +315,13 @@ contract MarketTest is IntegrationTest {
         );
         vault.updateWithdrawQueue(indexes);
     }
+
+    function testRevokeNoRevert() public {
+        vm.startPrank(OWNER);
+        vault.revokePendingTimelockNoRevert();
+        vault.revokePendingGuardianNoRevert();
+        vault.revokePendingCapNoRevert(Id.wrap(bytes32(0)));
+        vault.revokePendingMarketRemoval(Id.wrap(bytes32(0)));
+        vm.stopPrank();
+    }
 }
