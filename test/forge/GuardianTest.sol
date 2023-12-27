@@ -37,7 +37,7 @@ contract GuardianTest is IntegrationTest {
         vm.expectEmit(address(vault));
         emit EventsLib.RevokePendingTimelock(GUARDIAN);
         vm.prank(GUARDIAN);
-        vault.revokePendingTimelock();
+        vault.revokePendingTimelockNoRevert();
 
         uint256 newTimelock = vault.timelock();
         PendingUint192 memory pendingTimelock = vault.pendingTimelock();
@@ -59,7 +59,7 @@ contract GuardianTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.RevokePendingTimelock(OWNER);
         vm.prank(OWNER);
-        vault.revokePendingTimelock();
+        vault.revokePendingTimelockNoRevert();
 
         uint256 newTimelock = vault.timelock();
         PendingUint192 memory pendingTimelock = vault.pendingTimelock();
@@ -84,7 +84,7 @@ contract GuardianTest is IntegrationTest {
         vm.expectEmit(address(vault));
         emit EventsLib.RevokePendingCap(GUARDIAN, id);
         vm.prank(GUARDIAN);
-        vault.revokePendingCap(id);
+        vault.revokePendingCapNoRevert(id);
 
         MarketConfig memory marketConfig = vault.config(id);
         PendingUint192 memory pendingCap = vault.pendingCap(id);
@@ -109,7 +109,7 @@ contract GuardianTest is IntegrationTest {
         vm.expectEmit(address(vault));
         emit EventsLib.RevokePendingGuardian(GUARDIAN);
         vm.prank(GUARDIAN);
-        vault.revokePendingGuardian();
+        vault.revokePendingGuardianNoRevert();
 
         address newGuardian = vault.guardian();
         PendingAddress memory pendingGuardian = vault.pendingGuardian();

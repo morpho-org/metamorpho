@@ -29,7 +29,7 @@ contract RevokeTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.RevokePendingTimelock(OWNER);
         vm.prank(OWNER);
-        vault.revokePendingTimelock();
+        vault.revokePendingTimelockNoRevert();
 
         uint256 newTimelock = vault.timelock();
         PendingUint192 memory pendingTimelock = vault.pendingTimelock();
@@ -54,7 +54,7 @@ contract RevokeTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.RevokePendingCap(CURATOR, id);
         vm.prank(CURATOR);
-        vault.revokePendingCap(id);
+        vault.revokePendingCapNoRevert(id);
 
         MarketConfig memory marketConfig = vault.config(id);
         PendingUint192 memory pendingCap = vault.pendingCap(id);
@@ -81,7 +81,7 @@ contract RevokeTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.RevokePendingCap(OWNER, id);
         vm.prank(OWNER);
-        vault.revokePendingCap(id);
+        vault.revokePendingCapNoRevert(id);
 
         MarketConfig memory marketConfig = vault.config(id);
         PendingUint192 memory pendingCap = vault.pendingCap(id);
@@ -106,7 +106,7 @@ contract RevokeTest is IntegrationTest {
         vm.expectEmit();
         emit EventsLib.RevokePendingGuardian(GUARDIAN);
         vm.prank(GUARDIAN);
-        vault.revokePendingGuardian();
+        vault.revokePendingGuardianNoRevert();
 
         address newGuardian = vault.guardian();
         PendingAddress memory pendingGuardian = vault.pendingGuardian();

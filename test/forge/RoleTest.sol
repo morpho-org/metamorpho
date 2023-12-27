@@ -92,7 +92,7 @@ contract RoleTest is IntegrationTest {
         vm.startPrank(caller);
 
         vm.expectRevert(ErrorsLib.NotCuratorNorGuardianRole.selector);
-        vault.revokePendingCap(id);
+        vault.revokePendingCapNoRevert(id);
 
         vm.expectRevert(ErrorsLib.NotCuratorNorGuardianRole.selector);
         vault.revokePendingMarketRemoval(id);
@@ -106,10 +106,10 @@ contract RoleTest is IntegrationTest {
         vm.startPrank(caller);
 
         vm.expectRevert(ErrorsLib.NotGuardianRole.selector);
-        vault.revokePendingTimelock();
+        vault.revokePendingTimelockNoRevert();
 
         vm.expectRevert(ErrorsLib.NotGuardianRole.selector);
-        vault.revokePendingGuardian();
+        vault.revokePendingGuardianNoRevert();
 
         vm.stopPrank();
     }
