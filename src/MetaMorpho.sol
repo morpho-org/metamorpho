@@ -58,6 +58,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     IMorpho public immutable MORPHO;
 
+    /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
+    /// @dev Calculated to be max(0, 18 - underlyingDecimals) at construction, so the initial conversion rate maximizes
+    /// precision between shares and assets.
+    uint8 public immutable DECIMALS_OFFSET;
+
     /* STORAGE */
 
     /// @inheritdoc IMetaMorphoBase
@@ -122,6 +127,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
 
         MORPHO = IMorpho(morpho);
+        DECIMALS_OFFSET = uint8(uint256(18).zeroFloorSub(IERC20Metadata(_asset).decimals()));
 
         _checkTimelockBounds(initialTimelock);
         _setTimelock(initialTimelock);
@@ -589,8 +595,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* ERC4626 (INTERNAL) */
 
     /// @inheritdoc ERC4626
-    function _decimalsOffset() internal pure override returns (uint8) {
-        return ConstantsLib.DECIMALS_OFFSET;
+    function _decimalsOffset() internal view override returns (uint8) {
+        return DECIMALS_OFFSET;
     }
 
     /// @dev Returns the maximum amount of asset (`assets`) that the `owner` can withdraw from the vault, as well as the
@@ -616,9 +622,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             uint256 supplyCap = config[id].cap;
             if (supplyCap == 0) continue;
 
-            uint256 supplyAssets = MORPHO.expectedSupplyAssets(_marketParams(id), address(this));
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(_marketParams(id));
 
-            totalSuppliable += supplyCap.zeroFloorSub(supplyAssets);
+            totalSuppliable += supplyCap.zeroFloorSub(supplyShares.toAssetsUp(totalSupplyAssets, totalSupplyShares));
         }
     }
 
@@ -645,7 +652,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalSupply,
         uint256 newTotalAssets,
         Math.Rounding rounding
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         return assets.mulDiv(newTotalSupply + 10 ** _decimalsOffset(), newTotalAssets + 1, rounding);
     }
 
@@ -656,7 +663,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         uint256 newTotalSupply,
         uint256 newTotalAssets,
         Math.Rounding rounding
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         return shares.mulDiv(newTotalAssets + 1, newTotalSupply + 10 ** _decimalsOffset(), rounding);
     }
 
@@ -673,11 +680,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc ERC4626
     /// @dev Used in redeem or withdraw to withdraw the underlying asset from Morpho markets.
-    /// @dev Depending on 4 cases, reverts when withdrawing "too much" with:
-    /// 1. ERC20InsufficientAllowance when withdrawing more than `caller`'s allowance.
-    /// 2. ERC20InsufficientBalance when withdrawing more than `owner`'s balance but less than vault's total assets.
-    /// 3. NotEnoughLiquidity when withdrawing more than vault's total assets.
-    /// 4. NotEnoughLiquidity when withdrawing more than `owner`'s balance but less than the available liquidity.
+    /// @dev Depending on 3 cases, reverts when withdrawing "too much" with:
+    /// 1. NotEnoughLiquidity when withdrawing more than available liquidity.
+    /// 2. ERC20InsufficientAllowance when withdrawing more than `caller`'s allowance.
+    /// 3. ERC20InsufficientBalance when withdrawing more than `owner`'s balance.
     function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
         internal
         override
@@ -768,7 +774,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             if (supplyCap == 0) continue;
 
             MarketParams memory marketParams = _marketParams(id);
-            (uint256 supplyAssets,,) = _accruedSupplyBalance(marketParams, id);
+
+            MORPHO.accrueInterest(marketParams);
+
+            Market memory market = MORPHO.market(id);
+            uint256 supplyShares = MORPHO.supplyShares(id, address(this));
+            // `supplyAssets` needs to be rounded up for `toSupply` to be rounded down.
+            uint256 supplyAssets = supplyShares.toAssetsUp(market.totalSupplyAssets, market.totalSupplyShares);
 
             uint256 toSupply = UtilsLib.min(supplyCap.zeroFloorSub(supplyAssets), assets);
 

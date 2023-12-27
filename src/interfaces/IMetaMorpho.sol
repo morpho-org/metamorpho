@@ -32,6 +32,7 @@ interface IOwnable {
 interface IMetaMorphoBase {
     /// @notice The address of the Morpho contract.
     function MORPHO() external view returns (IMorpho);
+    function DECIMALS_OFFSET() external view returns (uint8);
 
     /// @notice The address of the curator.
     function curator() external view returns (address);
@@ -70,7 +71,9 @@ interface IMetaMorphoBase {
     function withdrawQueueLength() external view returns (uint256);
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
-    /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
+    /// @dev May be greater than `totalAssets()` due to removal of markets with non-zero supply or socialized bad debt.
+    /// This difference will decrease the fee accrued until one of the functions updating `lastTotalAssets` is
+    /// triggered (deposit/mint/withdraw/redeem/setFee/setFeeRecipient).
     function lastTotalAssets() external view returns (uint256);
 
     /// @notice Submits a `newTimelock`.
@@ -152,6 +155,7 @@ interface IMetaMorphoBase {
     /// @notice Warning: Anyone can supply on behalf of the vault so the call to `updateWithdrawQueue` that expects a
     /// market to be empty can be griefed by a front-run. To circumvent this, the allocator can simply bundle a
     /// reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
+    /// @dev Warning: Removing a market with supply will decrease the fee accrued until the next deposit/withdrawal.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
