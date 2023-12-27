@@ -235,7 +235,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFee > ConstantsLib.MAX_FEE) revert ErrorsLib.MaxFeeExceeded();
         if (newFee != 0 && feeRecipient == address(0)) revert ErrorsLib.ZeroFeeRecipient();
 
-        // Accrue interest using the previous fee set before changing it.
+        // Accrue fee using the previous fee set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
         // Safe "unchecked" cast because newFee <= MAX_FEE.
@@ -249,7 +249,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newFeeRecipient == feeRecipient) revert ErrorsLib.AlreadySet();
         if (newFeeRecipient == address(0) && fee != 0) revert ErrorsLib.ZeroFeeRecipient();
 
-        // Accrue interest to the previous fee recipient set before changing it.
+        // Accrue fee to the previous fee recipient set before changing it.
         _updateLastTotalAssets(_accrueFee());
 
         feeRecipient = newFeeRecipient;
@@ -300,7 +300,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     function submitMarketRemoval(Id id) external onlyCuratorRole {
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
-        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled();
+        if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled(id);
 
         _setCap(id, 0);
 
@@ -381,7 +381,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
             uint256 withdrawn = supplyAssets.zeroFloorSub(allocation.assets);
 
             if (withdrawn > 0) {
-                if (allocation.marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
+                if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled(id);
 
                 // Guarantees that unknown frontrunning donations can be withdrawn, in order to disable a market.
                 uint256 shares;
