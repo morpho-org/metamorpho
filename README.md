@@ -104,7 +104,7 @@ To achieve this, it is advised to allocate "idle" funds to any market on Morpho 
 
 - The vault's asset as loan token.
 - No collateral token (`address(0)`).
-- An arbitrary IRM.
+- An arbitrary IRM (`address(0)`).
 - An arbitrary oracle (`address(0)`).
 - An arbitrary LLTV.
 
