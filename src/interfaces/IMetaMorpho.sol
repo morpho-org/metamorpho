@@ -97,7 +97,8 @@ interface IMetaMorphoBase {
     function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
-    /// @dev Warning: Reverts for non-zero cap or if there is a pending cap. Successfully submitting a zero cap will prevent such reverts.
+    /// @dev Warning: Reverts for non-zero cap or if there is a pending cap. Successfully submitting a zero cap will
+    /// prevent such reverts.
     function submitMarketRemoval(Id id) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
