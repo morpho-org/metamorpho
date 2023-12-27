@@ -93,6 +93,17 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.supplyQueue(1)), Id.unwrap(allMarkets[2].id()));
     }
 
+    function testSetSupplyQueueWithDuplicate() public {
+        Id[] memory supplyQueue = new Id[](3);
+        supplyQueue[0] = allMarkets[1].id();
+        supplyQueue[1] = allMarkets[2].id();
+        supplyQueue[2] = allMarkets[1].id();
+
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.DuplicateMarket.selector, supplyQueue[0]));
+        vm.prank(ALLOCATOR);
+        vault.setSupplyQueue(supplyQueue);
+    }
+
     function testSetSupplyQueueMaxQueueLengthExceeded() public {
         Id[] memory supplyQueue = new Id[](ConstantsLib.MAX_QUEUE_LENGTH + 1);
 
