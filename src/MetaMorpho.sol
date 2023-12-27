@@ -318,8 +318,27 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
         if (length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
 
+        Id[] memory sorted = new Id[](length);
         for (uint256 i; i < length; ++i) {
             if (config[newSupplyQueue[i]].cap == 0) revert ErrorsLib.UnauthorizedMarket(newSupplyQueue[i]);
+            sorted[i] = newSupplyQueue[i];
+        }
+
+        // Gnome sort. O(n) if already sorted.
+        uint256 j;
+        while (j < length) {
+            if (j == 0 || Id.unwrap(sorted[j]) >= Id.unwrap(sorted[j - 1])) {
+                j++;
+            } else {
+                (sorted[j], sorted[j - 1]) = (sorted[j - 1], sorted[j]);
+                j--;
+            }
+        }
+
+        Id prev;
+        for (uint256 i; i < length; ++i) {
+            if (Id.unwrap(prev) == Id.unwrap(sorted[i])) revert ErrorsLib.DuplicateMarket(sorted[i]);
+            prev = sorted[i];
         }
 
         supplyQueue = newSupplyQueue;
