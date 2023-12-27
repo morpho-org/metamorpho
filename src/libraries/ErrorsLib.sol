@@ -63,7 +63,7 @@ library ErrorsLib {
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();
 
-    /// @notice Thrown when submitting a non previously enabled market for removal.
+    /// @notice Thrown when interacting with a non previously enabled market `id`.
     error MarketNotEnabled(Id id);
 
     /// @notice Thrown when the submitted timelock is above the max timelock.
