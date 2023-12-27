@@ -137,8 +137,7 @@ interface IMetaMorphoBase {
     /// increase the cost of depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
 
-    /// @notice Sets the withdraw queue as a permutation of the previous one, although some markets can be removed.
-    /// @notice This is the only entry point to remove a market.
+    /// @notice Updates the withdraw queue. Some markets can be removed, but no market can be added.
     /// @notice Removing a market requires the vault to have 0 supply on it, or to have previously submitted a removal
     /// for this market (with the function `submitMarketRemoval`).
     /// @notice Warning: Anyone can supply on behalf of the vault so the call to `updateWithdrawQueue` that expects a
