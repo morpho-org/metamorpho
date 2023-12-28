@@ -318,9 +318,9 @@ contract MarketTest is IntegrationTest {
 
     function testRevokeNoRevert() public {
         vm.startPrank(OWNER);
-        vault.revokePendingTimelockNoRevert();
-        vault.revokePendingGuardianNoRevert();
-        vault.revokePendingCapNoRevert(Id.wrap(bytes32(0)));
+        vault.revokePendingTimelock();
+        vault.revokePendingGuardian();
+        vault.revokePendingCap(Id.wrap(bytes32(0)));
         vault.revokePendingMarketRemoval(Id.wrap(bytes32(0)));
         vm.stopPrank();
     }

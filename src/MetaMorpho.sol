@@ -417,21 +417,21 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /* REVOKE FUNCTIONS */
 
     /// @inheritdoc IMetaMorphoBase
-    function revokePendingTimelockNoRevert() external onlyGuardianRole {
+    function revokePendingTimelock() external onlyGuardianRole {
         delete pendingTimelock;
 
         emit EventsLib.RevokePendingTimelock(_msgSender());
     }
 
     /// @inheritdoc IMetaMorphoBase
-    function revokePendingGuardianNoRevert() external onlyGuardianRole {
+    function revokePendingGuardian() external onlyGuardianRole {
         delete pendingGuardian;
 
         emit EventsLib.RevokePendingGuardian(_msgSender());
     }
 
     /// @inheritdoc IMetaMorphoBase
-    function revokePendingCapNoRevert(Id id) external onlyCuratorOrGuardianRole {
+    function revokePendingCap(Id id) external onlyCuratorOrGuardianRole {
         delete pendingCap[id];
 
         emit EventsLib.RevokePendingCap(_msgSender(), id);

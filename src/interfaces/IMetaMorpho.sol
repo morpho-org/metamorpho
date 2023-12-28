@@ -85,7 +85,8 @@ interface IMetaMorphoBase {
     function acceptTimelock() external;
 
     /// @notice Revokes the pending timelock.
-    function revokePendingTimelockNoRevert() external;
+    /// @dev Does not revert if there is no pending timelock.
+    function revokePendingTimelock() external;
 
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
     /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
@@ -97,7 +98,8 @@ interface IMetaMorphoBase {
     function acceptCap(Id id) external;
 
     /// @notice Revokes the pending cap of the market defined by `id`.
-    function revokePendingCapNoRevert(Id id) external;
+    /// @dev Does not revert if there is no pending cap.
+    function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
     /// @notice Funds can be recovered by enabling this market again and withdrawing from it (using `reallocate`),
@@ -111,6 +113,7 @@ interface IMetaMorphoBase {
     function submitMarketRemoval(Id id) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
+    /// @dev Does not revert if there is no pending market removal.
     function revokePendingMarketRemoval(Id id) external;
 
     /// @notice Submits a `newGuardian`.
@@ -124,7 +127,7 @@ interface IMetaMorphoBase {
     function acceptGuardian() external;
 
     /// @notice Revokes the pending guardian.
-    function revokePendingGuardianNoRevert() external;
+    function revokePendingGuardian() external;
 
     /// @notice Skims the vault `token` balance to `skimRecipient`.
     function skim(address) external;
