@@ -491,11 +491,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May be higher than the actual max deposit due to duplicate markets in the supplyQueue.
     function maxDeposit(address) public view override returns (uint256) {
         return _maxDeposit();
     }
 
     /// @inheritdoc IERC4626
+    /// @dev Warning: May be higher than the actual max mint due to duplicate markets in the supplyQueue.
     function maxMint(address) public view override returns (uint256) {
         uint256 suppliable = _maxDeposit();
 
