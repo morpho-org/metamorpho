@@ -159,6 +159,7 @@ interface IMetaMorphoBase {
     /// market to be empty can be griefed by a front-run. To circumvent this, the allocator can simply bundle a
     /// reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
     /// @dev Warning: Removing a market with supply will decrease the fee accrued until the next deposit/withdrawal.
+    /// @dev Warning: updateWithdrawQueue is not idempotent. Submitting twice the same tx will change the queue twice.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
