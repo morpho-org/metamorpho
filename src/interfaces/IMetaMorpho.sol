@@ -7,7 +7,6 @@ import {IERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC
 
 import {MarketConfig, PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
 
-/// @dev Either `assets` or `shares` should be zero.
 struct MarketAllocation {
     /// @notice The market to allocate.
     MarketParams marketParams;
