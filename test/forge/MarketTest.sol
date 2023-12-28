@@ -80,6 +80,24 @@ contract MarketTest is IntegrationTest {
         vault.submitCap(allMarkets[0], CAP);
     }
 
+    function testSubmitCapAlreadyPending() public {
+        vm.prank(CURATOR);
+        vault.submitCap(allMarkets[0], CAP + 1);
+
+        vm.prank(CURATOR);
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vault.submitCap(allMarkets[0], CAP + 1);
+    }
+
+    function testSubmitCapPendingRemoval() public {
+        vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
+        vault.submitMarketRemoval(allMarkets[2]);
+
+        vm.expectRevert(ErrorsLib.PendingRemoval.selector);
+        vault.submitCap(allMarkets[2], CAP + 1);
+    }
+
     function testSetSupplyQueue() public {
         Id[] memory supplyQueue = new Id[](2);
         supplyQueue[0] = allMarkets[1].id();
@@ -183,19 +201,37 @@ contract MarketTest is IntegrationTest {
     }
 
     function testSubmitMarketRemoval() public {
+        vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
         vm.expectEmit();
         emit EventsLib.SubmitMarketRemoval(CURATOR, allMarkets[2].id());
-        vm.prank(CURATOR);
         vault.submitMarketRemoval(allMarkets[2]);
+        vm.stopPrank();
 
         assertEq(vault.config(allMarkets[2].id()).cap, 0);
         assertEq(vault.config(allMarkets[2].id()).removableAt, block.timestamp + TIMELOCK);
     }
 
-    function testSubmitMarketRemovalAlreadySet() public {
+    function testSubmitMarketRemovalPendingCap() public {
         vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], vault.config(allMarkets[2].id()).cap + 1);
+        vm.expectRevert(ErrorsLib.PendingCap.selector);
         vault.submitMarketRemoval(allMarkets[2]);
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
+        vm.stopPrank();
+    }
+
+    function testSubmitMarketRemovalNonZeroCap() public {
+        vm.startPrank(CURATOR);
+        vm.expectRevert(ErrorsLib.NonZeroCap.selector);
+        vault.submitMarketRemoval(allMarkets[2]);
+        vm.stopPrank();
+    }
+
+    function testSubmitMarketRemovalAlreadyPending() public {
+        vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
+        vault.submitMarketRemoval(allMarkets[2]);
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
         vault.submitMarketRemoval(allMarkets[2]);
         vm.stopPrank();
     }
@@ -314,5 +350,14 @@ contract MarketTest is IntegrationTest {
         _setCap(allMarkets[3], CAP);
 
         assertEq(vault.lastTotalAssets(), deposited + additionalSupply);
+    }
+
+    function testRevokeNoRevert() public {
+        vm.startPrank(OWNER);
+        vault.revokePendingTimelock();
+        vault.revokePendingGuardian();
+        vault.revokePendingCap(Id.wrap(bytes32(0)));
+        vault.revokePendingMarketRemoval(Id.wrap(bytes32(0)));
+        vm.stopPrank();
     }
 }
