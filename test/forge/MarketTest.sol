@@ -7,6 +7,7 @@ import {SafeCast} from "../../lib/openzeppelin-contracts/contracts/utils/math/Sa
 import "./helpers/IntegrationTest.sol";
 
 contract MarketTest is IntegrationTest {
+    using MathLib for uint256;
     using MarketParamsLib for MarketParams;
     using MorphoLib for IMorpho;
 
@@ -79,15 +80,22 @@ contract MarketTest is IntegrationTest {
         vault.submitCap(allMarkets[0], CAP);
     }
 
-    function testSubmitCapRemovalSubmitted(uint256 cap) public {
-        cap = bound(cap, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+    function testSubmitCapAlreadyPending() public {
+        vm.prank(CURATOR);
+        vault.submitCap(allMarkets[0], CAP + 1);
 
+        vm.prank(CURATOR);
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vault.submitCap(allMarkets[0], CAP + 1);
+    }
+
+    function testSubmitCapPendingRemoval() public {
         vm.startPrank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[0].id());
+        vault.submitCap(allMarkets[2], 0);
+        vault.submitMarketRemoval(allMarkets[2]);
 
         vm.expectRevert(ErrorsLib.PendingRemoval.selector);
-        vault.submitCap(allMarkets[0], cap);
-        vm.stopPrank();
+        vault.submitCap(allMarkets[2], CAP + 1);
     }
 
     function testSetSupplyQueue() public {
@@ -127,7 +135,7 @@ contract MarketTest is IntegrationTest {
         vm.warp(block.timestamp + 1 weeks);
 
         vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
-        vault.acceptCap(marketParams.id());
+        vault.acceptCap(marketParams);
     }
 
     function testSetSupplyQueueUnauthorizedMarket() public {
@@ -167,7 +175,7 @@ contract MarketTest is IntegrationTest {
         _setCap(allMarkets[2], 0);
 
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2]);
 
         vm.warp(block.timestamp + TIMELOCK);
 
@@ -195,20 +203,38 @@ contract MarketTest is IntegrationTest {
     }
 
     function testSubmitMarketRemoval() public {
+        vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
         vm.expectEmit();
         emit EventsLib.SubmitMarketRemoval(CURATOR, allMarkets[2].id());
-        vm.prank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitMarketRemoval(allMarkets[2]);
+        vm.stopPrank();
 
         assertEq(vault.config(allMarkets[2].id()).cap, 0);
         assertEq(vault.config(allMarkets[2].id()).removableAt, block.timestamp + TIMELOCK);
     }
 
-    function testSubmitMarketRemovalAlreadySet() public {
+    function testSubmitMarketRemovalPendingCap() public {
         vm.startPrank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[2].id());
-        vm.expectRevert(ErrorsLib.AlreadySet.selector);
-        vault.submitMarketRemoval(allMarkets[2].id());
+        vault.submitCap(allMarkets[2], vault.config(allMarkets[2].id()).cap + 1);
+        vm.expectRevert(ErrorsLib.PendingCap.selector);
+        vault.submitMarketRemoval(allMarkets[2]);
+        vm.stopPrank();
+    }
+
+    function testSubmitMarketRemovalNonZeroCap() public {
+        vm.startPrank(CURATOR);
+        vm.expectRevert(ErrorsLib.NonZeroCap.selector);
+        vault.submitMarketRemoval(allMarkets[2]);
+        vm.stopPrank();
+    }
+
+    function testSubmitMarketRemovalAlreadyPending() public {
+        vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
+        vault.submitMarketRemoval(allMarkets[2]);
+        vm.expectRevert(ErrorsLib.AlreadyPending.selector);
+        vault.submitMarketRemoval(allMarkets[2]);
         vm.stopPrank();
     }
 
@@ -277,7 +303,7 @@ contract MarketTest is IntegrationTest {
         _setCap(idleParams, 0);
 
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(idleParams.id());
+        vault.submitMarketRemoval(idleParams);
 
         vm.warp(block.timestamp + elapsed);
 
@@ -291,5 +317,49 @@ contract MarketTest is IntegrationTest {
             abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalTimelockNotElapsed.selector, idleParams.id())
         );
         vault.updateWithdrawQueue(indexes);
+    }
+
+    function testEnableMarketWithLiquidity(uint256 deposited, uint256 additionalSupply, uint256 blocks) public {
+        deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        additionalSupply = bound(additionalSupply, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+        blocks = _boundBlocks(blocks);
+
+        Id[] memory supplyQueue = new Id[](1);
+        supplyQueue[0] = allMarkets[0].id();
+
+        _setCap(allMarkets[0], deposited);
+
+        vm.prank(ALLOCATOR);
+        vault.setSupplyQueue(supplyQueue);
+
+        loanToken.setBalance(SUPPLIER, deposited + additionalSupply);
+
+        vm.startPrank(SUPPLIER);
+        vault.deposit(deposited, ONBEHALF);
+        morpho.supply(allMarkets[3], additionalSupply, 0, address(vault), hex"");
+        vm.stopPrank();
+
+        uint256 collateral = uint256(MAX_TEST_ASSETS).wDivUp(allMarkets[0].lltv);
+        collateralToken.setBalance(BORROWER, collateral);
+
+        vm.startPrank(BORROWER);
+        morpho.supplyCollateral(allMarkets[0], collateral, BORROWER, hex"");
+        morpho.borrow(allMarkets[0], deposited, 0, BORROWER, BORROWER);
+        vm.stopPrank();
+
+        _forward(blocks);
+
+        _setCap(allMarkets[3], CAP);
+
+        assertEq(vault.lastTotalAssets(), deposited + additionalSupply);
+    }
+
+    function testRevokeNoRevert() public {
+        vm.startPrank(OWNER);
+        vault.revokePendingTimelock();
+        vault.revokePendingGuardian();
+        vault.revokePendingCap(Id.wrap(bytes32(0)));
+        vault.revokePendingMarketRemoval(Id.wrap(bytes32(0)));
+        vm.stopPrank();
     }
 }
