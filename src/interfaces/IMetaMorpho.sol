@@ -100,6 +100,12 @@ interface IMetaMorphoBase {
     function revokePendingCapNoRevert(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
+    /// @notice Funds can be recovered by enabling this market again and withdrawing from it (using `reallocate`),
+    /// but funds will be distributed pro-rata to the shares at the time of withdrawal, not at the time of removal.
+    /// @notice This forced removal is expected to be used as an emergency process in case a market constantly reverts.
+    /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
+    /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
+    /// @dev Warning: Removing a market with non-zero supply will instantly impact the vault's price per share.
     /// @dev Warning: Reverts for non-zero cap or if there is a pending cap. Successfully submitting a zero cap will
     /// prevent such reverts.
     function submitMarketRemoval(Id id) external;
@@ -143,9 +149,7 @@ interface IMetaMorphoBase {
     /// increase the cost of depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
 
-    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
-    /// zero vault's supply can be removed from the permutation.
-    /// @notice This is the only entry point to disable a market.
+    /// @notice Updates the withdraw queue. Some markets can be removed, but no market can be added.
     /// @notice Removing a market requires the vault to have 0 supply on it, or to have previously submitted a removal
     /// for this market (with the function `submitMarketRemoval`).
     /// @notice Warning: Anyone can supply on behalf of the vault so the call to `updateWithdrawQueue` that expects a
