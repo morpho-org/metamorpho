@@ -282,7 +282,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
         if (newSupplyCap < supplyCap) {
-            _setCap(id, newSupplyCap.toUint184());
+            _setCap(marketParams, id, newSupplyCap.toUint184());
         } else {
             pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 
@@ -291,7 +291,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IMetaMorphoBase
-    function submitMarketRemoval(Id id) external onlyCuratorRole {
+    function submitMarketRemoval(MarketParams memory marketParams) external onlyCuratorRole {
+        Id id = marketParams.id();
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadyPending();
         if (pendingCap[id].validAt != 0) revert ErrorsLib.PendingCap();
         if (config[id].cap != 0) revert ErrorsLib.NonZeroCap();
@@ -467,9 +468,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IMetaMorphoBase
-    function acceptCap(Id id) external afterTimelock(pendingCap[id].validAt) {
+    function acceptCap(MarketParams memory marketParams)
+        external
+        afterTimelock(pendingCap[marketParams.id()].validAt)
+    {
+        Id id = marketParams.id();
+
         // Safe "unchecked" cast because pendingCap <= type(uint184).max.
-        _setCap(id, uint184(pendingCap[id].value));
+        _setCap(marketParams, id, uint184(pendingCap[id].value));
     }
 
     /// @inheritdoc IMetaMorphoBase
@@ -726,7 +732,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @dev Sets the cap of the market defined by `id` to `supplyCap`.
-    function _setCap(Id id, uint184 supplyCap) internal {
+    /// @dev Assumes that the inputs `marketParams` and `id` match.
+    function _setCap(MarketParams memory marketParams, Id id, uint184 supplyCap) internal {
         MarketConfig storage marketConfig = config[id];
 
         if (supplyCap > 0) {
@@ -736,6 +743,8 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
                 if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
 
                 marketConfig.enabled = true;
+
+                _updateLastTotalAssets(lastTotalAssets + MORPHO.expectedSupplyAssets(marketParams, address(this)));
 
                 emit EventsLib.SetWithdrawQueue(msg.sender, withdrawQueue);
             }

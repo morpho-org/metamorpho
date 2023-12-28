@@ -94,8 +94,8 @@ interface IMetaMorphoBase {
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
-    /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external;
+    /// @notice Accepts the pending cap of the market defined by `marketParams`.
+    function acceptCap(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending cap of the market defined by `id`.
     /// @dev Does not revert if there is no pending cap.
@@ -110,7 +110,7 @@ interface IMetaMorphoBase {
     /// @dev Warning: Removing a market with non-zero supply will instantly impact the vault's price per share.
     /// @dev Warning: Reverts for non-zero cap or if there is a pending cap. Successfully submitting a zero cap will
     /// prevent such reverts.
-    function submitMarketRemoval(Id id) external;
+    function submitMarketRemoval(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
     /// @dev Does not revert if there is no pending market removal.

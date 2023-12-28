@@ -113,7 +113,7 @@ contract IntegrationTest is BaseTest {
 
         vm.warp(block.timestamp + vault.timelock());
 
-        vault.acceptCap(id);
+        vault.acceptCap(marketParams);
 
         assertEq(vault.config(id).cap, newCap, "_setCap");
 

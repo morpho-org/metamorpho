@@ -16,22 +16,19 @@ contract MetaMorphoInternalTest is InternalTest {
 
     function testSetCapMaxQueueLengthExcedeed() public {
         for (uint256 i; i < NB_MARKETS - 1; ++i) {
-            Id id = allMarkets[i].id();
-            _setCap(id, CAP);
+            _setCap(allMarkets[i], allMarkets[i].id(), CAP);
         }
 
-        Id lastId = allMarkets[NB_MARKETS - 1].id();
         vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
-        _setCap(lastId, CAP);
+        _setCap(allMarkets[NB_MARKETS - 1], allMarkets[NB_MARKETS - 1].id(), CAP);
     }
 
     function testSimulateWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 
-        Id id = allMarkets[0].id();
-        _setCap(id, CAP);
-        supplyQueue = [id];
+        _setCap(allMarkets[0], allMarkets[0].id(), CAP);
+        supplyQueue = [allMarkets[0].id()];
 
         loanToken.setBalance(SUPPLIER, suppliedAmount);
         vm.prank(SUPPLIER);
