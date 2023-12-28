@@ -104,9 +104,9 @@ To achieve this, it is advised to allocate "idle" funds to any market on Morpho 
 
 - The vault's asset as loan token.
 - No collateral token (`address(0)`).
-- An arbitrary IRM.
+- An IRM that does not trigger a revert (`address(0)`).
 - An arbitrary oracle (`address(0)`).
-- An arbitrary LLTV.
+- An arbitrary LLTV (`0`).
 
 Thus, these funds cannot be borrowed on Morpho Blue and are guaranteed to be liquid; though it won't generate interest.
 

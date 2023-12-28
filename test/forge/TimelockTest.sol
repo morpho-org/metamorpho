@@ -454,7 +454,7 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitMarketRemovalMarketNotEnabled() public {
-        vm.expectRevert(ErrorsLib.MarketNotEnabled.selector);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MarketNotEnabled.selector, allMarkets[1].id()));
         vm.prank(CURATOR);
         vault.submitMarketRemoval(allMarkets[1]);
     }
