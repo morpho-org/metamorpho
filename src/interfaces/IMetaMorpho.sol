@@ -77,25 +77,28 @@ interface IMetaMorphoBase {
     function lastTotalAssets() external view returns (uint256);
 
     /// @notice Submits a `newTimelock`.
+    /// @dev Warning: Reverts if a timelock is already pending. Revoke the pending timelock to overwrite it.
     /// @dev In case the new timelock is higher than the current one, the timelock is set immediately.
-    /// @dev Warning: Submitting a timelock will overwrite the current pending timelock.
     function submitTimelock(uint256 newTimelock) external;
 
     /// @notice Accepts the pending timelock.
     function acceptTimelock() external;
 
     /// @notice Revokes the pending timelock.
+    /// @dev Does not revert if there is no pending timelock.
     function revokePendingTimelock() external;
 
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
+    /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
+    /// @dev Warning: Reverts if a market removal is pending.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
-    /// @dev Warning: Submitting a cap will overwrite the current pending cap.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
     /// @notice Accepts the pending cap of the market defined by `id`.
     function acceptCap(Id id) external;
 
     /// @notice Revokes the pending cap of the market defined by `id`.
+    /// @dev Does not revert if there is no pending cap.
     function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
@@ -105,9 +108,12 @@ interface IMetaMorphoBase {
     /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
     /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
     /// @dev Warning: Removing a market with non-zero supply will instantly impact the vault's price per share.
+    /// @dev Warning: Reverts for non-zero cap or if there is a pending cap. Successfully submitting a zero cap will
+    /// prevent such reverts.
     function submitMarketRemoval(Id id) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
+    /// @dev Does not revert if there is no pending market removal.
     function revokePendingMarketRemoval(Id id) external;
 
     /// @notice Submits a `newGuardian`.

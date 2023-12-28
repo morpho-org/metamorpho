@@ -214,14 +214,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     function submitTimelock(uint256 newTimelock) external onlyOwner {
         if (newTimelock == timelock) revert ErrorsLib.AlreadySet();
+        if (pendingTimelock.validAt != 0) revert ErrorsLib.AlreadyPending();
         _checkTimelockBounds(newTimelock);
 
         if (newTimelock > timelock) {
             _setTimelock(newTimelock);
         } else {
-            // newTimelock >= MIN_TIMELOCK > 0 so there's no need to check `pendingTimelock.validAt != 0`.
-            if (newTimelock == pendingTimelock.value) revert ErrorsLib.AlreadyPending();
-
             // Safe "unchecked" cast because newTimelock <= MAX_TIMELOCK.
             pendingTimelock.update(uint184(newTimelock), timelock);
 
@@ -260,14 +258,11 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     function submitGuardian(address newGuardian) external onlyOwner {
         if (newGuardian == guardian) revert ErrorsLib.AlreadySet();
+        if (pendingGuardian.validAt != 0) revert ErrorsLib.AlreadyPending();
 
         if (guardian == address(0)) {
             _setGuardian(newGuardian);
         } else {
-            if (pendingGuardian.validAt != 0 && newGuardian == pendingGuardian.value) {
-                revert ErrorsLib.AlreadyPending();
-            }
-
             pendingGuardian.update(newGuardian, timelock);
 
             emit EventsLib.SubmitGuardian(newGuardian);
@@ -281,16 +276,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
         Id id = marketParams.id();
         if (marketParams.loanToken != asset()) revert ErrorsLib.InconsistentAsset(id);
         if (MORPHO.lastUpdate(id) == 0) revert ErrorsLib.MarketNotCreated();
-
+        if (pendingCap[id].validAt != 0) revert ErrorsLib.AlreadyPending();
+        if (config[id].removableAt != 0) revert ErrorsLib.PendingRemoval();
         uint256 supplyCap = config[id].cap;
         if (newSupplyCap == supplyCap) revert ErrorsLib.AlreadySet();
 
         if (newSupplyCap < supplyCap) {
             _setCap(id, newSupplyCap.toUint184());
         } else {
-            // newSupplyCap > supplyCap >= 0 so there's no need to check `pendingCap[id].validAt != 0`.
-            if (newSupplyCap == pendingCap[id].value) revert ErrorsLib.AlreadyPending();
-
             pendingCap[id].update(newSupplyCap.toUint184(), timelock);
 
             emit EventsLib.SubmitCap(_msgSender(), id, newSupplyCap);
@@ -299,10 +292,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IMetaMorphoBase
     function submitMarketRemoval(Id id) external onlyCuratorRole {
-        if (config[id].removableAt != 0) revert ErrorsLib.AlreadySet();
+        if (config[id].removableAt != 0) revert ErrorsLib.AlreadyPending();
+        if (pendingCap[id].validAt != 0) revert ErrorsLib.PendingCap();
+        if (config[id].cap != 0) revert ErrorsLib.NonZeroCap();
         if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled(id);
-
-        _setCap(id, 0);
 
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
         config[id].removableAt = uint64(block.timestamp + timelock);
@@ -425,8 +418,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IMetaMorphoBase
     function revokePendingTimelock() external onlyGuardianRole {
-        if (pendingTimelock.validAt == 0) revert ErrorsLib.NoPendingValue();
-
         delete pendingTimelock;
 
         emit EventsLib.RevokePendingTimelock(_msgSender());
@@ -434,8 +425,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IMetaMorphoBase
     function revokePendingGuardian() external onlyGuardianRole {
-        if (pendingGuardian.validAt == 0) revert ErrorsLib.NoPendingValue();
-
         delete pendingGuardian;
 
         emit EventsLib.RevokePendingGuardian(_msgSender());
@@ -443,8 +432,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
     /// @inheritdoc IMetaMorphoBase
     function revokePendingCap(Id id) external onlyCuratorOrGuardianRole {
-        if (pendingCap[id].validAt == 0) revert ErrorsLib.NoPendingValue();
-
         delete pendingCap[id];
 
         emit EventsLib.RevokePendingCap(_msgSender(), id);
