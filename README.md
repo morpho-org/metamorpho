@@ -29,7 +29,7 @@ The vault's owner has the choice to distribute back these rewards to vault depos
 For more information about this use case, see the [Rewards](#rewards) section.
 
 All actions that may be against users' interests (e.g. enabling a market with a high exposure) are subject to a timelock of minimum 24 hours.
-If set, the `guardian` can revoke the action during the timelock.
+If set, the `guardian` or the `owner` can revoke the action during the timelock.
 After the timelock, the action can be executed by anyone.
 
 ### Roles
