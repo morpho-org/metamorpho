@@ -198,6 +198,8 @@ contract MarketTest is IntegrationTest {
         assertEq(Id.unwrap(vault.withdrawQueue(1)), Id.unwrap(expectedWithdrawQueue[1]));
         assertEq(Id.unwrap(vault.withdrawQueue(2)), Id.unwrap(expectedWithdrawQueue[2]));
         assertFalse(vault.config(allMarkets[2].id()).enabled);
+        assertEq(vault.pendingCap(allMarkets[2].id()).value, 0, "pendingCap.value");
+        assertEq(vault.pendingCap(allMarkets[2].id()).validAt, 0, "pendingCap.validAt");
     }
 
     function testSubmitMarketRemoval() public {
@@ -214,8 +216,9 @@ contract MarketTest is IntegrationTest {
 
     function testSubmitMarketRemovalPendingCap() public {
         vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
         vault.submitCap(allMarkets[2], vault.config(allMarkets[2].id()).cap + 1);
-        vm.expectRevert(ErrorsLib.PendingCap.selector);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.PendingCap.selector, allMarkets[2].id()));
         vault.submitMarketRemoval(allMarkets[2]);
         vm.stopPrank();
     }
@@ -314,6 +317,23 @@ contract MarketTest is IntegrationTest {
         vm.expectRevert(
             abi.encodeWithSelector(ErrorsLib.InvalidMarketRemovalTimelockNotElapsed.selector, idleParams.id())
         );
+        vault.updateWithdrawQueue(indexes);
+    }
+
+    function testUpdateWithdrawQueueInvalidMarketRemovalPendingCap(uint256 cap) public {
+        cap = bound(cap, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
+
+        _setCap(allMarkets[2], 0);
+        vm.prank(CURATOR);
+        vault.submitCap(allMarkets[2], cap);
+
+        uint256[] memory indexes = new uint256[](3);
+        indexes[0] = 0;
+        indexes[1] = 2;
+        indexes[2] = 1;
+
+        vm.prank(ALLOCATOR);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.PendingCap.selector, allMarkets[2].id()));
         vault.updateWithdrawQueue(indexes);
     }
 

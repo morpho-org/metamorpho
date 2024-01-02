@@ -43,7 +43,7 @@ library ErrorsLib {
     error AlreadyPending();
 
     /// @notice Thrown when submitting the removal of a market when there is a cap already pending on that market.
-    error PendingCap();
+    error PendingCap(Id id);
 
     /// @notice Thrown when submitting a cap for a market with a pending removal.
     error PendingRemoval();
