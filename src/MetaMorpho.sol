@@ -746,6 +746,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
                 marketConfig.enabled = true;
 
+                // Take into account assets of the new market without applying a fee.
                 _updateLastTotalAssets(lastTotalAssets + MORPHO.expectedSupplyAssets(marketParams, address(this)));
 
                 emit EventsLib.SetWithdrawQueue(msg.sender, withdrawQueue);
