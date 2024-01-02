@@ -216,6 +216,7 @@ contract MarketTest is IntegrationTest {
 
     function testSubmitMarketRemovalPendingCap() public {
         vm.startPrank(CURATOR);
+        vault.submitCap(allMarkets[2], 0);
         vault.submitCap(allMarkets[2], vault.config(allMarkets[2].id()).cap + 1);
         vm.expectRevert(abi.encodeWithSelector(ErrorsLib.PendingCap.selector, allMarkets[2].id()));
         vault.submitMarketRemoval(allMarkets[2]);
