@@ -100,7 +100,9 @@ It can:
 
 In some cases, the vault's curator or allocators may want to keep some funds "idle", to guarantee lenders that some liquidity can be withdrawn from the vault (beyond the liquidity of each of the vault's markets).
 
-To achieve this, it is advised to allocate "idle" funds to any market on Morpho Blue having this canonical configuration:
+To achieve this, they can deposit in markets with `address(0)` as the oracle or the collateral, ensuring that these funds can't be borrowed.
+They are thus guaranteed to be liquid; though they won't generate interest.
+It is advised to use these canonical configurations for "idle" markets:
 
 - `loanToken`: The vault's asset to be able to supply/withdraw funds.
 - `collateralToken`: `address(0)` (not necessary since no funds will be borrowed on this market)
@@ -108,8 +110,6 @@ To achieve this, it is advised to allocate "idle" funds to any market on Morpho 
 - `oracle`: `address(0)` (not necessary since no funds will be borrowed on this market)
 - `lltv`: `0` (not necessary since no funds will be borrowed on this market)
 
-Having this configuration for all idle markets will make risk management easier.
-It also ensures that no funds can be borrowed on Morpho Blue and are guaranteed to be liquid; though it won't generate interest.
 
 Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
 Enabling an infinite cap (`type(uint184).max`) will always allow users to deposit on the vault.
