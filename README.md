@@ -103,7 +103,7 @@ In some cases, the vault's curator or allocators may want to keep some funds "id
 To achieve this, it is advised to allocate "idle" funds to any market on Morpho Blue having:
 
 - The vault's asset as loan token.
-- No collateral token (`address(0)`).
+- An arbitrary collateral token (`address(0)`).
 - An IRM that does not trigger a revert (`address(0)`).
 - An arbitrary oracle (`address(0)`).
 - An arbitrary LLTV (`0`).
