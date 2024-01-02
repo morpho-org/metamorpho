@@ -619,8 +619,10 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             uint256 supplyShares = MORPHO.supplyShares(id, address(this));
             (uint256 totalSupplyAssets, uint256 totalSupplyShares,,) = MORPHO.expectedMarketBalances(_marketParams(id));
+            // `supplyAssets` needs to be rounded up for `totalSuppliable` to be rounded down.
+            uint256 supplyAssets = supplyShares.toAssetsUp(totalSupplyAssets, totalSupplyShares);
 
-            totalSuppliable += supplyCap.zeroFloorSub(supplyShares.toAssetsUp(totalSupplyAssets, totalSupplyShares));
+            totalSuppliable += supplyCap.zeroFloorSub(supplyAssets);
         }
     }
 
