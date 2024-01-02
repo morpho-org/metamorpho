@@ -29,7 +29,7 @@ The vault's owner has the choice to distribute back these rewards to vault depos
 For more information about this use case, see the [Rewards](#rewards) section.
 
 All actions that may be against users' interests (e.g. enabling a market with a high exposure) are subject to a timelock of minimum 24 hours.
-If set, the `guardian` can revoke the action during the timelock.
+The `owner`, or the `guardian` if set, can revoke the action during the timelock.
 After the timelock, the action can be executed by anyone.
 
 ### Roles
@@ -100,15 +100,16 @@ It can:
 
 In some cases, the vault's curator or allocators may want to keep some funds "idle", to guarantee lenders that some liquidity can be withdrawn from the vault (beyond the liquidity of each of the vault's markets).
 
-To achieve this, it is advised to allocate "idle" funds to any market on Morpho Blue having:
+To achieve this, they can deposit in markets with `address(0)` as the oracle or the collateral, ensuring that these funds can't be borrowed.
+They are thus guaranteed to be liquid; though they won't generate interest.
+It is advised to use these canonical configurations for "idle" markets:
 
-- The vault's asset as loan token.
-- No collateral token (`address(0)`).
-- An IRM that does not trigger a revert (`address(0)`).
-- An arbitrary oracle (`address(0)`).
-- An arbitrary LLTV (`0`).
+- `loanToken`: The vault's asset to be able to supply/withdraw funds.
+- `collateralToken`: `address(0)` (not necessary since no funds will be borrowed on this market)
+- `irm`: `address(0)` (Morpho Blue will skip the call to the IRM in this case, thus reducing the gas cost)
+- `oracle`: `address(0)` (not necessary since no funds will be borrowed on this market)
+- `lltv`: `0` (not necessary since no funds will be borrowed on this market)
 
-Thus, these funds cannot be borrowed on Morpho Blue and are guaranteed to be liquid; though it won't generate interest.
 
 Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
 Enabling an infinite cap (`type(uint184).max`) will always allow users to deposit on the vault.
