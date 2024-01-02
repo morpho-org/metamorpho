@@ -352,7 +352,7 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectEmit(address(vault));
         emit EventsLib.SetCap(address(this), id, cap);
-        vault.acceptCap(id);
+        vault.acceptCap(marketParams);
 
         MarketConfig memory marketConfig = vault.config(id);
         PendingUint192 memory pendingCap = vault.pendingCap(id);
@@ -383,7 +383,7 @@ contract TimelockTest is IntegrationTest {
 
         vm.expectEmit();
         emit EventsLib.SetCap(address(this), id, cap);
-        vault.acceptCap(id);
+        vault.acceptCap(marketParams);
 
         MarketConfig memory marketConfig = vault.config(id);
         PendingUint192 memory pendingCap = vault.pendingCap(id);
@@ -408,7 +408,6 @@ contract TimelockTest is IntegrationTest {
         vm.warp(block.timestamp + elapsed);
 
         MarketParams memory marketParams = allMarkets[0];
-        Id id = marketParams.id();
 
         vm.prank(CURATOR);
         vault.submitCap(marketParams, cap);
@@ -418,12 +417,12 @@ contract TimelockTest is IntegrationTest {
         vault.acceptTimelock();
 
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
-        vault.acceptCap(id);
+        vault.acceptCap(marketParams);
     }
 
     function testAcceptCapNoPendingValue() public {
         vm.expectRevert(ErrorsLib.NoPendingValue.selector);
-        vault.acceptCap(allMarkets[0].id());
+        vault.acceptCap(allMarkets[0]);
     }
 
     function testAcceptCapTimelockNotElapsed(uint256 elapsed) public {
@@ -435,7 +434,7 @@ contract TimelockTest is IntegrationTest {
         vm.warp(block.timestamp + elapsed);
 
         vm.expectRevert(ErrorsLib.TimelockNotElapsed.selector);
-        vault.acceptCap(allMarkets[1].id());
+        vault.acceptCap(allMarkets[1]);
     }
 
     function testSubmitMarketRemoval() public {
@@ -445,7 +444,7 @@ contract TimelockTest is IntegrationTest {
         _setCap(marketParams, 0);
 
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(id);
+        vault.submitMarketRemoval(marketParams);
 
         MarketConfig memory marketConfig = vault.config(id);
 
@@ -455,8 +454,8 @@ contract TimelockTest is IntegrationTest {
     }
 
     function testSubmitMarketRemovalMarketNotEnabled() public {
-        vm.expectRevert(ErrorsLib.MarketNotEnabled.selector);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MarketNotEnabled.selector, allMarkets[1].id()));
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(allMarkets[1].id());
+        vault.submitMarketRemoval(allMarkets[1]);
     }
 }

@@ -115,24 +115,4 @@ contract RevokeTest is IntegrationTest {
         assertEq(pendingGuardian.value, address(0), "value");
         assertEq(pendingGuardian.validAt, 0, "validAt");
     }
-
-    function testOwnerRevokePendingCapNoPendingValue(uint256 seed) public {
-        MarketParams memory marketParams = _randomMarketParams(seed);
-
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
-        vault.revokePendingCap(marketParams.id());
-    }
-
-    function testOwnerRevokePendingTimelockNoPendingValue() public {
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
-        vault.revokePendingTimelock();
-    }
-
-    function testOwnerRevokePendingGuardianNoPendingValue() public {
-        vm.prank(OWNER);
-        vm.expectRevert(ErrorsLib.NoPendingValue.selector);
-        vault.revokePendingGuardian();
-    }
 }

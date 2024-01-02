@@ -7,7 +7,6 @@ import {IERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC
 
 import {MarketConfig, PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
 
-/// @dev Either `assets` or `shares` should be zero.
 struct MarketAllocation {
     /// @notice The market to allocate.
     MarketParams marketParams;
@@ -20,7 +19,7 @@ interface IMulticall {
 }
 
 interface IOwnable {
-    function owner() external returns (address);
+    function owner() external view returns (address);
     function transferOwnership(address) external;
     function renounceOwnership() external;
     function acceptOwnership() external;
@@ -32,6 +31,7 @@ interface IOwnable {
 interface IMetaMorphoBase {
     /// @notice The address of the Morpho contract.
     function MORPHO() external view returns (IMorpho);
+    function DECIMALS_OFFSET() external view returns (uint8);
 
     /// @notice The address of the curator.
     function curator() external view returns (address);
@@ -70,36 +70,49 @@ interface IMetaMorphoBase {
     function withdrawQueueLength() external view returns (uint256);
 
     /// @notice Stores the total assets managed by this vault when the fee was last accrued.
-    /// @dev May be a little off `totalAssets()` after each interaction, due to some roundings.
+    /// @dev May be greater than `totalAssets()` due to removal of markets with non-zero supply or socialized bad debt.
+    /// This difference will decrease the fee accrued until one of the functions updating `lastTotalAssets` is
+    /// triggered (deposit/mint/withdraw/redeem/setFee/setFeeRecipient).
     function lastTotalAssets() external view returns (uint256);
 
     /// @notice Submits a `newTimelock`.
+    /// @dev Warning: Reverts if a timelock is already pending. Revoke the pending timelock to overwrite it.
     /// @dev In case the new timelock is higher than the current one, the timelock is set immediately.
-    /// @dev Warning: Submitting a timelock will overwrite the current pending timelock.
     function submitTimelock(uint256 newTimelock) external;
 
     /// @notice Accepts the pending timelock.
     function acceptTimelock() external;
 
     /// @notice Revokes the pending timelock.
+    /// @dev Does not revert if there is no pending timelock.
     function revokePendingTimelock() external;
 
     /// @notice Submits a `newSupplyCap` for the market defined by `marketParams`.
+    /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
+    /// @dev Warning: Reverts if a market removal is pending.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
-    /// @dev Warning: Submitting a cap will overwrite the current pending cap.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
-    /// @notice Accepts the pending cap of the market defined by `id`.
-    function acceptCap(Id id) external;
+    /// @notice Accepts the pending cap of the market defined by `marketParams`.
+    function acceptCap(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending cap of the market defined by `id`.
+    /// @dev Does not revert if there is no pending cap.
     function revokePendingCap(Id id) external;
 
-    /// @notice Submits a forced market removal from the vault, potentially losing all funds supplied to the market.
-    /// @dev Warning: Submitting a forced removal will overwrite the timestamp at which the market will be removable.
-    function submitMarketRemoval(Id id) external;
+    /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
+    /// @notice Funds can be recovered by enabling this market again and withdrawing from it (using `reallocate`),
+    /// but funds will be distributed pro-rata to the shares at the time of withdrawal, not at the time of removal.
+    /// @notice This forced removal is expected to be used as an emergency process in case a market constantly reverts.
+    /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
+    /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
+    /// @dev Warning: Removing a market with non-zero supply will instantly impact the vault's price per share.
+    /// @dev Warning: Reverts for non-zero cap or if there is a pending cap. Successfully submitting a zero cap will
+    /// prevent such reverts.
+    function submitMarketRemoval(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending removal of the market defined by `id`.
+    /// @dev Does not revert if there is no pending market removal.
     function revokePendingMarketRemoval(Id id) external;
 
     /// @notice Submits a `newGuardian`.
@@ -138,12 +151,15 @@ interface IMetaMorphoBase {
     /// increase the cost of depositing to the vault.
     function setSupplyQueue(Id[] calldata newSupplyQueue) external;
 
-    /// @notice Sets the withdraw queue as a permutation of the previous one, although markets with both zero cap and
-    /// zero vault's supply can be removed from the permutation.
-    /// @notice This is the only entry point to disable a market.
-    /// @notice Removing a market requires the vault to have 0 supply on it; but anyone can supply on behalf of the
-    /// vault so the call to `updateWithdrawQueue` can be griefed by a frontrun. To circumvent this, the allocator can
-    /// simply bundle a reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
+    /// @notice Updates the withdraw queue. Some markets can be removed, but no market can be added.
+    /// @notice Removing a market requires the vault to have 0 supply on it, or to have previously submitted a removal
+    /// for this market (with the function `submitMarketRemoval`).
+    /// @notice Warning: Anyone can supply on behalf of the vault so the call to `updateWithdrawQueue` that expects a
+    /// market to be empty can be griefed by a front-run. To circumvent this, the allocator can simply bundle a
+    /// reallocation that withdraws max from this market with a call to `updateWithdrawQueue`.
+    /// @dev Warning: Removing a market with supply will decrease the fee accrued until one of the functions updating
+    /// `lastTotalAssets` is triggered (deposit/mint/withdraw/redeem/setFee/setFeeRecipient).
+    /// @dev Warning: `updateWithdrawQueue` is not idempotent. Submitting twice the same tx will change the queue twice.
     /// @param indexes The indexes of each market in the previous withdraw queue, in the new withdraw queue's order.
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
@@ -156,6 +172,8 @@ interface IMetaMorphoBase {
     /// reallocation.
     /// - Donations to the vault on markets that are expected to be supplied to during reallocation.
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
+    /// @dev Sender is expected to pass `assets = type(uint256).max` with the last MarketAllocation of `allocations` to
+    /// supply all the remaining withdrawn liquidity, which would ensure that `totalWithdrawn` = `totalSupplied`.
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
