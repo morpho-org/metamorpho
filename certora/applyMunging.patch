@@ -1,0 +1,88 @@
+diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
+--- interfaces/IMetaMorpho.sol	2024-01-02 16:00:47.105888392 +0100
++++ interfaces/IMetaMorpho.sol	2024-01-02 16:45:30.829671859 +0100
+@@ -1,9 +1,9 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.5.0;
+ 
+-import {IMorpho, Id, MarketParams} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
+-import {IERC4626} from "../../lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
+-import {IERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol";
++import {IMorpho, Id, MarketParams} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
++import {IERC4626} from "../../../lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
++import {IERC20Permit} from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol";
+ 
+ import {MarketConfig, PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
+ 
+diff -ruN libraries/ErrorsLib.sol libraries/ErrorsLib.sol
+--- libraries/ErrorsLib.sol	2024-01-02 16:00:47.105888392 +0100
++++ libraries/ErrorsLib.sol	2024-01-02 16:44:31.507106060 +0100
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity ^0.8.0;
+ 
+-import {Id} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
++import {Id} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
+ 
+ /// @title ErrorsLib
+ /// @author Morpho Labs
+diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
+--- libraries/EventsLib.sol	2023-11-28 14:45:01.301789136 +0100
++++ libraries/EventsLib.sol	2024-01-02 16:45:04.878299322 +0100
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity ^0.8.0;
+ 
+-import {Id} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
++import {Id} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
+ 
+ import {PendingAddress} from "./PendingLib.sol";
+ 
+diff -ruN MetaMorpho.sol MetaMorpho.sol
+--- MetaMorpho.sol	2024-01-02 16:00:47.105888392 +0100
++++ MetaMorpho.sol	2024-01-02 16:46:26.284330796 +0100
+@@ -9,24 +9,22 @@
+     MarketAllocation,
+     IMetaMorphoStaticTyping
+ } from "./interfaces/IMetaMorpho.sol";
+-import {Id, MarketParams, Market, IMorpho} from "../lib/morpho-blue/src/interfaces/IMorpho.sol";
++import {Id, MarketParams, Market, IMorpho} from "../harness/IMorphoHarness.sol";
+ 
+ import {PendingUint192, PendingAddress, PendingLib} from "./libraries/PendingLib.sol";
+ import {ConstantsLib} from "./libraries/ConstantsLib.sol";
+ import {ErrorsLib} from "./libraries/ErrorsLib.sol";
+ import {EventsLib} from "./libraries/EventsLib.sol";
+-import {WAD} from "../lib/morpho-blue/src/libraries/MathLib.sol";
+-import {UtilsLib} from "../lib/morpho-blue/src/libraries/UtilsLib.sol";
+-import {SafeCast} from "../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
+-import {SharesMathLib} from "../lib/morpho-blue/src/libraries/SharesMathLib.sol";
+-import {MorphoLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoLib.sol";
+-import {MarketParamsLib} from "../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
+-import {IERC20Metadata} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+-import {MorphoBalancesLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
++import {WAD} from "../../lib/morpho-blue/src/libraries/MathLib.sol";
++import {UtilsLib} from "../../lib/morpho-blue/src/libraries/UtilsLib.sol";
++import {SafeCast} from "../../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
++import {SharesMathLib} from "../../lib/morpho-blue/src/libraries/SharesMathLib.sol";
++import {MarketParamsLib} from "../../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
++import {IERC20Metadata} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+ 
+-import {Multicall} from "../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
+-import {Ownable2Step, Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+-import {ERC20Permit} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
++import {Multicall} from "../../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
++import {Ownable2Step, Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
++import {ERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
+ import {
+     IERC20,
+     IERC4626,
+@@ -45,9 +43,7 @@
+     using UtilsLib for uint256;
+     using SafeCast for uint256;
+     using SafeERC20 for IERC20;
+-    using MorphoLib for IMorpho;
+     using SharesMathLib for uint256;
+-    using MorphoBalancesLib for IMorpho;
+     using MarketParamsLib for MarketParams;
+     using PendingLib for MarketConfig;
+     using PendingLib for PendingUint192;
