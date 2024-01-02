@@ -294,9 +294,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     function submitMarketRemoval(MarketParams memory marketParams) external onlyCuratorRole {
         Id id = marketParams.id();
         if (config[id].removableAt != 0) revert ErrorsLib.AlreadyPending();
-        if (pendingCap[id].validAt != 0) revert ErrorsLib.PendingCap(id);
         if (config[id].cap != 0) revert ErrorsLib.NonZeroCap();
         if (!config[id].enabled) revert ErrorsLib.MarketNotEnabled(id);
+        if (pendingCap[id].validAt != 0) revert ErrorsLib.PendingCap(id);
 
         // Safe "unchecked" cast because timelock <= MAX_TIMELOCK.
         config[id].removableAt = uint64(block.timestamp + timelock);
