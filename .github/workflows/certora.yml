@@ -11,6 +11,13 @@ jobs:
   verify:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+
+      matrix:
+        conf:
+          - Roles
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -28,14 +35,10 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
 
+      - name: Apply munging
+        run: make -C certora munged
+
       - name: Verify rule ${{ matrix.script }}
         run: certoraRun certora/confs/${{ matrix.conf }}.conf
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
-
-    strategy:
-      fail-fast: false
-
-      matrix:
-        conf:
-          - Roles
