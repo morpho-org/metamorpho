@@ -7,7 +7,6 @@
 [submodule "lib/morpho-blue"]
 	path = lib/morpho-blue
 	url = https://github.com/morpho-org/morpho-blue
-	branch = chore/remove-remapping-context
 [submodule "lib/universal-rewards-distributor"]
 	path = lib/universal-rewards-distributor
 	url = https://github.com/morpho-org/universal-rewards-distributor

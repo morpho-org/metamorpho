@@ -129,7 +129,7 @@ contract GuardianTest is IntegrationTest {
         _setCap(marketParams, 0);
 
         vm.prank(CURATOR);
-        vault.submitMarketRemoval(id);
+        vault.submitMarketRemoval(allMarkets[0]);
 
         vm.warp(block.timestamp + elapsed);
 

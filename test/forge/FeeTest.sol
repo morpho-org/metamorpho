@@ -55,11 +55,7 @@ contract FeeTest is IntegrationTest {
         uint256 interest = totalAssetsAfter - vault.lastTotalAssets();
         uint256 feeAssets = interest.mulDiv(FEE, WAD);
 
-        return feeAssets.mulDiv(
-            vault.totalSupply() + 10 ** ConstantsLib.DECIMALS_OFFSET,
-            totalAssetsAfter - feeAssets + 1,
-            Math.Rounding.Floor
-        );
+        return feeAssets.mulDiv(vault.totalSupply() + 1, totalAssetsAfter - feeAssets + 1, Math.Rounding.Floor);
     }
 
     function testAccrueFeeWithinABlock(uint256 deposited, uint256 withdrawn) public {
@@ -312,11 +308,8 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares();
-        uint256 expectedShares = assets.mulDiv(
-            vault.totalSupply() + feeShares + 10 ** ConstantsLib.DECIMALS_OFFSET,
-            vault.totalAssets() + 1,
-            Math.Rounding.Floor
-        );
+        uint256 expectedShares =
+            assets.mulDiv(vault.totalSupply() + feeShares + 1, vault.totalAssets() + 1, Math.Rounding.Floor);
         uint256 shares = vault.convertToShares(assets);
 
         assertEq(shares, expectedShares, "shares");
@@ -325,7 +318,7 @@ contract FeeTest is IntegrationTest {
 
     function testConvertToSharesWithFeeAndInterest(uint256 deposited, uint256 shares, uint256 blocks) public {
         deposited = bound(deposited, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
-        shares = bound(shares, 10 ** ConstantsLib.DECIMALS_OFFSET, MAX_TEST_ASSETS);
+        shares = bound(shares, 1, MAX_TEST_ASSETS);
         blocks = _boundBlocks(blocks);
 
         loanToken.setBalance(SUPPLIER, deposited);
@@ -338,11 +331,8 @@ contract FeeTest is IntegrationTest {
         _forward(blocks);
 
         uint256 feeShares = _feeShares();
-        uint256 expectedAssets = shares.mulDiv(
-            vault.totalAssets() + 1,
-            vault.totalSupply() + feeShares + 10 ** ConstantsLib.DECIMALS_OFFSET,
-            Math.Rounding.Floor
-        );
+        uint256 expectedAssets =
+            shares.mulDiv(vault.totalAssets() + 1, vault.totalSupply() + feeShares + 1, Math.Rounding.Floor);
         uint256 assets = vault.convertToAssets(shares);
 
         assertEq(assets, expectedAssets, "assets");
