@@ -4,6 +4,9 @@ methods {
     function curator() external returns address envfree;
     function guardian() external returns address envfree;
     function isAllocator(address target) external returns bool envfree;
+
+    function _.transfer(address, uint256) external => CONSTANT;
+    function _.transferFrom(address, address, uint256) external => CONSTANT;
 }
 
 rule curatorIsAllocator(method f, calldataarg args) {
