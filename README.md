@@ -139,9 +139,9 @@ Below is a typical example of how this use case would take place:
 
 ## Emergency
 
-### An enabled market risk is now considered unsafe
+### An enabled market is now considered unsafe
 
-If the owner/curator consider an enabled market unsafe (e.g., risk too high) and want to disable this market, he should follow these steps :
+If an enabled market is considered unsafe (e.g., risk too high), the curator/owner may want to disable this market in the following way:
 
 - Set the cap of the market to 0 with the `submitCap` function.
 - Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
@@ -150,7 +150,7 @@ If the owner/curator consider an enabled market unsafe (e.g., risk too high) and
 
 ### An enabled market reverts
 
-If an enabled market starts reverting, it makes a lot of the vault functions revert as well (because of the call to `totalAssets`). To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps :
+If an enabled market starts reverting, many of the vault functions would revert as well (because of the call to `totalAssets`). To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps :
 
 - Set the cap of the market to 0 with the `submitCap` function.
 - Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
@@ -160,17 +160,17 @@ If an enabled market starts reverting, it makes a lot of the vault functions rev
 
 ### Curator takeover
 
-If the curator starts to submits positive caps for unsafe markets that are not in line with the vault risk strategy, the owner of the vault should :
+If the curator starts to submit positive caps for unsafe markets that are not in line with the vault risk strategy, the owner of the vault can:
 
 - Set a new curator with the `setCurator` function.
-- Revoke the pending caps submitted by the guardian (this can also be done by the guardian or the new curator).
+- Revoke the pending caps submitted by the curator (this can also be done by the guardian or the new curator).
 - If the curator had the time to accept a cap (because `timelock` has elapsed before the guardian or the owner had time to act), the owner (or the new curator) must disable the unsafe market (see the "An enabled market risk is now considered unsafe" section above).
 
 ### Allocator takeover
 
 If one of the allocators starts setting withdraw queue and/or supply queue that are not in line with the vault risk strategy, or maliciously reallocating the funds, the owner of the vault should :
 
-- Deprive the malicious allocator from his privileges with the `setIsAllocator` function.
+- Deprive the faulty allocator from his privileges with the `setIsAllocator` function.
 - Reallocate the funds in a way consistent with the vault risk strategy with the `reallocate` function (this can also be done by the currator or the other allocators).
 - Set a new withdraw queue that is in line with the vault risk strategy with the `updateWithdrawQueue` function (this can also be done by the currator or the other allocators).
 - Set a new supply queue that is in line with the vault risk strategy with the `setSupplyQueue` function (this can also be done by the currator or the other allocators).
