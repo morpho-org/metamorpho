@@ -5,17 +5,21 @@ methods {
     function guardian() external returns address envfree;
     function isAllocator(address target) external returns bool envfree;
 
-    function _.idToMarketParams(MetaMorphoHarness.Id) external => NONDET;
-    function _.supplyShares(MetaMorphoHarness.Id, address) external => NONDET;
+    function _.idToMarketParams(MetaMorphoHarness.Id) external => AUTO;
+    function _.supplyShares(MetaMorphoHarness.Id, address) external => AUTO;
+    function _.accrueInterest(MetaMorphoHarness.MarketParams) external => AUTO;
 
-    function _.balanceOf(address) external => NONDET;
-    function _.transfer(address, uint256) external => HAVOC_ECF;
-    function _.transferFrom(address, address, uint256) external => HAVOC_ECF;
+    function _.balanceOf(address) external => AUTO;
+    function _.transfer(address, uint256) external => AUTO;
+    function _.transferFrom(address, address, uint256) external => AUTO;
+
+    function SafeERC20._() internal => AUTO;
 }
 
 rule curatorIsAllocator(method f, calldataarg args)
 filtered {
     f -> !f.isView
+    // && f.selector != sig:transferFrom(address,address,uint256).selector
 }
 {
     storage initial = lastStorage;
@@ -24,6 +28,7 @@ filtered {
     require e1.block.timestamp == e2.block.timestamp;
     require e1.msg.value == e2.msg.value;
 
+    require e1.msg.sender != 0;
     require e2.msg.sender != 0;
 
     require isAllocator(e1.msg.sender);
