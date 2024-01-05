@@ -110,7 +110,6 @@ It is advised to use these canonical configurations for "idle" markets:
 - `oracle`: `address(0)` (not necessary since no funds will be borrowed on this market)
 - `lltv`: `0` (not necessary since no funds will be borrowed on this market)
 
-
 Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
 Enabling an infinite cap (`type(uint184).max`) will always allow users to deposit on the vault.
 
@@ -137,6 +136,44 @@ Below is a typical example of how this use case would take place:
   Note: the amount of rewards transferred corresponds to the vault's balance of reward asset.
 
 - Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
+
+## Emergency
+
+### An enabled market risk is now considered unsafe
+
+If the owner/curator consider an enabled market unsafe (e.g., risk too high) and want to disable this market, he should follow these steps :
+
+- Set the cap of the market to 0 with the `submitCap` function.
+- Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
+- Withdraw all the supply of this market with the `reallocate` function. If there is not enough liquidity on the market, the market should be put at the beginning of the withdraw queue (with the `updateWithdrawQueue` function).
+- Once all the supply has been removed from the market, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
+
+### An enabled market reverts
+
+If an enabled market starts reverting, it makes a lot of the vault functions revert as well (because of the call to `totalAssets`). To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps :
+
+- Set the cap of the market to 0 with the `submitCap` function.
+- Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
+- Submit a removal of the market with the `submitMarketRemoval` function.
+- Wait for the timelock to elapse
+- Once the timelock has elapsed, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
+
+### Curator takeover
+
+If the curator starts to submits positive caps for unsafe markets that are not in line with the vault risk strategy, the owner of the vault should :
+
+- Set a new curator with the `setCurator` function.
+- Revoke the pending caps submitted by the guardian (this can also be done by the guardian or the new curator).
+- If the curator had the time to accept a cap (because `timelock` has elapsed before the guardian or the owner had time to act), the owner (or the new curator) must disable the unsafe market (see the "An enabled market risk is now considered unsafe" section above).
+
+### Allocator takeover
+
+If one of the allocators starts setting withdraw queue and/or supply queue that are not in line with the vault risk strategy, or maliciously reallocating the funds, the owner of the vault should :
+
+- Deprive the malicious allocator from his privileges with the `setIsAllocator` function.
+- Reallocate the funds in a way consistent with the vault risk strategy with the `reallocate` function (this can also be done by the currator or the other allocators).
+- Set a new withdraw queue that is in line with the vault risk strategy with the `updateWithdrawQueue` function (this can also be done by the currator or the other allocators).
+- Set a new supply queue that is in line with the vault risk strategy with the `setSupplyQueue` function (this can also be done by the currator or the other allocators).
 
 ## Getting Started
 
