@@ -166,7 +166,6 @@ If the curator starts to submit positive caps for unsafe markets that are not in
 - Set a new curator with the `setCurator` function.
 - Revoke the pending caps submitted by the curator (this can also be done by the guardian or the new curator).
 - If the curator had the time to accept a cap (because `timelock` has elapsed before the guardian or the owner had time to act), the owner (or the new curator) must disable the unsafe market (see [above](#an-enabled-market-is-now-considered-unsafe)).
-  "An enabled market risk is now considered unsafe" section above).
 
 ### Allocator takeover
 
