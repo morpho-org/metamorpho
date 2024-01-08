@@ -16,6 +16,7 @@ jobs:
 
       matrix:
         conf:
+          - ConsistentState
           - Roles
           - Tokens
 

@@ -16,4 +16,8 @@ contract MetaMorphoHarness is MetaMorpho {
     function balanceOf(address asset, address user) external view returns (uint256) {
         return IERC20(asset).balanceOf(user);
     }
+
+    function maxFee() external view returns (uint256) {
+        return ConstantsLib.MAX_FEE;
+    }
 }
