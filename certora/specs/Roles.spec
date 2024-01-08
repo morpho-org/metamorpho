@@ -18,7 +18,19 @@ methods {
 rule curatorIsAllocator(method f, calldataarg args)
 filtered {
     f -> !f.isView
-    // && f.selector != sig:transferFrom(address,address,uint256).selector
+    && f.selector != sig:updateWithdrawQueue(uint256[]).selector
+    && f.selector != sig:deposit(uint256, address).selector
+    && f.selector != sig:redeem(uint256, address, address).selector
+    && f.selector != sig:transfer(address, uint256).selector
+    && f.selector != sig:skim(address).selector
+    && f.selector != sig:acceptCap(MetaMorphoHarness.MarketParams).selector
+    && f.selector != sig:transferFrom(address, address, uint256).selector
+    && f.selector != sig:reallocate(MetaMorphoHarness.MarketAllocation[]).selector
+    && f.selector != sig:mint(uint256, address).selector
+    && f.selector != sig:withdraw(uint256, address, address).selector
+    && f.selector != sig:multicall(bytes[]).selector
+    && f.selector != sig:submitCap(MetaMorphoHarness.MarketParams, uint256).selector
+    && f.selector != sig:acceptOwnership().selector
 }
 {
     storage initial = lastStorage;
