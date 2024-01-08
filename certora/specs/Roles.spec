@@ -10,10 +10,9 @@ methods {
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => AUTO;
 
     function _.balanceOf(address) external => AUTO;
-    function _.transfer(address, uint256) external => AUTO;
-    function _.transferFrom(address, address, uint256) external => AUTO;
 
-    function SafeERC20._() internal => AUTO;
+    function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
+    function SafeERC20.safeTransferFrom(address, address, address, uint256) internal => CONSTANT;
 }
 
 rule curatorIsAllocator(method f, calldataarg args)
