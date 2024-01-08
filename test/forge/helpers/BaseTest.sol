@@ -53,7 +53,7 @@ contract BaseTest is Test {
     address internal MORPHO_FEE_RECIPIENT = makeAddr("MorphoFeeRecipient");
 
     IMorpho internal morpho =
-        IMorpho(deployCode("lib/morpho-blue/out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
+        IMorpho(deployCode("out/Morpho.sol/Morpho.json", abi.encode(MORPHO_OWNER)));
     ERC20Mock internal loanToken = new ERC20Mock("loan", "B");
     ERC20Mock internal collateralToken = new ERC20Mock("collateral", "C");
     OracleMock internal oracle = new OracleMock();
