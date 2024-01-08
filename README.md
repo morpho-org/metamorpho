@@ -161,7 +161,7 @@ If an enabled market starts reverting, many of the vault functions would revert 
 - Wait for the timelock to elapse
 - Once the timelock has elapsed, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
 
-Warning : Funds supplied in forced removed markets will be lost, this why only reverting market should be disabled this way (because funds supplied in such markets can be considered lost anyway).
+Warning : Funds supplied in forced removed markets will be lost, this is why only markets expected to always revert should be disabled this way (because funds supplied in such markets can be considered lost anyway).
 
 ### Curator takeover
 
@@ -173,7 +173,7 @@ If the curator starts to submit positive caps for unsafe markets that are not in
 
 ### Allocator takeover
 
-If one of the allocators starts setting withdraw queue and/or supply queue that are not in line with the vault risk strategy, or incoherently reallocating the funds, the owner of the vault should:
+If one of the allocators starts setting the withdraw queue and/or supply queue that are not in line with the vault risk strategy, or incoherently reallocating the funds, the owner of the vault should:
 
 - Deprive the faulty allocator from his privileges with the `setIsAllocator` function.
 - Reallocate the funds in a way consistent with the vault risk strategy with the `reallocate` function (this can also be done by the curator or the other allocators).
