@@ -48,7 +48,7 @@ It can:
 - Set the rewards recipient.
 - Increase the timelock.
 - [Timelocked] Decrease the timelock.
-- [Timelocked] Set the guardian.
+- [Timelocked if already set] Set the guardian.
 - Set the performance fee (capped at 50%).
 - Set the fee recipient.
 
@@ -109,7 +109,6 @@ It is advised to use these canonical configurations for "idle" markets:
 - `irm`: `address(0)` (Morpho Blue will skip the call to the IRM in this case, thus reducing the gas cost)
 - `oracle`: `address(0)` (not necessary since no funds will be borrowed on this market)
 - `lltv`: `0` (not necessary since no funds will be borrowed on this market)
-
 
 Note that to allocate funds to this idle market, it is first required to enable its cap on MetaMorpho.
 Enabling an infinite cap (`type(uint184).max`) will always allow users to deposit on the vault.
