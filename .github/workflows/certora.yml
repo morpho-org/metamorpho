@@ -17,6 +17,7 @@ jobs:
       matrix:
         conf:
           - Roles
+          - Tokens
 
     steps:
       - uses: actions/checkout@v3
