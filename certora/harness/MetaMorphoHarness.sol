@@ -12,4 +12,8 @@ contract MetaMorphoHarness is MetaMorpho {
         string memory _name,
         string memory _symbol
     ) MetaMorpho(owner, morpho, initialTimelock, _asset, _name, _symbol) {}
+
+    function balanceOf(address token, address user) external view returns (uint256) {
+        return IERC20(token).balanceOf(user);
+    }
 }
