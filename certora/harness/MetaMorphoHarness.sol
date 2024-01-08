@@ -16,4 +16,12 @@ contract MetaMorphoHarness is MetaMorpho {
     function maxFee() external view returns (uint256) {
         return ConstantsLib.MAX_FEE;
     }
+
+    function minTimelock() external view returns (uint256) {
+        return ConstantsLib.MIN_TIMELOCK;
+    }
+
+    function maxTimelock() external view returns (uint256) {
+        return ConstantsLib.MAX_TIMELOCK;
+    }
 }
