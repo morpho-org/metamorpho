@@ -145,6 +145,7 @@ If an enabled market is considered unsafe (e.g., risk too high), the curator/own
 
 - Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
 - Set the cap of the market to 0 with the `submitCap` function.
+  To ensure that submit cap does not revert because of a pending cap, it is recommended to batch the two previous transactions, for example using the multicall function of MetaMorpho.
 - Withdraw all the supply of this market with the `reallocate` function.
   If there is not enough liquidity on the market, remove the maximum available liquidity with the `reallocate` function, then put the market at the beginning of the withdraw queue (with the `updateWithdrawQueue` function).
 - Once all the supply has been removed from the market, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
@@ -155,9 +156,12 @@ If an enabled market starts reverting, many of the vault functions would revert 
 
 - Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
 - Set the cap of the market to 0 with the `submitCap` function.
+  To ensure that submit cap does not revert because of a pending cap, it is recommended to batch the two previous transactions, for example using the multicall function of MetaMorpho.
 - Submit a removal of the market with the `submitMarketRemoval` function.
 - Wait for the timelock to elapse
 - Once the timelock has elapsed, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
+
+Warning : Funds supplied in forced removed markets will be lost, this why only reverting market should be disabled this way (because funds supplied in such markets can be considered lost anyway).
 
 ### Curator takeover
 
