@@ -13,15 +13,19 @@ contract MetaMorphoHarness is MetaMorpho {
         string memory _symbol
     ) MetaMorpho(owner, morpho, initialTimelock, _asset, _name, _symbol) {}
 
-    function maxFee() external view returns (uint256) {
-        return ConstantsLib.MAX_FEE;
-    }
-
     function minTimelock() external view returns (uint256) {
         return ConstantsLib.MIN_TIMELOCK;
     }
 
     function maxTimelock() external view returns (uint256) {
         return ConstantsLib.MAX_TIMELOCK;
+    }
+
+    function maxQueueLength() external view returns (uint256) {
+        return ConstantsLib.MAX_QUEUE_LENGTH;
+    }
+
+    function maxFee() external view returns (uint256) {
+        return ConstantsLib.MAX_FEE;
     }
 }

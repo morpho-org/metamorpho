@@ -4,11 +4,14 @@ methods {
 
     function pendingTimelock() external returns(uint192, uint64) envfree;
     function timelock() external returns (uint256) envfree;
+    function supplyQueueLength() external returns(uint256) envfree;
+    function withdrawQueueLength() external returns(uint256) envfree;
     function fee() external returns (uint96) envfree;
 
-    function maxFee() external returns (uint256) envfree;
     function minTimelock() external returns (uint256) envfree;
     function maxTimelock() external returns (uint256) envfree;
+    function maxQueueLength() external returns (uint256) envfree;
+    function maxFee() external returns (uint256) envfree;
 }
 
 invariant feeInRange()
@@ -32,3 +35,9 @@ invariant timelockInRange()
         require isPendingTimelockInRange();
     }
 }
+
+invariant supplyQueueLengthInRange()
+    supplyQueueLength() <= maxQueueLength();
+
+invariant withdrawQueueLengthInRange()
+    withdrawQueueLength() <= maxQueueLength();
