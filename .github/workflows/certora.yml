@@ -39,7 +39,7 @@ jobs:
       - name: Apply munging
         run: make -C certora munged
 
-      - name: Verify rule ${{ matrix.script }}
+      - name: Verify rule ${{ matrix.conf }}
         run: certoraRun certora/confs/${{ matrix.conf }}.conf
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
