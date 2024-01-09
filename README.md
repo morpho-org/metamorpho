@@ -48,7 +48,7 @@ It can:
 - Set the rewards recipient.
 - Increase the timelock.
 - [Timelocked] Decrease the timelock.
-- [Timelocked] Set the guardian.
+- [Timelocked if already set] Set the guardian.
 - Set the performance fee (capped at 50%).
 - Set the fee recipient.
 
