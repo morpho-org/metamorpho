@@ -51,7 +51,7 @@ const commonCompilerSettings : any = {
     runs: 200,
   },
   viaIR: true,
-  evmVersion: "berlin",
+  evmVersion: "paris",
 }
 
 const config: HardhatUserConfig = {
