@@ -45,7 +45,7 @@ BigInt.prototype.toSharesDown = function (totalAssets: BigNumberish, totalShares
   return toSharesDown(this as bigint, totalAssets, totalShares);
 };
 
-const commonCompilerSettings : any = {
+const commonCompilerSettings: any = {
   optimizer: { 
     enabled: true,
     runs: 200,
