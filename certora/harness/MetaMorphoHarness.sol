@@ -16,4 +16,20 @@ contract MetaMorphoHarness is MetaMorpho {
     function balanceOf(address token, address user) external view returns (uint256) {
         return IERC20(token).balanceOf(user);
     }
+
+    function minTimelock() external view returns (uint256) {
+        return ConstantsLib.MIN_TIMELOCK;
+    }
+
+    function maxTimelock() external view returns (uint256) {
+        return ConstantsLib.MAX_TIMELOCK;
+    }
+
+    function maxQueueLength() external view returns (uint256) {
+        return ConstantsLib.MAX_QUEUE_LENGTH;
+    }
+
+    function maxFee() external view returns (uint256) {
+        return ConstantsLib.MAX_FEE;
+    }
 }
