@@ -24,6 +24,11 @@ broadcast/
 # Node.js
 node_modules/
 
+# Certora
+.certora**
+emv-*-certora*
+certora/munged/
+
 # Hardhat
 /types
 /cache_hardhat
