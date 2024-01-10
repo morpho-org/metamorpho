@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+import "ConsistentState.spec";
+
 using MorphoHarness as Morpho;
 
 methods {
@@ -87,6 +89,11 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
     address oldGuardian = guardian();
     uint64 pendingGuardianValidAt;
     _, pendingGuardianValidAt = pendingGuardian();
+
+    // Safe require as it corresponds to year 2262.
+    require e.block.timestamp < 2^63;
+    // Safe require because it is a verified invariant.
+    require isPendingTimelockInRange();
 
     submitGuardian@withrevert(e, newGuardian);
 
