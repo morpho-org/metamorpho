@@ -64,31 +64,15 @@ invariant noBadPendingTimelock()
     }
 }
 
-function isDifferentPendingTimelock() returns bool {
+function isSmallerPendingTimelock() returns bool {
     uint192 pendingValue;
     pendingValue, _ = pendingTimelock();
 
-    return assert_uint256(pendingValue) != timelock();
+    return assert_uint256(pendingValue) < timelock();
 }
 
-invariant differentPendingTimelock()
-    isDifferentPendingTimelock()
-{
-    preserved {
-        requireInvariant pendingTimelockInRange();
-        requireInvariant timelockInRange();
-    }
-}
-
-function isGreaterPendingTimelock() returns bool {
-    uint192 pendingValue;
-    pendingValue, _ = pendingTimelock();
-
-    return assert_uint256(pendingValue) != 0 => assert_uint256(pendingValue) != timelock();
-}
-
-invariant greaterPendingTimelock()
-    isGreaterPendingTimelock()
+invariant smallerPendingTimelock()
+    isSmallerPendingTimelock()
 {
     preserved {
         requireInvariant pendingTimelockInRange();
@@ -152,5 +136,5 @@ function isDifferentPendingGuardian() returns bool {
     return pendingValue != 0 => pendingValue != guardian();
 }
 
-invariant isDifferentPendingGuardian()
+invariant differentPendingGuardian()
     isDifferentPendingGuardian();
