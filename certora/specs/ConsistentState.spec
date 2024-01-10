@@ -3,19 +3,20 @@ methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
     function pendingTimelock() external returns(uint192, uint64) envfree;
-    function timelock() external returns (uint256) envfree;
-    function guardian() external returns (address) envfree;
+    function timelock() external returns(uint256) envfree;
+    function guardian() external returns(address) envfree;
     function pendingGuardian() external returns(address, uint64) envfree;
     function pendingCap(MetaMorphoHarness.Id) external returns(uint192, uint64) envfree;
     function config(MetaMorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function supplyQueueLength() external returns(uint256) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
-    function fee() external returns (uint96) envfree;
+    function fee() external returns(uint96) envfree;
+    function feeRecipient() external returns(address) envfree;
 
-    function minTimelock() external returns (uint256) envfree;
-    function maxTimelock() external returns (uint256) envfree;
-    function maxQueueLength() external returns (uint256) envfree;
-    function maxFee() external returns (uint256) envfree;
+    function minTimelock() external returns(uint256) envfree;
+    function maxTimelock() external returns(uint256) envfree;
+    function maxQueueLength() external returns(uint256) envfree;
+    function maxFee() external returns(uint256) envfree;
 }
 
 invariant feeInRange()
@@ -138,3 +139,6 @@ function isDifferentPendingGuardian() returns bool {
 
 invariant differentPendingGuardian()
     isDifferentPendingGuardian();
+
+invariant noFeeToUnsetFeeRecipient()
+    feeRecipient() == 0 => fee() == 0;
