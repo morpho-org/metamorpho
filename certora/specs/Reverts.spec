@@ -78,7 +78,7 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
     address owner = owner();
     address oldGuardian = guardian();
     address pendingGuardianValidAt;
-    pendingGuardianValidAt, _ = pendingGuardian();
+    _, pendingGuardianValidAt = pendingGuardian();
 
     submitGuardian@withrevert(e, newGuardian);
 
