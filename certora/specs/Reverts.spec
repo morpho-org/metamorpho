@@ -115,6 +115,8 @@ rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
     uint256 removableAt;
     supplyCap, _, removableAt = config(id);
 
+    submitCap@withrevert(e, marketParams, newSupplyCap);
+
     assert marketParams.loanToken != asset ||
            lastUpdate == 0 ||
            pendingCapValidAt != 0 ||
