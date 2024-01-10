@@ -20,6 +20,14 @@ methods {
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
 }
 
+function hasCuratorRole(address user) returns bool {
+    return user == owner() || user == curator();
+}
+
+function hasAllocatorRole(address user) returns bool {
+    return user == owner() || user == curator() || isAllocator(user);
+}
+
 rule setCuratorRevertCondition(env e, address newCurator) {
     address owner = owner();
     address oldCurator = curator();
@@ -107,20 +115,84 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
 rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams, uint256 newSupplyCap) {
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
+    bool hasCuratorRole = hasCuratorRole(e.msg.sender);
     address asset = asset();
     uint256 lastUpdate = Morpho.lastUpdate(id);
     uint256 pendingCapValidAt;
     _, pendingCapValidAt = pendingCap(id);
-    uint256 supplyCap;
-    uint256 removableAt;
+    uint184 supplyCap;
+    uint64 removableAt;
     supplyCap, _, removableAt = config(id);
 
     submitCap@withrevert(e, marketParams, newSupplyCap);
 
-    assert marketParams.loanToken != asset ||
+    assert e.msg.value != 0 ||
+           hasCuratorRole ||
+           marketParams.loanToken != asset ||
            lastUpdate == 0 ||
            pendingCapValidAt != 0 ||
            removableAt != 0 ||
-           newSupplyCap == supplyCap
+           newSupplyCap == assert_uint256(supplyCap)
+        => lastReverted;
+}
+
+rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams) {
+    MorphoHarness.Id id = Morpho.libId(marketParams);
+
+    bool hasCuratorRole = hasCuratorRole(e.msg.sender);
+    uint184 supplyCap;
+    bool enabled;
+    uint64 oldRemovableAt;
+    supplyCap, enabled, oldRemovableAt = config(id);
+
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+    // Safe require as it corresponds to year 2262.
+    require e.block.timestamp < 2^63;
+
+    submitMarketRemoval@withrevert(e, marketParams);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !hasCuratorRole ||
+        supplyCap != 0 ||
+        !enabled ||
+        oldRemovableAt != 0;
+}
+
+rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
+    bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
+    uint256 maxQueueLength = maxQueueLength();
+    uint256 i;
+    uint184 anyCap;
+    anyCap, _, _ = config(newSupplyQueue[i]);
+
+    assert e.msg.value != 0 ||
+           !hasAllocatorRole ||
+           newSupplyQueue.length > maxQueueLength ||
+           anyCap == 0
+        => lastReverted;
+}
+
+rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
+    bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
+    uint256 i;
+    uint256 j;
+    uint256 anyIndex = indexes[i];
+    uint256 oldLength = withdrawQueueLength();
+    uint256 anyOtherIndex = indexes[j];
+
+    assert e.msg.value != 0 ||
+           !hasAllocatorRole ||
+           anyIndex > oldLength ||
+           (i != j && anyOtherIndex == anyIndex)
+        => lastReverted;
+}
+
+rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation allocations) {
+    bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
+
+    assert e.msg.value != 0 ||
+           !hasAllocatorRole
         => lastReverted;
 }
