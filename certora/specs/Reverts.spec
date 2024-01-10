@@ -77,8 +77,8 @@ rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
 rule submitGuardianRevertCondition(env e, address newGuardian) {
     address owner = owner();
     address oldGuardian = guardian();
-    address pendingGuardian;
-    pendingGuardian, _ = pendingGuardian();
+    address pendingGuardianValidAt;
+    pendingGuardianValidAt, _ = pendingGuardian();
 
     submitGuardian@withrevert(e, newGuardian);
 
@@ -86,5 +86,5 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
         e.msg.value != 0 ||
         e.msg.sender != owner ||
         newGuardian == oldGuardian ||
-        pendingGuardian != 0;
+        pendingGuardianValidAt != 0;
 }
