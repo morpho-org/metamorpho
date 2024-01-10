@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+using MorphoHarness as Morpho;
+
 methods {
+    function asset() external returns(address) envfree;
     function owner() external returns(address) envfree;
     function curator() external returns(address) envfree;
     function isAllocator(address) external returns(bool) envfree;
@@ -8,6 +11,11 @@ methods {
     function feeRecipient() external returns(address) envfree;
     function guardian() external returns(address) envfree;
     function pendingGuardian() external returns(address, uint64) envfree;
+    function config(MorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
+    function pendingCap(MorphoHarness.Id) external returns(uint192, uint64) envfree;
+
+    function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
+    function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
 }
 
 rule setCuratorRevertCondition(env e, address newCurator) {
@@ -77,7 +85,7 @@ rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
 rule submitGuardianRevertCondition(env e, address newGuardian) {
     address owner = owner();
     address oldGuardian = guardian();
-    address pendingGuardianValidAt;
+    uint64 pendingGuardianValidAt;
     _, pendingGuardianValidAt = pendingGuardian();
 
     submitGuardian@withrevert(e, newGuardian);
@@ -87,4 +95,23 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
         e.msg.sender != owner ||
         newGuardian == oldGuardian ||
         pendingGuardianValidAt != 0;
+}
+
+rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams, uint256 newSupplyCap) {
+    MorphoHarness.Id id = Morpho.libId(marketParams);
+
+    address asset = asset();
+    uint256 lastUpdate = Morpho.lastUpdate(id);
+    uint256 pendingCapValidAt;
+    _, pendingCapValidAt = pendingCap(id);
+    uint256 supplyCap;
+    uint256 removableAt;
+    supplyCap, _, removableAt = config(id);
+
+    assert marketParams.loanToken != asset ||
+           lastUpdate == 0 ||
+           pendingCapValidAt != 0 ||
+           removableAt != 0 ||
+           newSupplyCap == supplyCap
+        => lastReverted;
 }
