@@ -28,6 +28,10 @@ function hasAllocatorRole(address user) returns bool {
     return user == owner() || user == curator() || isAllocator(user);
 }
 
+function hasGuardianRole(address user) returns bool {
+    return user == owner() || user == guardian();
+}
+
 rule setCuratorRevertCondition(env e, address newCurator) {
     address owner = owner();
     address oldCurator = curator();
@@ -127,7 +131,7 @@ rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
     submitCap@withrevert(e, marketParams, newSupplyCap);
 
     assert e.msg.value != 0 ||
-           hasCuratorRole ||
+           !hasCuratorRole ||
            marketParams.loanToken != asset ||
            lastUpdate == 0 ||
            pendingCapValidAt != 0 ||
@@ -140,6 +144,8 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
+    uint256 pendingCapValidAt;
+    _, pendingCapValidAt = pendingCap(id);
     uint184 supplyCap;
     bool enabled;
     uint64 oldRemovableAt;
@@ -155,6 +161,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     assert lastReverted <=>
         e.msg.value != 0 ||
         !hasCuratorRole ||
+        pendingCapValidAt != 0 ||
         supplyCap != 0 ||
         !enabled ||
         oldRemovableAt != 0;
@@ -189,10 +196,42 @@ rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
         => lastReverted;
 }
 
-rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation allocations) {
+rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation[] allocations) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
+
+    reallocate@withrevert(e, allocations);
 
     assert e.msg.value != 0 ||
            !hasAllocatorRole
         => lastReverted;
+}
+
+rule revokePendingTimelockRevertCondition(env e) {
+    bool hasGuardianRole = hasGuardianRole(e.msg.sender);
+
+    revokePendingTimelock@withrevert(e);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !hasGuardianRole;
+}
+
+rule revokePendingGuardianRevertCondition(env e) {
+    bool hasGuardianRole = hasGuardianRole(e.msg.sender);
+
+    revokePendingGuardian@withrevert(e);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !hasGuardianRole;
+}
+
+rule revokePendingCapRevertCondition(env e, MorphoHarness.Id id) {
+    bool hasGuardianRole = hasGuardianRole(e.msg.sender);
+
+    revokePendingCap@withrevert(e, id);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !hasGuardianRole;
 }
