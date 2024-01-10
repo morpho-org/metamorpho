@@ -9,16 +9,12 @@ methods {
     function curator() external returns(address) envfree;
     function isAllocator(address) external returns(bool) envfree;
     function skimRecipient() external returns(address) envfree;
-    function fee() external returns(uint96) envfree;
-    function feeRecipient() external returns(address) envfree;
-    function guardian() external returns(address) envfree;
-    function pendingGuardian() external returns(address, uint64) envfree;
-    function config(MorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
-    function pendingCap(MorphoHarness.Id) external returns(uint192, uint64) envfree;
 
     function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
 }
+
+use invariant timelockInRange;
 
 rule setCuratorRevertCondition(env e, address newCurator) {
     address owner = owner();
@@ -90,10 +86,9 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
     uint64 pendingGuardianValidAt;
     _, pendingGuardianValidAt = pendingGuardian();
 
+    requireInvariant timelockInRange();
     // Safe require as it corresponds to year 2262.
     require e.block.timestamp < 2^63;
-    // Safe require because it is a verified invariant.
-    require isPendingTimelockInRange();
 
     submitGuardian@withrevert(e, newGuardian);
 
