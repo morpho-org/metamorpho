@@ -46,32 +46,32 @@ rule setSkimRecipientRevertCondition(env e, address newSkimRecipient) {
         newSkimRecipient == oldSkimRecipient;
 }
 
-rule setFeeRevertCondition(env e, uint256 newFee) {
+rule setFeeRevertInputValidation(env e, uint256 newFee) {
     address owner = owner();
     uint96 oldFee = fee();
     address feeRecipient = feeRecipient();
 
     setFee@withrevert(e, newFee);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        e.msg.sender != owner ||
-        newFee == assert_uint256(oldFee) ||
-        (newFee != 0 && feeRecipient == 0);
+    assert e.msg.value != 0 ||
+           e.msg.sender != owner ||
+           newFee == assert_uint256(oldFee) ||
+           (newFee != 0 && feeRecipient == 0)
+        => lastReverted;
 }
 
-rule setFeeRecipientRevertCondition(env e, address newFeeRecipient) {
+rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
     address owner = owner();
     uint96 fee = fee();
     address oldFeeRecipient = feeRecipient();
 
     setFeeRecipient@withrevert(e, newFeeRecipient);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        e.msg.sender != owner ||
-        newFeeRecipient == oldFeeRecipient ||
-        (fee != 0 && newFeeRecipient == 0);
+    assert e.msg.value != 0 ||
+           e.msg.sender != owner ||
+           newFeeRecipient == oldFeeRecipient ||
+           (fee != 0 && newFeeRecipient == 0)
+        => lastReverted;
 }
 
 rule submitGuardianRevertCondition(env e, address newGuardian) {
