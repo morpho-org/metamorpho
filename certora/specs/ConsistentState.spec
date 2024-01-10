@@ -33,8 +33,12 @@ function isPendingTimelockInRange() returns bool {
 invariant pendingTimelockInRange()
     isPendingTimelockInRange();
 
+function isTimelockInRange() returns bool {
+    return timelock() <= maxTimelock() && timelock() >= minTimelock();
+}
+
 invariant timelockInRange()
-    timelock() <= maxTimelock() && timelock() >= minTimelock()
+    isTimelockInRange()
 {
     preserved {
         requireInvariant pendingTimelockInRange();

@@ -90,10 +90,10 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
     uint64 pendingGuardianValidAt;
     _, pendingGuardianValidAt = pendingGuardian();
 
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
     // Safe require as it corresponds to year 2262.
     require e.block.timestamp < 2^63;
-    // Safe require because it is a verified invariant.
-    require isPendingTimelockInRange();
 
     submitGuardian@withrevert(e, newGuardian);
 
