@@ -12,11 +12,11 @@ methods {
     function _.supplyShares(MetaMorphoHarness.Id, address) external => AUTO;
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => AUTO;
     function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => AUTO;
-    function _.lasUpdate(MetaMorphoHarness.Id) external => NONDET;
+    function _.lastUpdate(MetaMorphoHarness.Id) external => NONDET;
 
-    function _.balanceOf(address) external => NONDET;
+    function _.balanceOf(address) external => CONSTANT;
+    function allowance(address, address) internal returns(uint256) => CONSTANT;
 
-    function allowance(address, address) internal returns(uint256) => NONDET;
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
     function SafeERC20.safeTransferFrom(address, address, address, uint256) internal => CONSTANT;
 }
