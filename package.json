@@ -1,8 +1,8 @@
 {
-  "name": "metamorpho",
-  "description": "MetaMorpho",
+  "name": "@morpho-org/metamorpho",
+  "description": "MetaMorpho multicall encoder",
   "license": "GPL-2.0-or-later",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "bin": "lib/cli.js",
   "files": [
