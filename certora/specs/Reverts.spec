@@ -166,6 +166,7 @@ rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
     uint256 maxQueueLength = maxQueueLength();
     uint256 i;
+    require i < newSupplyQueue.length;
     uint184 anyCap;
     anyCap, _, _ = config(newSupplyQueue[i]);
 
@@ -181,7 +182,9 @@ rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
 rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
     uint256 i;
+    require i < indexes.length;
     uint256 j;
+    require j < indexes.length;
     uint256 anyIndex = indexes[i];
     uint256 oldLength = withdrawQueueLength();
     uint256 anyOtherIndex = indexes[j];
