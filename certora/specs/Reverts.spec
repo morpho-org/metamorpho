@@ -299,7 +299,7 @@ rule acceptCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
         pendingCapValidAt > e.block.timestamp;
 }
 
-rule skimInputValidation(env e, address token) {
+rule skimRevertCondition(env e, address token) {
     address skimRecipient = skimRecipient();
 
     skim@withrevert(e, token);
@@ -308,3 +308,5 @@ rule skimInputValidation(env e, address token) {
         e.msg.value != 0 ||
         skimRecipient == 0;
 }
+
+// The mint, deposit, withdraw and redeem functions do not require to validate their input.
