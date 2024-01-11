@@ -16,7 +16,7 @@ methods {
 
     function _.balanceOf(address) external => NONDET;
 
-    function allowance(address, address) internal => NONDET;
+    function allowance(address, address) internal returns(uint256) => NONDET;
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
     function SafeERC20.safeTransferFrom(address, address, address, uint256) internal => CONSTANT;
 }
