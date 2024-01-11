@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
-    function asset() external returns (address) envfree;
-    function MORPHO() external returns (address) envfree;
+    function asset() external returns(address) envfree;
+    function MORPHO() external returns(address) envfree;
 
     function balanceOf(address, address) external returns(uint256) envfree;
     function transferFrom(address, address, address, uint256) external envfree;
