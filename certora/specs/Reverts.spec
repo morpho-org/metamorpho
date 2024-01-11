@@ -16,6 +16,12 @@ methods {
     function config(MorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function pendingCap(MorphoHarness.Id) external returns(uint192, uint64) envfree;
 
+    function _.transfer(address, uint256) external => DISPATCHER(true);
+    function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
+    function _.balanceOf(address) external => DISPATCHER(true);
+    function _.allowance(address, address) external => DISPATCHER(true);
+    function _.totalSupply() external => DISPATCHER(true);
+
     function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
 }
@@ -242,4 +248,63 @@ rule revokePendingCapRevertCondition(env e, MorphoHarness.Id id) {
     assert lastReverted <=>
         e.msg.value != 0 ||
         !(hasGuardianRole || hasCuratorRole);
+}
+
+rule revokePendingMarketRemovalRevertCondition(env e, MorphoHarness.Id id) {
+    bool hasGuardianRole = hasGuardianRole(e.msg.sender);
+    bool hasCuratorRole = hasCuratorRole(e.msg.sender);
+
+    revokePendingMarketRemoval@withrevert(e, id);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !(hasGuardianRole || hasCuratorRole);
+}
+
+rule acceptTimelockRevertCondition(env e) {
+    uint256 pendingTimelockValidAt;
+    _, pendingTimelockValidAt = pendingTimelock();
+
+    acceptTimelock@withrevert(e);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        pendingTimelockValidAt == 0 ||
+        pendingTimelockValidAt > e.block.timestamp;
+}
+
+rule acceptGuardianRevertCondition(env e) {
+    uint256 pendingGuardianValidAt;
+    _, pendingGuardianValidAt = pendingGuardian();
+
+    acceptGuardian@withrevert(e);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        pendingGuardianValidAt == 0 ||
+        pendingGuardianValidAt > e.block.timestamp;
+}
+
+rule acceptCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams) {
+    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+
+    uint256 pendingCapValidAt;
+    _, pendingCapValidAt = pendingCap(id);
+
+    acceptCap@withrevert(e, marketParams);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        pendingCapValidAt == 0 ||
+        pendingCapValidAt > e.block.timestamp;
+}
+
+rule skimInputValidation(env e, address token) {
+    address skimRecipient = skimRecipient();
+
+    skim@withrevert(e, token);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        skimRecipient == 0;
 }
