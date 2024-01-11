@@ -3,16 +3,20 @@ methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
     function owner() external returns(address) envfree;
+    function pendingOwner() external returns(address) envfree;
     function curator() external returns(address) envfree;
     function guardian() external returns(address) envfree;
     function isAllocator(address target) external returns(bool) envfree;
 
-    function _.idToMarketParams(MetaMorphoHarness.Id) external => AUTO;
+    function _.idToMarketParams(MetaMorphoHarness.Id) external => NONDET;
     function _.supplyShares(MetaMorphoHarness.Id, address) external => AUTO;
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => AUTO;
+    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => AUTO;
+    function _.lasUpdate(MetaMorphoHarness.Id) external => NONDET;
 
     function _.balanceOf(address) external => NONDET;
 
+    function allowance(address, address) internal => NONDET;
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
     function SafeERC20.safeTransferFrom(address, address, address, uint256) internal => CONSTANT;
 }
@@ -34,6 +38,7 @@ filtered {
     require isAllocator(e1.msg.sender);
     require e1.msg.sender != owner();
     require e1.msg.sender != guardian();
+    require e1.msg.sender != pendingOwner();
     f@withrevert(e1, args) at initial;
     bool revertedAllocator = lastReverted;
 
