@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
+    function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
+    function transferFrom(address, address, address, uint256) external => NONDET DELETE;
+
     function owner() external returns address envfree;
     function curator() external returns address envfree;
     function guardian() external returns address envfree;
@@ -28,7 +31,6 @@ filtered {
     && f.selector != sig:reallocate(MetaMorphoHarness.MarketAllocation[]).selector
     && f.selector != sig:mint(uint256, address).selector
     && f.selector != sig:withdraw(uint256, address, address).selector
-    && f.selector != sig:multicall(bytes[]).selector
     && f.selector != sig:submitCap(MetaMorphoHarness.MarketParams, uint256).selector
     && f.selector != sig:acceptOwnership().selector
 }

@@ -21,19 +21,19 @@ contract MetaMorphoHarness is MetaMorpho {
         IERC20(token).transferFrom(from, to, amount);
     }
 
-    function minTimelock() external view returns (uint256) {
+    function minTimelock() external pure returns (uint256) {
         return ConstantsLib.MIN_TIMELOCK;
     }
 
-    function maxTimelock() external view returns (uint256) {
+    function maxTimelock() external pure returns (uint256) {
         return ConstantsLib.MAX_TIMELOCK;
     }
 
-    function maxQueueLength() external view returns (uint256) {
+    function maxQueueLength() external pure returns (uint256) {
         return ConstantsLib.MAX_QUEUE_LENGTH;
     }
 
-    function maxFee() external view returns (uint256) {
+    function maxFee() external pure returns (uint256) {
         return ConstantsLib.MAX_FEE;
     }
 }
