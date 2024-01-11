@@ -11,5 +11,8 @@
     "declaration": true
   },
   "include": ["pkg", "test/hardhat", "types"],
-  "files": ["hardhat.config.ts"]
+  "files": ["hardhat.config.ts"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }
