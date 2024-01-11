@@ -45,15 +45,6 @@ BigInt.prototype.toSharesDown = function (totalAssets: BigNumberish, totalShares
   return toSharesDown(this as bigint, totalAssets, totalShares);
 };
 
-const commonCompilerSettings: any = {
-  optimizer: { 
-    enabled: true,
-    runs: 200,
-  },
-  viaIR: true,
-  evmVersion: "paris",
-}
-
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -76,11 +67,25 @@ const config: HardhatUserConfig = {
     compilers: [
       {
         version: "0.8.21",
-        settings: commonCompilerSettings,
+        settings: {
+          optimizer: { 
+            enabled: true,
+            runs: 200,
+          },
+          viaIR: true,
+          evmVersion: "paris",
+        }
       },
       {
         version: "0.8.19",
-        settings: commonCompilerSettings,
+        settings: {
+          optimizer: { 
+            enabled: true,
+            runs: 999999,
+          },
+          viaIR: true,
+          evmVersion: "paris",
+        }
       }
     ],
   },
