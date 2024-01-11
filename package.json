@@ -1,6 +1,6 @@
 {
-  "name": "morpho-stack",
-  "description": "Morpho Stack Contracts",
+  "name": "metamorpho",
+  "description": "MetaMorpho",
   "license": "GPL-2.0-or-later",
   "version": "1.0.0",
   "main": "lib/index.js",
@@ -9,12 +9,11 @@
     "lib/**/*"
   ],
   "scripts": {
-    "prepare": "husky install",
-    "postinstall": "forge install",
+    "prepare": "husky install && forge install",
     "build:forge": "FOUNDRY_PROFILE=build forge build",
     "build:hardhat": "hardhat compile",
     "build:blue": "cd lib/morpho-blue/ && yarn build:forge && cd ../..",
-    "build:irm": "cd lib/morpho-blue-irm/ && forge build && cd ../..",
+    "build:irm": "cd lib/morpho-blue-irm/ && yarn build:forge && cd ../..",
     "typecheck": "tsc --noEmit",
     "test:forge": "yarn build:blue && FOUNDRY_PROFILE=test forge test",
     "test:hardhat": "yarn build:blue && yarn build:irm && hardhat test",
@@ -28,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/morpho-labs/morpho-stack.git"
+    "url": "git+https://github.com/morpho-org/metamorpho.git"
   },
   "author": {
     "name": "Morpho Labs",
@@ -36,9 +35,9 @@
     "url": "https://github.com/morpho-labs"
   },
   "bugs": {
-    "url": "https://github.com/morpho-labs/morpho-stack/issues"
+    "url": "https://github.com/morpho-org/metamorpho/issues"
   },
-  "homepage": "https://github.com/morpho-labs/morpho-stack#readme",
+  "homepage": "https://github.com/morpho-org/metamorpho#readme",
   "dependencies": {
     "ethers": "^6.9.0",
     "ethers-maths": "^5.0.2",

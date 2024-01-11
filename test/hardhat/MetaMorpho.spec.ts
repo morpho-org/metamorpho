@@ -1,7 +1,7 @@
 import { AbiCoder, MaxUint256, ZeroAddress, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, OracleMock, MetaMorpho, IIrm, IMorpho, MetaMorphoFactory, MetaMorpho__factory } from "types";
+import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IIrm } from "types";
 import { MarketParamsStruct } from "types/src/MetaMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -222,10 +222,10 @@ describe("MetaMorpho", () => {
 
     await forwardTimestamp(timelock);
 
-    await metaMorpho.connect(admin).acceptCap(identifier(idleParams));
+    await metaMorpho.connect(admin).acceptCap(idleParams);
 
     for (const marketParams of allMarketParams) {
-      await metaMorpho.connect(admin).acceptCap(identifier(marketParams));
+      await metaMorpho.connect(admin).acceptCap(marketParams);
     }
 
     await metaMorpho.connect(curator).setSupplyQueue(

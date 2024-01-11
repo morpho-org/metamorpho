@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
+import {IMetaMorpho} from "./interfaces/IMetaMorpho.sol";
+import {IMetaMorphoFactory} from "./interfaces/IMetaMorphoFactory.sol";
+
 import {EventsLib} from "./libraries/EventsLib.sol";
 import {ErrorsLib} from "./libraries/ErrorsLib.sol";
 
@@ -10,15 +13,15 @@ import {MetaMorpho} from "./MetaMorpho.sol";
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org
 /// @notice This contract allows to create MetaMorpho vaults, and to index them easily.
-contract MetaMorphoFactory {
+contract MetaMorphoFactory is IMetaMorphoFactory {
     /* IMMUTABLES */
 
-    /// @notice The address of the Morpho contract.
+    /// @inheritdoc IMetaMorphoFactory
     address public immutable MORPHO;
 
     /* STORAGE */
 
-    /// @notice Whether a MetaMorpho vault was created with the factory.
+    /// @inheritdoc IMetaMorphoFactory
     mapping(address => bool) public isMetaMorpho;
 
     /* CONSTRUCTOR */
@@ -33,13 +36,7 @@ contract MetaMorphoFactory {
 
     /* EXTERNAL */
 
-    /// @notice Creates a new MetaMorpho vault.
-    /// @param initialOwner The owner of the vault.
-    /// @param initialTimelock The initial timelock of the vault.
-    /// @param asset The address of the underlying asset.
-    /// @param name The name of the vault.
-    /// @param symbol The symbol of the vault.
-    /// @param salt The salt to use for the MetaMorpho vault's CREATE2 address.
+    /// @inheritdoc IMetaMorphoFactory
     function createMetaMorpho(
         address initialOwner,
         uint256 initialTimelock,
@@ -47,8 +44,9 @@ contract MetaMorphoFactory {
         string memory name,
         string memory symbol,
         bytes32 salt
-    ) external returns (MetaMorpho metaMorpho) {
-        metaMorpho = new MetaMorpho{salt: salt}(initialOwner, MORPHO, initialTimelock, asset, name, symbol);
+    ) external returns (IMetaMorpho metaMorpho) {
+        metaMorpho =
+            IMetaMorpho(address(new MetaMorpho{salt: salt}(initialOwner, MORPHO, initialTimelock, asset, name, symbol)));
 
         isMetaMorpho[address(metaMorpho)] = true;
 

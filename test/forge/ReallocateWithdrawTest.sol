@@ -59,7 +59,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         assertEq(_idle(), INITIAL_DEPOSIT, "idle");
     }
 
-    function testReallocateWithdrawInconsistentAsset() public {
+    function testReallocateWithdrawMarketNotEnabled() public {
         ERC20Mock loanToken2 = new ERC20Mock("loan2", "B2");
         allMarkets[0].loanToken = address(loanToken2);
 
@@ -75,7 +75,7 @@ contract ReallocateWithdrawTest is IntegrationTest {
         allocations.push(MarketAllocation(allMarkets[0], 0));
 
         vm.prank(ALLOCATOR);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.InconsistentAsset.selector, allMarkets[0].id()));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsLib.MarketNotEnabled.selector, allMarkets[0].id()));
         vault.reallocate(allocations);
     }
 
