@@ -9,10 +9,11 @@ methods {
     function isAllocator(address target) external returns(bool) envfree;
 
     function _.idToMarketParams(MetaMorphoHarness.Id) external => NONDET;
-    function _.supplyShares(MetaMorphoHarness.Id, address) external => AUTO;
-    function _.accrueInterest(MetaMorphoHarness.MarketParams) external => AUTO;
-    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => AUTO;
-    function _.lastUpdate(MetaMorphoHarness.Id) external => NONDET;
+    function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
+    function _.accrueInterest(MetaMorphoHarness.MarketParams) external => CONSTANT;
+    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => CONSTANT;
+    function _.lastUpdate(MetaMorphoHarness.Id) external => CONSTANT;
+    function _.market(MetaMorphoHarness.Id) external => CONSTANT;
 
     function _.balanceOf(address) external => CONSTANT;
     function allowance(address, address) internal returns(uint256) => CONSTANT;
