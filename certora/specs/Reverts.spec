@@ -227,10 +227,11 @@ rule revokePendingGuardianRevertCondition(env e) {
 
 rule revokePendingCapRevertCondition(env e, MorphoHarness.Id id) {
     bool hasGuardianRole = hasGuardianRole(e.msg.sender);
+    bool hasCuratorRole = hasCuratorRole(e.msg.sender);
 
     revokePendingCap@withrevert(e, id);
 
     assert lastReverted <=>
         e.msg.value != 0 ||
-        !hasGuardianRole;
+        !(hasGuardianRole || hasCuratorRole);
 }
