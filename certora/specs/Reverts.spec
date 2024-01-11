@@ -17,10 +17,9 @@ methods {
     function pendingCap(MorphoHarness.Id) external returns(uint192, uint64) envfree;
 
     function _.transfer(address, uint256) external => DISPATCHER(true);
-    function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
-    function _.allowance(address, address) external => DISPATCHER(true);
-    function _.totalSupply() external => DISPATCHER(true);
+    function totalSupply(address) external returns(uint256) envfree;
+    function balanceOf(address, address) external returns(uint256) envfree;
 
     function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
@@ -285,7 +284,7 @@ rule acceptGuardianRevertCondition(env e) {
         pendingGuardianValidAt > e.block.timestamp;
 }
 
-rule acceptCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams) {
+rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
     uint256 pendingCapValidAt;
@@ -293,14 +292,16 @@ rule acceptCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
 
     acceptCap@withrevert(e, marketParams);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        pendingCapValidAt == 0 ||
-        pendingCapValidAt > e.block.timestamp;
+    assert e.msg.value != 0 ||
+           pendingCapValidAt == 0 ||
+           pendingCapValidAt > e.block.timestamp
+        => lastReverted;
 }
 
 rule skimRevertCondition(env e, address token) {
     address skimRecipient = skimRecipient();
+
+    require skimRecipient != currentContract => balanceOf(token, skimRecipient) + balanceOf(token, currentContract) <= to_mathint(totalSupply(token));
 
     skim@withrevert(e, token);
 
