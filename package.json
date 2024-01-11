@@ -2,7 +2,7 @@
   "name": "metamorpho",
   "description": "MetaMorpho",
   "license": "GPL-2.0-or-later",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "lib/index.js",
   "bin": "lib/cli.js",
   "files": [
@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "prepare": "husky install && forge install",
+    "build:pkg": "yarn build:hardhat --force && tsc --build ./tsconfig.build.json",
     "build:forge": "FOUNDRY_PROFILE=build forge build",
     "build:hardhat": "hardhat compile",
     "build:blue": "cd lib/morpho-blue/ && yarn build:forge && cd ../..",
@@ -40,7 +41,7 @@
   "homepage": "https://github.com/morpho-org/metamorpho#readme",
   "dependencies": {
     "ethers": "^6.9.0",
-    "ethers-maths": "^5.0.2",
+    "evm-maths": "^6.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
