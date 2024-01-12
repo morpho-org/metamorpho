@@ -10,6 +10,7 @@ methods {
     function config(MetaMorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function supplyQueueLength() external returns(uint256) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
+    function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function fee() external returns (uint96) envfree;
 
     function minTimelock() external returns (uint256) envfree;
@@ -138,3 +139,16 @@ function isDifferentPendingGuardian() returns bool {
 
 invariant differentPendingGuardian()
     isDifferentPendingGuardian();
+
+function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
+    if(i >= withdrawQueueLength()) return true;
+
+    MetaMorphoHarness.Id id = withdrawQueue(i);
+    bool enabled;
+    _, enabled, _ = config(id);
+
+    return enabled;
+}
+
+invariant inWithdrawQueueIsEnabled(uint256 i)
+    isInWithdrawQueueIsEnabled(i);
