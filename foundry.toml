@@ -5,7 +5,7 @@ libs = ["lib"]
 evm_version = "paris"
 fs_permissions = [
     { access = "read", path = "./config/"},
-    { access = "read", path = "./lib/morpho-blue/out/"}
+    { access = "read", path = "./out/"}
 ]
 
 [profile.default.rpc_endpoints]

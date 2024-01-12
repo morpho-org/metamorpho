@@ -68,14 +68,25 @@ const config: HardhatUserConfig = {
       {
         version: "0.8.21",
         settings: {
-          optimizer: {
+          optimizer: { 
             enabled: true,
             runs: 200,
           },
           viaIR: true,
           evmVersion: "paris",
-        },
+        }
       },
+      {
+        version: "0.8.19",
+        settings: {
+          optimizer: { 
+            enabled: true,
+            runs: 999999,
+          },
+          viaIR: true,
+          evmVersion: "paris",
+        }
+      }
     ],
   },
   mocha: {
