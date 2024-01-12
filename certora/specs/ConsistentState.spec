@@ -11,6 +11,7 @@ methods {
     function supplyQueueLength() external returns(uint256) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
     function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
+    function withdrawRank(MetaMorphoHarness.Id) external returns(uint256) envfree;
     function fee() external returns (uint96) envfree;
 
     function minTimelock() external returns (uint256) envfree;
