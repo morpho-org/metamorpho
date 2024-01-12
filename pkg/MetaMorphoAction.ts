@@ -98,6 +98,24 @@ export class MetaMorphoAction {
   static reallocate(allocations: MarketAllocationStruct[]): MetaMorphoCall {
     return MetaMorphoAction.METAMORPHO_IFC.encodeFunctionData("reallocate", [allocations]);
   }
+
+  /* ERC4626 */
+
+  static mint(shares: BigNumberish, receiver: string): MetaMorphoCall {
+    return MetaMorphoAction.METAMORPHO_IFC.encodeFunctionData("mint", [shares, receiver]);
+  }
+
+  static deposit(assets: BigNumberish, receiver: string): MetaMorphoCall {
+    return MetaMorphoAction.METAMORPHO_IFC.encodeFunctionData("deposit", [assets, receiver]);
+  }
+
+  static withdraw(assets: BigNumberish, receiver: string, owner: string): MetaMorphoCall {
+    return MetaMorphoAction.METAMORPHO_IFC.encodeFunctionData("withdraw", [assets, receiver, owner]);
+  }
+
+  static redeem(shares: BigNumberish, receiver: string, owner: string): MetaMorphoCall {
+    return MetaMorphoAction.METAMORPHO_IFC.encodeFunctionData("redeem", [shares, receiver, owner]);
+  }
 }
 
 export default MetaMorphoAction;
