@@ -151,4 +151,20 @@ function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
 }
 
 invariant inWithdrawQueueIsEnabled(uint256 i)
-    isInWithdrawQueueIsEnabled(i);
+    isInWithdrawQueueIsEnabled(i)
+filtered {
+    f -> f.selector != sig:reallocate(MetaMorphoHarness.MarketAllocation[]).selector
+}
+
+rule inWithdrawQueueIsEnabledPreservedReallocate(env e, uint256 i, MetaMorphoHarness.MarketAllocation[] allocations) {
+    uint j;
+
+    require isInWithdrawQueueIsEnabled(j);
+
+    reallocate(e, allocations);
+
+    MetaMorphoHarness.Id id = withdrawQueue(i);
+    require j == withdrawRank(id);
+
+    assert isInWithdrawQueueIsEnabled(i);
+}
