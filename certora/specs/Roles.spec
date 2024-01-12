@@ -49,6 +49,7 @@ filtered {
     bool revertedAllocator = lastReverted;
 
     require e2.msg.sender == curator();
+    require e2.msg.sender != currentContract;
     f@withrevert(e2, args) at initial;
     bool revertedCurator = lastReverted;
 
