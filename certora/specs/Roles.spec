@@ -44,6 +44,7 @@ filtered {
     require e1.msg.sender != owner();
     require e1.msg.sender != guardian();
     require e1.msg.sender != pendingOwner();
+    require e1.msg.sender != currentContract;
     f@withrevert(e1, args) at initial;
     bool revertedAllocator = lastReverted;
 
