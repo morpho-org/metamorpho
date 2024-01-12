@@ -18,7 +18,7 @@ methods {
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => CONSTANT;
 
     function _.balanceOf(address) external => CONSTANT;
-    function balanceOf(address) internal => CONSTANT;
+    function balanceOf(address) internal returns(uint256) => CONSTANT;
     function allowance(address, address) internal returns(uint256) => CONSTANT;
 
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
