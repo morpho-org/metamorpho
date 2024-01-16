@@ -157,14 +157,20 @@ filtered {
     f -> f.selector != sig:updateWithdrawQueue(uint256[]).selector
 }
 
-rule inWithdrawQueueIsEnabledPreservedupdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
+invariant withdrawRankCorrect(MetaMorphoHarness.Id id)
+    withdrawRank(id) != 0 => withdrawQueue(withdrawRank(id)) == id;
+
+rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
     MetaMorphoHarness.Id id;
-    uint j = withdrawRank(id);
+    uint256 j = withdrawRank(id);
+
+    requireInvariant withdrawRankCorrect(j);
 
     require isInWithdrawQueueIsEnabled(j);
 
     updateWithdrawQueue(e, indexes);
 
+    // Safe require because id is not otherwise constrained.
     require id == withdrawQueue(i);
 
     assert isInWithdrawQueueIsEnabled(i);
