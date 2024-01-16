@@ -143,6 +143,10 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
     supplyCap, _, removableAt = config(id);
 
     // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+    // Safe require as it corresponds to year 2262.
+    require e.block.timestamp < 2^63;
+    // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(id);
 
     submitCap@withrevert(e, marketParams, newSupplyCap);
@@ -154,7 +158,8 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
         lastUpdate == 0 ||
         pendingCapValidAt != 0 ||
         removableAt != 0 ||
-        newSupplyCap == assert_uint256(supplyCap);
+        newSupplyCap == assert_uint256(supplyCap) ||
+        newSupplyCap >= 2^184;
 }
 
 // Check all the revert conditions of the submitMarketRemoval function.
