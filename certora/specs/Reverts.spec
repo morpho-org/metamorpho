@@ -234,6 +234,7 @@ rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
 }
 
 // Check the input validation conditions under which the reallocate function reverts.
+// This function can also revert for non enabled markets and if the total withdrawn differs from the total supplied.
 rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation[] allocations) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
 
@@ -317,7 +318,7 @@ rule acceptGuardianRevertCondition(env e) {
 }
 
 // Check the input validation conditions under which the acceptCap function reverts.
-// This function can also revert if it would lead to growing the withdraw queue past the max length.
+// This function can also revert if interest accrual reverts or if it would lead to growing the withdraw queue past the max length.
 rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
