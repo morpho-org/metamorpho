@@ -1,6 +1,6 @@
 {
-  "name": "metamorpho",
-  "description": "MetaMorpho",
+  "name": "@morpho-org/metamorpho",
+  "description": "MetaMorpho multicall encoder",
   "license": "GPL-2.0-or-later",
   "version": "1.0.0",
   "main": "lib/index.js",
@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "prepare": "husky install && forge install",
+    "build:pkg": "yarn build:hardhat --force && tsc --build ./tsconfig.build.json",
     "build:forge": "FOUNDRY_PROFILE=build forge build",
     "build:hardhat": "hardhat compile",
     "build:blue": "yarn --cwd lib/morpho-blue/ build:forge",
@@ -40,7 +41,7 @@
   "homepage": "https://github.com/morpho-org/metamorpho#readme",
   "dependencies": {
     "ethers": "^6.9.2",
-    "ethers-maths": "^5.0.2",
+    "evm-maths": "^6.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

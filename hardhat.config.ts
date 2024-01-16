@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
-import { BigNumberish } from "ethers";
-import "ethers-maths";
-import { getConvertToAssets, getConvertToShares, mulDivDown, mulDivUp } from "ethers-maths/lib/utils";
+import { BigNumberish, toBigInt } from "ethers";
+import "evm-maths";
+import { getConvertToAssets, getConvertToShares, mulDivDown, mulDivUp } from "evm-maths/lib/utils";
 import "hardhat-gas-reporter";
 import "hardhat-tracer";
 import { HardhatUserConfig } from "hardhat/config";
@@ -33,16 +33,16 @@ const toSharesUp = getConvertToShares(virtualAssets, virtualShares, mulDivUp);
 const toSharesDown = getConvertToShares(virtualAssets, virtualShares, mulDivDown);
 
 BigInt.prototype.toAssetsUp = function (totalAssets: BigNumberish, totalShares: BigNumberish) {
-  return toAssetsUp(this as bigint, totalAssets, totalShares);
+  return toAssetsUp(this as bigint, toBigInt(totalAssets), toBigInt(totalShares));
 };
 BigInt.prototype.toAssetsDown = function (totalAssets: BigNumberish, totalShares: BigNumberish) {
-  return toAssetsDown(this as bigint, totalAssets, totalShares);
+  return toAssetsDown(this as bigint, toBigInt(totalAssets), toBigInt(totalShares));
 };
 BigInt.prototype.toSharesUp = function (totalAssets: BigNumberish, totalShares: BigNumberish) {
-  return toSharesUp(this as bigint, totalAssets, totalShares);
+  return toSharesUp(this as bigint, toBigInt(totalAssets), toBigInt(totalShares));
 };
 BigInt.prototype.toSharesDown = function (totalAssets: BigNumberish, totalShares: BigNumberish) {
-  return toSharesDown(this as bigint, totalAssets, totalShares);
+  return toSharesDown(this as bigint, toBigInt(totalAssets), toBigInt(totalShares));
 };
 
 const config: HardhatUserConfig = {
