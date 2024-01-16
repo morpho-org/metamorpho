@@ -158,14 +158,14 @@ filtered {
 }
 
 rule inWithdrawQueueIsEnabledPreservedupdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
-    uint j;
+    MetaMorphoHarness.Id id;
+    uint j = withdrawRank(id);
 
     require isInWithdrawQueueIsEnabled(j);
 
     updateWithdrawQueue(e, indexes);
 
-    MetaMorphoHarness.Id id = withdrawQueue(i);
-    require j == withdrawRank(id);
+    require id == withdrawQueue(i);
 
     assert isInWithdrawQueueIsEnabled(i);
 }
