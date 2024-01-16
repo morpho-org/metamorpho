@@ -146,3 +146,14 @@ invariant differentPendingGuardian()
 
 invariant noFeeToUnsetFeeRecipient()
     feeRecipient() == 0 => fee() == 0;
+
+function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
+    uint192 supplyCap;
+    bool enabled;
+    supplyCap, enabled, _ = config(id);
+
+    return supplyCap > 0 => enabled;
+}
+
+invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
+    hasSupplyCapIsEnabled(id);
