@@ -129,8 +129,8 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
         pendingGuardianValidAt != 0;
 }
 
-// Check the input validation conditions under which the submitCap function reverts.
-rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams, uint256 newSupplyCap) {
+// Check all the revert conditions of the submitCap function.
+rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams, uint256 newSupplyCap) {
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
@@ -142,16 +142,19 @@ rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
     uint64 removableAt;
     supplyCap, _, removableAt = config(id);
 
+    // Safe require because it is a verified invariant.
+    require hasSupplyCapIsEnabled(id);
+
     submitCap@withrevert(e, marketParams, newSupplyCap);
 
-    assert e.msg.value != 0 ||
-           !hasCuratorRole ||
-           marketParams.loanToken != asset ||
-           lastUpdate == 0 ||
-           pendingCapValidAt != 0 ||
-           removableAt != 0 ||
-           newSupplyCap == assert_uint256(supplyCap)
-        => lastReverted;
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !hasCuratorRole ||
+        marketParams.loanToken != asset ||
+        lastUpdate == 0 ||
+        pendingCapValidAt != 0 ||
+        removableAt != 0 ||
+        newSupplyCap == assert_uint256(supplyCap);
 }
 
 // Check all the revert conditions of the submitMarketRemoval function.
