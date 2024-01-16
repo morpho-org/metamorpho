@@ -1,7 +1,7 @@
 import { AbiCoder, MaxUint256, ZeroAddress, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IrmMock } from "types";
+import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IIrm } from "types";
 import { MarketParamsStruct } from "types/src/MetaMorpho";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -13,18 +13,14 @@ import {
 } from "@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time";
 
 // Must use relative import path.
+import AdaptiveCurveIrmArtifact from "../../lib/morpho-blue-irm/out/AdaptiveCurveIrm.sol/AdaptiveCurveIrm.json";
 import MorphoArtifact from "../../lib/morpho-blue/out/Morpho.sol/Morpho.json";
 
 // Without the division it overflows.
 const initBalance = MaxUint256 / 10000000000000000n;
 const oraclePriceScale = 1000000000000000000000000000000000000n;
-const nbMarkets = 5;
+const nbMarkets = 10;
 const timelock = 3600 * 24 * 7; // 1 week.
-
-const ln2 = 693147180559945309n;
-const targetUtilization = 800000000000000000n;
-const speedFactor = 277777777777n;
-const initialRate = 317097920n;
 
 let seed = 42;
 const random = () => {
@@ -71,7 +67,7 @@ describe("MetaMorpho", () => {
   let loan: ERC20Mock;
   let collateral: ERC20Mock;
   let oracle: OracleMock;
-  let irm: IrmMock;
+  let irm: IIrm;
 
   let factory: MetaMorphoFactory;
   let metaMorpho: MetaMorpho;
@@ -148,11 +144,13 @@ describe("MetaMorpho", () => {
 
     const morphoAddress = await morpho.getAddress();
 
-    const IrmMockFactory = await hre.ethers.getContractFactory("IrmMock", admin);
+    const AdaptiveCurveIrmFactory = await hre.ethers.getContractFactory(
+      AdaptiveCurveIrmArtifact.abi,
+      AdaptiveCurveIrmArtifact.bytecode.object,
+      admin,
+    );
 
-    irm = await IrmMockFactory.deploy();
-
-    await irm.setApr(BigInt.WAD / 100n); // 1%
+    irm = (await AdaptiveCurveIrmFactory.deploy(morphoAddress)) as IIrm;
 
     const loanAddress = await loan.getAddress();
     const collateralAddress = await collateral.getAddress();
