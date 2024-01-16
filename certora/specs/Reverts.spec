@@ -37,6 +37,7 @@ function hasGuardianRole(address user) returns bool {
     return user == owner() || user == guardian();
 }
 
+// Check all the revert conditions of the setCurator function.
 rule setCuratorRevertCondition(env e, address newCurator) {
     address owner = owner();
     address oldCurator = curator();
@@ -49,6 +50,7 @@ rule setCuratorRevertCondition(env e, address newCurator) {
         newCurator == oldCurator;
 }
 
+// Check all the revert conditions of the setIsAllocator function.
 rule setIsAllocatorRevertCondition(env e, address newAllocator, bool newIsAllocator) {
     address owner = owner();
     bool wasAllocator = isAllocator(newAllocator);
@@ -61,6 +63,7 @@ rule setIsAllocatorRevertCondition(env e, address newAllocator, bool newIsAlloca
         newIsAllocator == wasAllocator;
 }
 
+// Check all the revert conditions of the setSkimRecipient function.
 rule setSkimRecipientRevertCondition(env e, address newSkimRecipient) {
     address owner = owner();
     address oldSkimRecipient = skimRecipient();
@@ -73,7 +76,9 @@ rule setSkimRecipientRevertCondition(env e, address newSkimRecipient) {
         newSkimRecipient == oldSkimRecipient;
 }
 
-rule setFeeRevertInputValidation(env e, uint256 newFee) {
+// Check the input validation conditions under which the setFee function reverts.
+// This function can also revert if interest accrual reverts.
+rule setFeeInputValidation(env e, uint256 newFee) {
     address owner = owner();
     uint96 oldFee = fee();
     address feeRecipient = feeRecipient();
@@ -87,6 +92,8 @@ rule setFeeRevertInputValidation(env e, uint256 newFee) {
         => lastReverted;
 }
 
+// Check the input validation conditions under which the setFeeRecipient function reverts.
+// This function can also revert if interest accrual reverts.
 rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
     address owner = owner();
     uint96 fee = fee();
@@ -101,6 +108,7 @@ rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
         => lastReverted;
 }
 
+// Check all the revert conditions of the submitGuardian function.
 rule submitGuardianRevertCondition(env e, address newGuardian) {
     address owner = owner();
     address oldGuardian = guardian();
@@ -121,6 +129,7 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
         pendingGuardianValidAt != 0;
 }
 
+// Check the input validation conditions under which the submitCap function reverts.
 rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams, uint256 newSupplyCap) {
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
@@ -145,6 +154,7 @@ rule submitCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
         => lastReverted;
 }
 
+// Check all the revert conditions of the submitMarketRemoval function.
 rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams) {
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
@@ -172,6 +182,8 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
         oldRemovableAt != 0;
 }
 
+// Check the input validation conditions under which the setSupplyQueue function reverts.
+// There are no other condition under which this function reverts, but it cannot be expressed easily because of the encoding of the universal quantifier chosen.
 rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
     uint256 maxQueueLength = maxQueueLength();
@@ -189,6 +201,11 @@ rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
         => lastReverted;
 }
 
+// Check the input validation conditions under which the updateWithdrawQueue function reverts.
+// This function can also revert if a market is removed when it shouldn't:
+//   - a removed market should have 0 supply cap
+//   - a removed market should not have a pending cap
+//   - a removed market should either have no supply or (be marked for forced removal and that timestamp has elapsed)
 rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
     uint256 i;
@@ -208,6 +225,7 @@ rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
         => lastReverted;
 }
 
+// Check the input validation conditions under which the reallocate function reverts.
 rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation[] allocations) {
     bool hasAllocatorRole = hasAllocatorRole(e.msg.sender);
 
@@ -218,6 +236,7 @@ rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation[] alloc
         => lastReverted;
 }
 
+// Check all the revert conditions of the revokePendingTimelock function.
 rule revokePendingTimelockRevertCondition(env e) {
     bool hasGuardianRole = hasGuardianRole(e.msg.sender);
 
@@ -228,6 +247,7 @@ rule revokePendingTimelockRevertCondition(env e) {
         !hasGuardianRole;
 }
 
+// Check all the revert conditions of the revokePendingGuardian function.
 rule revokePendingGuardianRevertCondition(env e) {
     bool hasGuardianRole = hasGuardianRole(e.msg.sender);
 
@@ -238,6 +258,7 @@ rule revokePendingGuardianRevertCondition(env e) {
         !hasGuardianRole;
 }
 
+// Check all the revert conditions of the revokePendingCap function.
 rule revokePendingCapRevertCondition(env e, MorphoHarness.Id id) {
     bool hasGuardianRole = hasGuardianRole(e.msg.sender);
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
@@ -249,6 +270,7 @@ rule revokePendingCapRevertCondition(env e, MorphoHarness.Id id) {
         !(hasGuardianRole || hasCuratorRole);
 }
 
+// Check all the revert conditions of the revokePendingMarketRemoval function.
 rule revokePendingMarketRemovalRevertCondition(env e, MorphoHarness.Id id) {
     bool hasGuardianRole = hasGuardianRole(e.msg.sender);
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
@@ -260,6 +282,7 @@ rule revokePendingMarketRemovalRevertCondition(env e, MorphoHarness.Id id) {
         !(hasGuardianRole || hasCuratorRole);
 }
 
+// Check all the revert conditions of the acceptTimelock function.
 rule acceptTimelockRevertCondition(env e) {
     uint256 pendingTimelockValidAt;
     _, pendingTimelockValidAt = pendingTimelock();
@@ -272,6 +295,7 @@ rule acceptTimelockRevertCondition(env e) {
         pendingTimelockValidAt > e.block.timestamp;
 }
 
+// Check all the revert conditions of the acceptGuardian function.
 rule acceptGuardianRevertCondition(env e) {
     uint256 pendingGuardianValidAt;
     _, pendingGuardianValidAt = pendingGuardian();
@@ -284,6 +308,8 @@ rule acceptGuardianRevertCondition(env e) {
         pendingGuardianValidAt > e.block.timestamp;
 }
 
+// Check the input validation conditions under which the acceptCap function reverts.
+// This function can also revert if it would lead to growing the withdraw queue past the max length.
 rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
@@ -298,6 +324,7 @@ rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
         => lastReverted;
 }
 
+// Check all the revert conditions of the skim function.
 rule skimRevertCondition(env e, address token) {
     address skimRecipient = skimRecipient();
 
