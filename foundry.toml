@@ -5,9 +5,8 @@ libs = ["lib"]
 evm_version = "paris"
 fs_permissions = [
     { access = "read", path = "./config/"},
-    { access = "read", path = "./lib/morpho-blue/out/"}
+    { access = "read", path = "./out/"}
 ]
-optimization_runs = 999999 # Etherscan does not support verifying contracts with more optimization runs.
 
 [profile.default.rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
@@ -27,4 +26,4 @@ script = "/dev/null"
 via-ir = false
 
 
-# See more config options https://github.com/foundry-rs/foundry/tree/master/config
+# See more config options https://github.com/foundry-rs/foundry/tree/master/crates/config
