@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
+    function deposit(uint256, address) returns(uint256) => NONDET DELETE;
+    function mint(uint256, address) returns(uint256) => NONDET DELETE;
+    function withdraw(uint256, address, address) returns(uint256) => NONDET DELETE;
+    function redeem(uint256, address, address) returns(uint256) => NONDET DELETE;
 
     function owner() external returns(address) envfree;
     function pendingOwner() external returns(address) envfree;
@@ -17,12 +21,14 @@ methods {
     function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => CONSTANT;
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => CONSTANT;
 
-    function _.balanceOf(address) external => CONSTANT;
+    // Summarize MM seen as a token, useful for `transferFrom`.
     function balanceOf(address) internal returns(uint256) => CONSTANT;
     function allowance(address, address) internal returns(uint256) => CONSTANT;
     function ERC20._transfer(address, address, uint256) internal => CONSTANT;
-    function ERC4626._deposit(address, address, uint256, uint256) internal => CONSTANT;
-    function ERC4626._withdraw(address, address, address, uint256, uint256) internal => CONSTANT;
+
+    // Summarize other tokens, useful for `skim`.
+    function _.balanceOf(address) external => CONSTANT;
+    function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
 }
 
 rule curatorIsAllocator(method f, calldataarg args)
