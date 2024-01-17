@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
+    // Only verify the admin functions, not the main entrypoints.
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
     function deposit(uint256, address) external returns(uint256) => NONDET DELETE;
     function mint(uint256, address) external returns(uint256) => NONDET DELETE;
@@ -12,6 +13,7 @@ methods {
     function guardian() external returns(address) envfree;
     function isAllocator(address target) external returns(bool) envfree;
 
+    // Sumarize Morpho external calls, as they don't depend on the authorization system of MetaMorpho.
     function _.idToMarketParams(MetaMorphoHarness.Id) external => CONSTANT;
     function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => CONSTANT;
@@ -21,7 +23,7 @@ methods {
     function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => CONSTANT;
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => CONSTANT;
 
-    // Summarize MM seen as a token, useful for `transferFrom`.
+    // Summarize MetaMorpho seen as a token, useful for `transferFrom`.
     function balanceOf(address) internal returns(uint256) => CONSTANT;
     function allowance(address, address) internal returns(uint256) => CONSTANT;
     function ERC20._transfer(address, address, uint256) internal => CONSTANT;
@@ -31,6 +33,7 @@ methods {
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
 }
 
+// Check that the owner has more power than the guardian.
 rule ownerIsGuardian(method f, calldataarg args)
 filtered {
     f -> !f.isView
@@ -60,6 +63,7 @@ filtered {
     assert revertedOwner => revertedGuardian;
 }
 
+// Check that the owner has more power than the curator.
 rule ownerIsCurator(method f, calldataarg args)
 filtered {
     f -> !f.isView
@@ -89,6 +93,7 @@ filtered {
     assert revertedOwner => revertedCurator;
 }
 
+// Check that the curator has more power than allocators.
 rule curatorIsAllocator(method f, calldataarg args)
 filtered {
     f -> !f.isView
