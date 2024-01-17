@@ -46,6 +46,7 @@ filtered {
     require e2.msg.sender != 0;
 
     require e1.msg.sender == guardian();
+    require e1.msg.sender != owner();
     require e1.msg.sender != pendingOwner();
     require e1.msg.sender != currentContract;
     f@withrevert(e1, args) at initial;
@@ -74,6 +75,7 @@ filtered {
     require e2.msg.sender != 0;
 
     require e1.msg.sender == curator();
+    require e1.msg.sender != owner();
     require e1.msg.sender != pendingOwner();
     require e1.msg.sender != currentContract;
     f@withrevert(e1, args) at initial;
