@@ -158,15 +158,17 @@ filtered {
 }
 
 invariant withdrawRankCorrect(MetaMorphoHarness.Id id)
-    withdrawRank(id) != 0 => withdrawQueue(withdrawRank(id)) == id;
+    withdrawQueue(withdrawRank(id) - 1) == id;
 
 rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
     MetaMorphoHarness.Id id;
     uint256 j = withdrawRank(id);
 
-    requireInvariant withdrawRankCorrect(j);
+    if (j > 0) {
+        requireInvariant withdrawRankCorrect(j - 1);
 
-    require isInWithdrawQueueIsEnabled(j);
+        require isInWithdrawQueueIsEnabled(j - 1);
+    }
 
     updateWithdrawQueue(e, indexes);
 
