@@ -17,6 +17,10 @@ contract MetaMorphoHarness is MetaMorpho {
         return IERC20(token).balanceOf(user);
     }
 
+    function totalSupply(address token) external view returns (uint256) {
+        return IERC20(token).totalSupply();
+    }
+
     function transferFrom(address token, address from, address to, uint256 amount) external {
         IERC20(token).transferFrom(from, to, amount);
     }
