@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
-    function deposit(uint256, address) returns(uint256) => NONDET DELETE;
-    function mint(uint256, address) returns(uint256) => NONDET DELETE;
-    function withdraw(uint256, address, address) returns(uint256) => NONDET DELETE;
-    function redeem(uint256, address, address) returns(uint256) => NONDET DELETE;
+    function deposit(uint256, address) external returns(uint256) => NONDET DELETE;
+    function mint(uint256, address) external returns(uint256) => NONDET DELETE;
+    function withdraw(uint256, address, address) external returns(uint256) => NONDET DELETE;
+    function redeem(uint256, address, address) external returns(uint256) => NONDET DELETE;
 
     function owner() external returns(address) envfree;
     function pendingOwner() external returns(address) envfree;
