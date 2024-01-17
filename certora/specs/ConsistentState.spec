@@ -178,3 +178,28 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
 
     assert isInWithdrawQueueIsEnabled(i);
 }
+
+function isEnabledHasPositiveRank(MetaMorphoHarness.Id id) returns bool {
+    bool enabled;
+    _, enabled, _ = config(id);
+
+    uint256 rank = withdrawRank(id);
+
+    return enabled => rank > 0;
+}
+
+invariant enabledHasPositiveRank(MetaMorphoHarness.Id id)
+    isEnabledHasPositiveRank(id);
+
+rule enabledIsInWithdrawQueue(MetaMorphoHarness.Id id) {
+    bool enabled;
+    _, enabled, _ = config(id);
+
+    require enabled;
+
+    requireInvariant enabledHasPositiveRank(id);
+    requireInvariant withdrawRankCorrect(id);
+
+    uint256 witness = assert_uint256(withdrawRank(id) - 1);
+    assert withdrawQueue(witness) == id;
+}
