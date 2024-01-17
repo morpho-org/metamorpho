@@ -157,8 +157,16 @@ filtered {
     f -> f.selector != sig:updateWithdrawQueue(uint256[]).selector
 }
 
+function isWithdrawRankCorrect(MetaMorphoHarness.Id id) returns bool {
+    uint256 rank = withdrawRank(id);
+
+    if (rank == 0) return true;
+
+    return withdrawQueue(assert_uint256(rank - 1)) == id;
+}
+
 invariant withdrawRankCorrect(MetaMorphoHarness.Id id)
-    withdrawRank(id) > 0 => withdrawQueue(assert_uint256(withdrawRank(id) - 1)) == id;
+    isWithdrawRankCorrect(id);
 
 rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
     MetaMorphoHarness.Id id;
