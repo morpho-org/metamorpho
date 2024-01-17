@@ -31,6 +31,62 @@ methods {
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
 }
 
+rule ownerIsGuardian(method f, calldataarg args)
+filtered {
+    f -> !f.isView
+}
+{
+    storage initial = lastStorage;
+
+    env e1; env e2;
+    require e1.block.timestamp == e2.block.timestamp;
+    require e1.msg.value == e2.msg.value;
+
+    require e1.msg.sender != 0;
+    require e2.msg.sender != 0;
+
+    require e1.msg.sender == guardian();
+    require e1.msg.sender != pendingOwner();
+    require e1.msg.sender != currentContract;
+    f@withrevert(e1, args) at initial;
+    bool revertedGuardian = lastReverted;
+
+    require e2.msg.sender == owner();
+    require e2.msg.sender != currentContract;
+    f@withrevert(e2, args) at initial;
+    bool revertedOwner = lastReverted;
+
+    assert revertedOwner => revertedGuardian;
+}
+
+rule ownerIsCurator(method f, calldataarg args)
+filtered {
+    f -> !f.isView
+}
+{
+    storage initial = lastStorage;
+
+    env e1; env e2;
+    require e1.block.timestamp == e2.block.timestamp;
+    require e1.msg.value == e2.msg.value;
+
+    require e1.msg.sender != 0;
+    require e2.msg.sender != 0;
+
+    require e1.msg.sender == curator();
+    require e1.msg.sender != pendingOwner();
+    require e1.msg.sender != currentContract;
+    f@withrevert(e1, args) at initial;
+    bool revertedCurator = lastReverted;
+
+    require e2.msg.sender == owner();
+    require e2.msg.sender != currentContract;
+    f@withrevert(e2, args) at initial;
+    bool revertedOwner = lastReverted;
+
+    assert revertedOwner => revertedCurator;
+}
+
 rule curatorIsAllocator(method f, calldataarg args)
 filtered {
     f -> !f.isView
