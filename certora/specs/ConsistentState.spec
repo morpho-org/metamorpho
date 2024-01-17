@@ -3,19 +3,20 @@ methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
     function pendingTimelock() external returns(uint192, uint64) envfree;
-    function timelock() external returns (uint256) envfree;
-    function guardian() external returns (address) envfree;
+    function timelock() external returns(uint256) envfree;
+    function guardian() external returns(address) envfree;
     function pendingGuardian() external returns(address, uint64) envfree;
     function pendingCap(MetaMorphoHarness.Id) external returns(uint192, uint64) envfree;
     function config(MetaMorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function supplyQueueLength() external returns(uint256) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
-    function fee() external returns (uint96) envfree;
+    function fee() external returns(uint96) envfree;
+    function feeRecipient() external returns(address) envfree;
 
-    function minTimelock() external returns (uint256) envfree;
-    function maxTimelock() external returns (uint256) envfree;
-    function maxQueueLength() external returns (uint256) envfree;
-    function maxFee() external returns (uint256) envfree;
+    function minTimelock() external returns(uint256) envfree;
+    function maxTimelock() external returns(uint256) envfree;
+    function maxQueueLength() external returns(uint256) envfree;
+    function maxFee() external returns(uint256) envfree;
 }
 
 invariant feeInRange()
@@ -32,8 +33,12 @@ function isPendingTimelockInRange() returns bool {
 invariant pendingTimelockInRange()
     isPendingTimelockInRange();
 
+function isTimelockInRange() returns bool {
+    return timelock() <= maxTimelock() && timelock() >= minTimelock();
+}
+
 invariant timelockInRange()
-    timelock() <= maxTimelock() && timelock() >= minTimelock()
+    isTimelockInRange()
 {
     preserved {
         requireInvariant pendingTimelockInRange();
@@ -138,3 +143,17 @@ function isDifferentPendingGuardian() returns bool {
 
 invariant differentPendingGuardian()
     isDifferentPendingGuardian();
+
+invariant noFeeToUnsetFeeRecipient()
+    feeRecipient() == 0 => fee() == 0;
+
+function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
+    uint192 supplyCap;
+    bool enabled;
+    supplyCap, enabled, _ = config(id);
+
+    return supplyCap > 0 => enabled;
+}
+
+invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
+    hasSupplyCapIsEnabled(id);
