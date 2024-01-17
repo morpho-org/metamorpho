@@ -166,7 +166,7 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
 
     if (rank > 0) {
         uint256 index = assert_uint256(rank - 1);
-        requireInvariant withdrawRankCorrect(index);
+        requireInvariant withdrawRankCorrect(id);
 
         require isInWithdrawQueueIsEnabled(index);
     }
