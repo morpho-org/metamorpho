@@ -21,9 +21,8 @@ methods {
     function balanceOf(address) internal returns(uint256) => CONSTANT;
     function allowance(address, address) internal returns(uint256) => CONSTANT;
     function ERC20._transfer(address, address, uint256) internal => CONSTANT;
-
-    function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
-    function SafeERC20.safeTransferFrom(address, address, address, uint256) internal => CONSTANT;
+    function ERC4626._deposit(address, address, uint256, uint256) internal => CONSTANT;
+    function ERC4626._withdraw(address, address, address, uint256, uint256) internal => CONSTANT;
 }
 
 rule curatorIsAllocator(method f, calldataarg args)
