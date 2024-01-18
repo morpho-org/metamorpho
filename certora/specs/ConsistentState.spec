@@ -12,6 +12,7 @@ methods {
     function withdrawQueueLength() external returns(uint256) envfree;
     function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawRank(MetaMorphoHarness.Id) external returns(uint256) envfree;
+    function deletedBy(MetaMorphoHarness.Id) external returns(uint256) envfree;
     function fee() external returns(uint96) envfree;
     function feeRecipient() external returns(address) envfree;
 
@@ -160,6 +161,17 @@ function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
 invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
     hasSupplyCapIsEnabled(id);
 
+function hasDistinctIdentifiers(uint256 i, uint256 j) returns bool {
+    return i != j => withdrawQueue(i) != withdrawQueue(j);
+}
+
+invariant distinctIdentifiers(uint256 i, uint256 j)
+    hasDistinctIdentifiers(i, j)
+{
+    preserved updateWithdrawQueue(uint256[] indexes) with (env e) {
+        require hasDistinctIdentifiers(indexes[i], indexes[j]);
+    }
+}
 
 function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
     if(i >= withdrawQueueLength()) return true;
@@ -178,9 +190,16 @@ filtered {
 }
 
 rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
+    uint256 j;
     require isInWithdrawQueueIsEnabled(indexes[i]);
 
+    requireInvariant distinctIdentifiers(i, j);
+
     updateWithdrawQueue(e, indexes);
+
+    MetaMorphoHarness.Id id = withdrawQueue(i);
+    // Safe require because j is not otherwise constrained.
+    require j == deletedBy(id);
 
     assert isInWithdrawQueueIsEnabled(i);
 }
