@@ -193,7 +193,7 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
     uint256 j;
     require isInWithdrawQueueIsEnabled(indexes[i]);
 
-    requireInvariant distinctIdentifiers(i, j);
+    requireInvariant distinctIdentifiers(indexes[i], j);
 
     updateWithdrawQueue(e, indexes);
 
