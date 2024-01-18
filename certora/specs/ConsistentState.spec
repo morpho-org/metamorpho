@@ -177,6 +177,14 @@ filtered {
     f -> f.selector != sig:updateWithdrawQueue(uint256[]).selector
 }
 
+rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
+    require isInWithdrawQueueIsEnabled(indexes[i]);
+
+    updateWithdrawQueue(e, indexes);
+
+    assert isInWithdrawQueueIsEnabled(i);
+}
+
 function isWithdrawRankCorrect(MetaMorphoHarness.Id id) returns bool {
     uint256 rank = withdrawRank(id);
 
@@ -187,25 +195,6 @@ function isWithdrawRankCorrect(MetaMorphoHarness.Id id) returns bool {
 
 invariant withdrawRankCorrect(MetaMorphoHarness.Id id)
     isWithdrawRankCorrect(id);
-
-rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
-    MetaMorphoHarness.Id id;
-    uint256 rank = withdrawRank(id);
-
-    if (rank > 0) {
-        uint256 index = assert_uint256(rank - 1);
-        requireInvariant withdrawRankCorrect(id);
-
-        require isInWithdrawQueueIsEnabled(index);
-    }
-
-    updateWithdrawQueue(e, indexes);
-
-    // Safe require because id is not otherwise constrained.
-    require id == withdrawQueue(i);
-
-    assert isInWithdrawQueueIsEnabled(i);
-}
 
 function isEnabledHasPositiveRank(MetaMorphoHarness.Id id) returns bool {
     bool enabled;
