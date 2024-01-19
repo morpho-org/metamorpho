@@ -12,7 +12,7 @@ methods {
     function withdrawQueueLength() external returns(uint256) envfree;
     function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawRank(MetaMorphoHarness.Id) external returns(uint256) envfree;
-    function deletedBy(MetaMorphoHarness.Id) external returns(uint256) envfree;
+    function deletedAt(MetaMorphoHarness.Id) external returns(uint256) envfree;
     function fee() external returns(uint96) envfree;
     function feeRecipient() external returns(address) envfree;
 
@@ -184,7 +184,7 @@ invariant distinctIdentifiers(uint256 i, uint256 j)
     hasDistinctIdentifiers(i, j)
 {
     preserved updateWithdrawQueue(uint256[] indexes) with (env e) {
-        require hasDistinctIdentifiers(indexes[i], indexes[j]);
+        requireInvariant distinctIdentifiers(indexes[i], indexes[j]);
     }
 }
 
@@ -215,8 +215,8 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
 
     MetaMorphoHarness.Id id = withdrawQueue(i);
     // Safe require because j is not otherwise constrained.
-    // The ghost variable deletedBy is useful to make sure that markets are not permuted and deleted at the same time in updateWithdrawQueue.
-    require j == deletedBy(id);
+    // The ghost variable deletedAt is useful to make sure that markets are not permuted and deleted at the same time in updateWithdrawQueue.
+    require j == deletedAt(id);
 
     assert isInWithdrawQueueIsEnabled(i);
 }
