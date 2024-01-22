@@ -3,14 +3,14 @@ methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 }
 
-ghost bool delegateCall;
-ghost bool callToMorpho;
+persistent ghost bool delegateCall;
+persistent ghost bool callToMorpho;
 // True when storage has been accessed with either a SSTORE or a SLOAD.
-ghost bool hasAccessedStorage;
+persistent ghost bool hasAccessedStorage;
 // True when a CALL has been done after storage has been accessed.
-ghost bool hasCallAfterAccessingStorage;
+persistent ghost bool hasCallAfterAccessingStorage;
 // True when storage has been accessed, after which an external call is made, followed by accessing storage again.
-ghost bool hasReentrancyUnsafeCall;
+persistent ghost bool hasReentrancyUnsafeCall;
 
 function summaryCallToMorpho() {
     callToMorpho = true;
