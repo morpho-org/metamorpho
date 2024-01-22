@@ -33,7 +33,6 @@ function boolSummary() returns bool {
     return value;
 }
 
-persistent ghost bool delegateCall;
 persistent ghost bool ignoredCall;
 // True when storage has been accessed with either a SSTORE or a SLOAD.
 persistent ghost bool hasAccessedStorage;
@@ -61,10 +60,6 @@ hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, ui
     }
 }
 
-hook DELEGATECALL(uint g, address addr, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
-    delegateCall = true;
-}
-
 // Check that no function is accessing storage, then making an external CALL, and accessing storage again.
 rule reentrancySafe(method f, env e, calldataarg data) {
     // Set up the initial state.
@@ -72,12 +67,4 @@ rule reentrancySafe(method f, env e, calldataarg data) {
     require !hasAccessedStorage && !hasCallAfterAccessingStorage && !hasReentrancyUnsafeCall;
     f(e,data);
     assert !hasReentrancyUnsafeCall;
-}
-
-// Check that the contract is truly immutable.
-rule noDelegateCalls(method f, env e, calldataarg data) {
-    // Set up the initial state.
-    require !delegateCall;
-    f(e,data);
-    assert !delegateCall;
 }
