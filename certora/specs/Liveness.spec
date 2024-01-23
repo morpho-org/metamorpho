@@ -5,6 +5,15 @@ methods {
     function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
     function timelock() external returns(uint256) envfree;
+
+    function _.lastUpdate(MetaMorphoHarness.Id) external returns(uint256) => summaryLastUpdate();
+}
+
+// TODO: remove this summary.
+function summaryLastUpdate() returns uint256 {
+    uint256 answer;
+    require answer > 0;
+    return answer;
 }
 
 // Check that having the allocator role allows to pause supply on the vault.
