@@ -2,7 +2,9 @@
 import "Reverts.spec";
 
 methods {
-    function supplyQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
+    function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
+    function withdrawQueueLength() external returns(uint256) envfree;
+    function timelock() external returns(uint256) envfree;
 }
 
 // Check that having the allocator role allows to pause supply on the vault.
@@ -31,11 +33,16 @@ rule canPauseSupply() {
 rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
+    // Safe require because this is a verified invariant.
+    require hasSupplyCapIsEnabled(id);
+
     uint184 supplyCap; uint64 removableAt;
     supplyCap, _, removableAt = config(id);
     require supplyCap > 0;
     require removableAt == 0;
-    require supplyQueue(1) == id;
+    // Assume that the withdraw queue is [X, id];
+    require withdrawQueue(1) == id;
+    require withdrawQueueLength() == 2;
 
     env e1; env e2; env e3;
     require hasCuratorRole(e1.msg.sender);
@@ -53,4 +60,17 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     require e3.msg.value == 0;
     submitMarketRemoval@withrevert(e3, marketParams);
     assert !lastReverted;
+
+    env e4; uint256[] newWithdrawQueue;
+    assert newWithdrawQueue.length == 1;
+    assert newWithdrawQueue[0] == 0;
+    require e4.msg.value == 0;
+    require hasAllocatorRole(e4.msg.sender);
+    require to_mathint(e4.block.timestamp) >= e3.block.timestamp + timelock();
+    updateWithdrawQueue@withrevert(e4, newWithdrawQueue);
+    assert !lastReverted;
+
+    bool enabled;
+    _, enabled, _ = config(id);
+    assert !enabled;
 }
