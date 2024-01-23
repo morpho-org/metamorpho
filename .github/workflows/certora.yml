@@ -17,6 +17,7 @@ jobs:
       matrix:
         conf:
           - ConsistentState
+          - Liveness
           - Reverts
           - Roles
 
