@@ -157,3 +157,24 @@ function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
 
 invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
     hasSupplyCapIsEnabled(id);
+
+function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
+    uint192 supplyCap;
+    bool removableAt;
+    supplyCap, _, removableAt = config(id);
+
+    return supplyCap > 0 => removableAt == 0;
+}
+invariant supplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
+    hasSupplyCapIsNotMarkedForRemoval(id);
+
+function hasPendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
+    uint64 pendingAt;
+    _, pendingAt = pendingCap(id);
+    bool removableAt;
+    _, _, removableAt = config(id);
+
+    return pendingAt > 0 => removableAt == 0;
+}
+invariant pendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
+    hasPendingCapIsNotMarkedForRemoval(id);
