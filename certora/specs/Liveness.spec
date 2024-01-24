@@ -44,6 +44,8 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
 
     // Safe require because this is a verified invariant.
     require hasSupplyCapIsEnabled(id);
+    // Safe require because this is a verified invariant.
+    require hasSupplyCapHasConsistentAsset(marketParams);
 
     uint184 supplyCap; uint64 removableAt;
     supplyCap, _, removableAt = config(id);

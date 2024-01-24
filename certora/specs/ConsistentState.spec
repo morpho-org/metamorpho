@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+using MorphoHarness as Morpho;
+
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
+    function asset() external returns(address) envfree;
     function pendingTimelock() external returns(uint192, uint64) envfree;
     function timelock() external returns(uint256) envfree;
     function guardian() external returns(address) envfree;
@@ -17,6 +20,9 @@ methods {
     function maxTimelock() external returns(uint256) envfree;
     function maxQueueLength() external returns(uint256) envfree;
     function maxFee() external returns(uint256) envfree;
+
+    function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
+    function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
 }
 
 invariant feeInRange()
@@ -157,3 +163,15 @@ function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
 
 invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
     hasSupplyCapIsEnabled(id);
+
+function hasSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
+    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+
+    uint192 supplyCap;
+    supplyCap, _, _ = config(id);
+
+    return supplyCap > 0 => marketParams.loanToken == asset();
+}
+
+invariant supplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams)
+    hasSupplyCapHasConsistentAsset(marketParams);
