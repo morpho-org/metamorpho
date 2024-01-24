@@ -6,7 +6,7 @@ methods {
     function withdrawQueueLength() external returns(uint256) envfree;
     function timelock() external returns(uint256) envfree;
 
-    function _.lastUpdate(MetaMorphoHarness.Id) external returns(uint256) => summaryLastUpdate();
+    function _.lastUpdate(MetaMorphoHarness.Id) external => summaryLastUpdate() expect uint256;
 }
 
 // TODO: remove this summary.
