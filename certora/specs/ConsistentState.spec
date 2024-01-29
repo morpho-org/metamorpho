@@ -106,3 +106,29 @@ rule enabledIsInWithdrawQueue(MetaMorphoHarness.Id id) {
     uint256 witness = assert_uint256(withdrawRank(id) - 1);
     assert withdrawQueue(witness) == id;
 }
+
+invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
+    hasSupplyCapIsEnabled(id);
+
+function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
+    uint192 supplyCap;
+    uint64 removableAt;
+    supplyCap, _, removableAt = config(id);
+
+    return supplyCap > 0 => removableAt == 0;
+}
+
+invariant supplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
+    hasSupplyCapIsNotMarkedForRemoval(id);
+
+function hasPendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
+    uint64 pendingAt;
+    _, pendingAt = pendingCap(id);
+    uint64 removableAt;
+    _, _, removableAt = config(id);
+
+    return pendingAt > 0 => removableAt == 0;
+}
+
+invariant pendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
+    hasPendingCapIsNotMarkedForRemoval(id);
