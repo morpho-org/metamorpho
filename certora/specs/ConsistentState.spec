@@ -18,7 +18,7 @@ function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
 }
 
 // Check that having a positive supply cap implies that the market is enabled.
-// This invariant is useful to conclude that market that are not enabled cannot be interacted with (notably for reallocate).
+// This invariant is useful to conclude that markets that are not enabled cannot be interacted with (notably for reallocate).
 invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
     hasSupplyCapIsEnabled(id);
 
@@ -107,9 +107,7 @@ rule enabledIsInWithdrawQueue(MetaMorphoHarness.Id id) {
     assert withdrawQueue(witness) == id;
 }
 
-invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
-    hasSupplyCapIsEnabled(id);
-
+// Check that a market with a positive cap cannot be marked for removal.
 function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
     uint192 supplyCap;
     uint64 removableAt;
@@ -121,6 +119,7 @@ function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool
 invariant supplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
     hasSupplyCapIsNotMarkedForRemoval(id);
 
+// Check that a market with a pending cap cannot be marked for removal.
 function hasPendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
     uint64 pendingAt;
     _, pendingAt = pendingCap(id);
