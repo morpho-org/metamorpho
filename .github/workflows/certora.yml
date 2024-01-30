@@ -16,8 +16,10 @@ jobs:
 
       matrix:
         conf:
-          - ConsistentPendingValues
           - ConsistentState
+          - Enabled
+          - PendingValues
+          - Range
           - Reverts
           - Roles
 
