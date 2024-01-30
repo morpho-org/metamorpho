@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "ConsistentState.spec";
 
+using UtilHarness as Util;
 using MorphoHarness as Morpho;
 
 methods {
@@ -16,10 +17,11 @@ methods {
     function config(MorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function pendingCap(MorphoHarness.Id) external returns(uint192, uint64) envfree;
 
+    function Util.totalSupply(address) external returns(uint256) envfree;
+    function Util.balanceOf(address, address) external returns(uint256) envfree;
+
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
-    function totalSupply(address) external returns(uint256) envfree;
-    function balanceOf(address, address) external returns(uint256) envfree;
 
     function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
@@ -337,7 +339,7 @@ rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
 rule skimRevertCondition(env e, address token) {
     address skimRecipient = skimRecipient();
 
-    require skimRecipient != currentContract => balanceOf(token, skimRecipient) + balanceOf(token, currentContract) <= to_mathint(totalSupply(token));
+    require skimRecipient != currentContract => Util.balanceOf(token, skimRecipient) + Util.balanceOf(token, currentContract) <= to_mathint(Util.totalSupply(token));
 
     skim@withrevert(e, token);
 
