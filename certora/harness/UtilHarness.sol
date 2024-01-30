@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {IERC20} from "../munged/MetaMorpho.sol";
 
-contract MetaMorphoHarness {
+contract UtilHarness {
     function balanceOf(address token, address user) external view returns (uint256) {
         return IERC20(token).balanceOf(user);
     }
