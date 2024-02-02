@@ -73,8 +73,8 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     assert !lastReverted;
 
     env e4; uint256[] newWithdrawQueue;
-    assert newWithdrawQueue.length == 1;
-    assert newWithdrawQueue[0] == 0;
+    require newWithdrawQueue.length == 1;
+    require newWithdrawQueue[0] == 0;
     require e4.msg.value == 0;
     require hasAllocatorRole(e4.msg.sender);
     require to_mathint(e4.block.timestamp) >= e3.block.timestamp + timelock();
