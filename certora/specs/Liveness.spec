@@ -6,6 +6,8 @@ methods {
     function withdrawQueueLength() external returns(uint256) envfree;
     function timelock() external returns(uint256) envfree;
 
+    function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
+
     function _.lastUpdate(MetaMorphoHarness.Id) external => summaryLastUpdate() expect uint256;
 }
 
