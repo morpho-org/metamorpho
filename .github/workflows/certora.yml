@@ -18,8 +18,10 @@ jobs:
         conf:
           - ConsistentState
           - Enabled
+          - Immutability
           - PendingValues
           - Range
+          - Reentrancy
           - Reverts
           - Roles
 
