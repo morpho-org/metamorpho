@@ -6,6 +6,7 @@ methods {
     function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => uintPairSummary() expect (uint256, uint256);
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => uintPairSummary() expect (uint256, uint256);
 
+    function _.transfer(address, uint256) external => boolSummary() expect bool;
     function _.transferFrom(address, address, uint256) external => boolSummary() expect bool;
     function _.balanceOf(address) external => uintSummary() expect uint256;
 }
@@ -34,37 +35,21 @@ function boolSummary() returns bool {
 }
 
 persistent ghost bool ignoredCall;
-// True when storage has been accessed with either a SSTORE or a SLOAD.
-persistent ghost bool hasAccessedStorage;
-// True when a CALL has been done after storage has been accessed.
-persistent ghost bool hasCallAfterAccessingStorage;
-// True when storage has been accessed, after which an external call is made, followed by accessing storage again.
-persistent ghost bool hasReentrancyUnsafeCall;
-
-hook ALL_SSTORE(uint loc, uint v) {
-    hasAccessedStorage = true;
-    hasReentrancyUnsafeCall = hasCallAfterAccessingStorage;
-}
-
-hook ALL_SLOAD(uint loc) uint v {
-    hasAccessedStorage = true;
-    hasReentrancyUnsafeCall = hasCallAfterAccessingStorage;
-}
+persistent ghost bool hasCall;
 
 hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
     if (ignoredCall) {
-        // Assume that calls to Morpho markets and tokens are trusted (as they have gone through a timelock).
+        // Ignore calls to tokens and Morpho markets as they are trusted (they have gone through a timelock).
         ignoredCall = false;
     } else {
-        hasCallAfterAccessingStorage = hasAccessedStorage;
+        hasCall = true;
     }
 }
 
-// Check that no function is accessing storage, then making an external CALL, and accessing storage again.
+// Check that there are no untrusted external calls, ensuring notably reentrancy safety.
 rule reentrancySafe(method f, env e, calldataarg data) {
     // Set up the initial state.
-    require !ignoredCall;
-    require !hasAccessedStorage && !hasCallAfterAccessingStorage && !hasReentrancyUnsafeCall;
+    require !ignoredCall && !hasCall;
     f(e,data);
-    assert !hasReentrancyUnsafeCall;
+    assert !hasCall;
 }
