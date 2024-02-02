@@ -17,7 +17,9 @@ jobs:
       matrix:
         conf:
           - ConsistentState
+          - Immutability
           - Liveness
+          - Reentrancy
           - Reverts
           - Roles
 
