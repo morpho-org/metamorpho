@@ -69,7 +69,7 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     assert !lastReverted;
 
     require e3.msg.value == 0;
-    // Safe require because it is a verfied invariant.
+    // Safe require because it is a verified invariant.
     require isTimelockInRange();
     // Safe require as it corresponds to year 2262.
     require e3.block.timestamp < 2^63;
