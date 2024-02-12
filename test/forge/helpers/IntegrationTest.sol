@@ -16,7 +16,7 @@ contract IntegrationTest is BaseTest {
         super.setUp();
 
         vault = IMetaMorpho(
-            deployCode("MetaMorpho.sol",abi.encode(OWNER, morpho, TIMELOCK, loanToken, "MetaMorpho Vault", "MMV"))
+            deployCode("MetaMorpho.sol", abi.encode(OWNER, morpho, TIMELOCK, loanToken, "MetaMorpho Vault", "MMV"))
         );
 
         vm.startPrank(OWNER);

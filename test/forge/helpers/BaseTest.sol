@@ -22,10 +22,7 @@ import {OracleMock} from "../../../src/mocks/OracleMock.sol";
 
 import {Ownable} from "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-import {
-    IERC20,
-    ERC20
-} from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol";
+import {IERC20, ERC20} from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol";
 
 import "../../../lib/forge-std/src/Test.sol";
 import "../../../lib/forge-std/src/console2.sol";
