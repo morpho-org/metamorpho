@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./helpers/IntegrationTest.sol";
+import {MetaMorpho} from "../../src/MetaMorpho.sol";
 
 uint256 constant FEE = 0.1 ether; // 10%
 

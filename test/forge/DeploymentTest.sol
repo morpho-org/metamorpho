@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./helpers/IntegrationTest.sol";
+import {MetaMorpho} from "../../src/MetaMorpho.sol";
 
 contract DeploymentTest is IntegrationTest {
     function testDeployMetaMorphoAddresssZero() public {

@@ -21,7 +21,11 @@ import {ERC20Mock} from "../../../src/mocks/ERC20Mock.sol";
 import {OracleMock} from "../../../src/mocks/OracleMock.sol";
 
 import {Ownable} from "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import {MetaMorpho, ERC20, IERC20, MarketAllocation} from "../../../src/MetaMorpho.sol";
+
+import {
+    IERC20,
+    ERC20
+} from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol";
 
 import "../../../lib/forge-std/src/Test.sol";
 import "../../../lib/forge-std/src/console2.sol";

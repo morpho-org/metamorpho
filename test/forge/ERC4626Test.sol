@@ -5,6 +5,7 @@ import {IERC20Errors} from "../../lib/openzeppelin-contracts/contracts/interface
 import {IMorphoFlashLoanCallback} from "../../lib/morpho-blue/src/interfaces/IMorphoCallbacks.sol";
 
 import "./helpers/IntegrationTest.sol";
+import {MetaMorpho} from "../../src/MetaMorpho.sol";
 
 contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     using MorphoBalancesLib for IMorpho;
