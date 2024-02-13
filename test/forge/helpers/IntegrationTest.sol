@@ -15,9 +15,7 @@ contract IntegrationTest is BaseTest {
     function setUp() public virtual override {
         super.setUp();
 
-        vault = IMetaMorpho(
-            address(new MetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV"))
-        );
+        vault = createMetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         vm.startPrank(OWNER);
         vault.setCurator(CURATOR);
@@ -40,6 +38,21 @@ contract IntegrationTest is BaseTest {
         loanToken.approve(address(vault), type(uint256).max);
         collateralToken.approve(address(vault), type(uint256).max);
         vm.stopPrank();
+    }
+
+    // Deploy MetaMorpho from artifacts
+    // Replaces using `new MetaMorpho` which would force 0.8.21 on all tests
+    // (since MetaMorpho has pragma solidity 0.8.21)
+    function createMetaMorpho(
+        address owner,
+        address morpho,
+        uint256 initialTimelock,
+        address asset,
+        string memory name,
+        string memory symbol
+    ) public returns (IMetaMorpho) {
+        return
+            IMetaMorpho(deployCode("MetaMorpho.sol", abi.encode(owner, morpho, initialTimelock, asset, name, symbol)));
     }
 
     function _idle() internal view returns (uint256) {
