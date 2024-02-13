@@ -5,7 +5,6 @@ import {IERC20Errors} from "../../lib/openzeppelin-contracts/contracts/interface
 import {IMorphoFlashLoanCallback} from "../../lib/morpho-blue/src/interfaces/IMorphoCallbacks.sol";
 
 import "./helpers/IntegrationTest.sol";
-import {MetaMorpho} from "../../src/MetaMorpho.sol";
 
 contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     using MorphoBalancesLib for IMorpho;
@@ -21,9 +20,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
     function testDecimals(uint8 decimals) public {
         vm.mockCall(address(loanToken), abi.encodeWithSignature("decimals()"), abi.encode(decimals));
 
-        vault = IMetaMorpho(
-            address(new MetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV"))
-        );
+        vault = createMetaMorpho(OWNER, address(morpho), TIMELOCK, address(loanToken), "MetaMorpho Vault", "MMV");
 
         assertEq(vault.decimals(), Math.max(18, decimals), "decimals");
     }
