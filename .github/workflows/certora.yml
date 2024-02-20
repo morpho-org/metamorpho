@@ -17,8 +17,11 @@ jobs:
       matrix:
         conf:
           - ConsistentState
+          - Enabled
           - Immutability
           - Liveness
+          - PendingValues
+          - Range
           - Reentrancy
           - Reverts
           - Roles

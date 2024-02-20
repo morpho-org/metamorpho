@@ -1,6 +1,6 @@
 diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
---- interfaces/IMetaMorpho.sol	2024-01-02 16:50:27.294498890 +0100
-+++ interfaces/IMetaMorpho.sol	2024-01-02 17:22:07.380992366 +0100
+--- interfaces/IMetaMorpho.sol	2024-01-08 17:56:51.096340662 +0100
++++ interfaces/IMetaMorpho.sol	2024-01-19 09:52:17.406075608 +0100
 @@ -1,9 +1,9 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity >=0.5.0;
@@ -24,8 +24,8 @@ diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
  
      /// @notice The address of the curator.
 diff -ruN libraries/ErrorsLib.sol libraries/ErrorsLib.sol
---- libraries/ErrorsLib.sol	2024-01-02 16:50:27.294498890 +0100
-+++ libraries/ErrorsLib.sol	2024-01-02 17:05:36.140851783 +0100
+--- libraries/ErrorsLib.sol	2024-01-08 17:56:51.096340662 +0100
++++ libraries/ErrorsLib.sol	2024-01-19 09:52:17.406075608 +0100
 @@ -1,7 +1,7 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity ^0.8.0;
@@ -37,7 +37,7 @@ diff -ruN libraries/ErrorsLib.sol libraries/ErrorsLib.sol
  /// @author Morpho Labs
 diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
 --- libraries/EventsLib.sol	2023-11-28 14:45:01.301789136 +0100
-+++ libraries/EventsLib.sol	2024-01-02 17:05:36.140851783 +0100
++++ libraries/EventsLib.sol	2024-01-19 09:52:17.406075608 +0100
 @@ -1,7 +1,7 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity ^0.8.0;
@@ -48,8 +48,8 @@ diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
  import {PendingAddress} from "./PendingLib.sol";
  
 diff -ruN MetaMorpho.sol MetaMorpho.sol
---- MetaMorpho.sol	2024-01-02 16:50:27.290498988 +0100
-+++ MetaMorpho.sol	2024-01-02 17:21:13.866283142 +0100
+--- MetaMorpho.sol	2024-01-08 17:56:51.096340662 +0100
++++ MetaMorpho.sol	2024-01-19 09:53:16.841805812 +0100
 @@ -9,24 +9,22 @@
      IMetaMorphoBase,
      IMetaMorphoStaticTyping
@@ -114,7 +114,20 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
  
      /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
      /// @dev Calculated to be max(0, 18 - underlyingDecimals) at construction, so the initial conversion rate maximizes
-@@ -126,7 +122,7 @@
+@@ -107,6 +103,12 @@
+     /// @inheritdoc IMetaMorphoBase
+     uint256 public lastTotalAssets;
+ 
++    // HARNESS
++    mapping(Id => uint256) public withdrawRank;
++
++    // HARNESS
++    mapping(Id => uint256) public deletedAt;
++
+     /* CONSTRUCTOR */
+ 
+     /// @dev Initializes the contract.
+@@ -126,7 +128,7 @@
      ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
          if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
  
@@ -123,3 +136,34 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
          DECIMALS_OFFSET = uint8(uint256(18).zeroFloorSub(IERC20Metadata(_asset).decimals()));
  
          _checkTimelockBounds(initialTimelock);
+@@ -338,6 +340,9 @@
+             seen[prevIndex] = true;
+ 
+             newWithdrawQueue[i] = id;
++
++            // HARNESS
++            withdrawRank[id] = i + 1;
+         }
+ 
+         for (uint256 i; i < currLength; ++i) {
+@@ -355,6 +360,10 @@
+                     }
+                 }
+ 
++                // HARNESS
++                deletedAt[id] = i;
++                delete withdrawRank[id];
++
+                 delete config[id];
+             }
+         }
+@@ -743,6 +752,9 @@
+ 
+         if (supplyCap > 0) {
+             if (!marketConfig.enabled) {
++                // HARNESS
++                withdrawRank[id] = withdrawQueue.length + 1;
++
+                 withdrawQueue.push(id);
+ 
+                 if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();

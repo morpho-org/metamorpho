@@ -2,15 +2,8 @@
 import "ConsistentState.spec";
 
 methods {
-    function owner() external returns(address) envfree;
-    function curator() external returns(address) envfree;
-    function isAllocator(address) external returns(bool) envfree;
-    function skimRecipient() external returns(address) envfree;
-
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
-    function totalSupply(address) external returns(uint256) envfree;
-    function balanceOf(address, address) external returns(uint256) envfree;
 }
 
 function hasCuratorRole(address user) returns bool {
