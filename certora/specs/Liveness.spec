@@ -11,7 +11,6 @@ methods {
     function _.lastUpdate(MetaMorphoHarness.Id) external => summaryLastUpdate() expect uint256;
 }
 
-// TODO: remove this summary.
 function summaryLastUpdate() returns uint256 {
     uint256 answer;
     require answer > 0;

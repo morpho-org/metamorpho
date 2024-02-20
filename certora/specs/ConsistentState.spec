@@ -25,6 +25,19 @@ function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
 invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
     hasSupplyCapIsEnabled(id);
 
+function hasPendingSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
+    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+
+    uint64 pendingAt;
+    _, pendingAt = pendingCap(id);
+
+    return pendingAt > 0 => marketParams.loanToken == asset();
+}
+
+// Check that there can only be pending caps on markets where the loan asset is the asset of the vault.
+invariant pendingSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams)
+    hasPendingSupplyCapHasConsistentAsset(marketParams);
+
 function hasSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
@@ -34,9 +47,14 @@ function hasSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketPar
     return supplyCap > 0 => marketParams.loanToken == asset();
 }
 
-// Check that haping a positive cap implies that the loan asset is the asset of the vault.
+// Check that having a positive cap implies that the loan asset is the asset of the vault.
 invariant supplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams)
-    hasSupplyCapHasConsistentAsset(marketParams);
+    hasSupplyCapHasConsistentAsset(marketParams)
+{ preserved acceptCap(MetaMorphoHarness.MarketParams _mp) with (env e) {
+    requireInvariant pendingSupplyCapHasConsistentAsset(marketParams);
+    require e.block.timestamp > 0;
+  }
+}
 
 function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
     uint192 supplyCap;
