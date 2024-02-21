@@ -13,6 +13,9 @@ methods {
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
+
+    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => NONDET;
+    function _.borrowRate(MetaMorphoHarness.MarketParams, MetaMorphoHarness.Market) external => NONDET;
 }
 
 function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) returns (uint256, uint256) {
@@ -30,6 +33,8 @@ rule depositTokenChange(env e, uint256 assets, address receiver) {
     address morpho = MORPHO();
 
     require morpho != currentContract;
+    require asset != currentContract;
+    require receiver != currentContract;
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     deposit(e, assets, receiver);
