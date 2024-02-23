@@ -4,6 +4,21 @@ This folder contains the verification of MetaMorpho using CVL, Certora's Verific
 
 A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue market to allocate its funds.
 
+## Roles
+
+## Timelock
+
+## Interactions with other contracts
+### Enabled flag
+### Consistent asset
+### Reentrancy
+
+## Liveness
+
+## Other safety properties
+### Range of variables
+### Sanity checks
+
 # Folder and file structure
 
 The [`certora/specs`](specs) folder contains the following files:
