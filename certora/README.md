@@ -8,7 +8,15 @@ A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue market
 
 The [`certora/specs`](specs) folder contains the following files:
 
-TODO
+- [`ConsistentState.spec`](specs/ConsistentState.spec) checks various properties specifying what is the consistent state of MetaMorpho, what are the reachable setting configurations (such as caps and fee).
+- [`Enabled.spec`](specs/Enabled.spec) checks properties about enabled flag of market, notably that it correctly tracks the fact that the market is in the withdraw queue.
+- [`Immutability.spec`](specs/Immutability.spec) checks that MetaMorpho is immutable.
+- [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency solutions are always available.
+- [`PendingValues.spec`](specs/PendingValues.spec) checks properties on the values that are still under timelock. Those properties are notably useful to prove that actual storage variables, when set to the pending value, use a consistent value.
+- [`Range.spec`](specs/Range.spec) checks the bounds (if any) of storage variables.
+- [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
+- [`Reverts.spec`](specs/Reverts.spec) checks the revert conditions on entrypoints.
+- [`Roles.spec`](specs/Roles.spec) checks the access control and authorization granted by the respective MetaMorpho roles. In particular it checks the hierarchy of roles.
 
 The [`certora/confs`](confs) folder contains a configuration file for each corresponding specification file.
 
@@ -25,11 +33,6 @@ It requires having set the `CERTORAKEY` environment variable to a valid Certora 
 You can also pass additional arguments, notably to verify a specific rule.
 For example, at the root of the repository:
 
-TODO
-
-The `certora-cli` package also includes a `certoraMutate` binary.
-The file [`gambit.conf`](gambit.conf) provides a default configuration of the mutations.
-You can test to mutate the code and check it against a particular specification.
-For example, at the root of the repository:
-
-TODO
+```
+certoraRun certora/confs/Range.conf --rule timelockInRange
+```
