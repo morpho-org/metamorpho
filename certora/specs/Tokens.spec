@@ -6,7 +6,7 @@ methods {
     function MORPHO() external returns(address) envfree;
 
     function Util.balanceOf(address, address) external returns(uint256) envfree;
-    function Util.transferFrom(address, address, address, uint256) external envfree;
+    function Util.safeTransferFrom(address, address, address, uint256) external envfree;
 
     function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) external => summarySupply(marketParams, assets, shares, receiver, data) expect (uint256, uint256);
 
@@ -23,7 +23,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     require receiver == currentContract;
     require data.length == 0;
 
-    Util.transferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
+    Util.safeTransferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
 
     return (assets, shares);
 }
