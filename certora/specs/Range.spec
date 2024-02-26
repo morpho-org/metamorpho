@@ -2,6 +2,7 @@
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
+    function MORPHO() external returns(address) envfree;
     function asset() external returns(address) envfree;
     function pendingTimelock() external returns(uint192, uint64) envfree;
     function timelock() external returns(uint256) envfree;

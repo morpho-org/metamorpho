@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+import "ConsistentState.spec";
+
 using UtilHarness as Util;
 
 methods {
-    function asset() external returns(address) envfree;
-    function MORPHO() external returns(address) envfree;
-
     function Util.balanceOf(address, address) external returns(uint256) envfree;
     function Util.safeTransferFrom(address, address, address, uint256) external envfree;
-
-    function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) external => summarySupply(marketParams, assets, shares, receiver, data) expect (uint256, uint256);
 
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
 
+    function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) external => summarySupply(marketParams, assets, shares, receiver, data) expect (uint256, uint256);
     function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => NONDET;
     function _.borrowRate(MetaMorphoHarness.MarketParams, MetaMorphoHarness.Market) external => NONDET;
 }
@@ -22,6 +20,9 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     require shares == 0;
     require receiver == currentContract;
     require data.length == 0;
+
+    // Safe require because it is a verified invariant.
+    require hasSupplyCapHasConsistentAsset(marketParams);
 
     Util.safeTransferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
 
