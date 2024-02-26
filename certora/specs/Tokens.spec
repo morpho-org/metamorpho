@@ -17,9 +17,9 @@ methods {
 }
 
 function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) returns (uint256, uint256) {
-    require shares == 0;
-    require receiver == currentContract;
-    require data.length == 0;
+    assert shares == 0;
+    assert receiver == currentContract;
+    assert data.length == 0;
 
     // Safe require because it is a verified invariant.
     require hasSupplyCapHasConsistentAsset(marketParams);
