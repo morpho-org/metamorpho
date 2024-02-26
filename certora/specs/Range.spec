@@ -20,8 +20,6 @@ methods {
     function curator() external returns(address) envfree;
     function isAllocator(address) external returns(bool) envfree;
     function skimRecipient() external returns(address) envfree;
-    function totalSupply(address) external returns(uint256) envfree;
-    function balanceOf(address, address) external returns(uint256) envfree;
 
     function minTimelock() external returns(uint256) envfree;
     function maxTimelock() external returns(uint256) envfree;
