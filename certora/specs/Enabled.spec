@@ -22,7 +22,8 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
     uint256 j;
     require isInWithdrawQueueIsEnabled(indexes[i]);
 
-    requireInvariant distinctIdentifiers(indexes[i], j);
+    // Safe require because it is a verified invariant.
+    require hasDistinctIdentifiers(indexes[i], j);
 
     updateWithdrawQueue(e, indexes);
 
