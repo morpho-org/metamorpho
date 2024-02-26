@@ -12,8 +12,18 @@ methods {
     function _.balanceOf(address) external => DISPATCHER(true);
 
     function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) external => summarySupply(marketParams, assets, shares, receiver, data) expect (uint256, uint256);
+    function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect MetaMorphoHarness.MarketParams;
     function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => NONDET;
     function _.borrowRate(MetaMorphoHarness.MarketParams, MetaMorphoHarness.Market) external => NONDET;
+}
+
+function summaryIdToMarketParams(MetaMorphoHarness.Id id) returns MetaMorphoHarness.MarketParams {
+    MetaMorphoHarness.MarketParams marketParams;
+
+    // Safe require because it is a verified invariant in Morpho Blue.
+    require Morpho.libId(marketParams) == id;
+
+    return marketParams;
 }
 
 function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) returns (uint256, uint256) {
@@ -24,6 +34,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     // Safe require because it is a verified invariant.
     require hasSupplyCapHasConsistentAsset(marketParams);
 
+    // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
     Util.safeTransferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
 
     return (assets, shares);
