@@ -2,29 +2,13 @@
 import "ConsistentState.spec";
 
 using UtilHarness as Util;
-using MorphoHarness as Morpho;
 
 methods {
-    function asset() external returns(address) envfree;
-    function owner() external returns(address) envfree;
-    function curator() external returns(address) envfree;
-    function isAllocator(address) external returns(bool) envfree;
-    function skimRecipient() external returns(address) envfree;
-    function fee() external returns(uint96) envfree;
-    function feeRecipient() external returns(address) envfree;
-    function guardian() external returns(address) envfree;
-    function pendingGuardian() external returns(address, uint64) envfree;
-    function config(MorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
-    function pendingCap(MorphoHarness.Id) external returns(uint192, uint64) envfree;
-
     function Util.totalSupply(address) external returns(uint256) envfree;
     function Util.balanceOf(address, address) external returns(uint256) envfree;
 
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
-
-    function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
-    function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
 }
 
 function hasCuratorRole(address user) returns bool {
