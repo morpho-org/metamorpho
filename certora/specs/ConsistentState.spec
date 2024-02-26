@@ -11,14 +11,15 @@ methods {
 rule newPositiveCapEnsuresUpdated(env e, method f, calldataarg args) {
     MetaMorphoHarness.Id id;
 
-    uint192 supplyCap;
-    supplyCap, _, _ = config(id);
-    require supplyCap == 0;
+    uint192 supplyCapBefore;
+    supplyCapBefore, _, _ = config(id);
+    require supplyCapBefore == 0;
 
     f(e, args);
 
-    supplyCap, _, _ = config(id);
-    require supplyCap > 0;
+    uint192 supplyCapAfter;
+    supplyCapAfter, _, _ = config(id);
+    require supplyCapAfter > 0;
 
     assert Morpho.lastUpdate(id) > 0;
 }
