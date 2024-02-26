@@ -17,6 +17,7 @@ jobs:
       matrix:
         conf:
           - ConsistentState
+          - DistinctIdentifiers
           - Enabled
           - Immutability
           - Liveness

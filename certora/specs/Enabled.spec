@@ -1,18 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "PendingValues.spec";
-
-function hasDistinctIdentifiers(uint256 i, uint256 j) returns bool {
-    return i != j => withdrawQueue(i) != withdrawQueue(j);
-}
-
-// Check that there are no duplicate markets in the withdraw queue.
-invariant distinctIdentifiers(uint256 i, uint256 j)
-    hasDistinctIdentifiers(i, j)
-{
-    preserved updateWithdrawQueue(uint256[] indexes) with (env e) {
-        requireInvariant distinctIdentifiers(indexes[i], indexes[j]);
-    }
-}
+import "DistinctIdentifiers.spec";
 
 function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
     if(i >= withdrawQueueLength()) return true;
@@ -35,7 +22,8 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
     uint256 j;
     require isInWithdrawQueueIsEnabled(indexes[i]);
 
-    requireInvariant distinctIdentifiers(indexes[i], j);
+    // Safe require because it is a verified invariant.
+    require hasDistinctIdentifiers(indexes[i], j);
 
     updateWithdrawQueue(e, indexes);
 
