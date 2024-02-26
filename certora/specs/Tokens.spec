@@ -32,9 +32,12 @@ rule depositTokenChange(env e, uint256 assets, address receiver) {
     address asset = asset();
     address morpho = MORPHO();
 
-    require morpho != currentContract;
-    require asset != currentContract;
-    require receiver != currentContract;
+    // Trick to require that all the following addresses are different.
+    require e.msg.sender == 0x10;
+    require receiver == 0x11;
+    require currentContract == 0x12;
+    require morpho == 0x13;
+    require asset == 0x14;
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     deposit(e, assets, receiver);
