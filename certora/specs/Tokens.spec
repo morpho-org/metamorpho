@@ -19,9 +19,12 @@ methods {
 
 function summaryIdToMarketParams(MetaMorphoHarness.Id id) returns MetaMorphoHarness.MarketParams {
     MetaMorphoHarness.MarketParams marketParams;
+    uint256 lastUpdated = Morpho.lastUpdate(id);
 
+    // Safe require because markets in the supply/withdraw queue have positive last update (see LastUpdated.spec).
+    require lastUpdated > 0;
     // Safe require because it is a verified invariant in Morpho Blue.
-    require Morpho.libId(marketParams) == id;
+    require lastUpdated > 0 => Morpho.libId(marketParams) == id;
 
     return marketParams;
 }
