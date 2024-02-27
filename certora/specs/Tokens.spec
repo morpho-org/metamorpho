@@ -12,6 +12,7 @@ methods {
     function _.balanceOf(address) external => DISPATCHER(true);
 
     function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address receiver, bytes data) external => summarySupply(marketParams, assets, shares, receiver, data) expect (uint256, uint256);
+    function _.withdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external => summaryWithdraw(marketParams, assets, shares, onBehalf, receiver) expect (uint256, uint256);
     function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect MetaMorphoHarness.MarketParams;
     function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => NONDET;
     function _.borrowRate(MetaMorphoHarness.MarketParams, MetaMorphoHarness.Market) external => NONDET;
@@ -43,24 +44,79 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     return (assets, shares);
 }
 
+function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) returns (uint256, uint256) {
+    assert shares == 0;
+    assert onBehalf == currentContract;
+    assert receiver == currentContract;
+
+    // Safe require because it is a verified invariant.
+    require hasSupplyCapHasConsistentAsset(marketParams);
+
+    // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
+    Util.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, assets);
+
+    return (assets, shares);
+}
+
 rule depositTokenChange(env e, uint256 assets, address receiver) {
     address asset = asset();
     address morpho = MORPHO();
 
     // Trick to require that all the following addresses are different.
-    require e.msg.sender == 0x10;
-    require receiver == 0x11;
+    require morpho == 0x10;
+    require asset == 0x11;
     require currentContract == 0x12;
-    require morpho == 0x13;
-    require asset == 0x14;
+    require e.msg.sender == 0x13;
+    require receiver == 0x14;
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
     deposit(e, assets, receiver);
     uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
 
-    assert assets == assert_uint256(balanceMorphoAfter - balanceMorphoBefore);
+    assert assert_uint256(balanceMorphoAfter - balanceMorphoBefore) == assets;
+    assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
 }
 
-rule withdrawTokenChange() {
-    assert true;
+rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner) {
+    address asset = asset();
+    address morpho = MORPHO();
+
+    // Trick to require that all the following addresses are different.
+    require morpho == 0x10;
+    require asset == 0x11;
+    require currentContract == 0x12;
+    require e.msg.sender == 0x13;
+    require receiver == 0x14;
+    require owner == 0x15;
+
+    uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
+    withdraw(e, assets, receiver, owner);
+    uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
+
+    assert assert_uint256(balanceMorphoBefore - balanceMorphoAfter) == assets;
+    assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
+}
+
+rule reallocateTokenChange(env e, MetaMorphoHarness.MarketAllocation[] allocations) {
+    address asset = asset();
+    address morpho = MORPHO();
+
+    // Trick to require that all the following addresses are different.
+    require morpho == 0x10;
+    require asset == 0x11;
+    require currentContract == 0x12;
+    require e.msg.sender == 0x13;
+
+    uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
+    reallocate(e, allocations);
+    uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
+
+    assert balanceMorphoAfter == balanceMorphoAfter;
+    assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
 }
