@@ -2,10 +2,6 @@
 import "Reverts.spec";
 
 methods {
-    function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
-    function withdrawQueueLength() external returns(uint256) envfree;
-    function timelock() external returns(uint256) envfree;
-
     function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
 }
 
