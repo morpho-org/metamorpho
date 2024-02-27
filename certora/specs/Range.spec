@@ -11,6 +11,7 @@ methods {
     function pendingCap(MetaMorphoHarness.Id) external returns(uint192, uint64) envfree;
     function config(MetaMorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function supplyQueueLength() external returns(uint256) envfree;
+    function supplyQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
     function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawRank(MetaMorphoHarness.Id) external returns(uint256) envfree;
