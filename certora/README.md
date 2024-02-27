@@ -44,9 +44,50 @@ Indeed, a greater timelock means that the user would have more time to react to 
 
 ## Interactions with other contracts
 
-### Enabled flag
+MetaMorpho interacts with Morpho Blue and with the loan token of the vault.
+This section details how those calls are checked to be scoped, which ensures the safety of MetaMorpho.
 
 ### Consistent asset
+
+For deposit and withdrawd, it is checked that markets have a the same loan token as the loan token of the vault.
+We say that such market has a consistent asset.
+The following function is verified to always return `true` and contributes to verifying the property above.
+
+```solidity
+function hasSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
+    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+
+    uint192 supplyCap;
+    supplyCap, _, _ = config(id);
+
+    return supplyCap > 0 => marketParams.loanToken == asset();
+}
+```
+
+This checks that each market on which some supply may be deposited has a consistent asset.
+
+### Enabled flag
+
+It is verified that the enabled flag tracks if a given market is in the withdraw queue.
+The following function gives one half of this property, and is verified to always return `true` for every index `i`.
+
+```solidity
+function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
+    if(i >= withdrawQueueLength()) return true;
+
+    MetaMorphoHarness.Id id = withdrawQueue(i);
+    bool enabled;
+    _, enabled, _ = config(id);
+
+    return enabled;
+}
+```
+
+Thorough the code of MetaMorpho, this enabled flag is checked to be set to true, which is an efficient check that does not require to go through the whole withdraw queue.
+This check also ensures that such markets have some properties, since verifying those are necessary to be added to the withdraw queue.
+For example, markets added to the withdraw queue necessarily have a consistent asset.
+
+### Last updated
 
 ### Reentrancy
 
@@ -63,8 +104,10 @@ Indeed, a greater timelock means that the user would have more time to react to 
 The [`certora/specs`](specs) folder contains the following files:
 
 - [`ConsistentState.spec`](specs/ConsistentState.spec) checks various properties specifying what is the consistent state of MetaMorpho, what are the reachable setting configurations (such as caps and fee).
+- [`DistinctIdentifiers.spec`](specs/DistinctIdentifiers.spec) checks that the withdraw queue has no duplicate markets.
 - [`Enabled.spec`](specs/Enabled.spec) checks properties about enabled flag of market, notably that it correctly tracks the fact that the market is in the withdraw queue.
 - [`Immutability.spec`](specs/Immutability.spec) checks that MetaMorpho is immutable.
+- [`LastUpdated.spec`](specs/LastUpdated.spec) checks that all Morpho Blue markets that MetaMorpho interacts with are created markets.
 - [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency solutions are always available.
 - [`PendingValues.spec`](specs/PendingValues.spec) checks properties on the values that are still under timelock. Those properties are notably useful to prove that actual storage variables, when set to the pending value, use a consistent value.
 - [`Range.spec`](specs/Range.spec) checks the bounds (if any) of storage variables.
