@@ -7,9 +7,9 @@ contract MulticallTest is IntegrationTest {
     bytes[] internal data;
 
     function testMulticall() public {
-        data.push(abi.encodeCall(MetaMorpho.setCurator, (address(1))));
-        data.push(abi.encodeCall(MetaMorpho.setIsAllocator, (address(1), true)));
-        data.push(abi.encodeCall(MetaMorpho.submitTimelock, (ConstantsLib.MAX_TIMELOCK)));
+        data.push(abi.encodeCall(IMetaMorphoBase.setCurator, (address(1))));
+        data.push(abi.encodeCall(IMetaMorphoBase.setIsAllocator, (address(1), true)));
+        data.push(abi.encodeCall(IMetaMorphoBase.submitTimelock, (ConstantsLib.MAX_TIMELOCK)));
 
         vm.prank(OWNER);
         vault.multicall(data);
