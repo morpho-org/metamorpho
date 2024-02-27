@@ -7,14 +7,6 @@ methods {
     function timelock() external returns(uint256) envfree;
 
     function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
-
-    function _.lastUpdate(MetaMorphoHarness.Id) external => summaryLastUpdate() expect uint256;
-}
-
-function summaryLastUpdate() returns uint256 {
-    uint256 answer;
-    require answer > 0;
-    return answer;
 }
 
 // Check that having the allocator role allows to pause supply on the vault.
@@ -47,6 +39,8 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     require hasSupplyCapIsEnabled(id);
     // Safe require because this is a verified invariant.
     require hasSupplyCapHasConsistentAsset(marketParams);
+    // Safe require because this is a verified invariant.
+    require hasPositiveSupplyCapIsUpdated(id);
 
     uint184 supplyCap; uint64 removableAt;
     supplyCap, _, removableAt = config(id);
