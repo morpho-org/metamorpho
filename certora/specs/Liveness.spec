@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "Reverts.spec";
 
-methods {
-    function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
-}
-
 // Check that having the allocator role allows to pause supply on the vault.
 rule canPauseSupply() {
     env e1; MetaMorphoHarness.Id[] newSupplyQueue;
