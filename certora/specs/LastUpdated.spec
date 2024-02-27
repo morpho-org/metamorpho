@@ -16,16 +16,16 @@ function hasPositiveSupplyCapIsUpdated(MetaMorphoHarness.Id id) returns bool {
     uint192 supplyCap;
     supplyCap, _, _ = config(id);
 
-    assert supplyCap > 0 => Morpho.lastUpdated(id) > 0;
+    return supplyCap > 0 => Morpho.lastUpdate(id) > 0;
 }
 
 // Check that any new market in the supply queue necessarily has a positive cap.
-rule newSupplyQueueEnsuresPositiveCap(MetaMorphoHarness.Id[] newSupplyQueue) {
+rule newSupplyQueueEnsuresPositiveCap(env e, MetaMorphoHarness.Id[] newSupplyQueue) {
     uint256 i;
 
-    setSupplyQueue(newSupplyQueue);
+    setSupplyQueue(e, newSupplyQueue);
 
-    require supplyQueue(i) == id;
+    MetaMorphoHarness.Id id = supplyQueue(i);
 
     uint192 supplyCap;
     supplyCap, _, _ = config(id);
