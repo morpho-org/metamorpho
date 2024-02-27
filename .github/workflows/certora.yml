@@ -19,6 +19,7 @@ jobs:
           - ConsistentState
           - Enabled
           - Immutability
+          - LastUpdated
           - Liveness
           - PendingValues
           - Range
