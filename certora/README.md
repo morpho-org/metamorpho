@@ -44,8 +44,14 @@ Indeed, a greater timelock means that the user would have more time to react to 
 
 ## Interactions with other contracts
 
-MetaMorpho interacts with Morpho Blue and with the loan token of the vault.
-This section details how those calls are checked to be scoped, which ensures the safety of MetaMorpho.
+This section details how externals calls are checked to be scoped, which ensures the safety of MetaMorpho.
+
+### Reentrancy
+
+MetaMorpho only interacts with Morpho Blue and with the loan token of the vault.
+This is checked in [`Reentrancy.spec`](specs/Reentrancy.spec).
+Informally, the loan token and the markets of MetaMorpho are trusted.
+The former is known upfront by users, while markets are added through a timelock mechanism, which allows users (or by proxy, the guardian) to make sure that this addition is aligned with the desired risk profile.
 
 ### Consistent asset
 
@@ -89,7 +95,26 @@ For example, markets added to the withdraw queue necessarily have a consistent a
 
 ### Last updated
 
-### Reentrancy
+The `lastUpdate` variable in Morpho Blue is used to discriminate if a market is created.
+In MetaMorpho, every market in the supply queue or in the withdraw queue has been created.
+
+```solidity
+rule newSupplyQueueEnsuresPositiveCap(env e, MetaMorphoHarness.Id[] newSupplyQueue) {
+    uint256 i;
+
+    setSupplyQueue(e, newSupplyQueue);
+
+    MetaMorphoHarness.Id id = supplyQueue(i);
+
+    uint192 supplyCap;
+    supplyCap, _, _ = config(id);
+    assert supplyCap > 0;
+}
+```
+
+The previous rule ensures that when setting a new supply queue, each market has a positive supply cap.
+Markets can have a positive supply cap only if they are created on Morpho Blue.
+We can prove then that each market of the supply queue has been created on Morpho, because if a market has ben created it cannot be "destroyed" later.
 
 ## Liveness
 
