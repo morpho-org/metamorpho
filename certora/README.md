@@ -2,21 +2,60 @@ This folder contains the verification of MetaMorpho using CVL, Certora's Verific
 
 # High-level description
 
-A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue market to allocate its funds.
+A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue markets to allocate its funds.
+See [`README.md`](../README.md) for a in depth description of MetaMorpho.
 
 ## Roles
 
+MetaMorpho defines different roles to be able to manage the vault, the distinction between roles helps in reducing trust assumptions.
+Roles follow a hierarchy, and this hierarchy is verified to hold in [`Roles.spec`](specs/Roles.spec).
+More precisely, a stronger role is checked to be able to do the same operations of a lesser role.
+Additionally, it is verified in [`Reverts.spec`](specs/Reverts.spec) that the roles are necessary to be able to do permissioned operations
+For example, the following rule makes sure that having the guardian role is necessary to be able to revoke a pending timelock:
+
+```solidity
+rule revokePendingTimelockRevertCondition(env e) {
+    bool hasGuardianRole = hasGuardianRole(e.msg.sender);
+
+    revokePendingTimelock@withrevert(e);
+
+    assert lastReverted <=>
+        e.msg.value != 0 ||
+        !hasGuardianRole;
+}
+```
+
 ## Timelock
 
+MetaMorpho features a timelock mechanism that applies to every operation that could potentially increase risk for users.
+The following function is verified to always return `true`.
+
+```solidity
+function isSmallerPendingTimelock() returns bool {
+    uint192 pendingValue;
+    pendingValue, _ = pendingTimelock();
+
+    return assert_uint256(pendingValue) < timelock();
+}
+```
+
+Notice how increasing the timelock is itself not subject to a timelock, as it does not increase the risk for the user.
+Indeed, a greater timelock means that the user would have more time to react to the vault's management operations that would not align with the user risk profile.
+
 ## Interactions with other contracts
+
 ### Enabled flag
+
 ### Consistent asset
+
 ### Reentrancy
 
 ## Liveness
 
 ## Other safety properties
+
 ### Range of variables
+
 ### Sanity checks
 
 # Folder and file structure
