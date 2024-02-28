@@ -51,10 +51,11 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
-    uint256 withdrawn = Util.withdrawnAssets(MORPHO(), assets, shares);
+    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    uint256 withdrawn = Util.withdrawnAssets(MORPHO(), id, assets, shares);
 
     bool enabled;
-    _, enabled, _ = config(Morpho.libId(marketParams));
+    _, enabled, _ = config(id);
     // Safe require because:
     // - for reallocate this is checked in the code
     // - for withdraw, it is verified that markets in the withdraw queue are enabled.
