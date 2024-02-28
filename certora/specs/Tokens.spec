@@ -36,7 +36,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     assert receiver == currentContract;
     assert data.length == 0;
 
-    // Safe require becuase it is a verified invariant.
+    // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(Morpho.libId(marketParams));
     // Safe require because it is a verified invariant.
     require isEnabledHasConsistentAsset(marketParams);
@@ -52,7 +52,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
-    // Safe require becuase it is a verified invariant.
+    // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(Morpho.libId(marketParams));
     // Safe require because it is a verified invariant.
     require isEnabledHasConsistentAsset(marketParams);
