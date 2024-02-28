@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "LastUpdated.spec";
 
+function hasCuratorRole(address user) returns bool {
+    return user == owner() || user == curator();
+}
+
+function hasAllocatorRole(address user) returns bool {
+    return user == owner() || user == curator() || isAllocator(user);
+}
+
+function hasGuardianRole(address user) returns bool {
+    return user == owner() || user == guardian();
+}
+
 // Check that fee cannot accrue to an unset fee recipient.
 invariant noFeeToUnsetFeeRecipient()
     feeRecipient() == 0 => fee() == 0;

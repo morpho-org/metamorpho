@@ -32,19 +32,6 @@ methods {
     function SafeERC20.safeTransfer(address, address, uint256) internal => CONSTANT;
 }
 
-function hasCuratorRole(address user) returns bool {
-    return user == owner() || user == curator();
-}
-
-function hasAllocatorRole(address user) returns bool {
-    return user == owner() || user == curator() || isAllocator(user);
-}
-
-function hasGuardianRole(address user) returns bool {
-    return user == owner() || user == guardian();
-}
-
-
 // Check that the owner has more power than the guardian.
 rule ownerIsGuardian(method f, calldataarg args)
 filtered {
