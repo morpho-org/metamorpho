@@ -36,8 +36,10 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     assert receiver == currentContract;
     assert data.length == 0;
 
+    // Safe require becuase it is a verified invariant.
+    require hasSupplyCapIsEnabled(Morpho.libId(marketParams));
     // Safe require because it is a verified invariant.
-    require hasSupplyCapHasConsistentAsset(marketParams);
+    require isEnabledHasConsistentAsset(marketParams);
 
     // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
     Util.safeTransferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
@@ -50,8 +52,10 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
+    // Safe require becuase it is a verified invariant.
+    require hasSupplyCapIsEnabled(Morpho.libId(marketParams));
     // Safe require because it is a verified invariant.
-    require hasSupplyCapHasConsistentAsset(marketParams);
+    require isEnabledHasConsistentAsset(marketParams);
 
     // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
     Util.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, assets);

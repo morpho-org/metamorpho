@@ -30,7 +30,7 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     // Safe require because this is a verified invariant.
     require hasSupplyCapIsEnabled(id);
     // Safe require because this is a verified invariant.
-    require isEnabledHasConsistentState(marketParams);
+    require isEnabledHasConsistentAsset(marketParams);
     // Safe require because this is a verified invariant.
     require hasPositiveSupplyCapIsUpdated(id);
 
