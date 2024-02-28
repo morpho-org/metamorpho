@@ -11,18 +11,6 @@ methods {
     function _.balanceOf(address) external => DISPATCHER(true);
 }
 
-function hasCuratorRole(address user) returns bool {
-    return user == owner() || user == curator();
-}
-
-function hasAllocatorRole(address user) returns bool {
-    return user == owner() || user == curator() || isAllocator(user);
-}
-
-function hasGuardianRole(address user) returns bool {
-    return user == owner() || user == guardian();
-}
-
 // Check all the revert conditions of the setCurator function.
 rule setCuratorRevertCondition(env e, address newCurator) {
     address owner = owner();
