@@ -48,19 +48,24 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
 }
 
 function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) returns (uint256, uint256) {
-    assert shares == 0;
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
-    // Safe require because it is a verified invariant.
-    require hasSupplyCapIsEnabled(Morpho.libId(marketParams));
+    uint256 withdrawn = Util.withdrawnAssets(MORPHO(), assets, shares);
+
+    bool enabled;
+    _, enabled, _ = config(Morpho.libId(marketParams));
+    // Safe require because:
+    // - for reallocate this is checked in the code
+    // - for withdraw, it is verified that markets in the withdraw queue are enabled.
+    require enabled;
     // Safe require because it is a verified invariant.
     require isEnabledHasConsistentAsset(marketParams);
 
     // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
-    Util.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, assets);
+    Util.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, withdrawn);
 
-    return (assets, shares);
+    return (withdrawn, shares);
 }
 
 rule depositTokenChange(env e, uint256 assets, address receiver) {
