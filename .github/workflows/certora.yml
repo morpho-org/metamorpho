@@ -20,6 +20,8 @@ jobs:
           - DistinctIdentifiers
           - Enabled
           - Immutability
+          - LastUpdated
+          - Liveness
           - PendingValues
           - Range
           - Reentrancy

@@ -2,6 +2,7 @@
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
+    function asset() external returns(address) envfree;
     function pendingTimelock() external returns(uint192, uint64) envfree;
     function timelock() external returns(uint256) envfree;
     function guardian() external returns(address) envfree;
@@ -9,12 +10,19 @@ methods {
     function pendingCap(MetaMorphoHarness.Id) external returns(uint192, uint64) envfree;
     function config(MetaMorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
     function supplyQueueLength() external returns(uint256) envfree;
+    function supplyQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
     function withdrawQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawRank(MetaMorphoHarness.Id) external returns(uint256) envfree;
     function deletedAt(MetaMorphoHarness.Id) external returns(uint256) envfree;
     function fee() external returns(uint96) envfree;
     function feeRecipient() external returns(address) envfree;
+    function owner() external returns(address) envfree;
+    function curator() external returns(address) envfree;
+    function isAllocator(address) external returns(bool) envfree;
+    function skimRecipient() external returns(address) envfree;
+    function totalSupply(address) external returns(uint256) envfree;
+    function balanceOf(address, address) external returns(uint256) envfree;
 
     function minTimelock() external returns(uint256) envfree;
     function maxTimelock() external returns(uint256) envfree;
