@@ -91,7 +91,7 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
     submitGuardian@withrevert(e, newGuardian);
@@ -118,7 +118,7 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
     // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(id);
@@ -150,7 +150,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
     submitMarketRemoval@withrevert(e, marketParams);

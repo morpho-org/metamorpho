@@ -16,7 +16,7 @@ invariant noBadPendingTimelock()
     preserved with (env e) {
         // Safe require because it is a verified invariant.
         require isTimelockInRange();
-        // Safe require as it corresponds to year 2262.
+        // Safe require as it corresponds to some time very far into the future.
         require e.block.timestamp < 2^63;
     }
 }
@@ -55,7 +55,7 @@ invariant noBadPendingCap(MetaMorphoHarness.Id id)
     preserved with (env e) {
         // Safe require because it is a verified invariant.
         require isTimelockInRange();
-        // Safe require as it corresponds to year 2262.
+        // Safe require as it corresponds to some time very far into the future.
         require e.block.timestamp < 2^63;
     }
 }
@@ -89,7 +89,7 @@ invariant noBadPendingGuardian()
     preserved with (env e) {
         // Safe require because it is a verified invariant.
         require isTimelockInRange();
-        // Safe require as it corresponds to year 2262.
+        // Safe require as it corresponds to some time very far into the future.
         require e.block.timestamp < 2^63;
     }
 }
