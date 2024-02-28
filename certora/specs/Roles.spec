@@ -24,7 +24,6 @@ methods {
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => CONSTANT;
 
     // Summarize MetaMorpho seen as a token, useful for `transferFrom`.
-    function balanceOf(address) internal returns(uint256) => CONSTANT;
     function allowance(address, address) internal returns(uint256) => CONSTANT;
     function ERC20._transfer(address, address, uint256) internal => CONSTANT;
 
