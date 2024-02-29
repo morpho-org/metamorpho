@@ -215,7 +215,7 @@ describe("MetaMorpho", () => {
       MetaMorphoAction.setFee(BigInt.WAD / 10n),
     ]);
 
-    supplyCap = (BigInt.WAD * 20n * toBigInt(suppliers.length)) / toBigInt(nbMarkets);
+    supplyCap = (BigInt.WAD * 50n * toBigInt(suppliers.length * 2)) / toBigInt(nbMarkets);
 
     const supplyCapData: string[] = [];
     for (const marketParams of allMarketParams) supplyCapData.push(MetaMorphoAction.submitCap(marketParams, supplyCap));
@@ -250,19 +250,35 @@ describe("MetaMorpho", () => {
   });
 
   it("should simulate gas cost [main]", async () => {
-    for (let i = 0; i < suppliers.length; ++i) {
-      logProgress("main", i, suppliers.length);
+    const nbSuppliers = suppliers.length;
+    const nbDeposits = nbSuppliers * 2;
 
-      const supplier = suppliers[i];
-      const assets = BigInt.WAD * toBigInt(1 + Math.floor(random() * 100));
+    for (let i = 0; i < nbDeposits; ++i) {
+      logProgress("main", i, nbDeposits);
+
+      const j = i >= nbSuppliers ? nbDeposits - i - 1 : i;
+      const supplier = suppliers[j];
 
       await randomForwardTimestamp();
 
-      await metaMorpho.connect(supplier).deposit(assets, supplier.address);
+      // Supplier j supplies twice, ~100 in total.
+      await metaMorpho
+        .connect(supplier)
+        .deposit(
+          BigInt.WAD * toBigInt(1 + Math.floor((99 * (nbDeposits - i - 1)) / (nbDeposits - 1))),
+          supplier.address,
+        );
 
       await randomForwardTimestamp();
 
-      await metaMorpho.connect(supplier).withdraw(assets / 2n, supplier.address, supplier.address);
+      // Supplier j withdraws twice, ~80 in total.
+      await metaMorpho
+        .connect(supplier)
+        .withdraw(
+          BigInt.WAD * toBigInt(1 + Math.ceil((79 * i) / (nbDeposits - 1))),
+          supplier.address,
+          supplier.address,
+        );
 
       await randomForwardTimestamp();
 
@@ -293,9 +309,16 @@ describe("MetaMorpho", () => {
         };
       });
 
+      const idleMarket = await expectedMarket(idleParams);
+      const idlePosition = await morpho.position(identifier(idleParams), metaMorphoAddress);
+
+      const idleAssets = idlePosition.supplyShares.toAssetsDown(
+        idleMarket.totalSupplyAssets,
+        idleMarket.totalSupplyShares,
+      );
       const withdrawnAssets = withdrawnAllocation.reduce((total, { withdrawn }) => total + withdrawn, 0n);
 
-      const marketAssets = (withdrawnAssets * 9n) / 10n / toBigInt(nbMarkets);
+      const marketAssets = ((withdrawnAssets + idleAssets) * 9n) / 10n / toBigInt(nbMarkets);
 
       const allocations = withdrawnAllocation.map(({ marketParams, remaining }) => ({
         marketParams,
@@ -315,7 +338,7 @@ describe("MetaMorpho", () => {
 
       await hre.network.provider.send("evm_setAutomine", [false]);
 
-      const borrower = borrowers[i];
+      const borrower = borrowers[i % nbSuppliers];
 
       for (const marketParams of allMarketParams) {
         await randomForwardTimestamp();
@@ -323,7 +346,7 @@ describe("MetaMorpho", () => {
         const market = await expectedMarket(marketParams);
 
         const liquidity = market.totalSupplyAssets - market.totalBorrowAssets;
-        const borrowed = liquidity / 3n;
+        const borrowed = liquidity / 100n;
         if (borrowed === 0n) break;
 
         await morpho.connect(borrower).supplyCollateral(marketParams, liquidity, borrower.address, "0x");
