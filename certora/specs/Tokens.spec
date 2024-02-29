@@ -70,6 +70,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     return (withdrawn, shares);
 }
 
+// Check that, on deposit, MetaMorpho's balance does not change and that Morpho's balance increases by the corresponding amount.
 rule depositTokenChange(env e, uint256 assets, address receiver) {
     address asset = asset();
     address morpho = MORPHO();
@@ -91,6 +92,7 @@ rule depositTokenChange(env e, uint256 assets, address receiver) {
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
 }
 
+// Check that, on withdrawal, MetaMorpho's balance does not change and that Morpho's balance decreases by the corresponding amount.
 rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner) {
     address asset = asset();
     address morpho = MORPHO();
@@ -113,6 +115,7 @@ rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner)
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
 }
 
+// Check that, on reallocate, MetaMorpho's balance and Morpho's balance do not change.
 rule reallocateTokenChange(env e, MetaMorphoHarness.MarketAllocation[] allocations) {
     address asset = asset();
     address morpho = MORPHO();
