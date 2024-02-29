@@ -19,7 +19,11 @@ contract UtilHarness {
         IERC20(token).safeTransferFrom(from, to, amount);
     }
 
-    function withdrawnAssets(IMorphoHarness morpho, Id id, uint256 assets, uint256 shares) external returns (uint256) {
+    function withdrawnAssets(IMorphoHarness morpho, Id id, uint256 assets, uint256 shares)
+        external
+        view
+        returns (uint256)
+    {
         if (shares == 0) {
             return assets;
         } else {

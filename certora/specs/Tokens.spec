@@ -6,6 +6,7 @@ using UtilHarness as Util;
 methods {
     function Util.balanceOf(address, address) external returns(uint256) envfree;
     function Util.safeTransferFrom(address, address, address, uint256) external envfree;
+    function Util.withdrawnAssets(address, MetaMorphoHarness.Id, uint256, uint256) external returns (uint256) envfree;
 
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
