@@ -2,6 +2,7 @@
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
 
+    function MORPHO() external returns(address) envfree;
     function asset() external returns(address) envfree;
     function pendingTimelock() external returns(uint192, uint64) envfree;
     function timelock() external returns(uint256) envfree;
@@ -21,8 +22,6 @@ methods {
     function curator() external returns(address) envfree;
     function isAllocator(address) external returns(bool) envfree;
     function skimRecipient() external returns(address) envfree;
-    function totalSupply(address) external returns(uint256) envfree;
-    function balanceOf(address, address) external returns(uint256) envfree;
 
     function minTimelock() external returns(uint256) envfree;
     function maxTimelock() external returns(uint256) envfree;

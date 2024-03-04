@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import "../munged/MetaMorpho.sol";
+import {MetaMorpho, ConstantsLib} from "../munged/MetaMorpho.sol";
 
 contract MetaMorphoHarness is MetaMorpho {
     constructor(
@@ -13,27 +13,19 @@ contract MetaMorphoHarness is MetaMorpho {
         string memory _symbol
     ) MetaMorpho(owner, morpho, initialTimelock, _asset, _name, _symbol) {}
 
-    function balanceOf(address token, address user) external view returns (uint256) {
-        return IERC20(token).balanceOf(user);
-    }
-
-    function totalSupply(address token) external view returns (uint256) {
-        return IERC20(token).totalSupply();
-    }
-
-    function minTimelock() external view returns (uint256) {
+    function minTimelock() external pure returns (uint256) {
         return ConstantsLib.MIN_TIMELOCK;
     }
 
-    function maxTimelock() external view returns (uint256) {
+    function maxTimelock() external pure returns (uint256) {
         return ConstantsLib.MAX_TIMELOCK;
     }
 
-    function maxQueueLength() external view returns (uint256) {
+    function maxQueueLength() external pure returns (uint256) {
         return ConstantsLib.MAX_QUEUE_LENGTH;
     }
 
-    function maxFee() external view returns (uint256) {
+    function maxFee() external pure returns (uint256) {
         return ConstantsLib.MAX_FEE;
     }
 }

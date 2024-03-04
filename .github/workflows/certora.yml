@@ -27,6 +27,7 @@ jobs:
           - Reentrancy
           - Reverts
           - Roles
+          - Tokens
 
     steps:
       - uses: actions/checkout@v3
