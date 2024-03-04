@@ -67,10 +67,7 @@ The following function defined in [`PendingValues.spec`](specs/PendingValues.spe
 
 ```solidity
 function isSmallerPendingTimelock() returns bool {
-    uint192 pendingValue;
-    pendingValue, _ = pendingTimelock();
-
-    return assert_uint256(pendingValue) < timelock();
+    return assert_uint256(pendingTimelock_().value) < timelock();
 }
 ```
 
@@ -100,10 +97,7 @@ The following function defined in [`ConsistentState.spec`](specs/ConsistentState
 function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    bool enabled;
-    _, enabled, _ = config(id);
-
-    return enabled => marketParams.loanToken == asset();
+    return config_(id).enabled => marketParams.loanToken == asset();
 }
 ```
 
@@ -119,10 +113,8 @@ function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
     if(i >= withdrawQueueLength()) return true;
 
     MetaMorphoHarness.Id id = withdrawQueue(i);
-    bool enabled;
-    _, enabled, _ = config(id);
 
-    return enabled;
+    return config_(id).enabled;
 }
 ```
 
@@ -143,9 +135,7 @@ rule newSupplyQueueEnsuresPositiveCap(env e, MetaMorphoHarness.Id[] newSupplyQue
 
     MetaMorphoHarness.Id id = supplyQueue(i);
 
-    uint192 supplyCap;
-    supplyCap, _, _ = config(id);
-    assert supplyCap > 0;
+    assert config_(id).cap > 0;
 }
 ```
 

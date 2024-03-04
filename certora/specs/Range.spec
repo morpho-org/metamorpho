@@ -4,12 +4,12 @@ methods {
 
     function MORPHO() external returns(address) envfree;
     function asset() external returns(address) envfree;
-    function pendingTimelock() external returns(uint192, uint64) envfree;
     function timelock() external returns(uint256) envfree;
+    function pendingTimelock_() external returns(MetaMorphoHarness.PendingUint192) envfree;
     function guardian() external returns(address) envfree;
-    function pendingGuardian() external returns(address, uint64) envfree;
-    function pendingCap(MetaMorphoHarness.Id) external returns(uint192, uint64) envfree;
-    function config(MetaMorphoHarness.Id) external returns(uint184, bool, uint64) envfree;
+    function pendingGuardian_() external returns(MetaMorphoHarness.PendingAddress) envfree;
+    function config_(MetaMorphoHarness.Id) external returns(MetaMorphoHarness.MarketConfig) envfree;
+    function pendingCap_(MetaMorphoHarness.Id) external returns(MetaMorphoHarness.PendingUint192) envfree;
     function supplyQueueLength() external returns(uint256) envfree;
     function supplyQueue(uint256) external returns(MetaMorphoHarness.Id) envfree;
     function withdrawQueueLength() external returns(uint256) envfree;
@@ -30,11 +30,11 @@ methods {
 }
 
 function isPendingTimelockInRange() returns bool {
-    uint192 value;
-    uint64 validAt;
-    value, validAt = pendingTimelock();
+    MetaMorphoHarness.PendingUint192 pendingTimelock = pendingTimelock_();
 
-    return validAt != 0 => assert_uint256(value) <= maxTimelock() && assert_uint256(value) >= minTimelock();
+    return pendingTimelock.validAt != 0 =>
+        assert_uint256(pendingTimelock.value) <= maxTimelock() &&
+        assert_uint256(pendingTimelock.value) >= minTimelock();
 }
 
 // Check that the pending timelock is bounded by the min timelock and the max timelock.

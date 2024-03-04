@@ -13,10 +13,7 @@ methods {
 // - on MetaMorpho, that it holds when the cap is positive for the first time
 // - on Blue, that a created market always has positive last update
 function hasPositiveSupplyCapIsUpdated(MetaMorphoHarness.Id id) returns bool {
-    uint192 supplyCap;
-    supplyCap, _, _ = config(id);
-
-    return supplyCap > 0 => Morpho.lastUpdate(id) > 0;
+    return config_(id).cap > 0 => Morpho.lastUpdate(id) > 0;
 }
 
 // Check that any new market in the supply queue necessarily has a positive cap.
@@ -27,7 +24,5 @@ rule newSupplyQueueEnsuresPositiveCap(env e, MetaMorphoHarness.Id[] newSupplyQue
 
     MetaMorphoHarness.Id id = supplyQueue(i);
 
-    uint192 supplyCap;
-    supplyCap, _, _ = config(id);
-    assert supplyCap > 0;
+    assert config_(id).cap > 0;
 }

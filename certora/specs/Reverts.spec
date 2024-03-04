@@ -86,8 +86,7 @@ rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
 rule submitGuardianRevertCondition(env e, address newGuardian) {
     address owner = owner();
     address oldGuardian = guardian();
-    uint64 pendingGuardianValidAt;
-    _, pendingGuardianValidAt = pendingGuardian();
+    uint64 pendingGuardianValidAt = pendingGuardian_().validAt;
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
@@ -110,11 +109,8 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
     address asset = asset();
     uint256 lastUpdate = Morpho.lastUpdate(id);
-    uint256 pendingCapValidAt;
-    _, pendingCapValidAt = pendingCap(id);
-    uint184 supplyCap;
-    uint64 removableAt;
-    supplyCap, _, removableAt = config(id);
+    uint256 pendingCapValidAt = pendingCap_(id).validAt;
+    MetaMorphoHarness.MarketConfig config = config_(id);
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
@@ -131,8 +127,8 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
         marketParams.loanToken != asset ||
         lastUpdate == 0 ||
         pendingCapValidAt != 0 ||
-        removableAt != 0 ||
-        newSupplyCap == assert_uint256(supplyCap) ||
+        config.removableAt != 0 ||
+        newSupplyCap == assert_uint256(config.cap) ||
         newSupplyCap >= 2^184;
 }
 
@@ -141,12 +137,8 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
-    uint256 pendingCapValidAt;
-    _, pendingCapValidAt = pendingCap(id);
-    uint184 supplyCap;
-    bool enabled;
-    uint64 oldRemovableAt;
-    supplyCap, enabled, oldRemovableAt = config(id);
+    uint256 pendingCapValue = pendingCap_(id).value;
+    MetaMorphoHarness.Market config = config_(id);
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
@@ -158,10 +150,10 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     assert lastReverted <=>
         e.msg.value != 0 ||
         !hasCuratorRole ||
-        pendingCapValidAt != 0 ||
-        supplyCap != 0 ||
-        !enabled ||
-        oldRemovableAt != 0;
+        pendingCapValue != 0 ||
+        config.cap != 0 ||
+        !config.enabled ||
+        config.removableAt != 0;
 }
 
 // Check the input validation conditions under which the setSupplyQueue function reverts.
@@ -171,8 +163,7 @@ rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
     uint256 maxQueueLength = maxQueueLength();
     uint256 i;
     require i < newSupplyQueue.length;
-    uint184 anyCap;
-    anyCap, _, _ = config(newSupplyQueue[i]);
+    uint184 anyCap = config_(newSupplyQueue[i]).cap;
 
     setSupplyQueue@withrevert(e, newSupplyQueue);
 
@@ -267,8 +258,7 @@ rule revokePendingMarketRemovalRevertCondition(env e, MorphoHarness.Id id) {
 
 // Check all the revert conditions of the acceptTimelock function.
 rule acceptTimelockRevertCondition(env e) {
-    uint256 pendingTimelockValidAt;
-    _, pendingTimelockValidAt = pendingTimelock();
+    uint256 pendingTimelockValidAt = pendingTimelock_().validAt;
 
     acceptTimelock@withrevert(e);
 
@@ -280,8 +270,7 @@ rule acceptTimelockRevertCondition(env e) {
 
 // Check all the revert conditions of the acceptGuardian function.
 rule acceptGuardianRevertCondition(env e) {
-    uint256 pendingGuardianValidAt;
-    _, pendingGuardianValidAt = pendingGuardian();
+    uint256 pendingGuardianValidAt = pendingGuardian_().validAt;
 
     acceptGuardian@withrevert(e);
 
@@ -296,8 +285,7 @@ rule acceptGuardianRevertCondition(env e) {
 rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    uint256 pendingCapValidAt;
-    _, pendingCapValidAt = pendingCap(id);
+    uint256 pendingCapValidAt = pendingCap_(id).validAt;
 
     acceptCap@withrevert(e, marketParams);
 
