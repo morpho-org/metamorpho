@@ -53,8 +53,6 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert receiver == currentContract;
 
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
-    // Use effective withdrawn assets if shares are given as input.
-    uint256 withdrawn = Util.withdrawnAssets(MORPHO(), id, assets, shares);
 
     bool enabled;
     _, enabled, _ = config(id);
@@ -65,7 +63,9 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     // Safe require because it is a verified invariant.
     require isEnabledHasConsistentAsset(marketParams);
 
-    // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
+    // Use effective withdrawn assets if shares are given as input.
+    uint256 withdrawn = Util.withdrawnAssets(MORPHO(), id, assets, shares);
+    // Summarize withdraw as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
     Util.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, withdrawn);
 
     return (withdrawn, shares);
