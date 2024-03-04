@@ -148,6 +148,14 @@ and then checking that any new deposit would revert.
 
 ### Range of variables
 
+Some variables have defined range: queues have a constrained size, the timelock has a defined range, and the fee is capped at 50%.
+This last point is verified in the following rule defined in [`Range.spec`](specs/Range.spec):
+
+```solidity
+invariant feeInRange()
+    fee() <= maxFee();
+```
+
 ### Sanity checks
 
 # Folder and file structure
