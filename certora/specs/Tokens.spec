@@ -111,15 +111,15 @@ rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner)
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
-    uint256 balanceSenderBefore = Util.balanceOf(asset, e.msg.sender);
+    uint256 balanceReceiverBefore = Util.balanceOf(asset, receiver);
     withdraw(e, assets, receiver, owner);
     uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
-    uint256 balanceSenderAfter = Util.balanceOf(asset, e.msg.sender);
+    uint256 balanceReceiverAfter = Util.balanceOf(asset, receiver);
 
     assert assert_uint256(balanceMorphoBefore - balanceMorphoAfter) == assets;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
-    assert assert_uint256(balanceSenderAfter - balanceSenderBefore) == assets;
+    assert assert_uint256(balanceReceiverAfter - balanceReceiverBefore) == assets;
 }
 
 // Check that, on reallocate, MetaMorpho's balance and Morpho's balance do not change.
