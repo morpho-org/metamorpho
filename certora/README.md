@@ -1,5 +1,17 @@
 This folder contains the verification of MetaMorpho using CVL, Certora's Verification Language.
 
+# Getting started
+
+Install the `certora-cli` package with `pip install certora-cli`.
+To verify specification files, pass to `certoraRun` the corresponding configuration file in the [`certora/confs`](confs) folder.
+It requires having set the `CERTORAKEY` environment variable to a valid Certora key.
+You can also pass additional arguments, notably to verify a specific rule.
+For example, at the root of the repository:
+
+```
+certoraRun certora/confs/Range.conf --rule timelockInRange
+```
+
 # High-level description
 
 A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue markets to allocate its funds.
@@ -40,7 +52,7 @@ rule revokePendingTimelockRevertCondition(env e) {
 ## Timelock
 
 MetaMorpho features a timelock mechanism that applies to every operation that could potentially increase risk for users.
-The following function is verified to always return `true`.
+The following function defined in [`PendingValues.spec`](specs/PendingValues.spec) is verified to always return `true`.
 
 ```solidity
 function isSmallerPendingTimelock() returns bool {
@@ -58,18 +70,20 @@ Indeed, a greater timelock means that the user would have more time to react to 
 
 This section details how externals calls are checked to be scoped, which ensures the safety of MetaMorpho.
 
-### Reentrancy
+### Reentrancy and immutability
 
 MetaMorpho only interacts with Morpho Blue and with the loan token of the vault.
 This is checked in [`Reentrancy.spec`](specs/Reentrancy.spec).
 Informally, the loan token and the markets of MetaMorpho are trusted.
 The former is known upfront by users, while markets are added through a timelock mechanism, which allows users (or by proxy, the guardian) to make sure that this addition is aligned with the desired risk profile.
 
+Note also that these properties are ensured to always hold, because the contract is verified to be immutable in [`Immutability.spec`](specs/Immutability.spec).
+
 ### Consistent asset
 
 For deposit and withdraw, it is checked that markets have a the same loan token as the loan token of the vault.
 We say that such market has a consistent asset.
-The following function is verified to always return `true` and contributes to verifying the property above.
+The following function defined in [`ConsistentState.spec`](specs/ConsistentState.spec) is verified to always return `true` and contributes to verifying the property above.
 
 ```solidity
 function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
@@ -87,7 +101,7 @@ This checks that each market in the withdraw queue has a consistent asset.
 ### Enabled flag
 
 It is verified that the enabled flag tracks if a given market is in the withdraw queue.
-The following function gives one half of this property, and is verified to always return `true` for every index `i`.
+The following function defined in [`Enabled.spec`](specs/Enabled.spec) gives one half of this property, and is verified to always return `true` for every index `i`.
 
 ```solidity
 function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
@@ -158,6 +172,12 @@ invariant feeInRange()
 
 ### Sanity checks
 
+Other checks are done to ensure the safety of the code:
+
+- it is checked in [`DistinctIdentifiers.spec`](specs/DistinctIdentifiers.spec) that there are no duplicates in the withdraw queue.
+- it is checked in [`ConsistentState.spec`](specs/ConsistentState.spec) that fees cannot be accrued if the fee recipient is not set.
+- various verification of input sanitization and revert conditions are done in [`Reverts.spec`](specs/Reverts.spec).
+
 # Folder and file structure
 
 The [`certora/specs`](specs) folder contains the following files:
@@ -181,15 +201,3 @@ The [`certora/harness`](harness) folder contains helper contracts that enable 
 Notably, this allows handling the fact that library functions should be called from a contract to be verified independently, and it allows defining needed getters.
 
 The [`certora/dispatch`](dispatch) folder contains different contracts similar to the ones that are expected to be called from MetaMorpho.
-
-# Getting started
-
-Install the `certora-cli` package with `pip install certora-cli`.
-To verify specification files, pass to `certoraRun` the corresponding configuration file in the [`certora/confs`](confs) folder.
-It requires having set the `CERTORAKEY` environment variable to a valid Certora key.
-You can also pass additional arguments, notably to verify a specific rule.
-For example, at the root of the repository:
-
-```
-certoraRun certora/confs/Range.conf --rule timelockInRange
-```
