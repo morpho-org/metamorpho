@@ -138,7 +138,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
     uint256 pendingCapValue = pendingCap_(id).value;
-    MetaMorphoHarness.Market config = config_(id);
+    MetaMorphoHarness.MarketConfig config = config_(id);
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
