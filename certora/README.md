@@ -215,4 +215,19 @@ Notably, this allows handling the fact that library functions should be called f
 
 The [`certora/dispatch`](dispatch) folder contains different contracts similar to the ones that are expected to be called from MetaMorpho.
 
-## Specification imports
+## Specification imports graph
+
+```mermaid
+graph
+Tokens --> ConsistentState
+Liveness --> ConsistentState
+Reverts --> ConsistentState
+ConsistentState --> LastUpdated
+LastUpdated --> Enabled
+Enabled --> DistinctIdentifiers
+DistinctIdentifiers --> PendingValues
+PendingValues --> Range
+Roles
+Reentrancy
+Immutability
+```
