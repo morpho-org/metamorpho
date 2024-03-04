@@ -2,6 +2,17 @@ This folder contains the verification of MetaMorpho using CVL, Certora's Verific
 
 # Getting started
 
+The code is compiled using 2 versions of solidity, which must be installed to run the verification as:
+
+- `solc` for solidity compiler version 0.8.21 which is used for compiling MetaMorpho
+- `solc8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
+
+The verification is run on modified source files, which is made available by running:
+
+```
+make -C certora munged
+```
+
 Install the `certora-cli` package with `pip install certora-cli`.
 To verify specification files, pass to `certoraRun` the corresponding configuration file in the [`certora/confs`](confs) folder.
 It requires having set the `CERTORAKEY` environment variable to a valid Certora key.

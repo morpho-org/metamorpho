@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {IERC20, SafeERC20, IMorphoHarness, SharesMathLib, Id, Market} from "../munged/MetaMorpho.sol";
 
-contract UtilHarness {
+contract Util {
     using SafeERC20 for IERC20;
     using SharesMathLib for uint256;
 

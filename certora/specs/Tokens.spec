@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "ConsistentState.spec";
 
-using UtilHarness as Util;
+using Util as Util;
 
 methods {
     function Util.balanceOf(address, address) external returns(uint256) envfree;
