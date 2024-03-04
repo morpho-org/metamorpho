@@ -81,7 +81,6 @@ rule depositTokenChange(env e, uint256 assets, address receiver) {
     require asset == 0x11;
     require currentContract == 0x12;
     require e.msg.sender == 0x13;
-    require receiver == 0x14;
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
@@ -105,9 +104,7 @@ rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner)
     require morpho == 0x10;
     require asset == 0x11;
     require currentContract == 0x12;
-    require e.msg.sender == 0x13;
     require receiver == 0x14;
-    require owner == 0x15;
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
@@ -131,7 +128,6 @@ rule reallocateTokenChange(env e, MetaMorphoHarness.MarketAllocation[] allocatio
     require morpho == 0x10;
     require asset == 0x11;
     require currentContract == 0x12;
-    require e.msg.sender == 0x13;
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
