@@ -5,6 +5,18 @@ This folder contains the verification of MetaMorpho using CVL, Certora's Verific
 A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue markets to allocate its funds.
 See [`README.md`](../README.md) for a in depth description of MetaMorpho.
 
+## ERC20 tokens and transfers
+
+MetaMorpho relies solely on Morpho Blue markets to allocate funds.
+It is verified in [`Tokens.spec`](specs/Tokens.spec) that all incoming tokens are forwarded to Morpho Blue markets, and that all outgoing tokens are forwarded to the user.
+
+This verification relies on the fact that markets respect the constraints listed in the Morpho Blue documentation, in particular regarding ERC20 tokens.
+The verification is done for the most common ERC20 implementations, for which we distinguish three different implementations:
+
+- [ERC20Standard](dispatch/ERC20Standard.sol) which respects the standard and reverts in case of insufficient funds or in case of insufficient allowance.
+- [ERC20NoRevert](dispatch/ERC20NoRevert.sol) which respects the standard but does not revert (and returns false instead).
+- [ERC20USDT](dispatch/ERC20USDT.sol) which does not strictly respects the standard because it omits the return value of the `transfer` and `transferFrom` functions.
+
 ## Roles
 
 MetaMorpho defines different roles to be able to manage the vault, the distinction between roles helps in reducing trust assumptions.
@@ -55,22 +67,22 @@ The former is known upfront by users, while markets are added through a timelock
 
 ### Consistent asset
 
-For deposit and withdrawd, it is checked that markets have a the same loan token as the loan token of the vault.
+For deposit and withdraw, it is checked that markets have a the same loan token as the loan token of the vault.
 We say that such market has a consistent asset.
 The following function is verified to always return `true` and contributes to verifying the property above.
 
 ```solidity
-function hasSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
+function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    uint192 supplyCap;
-    supplyCap, _, _ = config(id);
+    bool enabled;
+    _, enabled, _ = config(id);
 
-    return supplyCap > 0 => marketParams.loanToken == asset();
+    return enabled => marketParams.loanToken == asset();
 }
 ```
 
-This checks that each market on which some supply may be deposited has a consistent asset.
+This checks that each market in the withdraw queue has a consistent asset.
 
 ### Enabled flag
 
