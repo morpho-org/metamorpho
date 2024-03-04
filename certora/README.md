@@ -130,6 +130,20 @@ We can prove then that each market of the supply queue has been created on Morph
 
 ## Liveness
 
+The liveness properties ensures that some crucial actions cannot be blocked.
+It is notably useful to show that in case of an emergency, it is still possible to make salvaging transactions.
+The `canPauseSupply` rule in [`Liveness.spec`](specs/Liveness.spec) shows that it is always possible to pause supply.
+This is done by first setting the supply queue as the empty queue and checking that it does not revert:
+
+```solidity
+require newSupplyQueue.length == 0;
+
+setSupplyQueue@withrevert(e1, newSupplyQueue);
+assert !lastReverted;
+```
+
+and then checking that any new deposit would revert.
+
 ## Other safety properties
 
 ### Range of variables
@@ -151,6 +165,7 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
 - [`Reverts.spec`](specs/Reverts.spec) checks the revert conditions on entrypoints.
 - [`Roles.spec`](specs/Roles.spec) checks the access control and authorization granted by the respective MetaMorpho roles. In particular it checks the hierarchy of roles.
+- [`Tokens.spec`](specs/Tokens.spec) checks that tokens are not kept on the MetaMorpho contract. Any deposit ends up in Morpho Blue and any withdrawal is forwarded to the user.
 
 The [`certora/confs`](confs) folder contains a configuration file for each corresponding specification file.
 

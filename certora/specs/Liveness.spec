@@ -4,9 +4,9 @@ import "ConsistentState.spec";
 // Check that having the allocator role allows to pause supply on the vault.
 rule canPauseSupply() {
     env e1; MetaMorphoHarness.Id[] newSupplyQueue;
-    require newSupplyQueue.length == 0;
     require e1.msg.value == 0;
     require hasAllocatorRole(e1.msg.sender);
+    require newSupplyQueue.length == 0;
 
     setSupplyQueue@withrevert(e1, newSupplyQueue);
     assert !lastReverted;
