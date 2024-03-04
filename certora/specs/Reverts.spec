@@ -137,7 +137,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     MorphoHarness.Id id = Morpho.libId(marketParams);
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
-    uint256 pendingCapValue = pendingCap_(id).value;
+    uint256 pendingCapValidAt = pendingCap_(id).validAt;
     MetaMorphoHarness.MarketConfig config = config_(id);
 
     // Safe require because it is a verified invariant.
@@ -150,7 +150,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     assert lastReverted <=>
         e.msg.value != 0 ||
         !hasCuratorRole ||
-        pendingCapValue != 0 ||
+        pendingCapValidAt != 0 ||
         config.cap != 0 ||
         !config.enabled ||
         config.removableAt != 0;
