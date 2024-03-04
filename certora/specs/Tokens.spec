@@ -53,6 +53,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert receiver == currentContract;
 
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    // Use effective withdrawn assets if shares are given as input.
     uint256 withdrawn = Util.withdrawnAssets(MORPHO(), id, assets, shares);
 
     bool enabled;
@@ -84,12 +85,15 @@ rule depositTokenChange(env e, uint256 assets, address receiver) {
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
+    uint256 balanceSenderBefore = Util.balanceOf(asset, e.msg.sender);
     deposit(e, assets, receiver);
     uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
+    uint256 balanceSenderAfter = Util.balanceOf(asset, e.msg.sender);
 
     assert assert_uint256(balanceMorphoAfter - balanceMorphoBefore) == assets;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
+    assert assert_uint256(balanceSenderBefore - balanceSenderAfter) == assets;
 }
 
 // Check that, on withdrawal, MetaMorpho's balance does not change and that Morpho's balance decreases by the corresponding amount.
@@ -107,12 +111,15 @@ rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner)
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
+    uint256 balanceSenderBefore = Util.balanceOf(asset, e.msg.sender);
     withdraw(e, assets, receiver, owner);
     uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
+    uint256 balanceSenderAfter = Util.balanceOf(asset, e.msg.sender);
 
     assert assert_uint256(balanceMorphoBefore - balanceMorphoAfter) == assets;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
+    assert assert_uint256(balanceSenderAfter - balanceSenderBefore) == assets;
 }
 
 // Check that, on reallocate, MetaMorpho's balance and Morpho's balance do not change.
@@ -128,10 +135,13 @@ rule reallocateTokenChange(env e, MetaMorphoHarness.MarketAllocation[] allocatio
 
     uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
+    uint256 balanceSenderBefore = Util.balanceOf(asset, e.msg.sender);
     reallocate(e, allocations);
     uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
     uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
+    uint256 balanceSenderAfter = Util.balanceOf(asset, e.msg.sender);
 
     assert balanceMorphoAfter == balanceMorphoAfter;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
+    assert balanceSenderAfter == balanceSenderBefore;
 }
