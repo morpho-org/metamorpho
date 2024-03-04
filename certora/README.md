@@ -189,7 +189,9 @@ Other checks are done to ensure the safety of the code:
 - it is checked in [`ConsistentState.spec`](specs/ConsistentState.spec) that fees cannot be accrued if the fee recipient is not set.
 - various verification of input sanitization and revert conditions are done in [`Reverts.spec`](specs/Reverts.spec).
 
-# Folder and file structure
+# Verification architecture
+
+## Folders and file structure
 
 The [`certora/specs`](specs) folder contains the following files:
 
@@ -208,7 +210,9 @@ The [`certora/specs`](specs) folder contains the following files:
 
 The [`certora/confs`](confs) folder contains a configuration file for each corresponding specification file.
 
-The [`certora/harness`](harness) folder contains helper contracts that enable the verification of MetaMorpho.
+The [`certora/helpers`](helpers) folder contains helper contracts that enable the verification of MetaMorpho.
 Notably, this allows handling the fact that library functions should be called from a contract to be verified independently, and it allows defining needed getters.
 
 The [`certora/dispatch`](dispatch) folder contains different contracts similar to the ones that are expected to be called from MetaMorpho.
+
+## Specification imports
