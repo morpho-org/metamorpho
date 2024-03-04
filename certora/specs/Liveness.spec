@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "Reverts.spec";
+import "ConsistentState.spec";
 
 // Check that having the allocator role allows to pause supply on the vault.
 rule canPauseSupply() {
@@ -27,11 +27,11 @@ rule canPauseSupply() {
 rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    // Safe require because this is a verified invariant.
+    // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(id);
-    // Safe require because this is a verified invariant.
-    require hasSupplyCapHasConsistentAsset(marketParams);
-    // Safe require because this is a verified invariant.
+    // Safe require because it is a verified invariant.
+    require isEnabledHasConsistentAsset(marketParams);
+    // Safe require because it is a verified invariant.
     require hasPositiveSupplyCapIsUpdated(id);
 
     uint184 supplyCap; uint64 removableAt;
@@ -58,7 +58,7 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     require e3.msg.value == 0;
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e3.block.timestamp < 2^63;
     submitMarketRemoval@withrevert(e3, marketParams);
     assert !lastReverted;

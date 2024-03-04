@@ -54,7 +54,7 @@ const config: HardhatUserConfig = {
       initialBaseFeePerGas: 0,
       allowBlocksWithSameTimestamp: true,
       accounts: {
-        count: 103, // must be odd
+        count: 53, // must be odd
       },
       mining: {
         mempool: {
@@ -68,25 +68,25 @@ const config: HardhatUserConfig = {
       {
         version: "0.8.21",
         settings: {
-          optimizer: { 
+          optimizer: {
             enabled: true,
             runs: 200,
           },
           viaIR: true,
           evmVersion: "paris",
-        }
+        },
       },
       {
         version: "0.8.19",
         settings: {
-          optimizer: { 
+          optimizer: {
             enabled: true,
             runs: 999999,
           },
           viaIR: true,
           evmVersion: "paris",
-        }
-      }
+        },
+      },
     ],
   },
   mocha: {

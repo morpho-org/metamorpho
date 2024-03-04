@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "ConsistentState.spec";
 
+using UtilHarness as Util;
+
 methods {
+    function Util.totalSupply(address) external returns(uint256) envfree;
+    function Util.balanceOf(address, address) external returns(uint256) envfree;
+
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
-}
-
-function hasCuratorRole(address user) returns bool {
-    return user == owner() || user == curator();
-}
-
-function hasAllocatorRole(address user) returns bool {
-    return user == owner() || user == curator() || isAllocator(user);
-}
-
-function hasGuardianRole(address user) returns bool {
-    return user == owner() || user == guardian();
 }
 
 // Check all the revert conditions of the setCurator function.
@@ -98,7 +91,7 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
     submitGuardian@withrevert(e, newGuardian);
@@ -125,7 +118,7 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
     // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(id);
@@ -157,7 +150,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
 
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
-    // Safe require as it corresponds to year 2262.
+    // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
     submitMarketRemoval@withrevert(e, marketParams);
@@ -318,7 +311,7 @@ rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
 rule skimRevertCondition(env e, address token) {
     address skimRecipient = skimRecipient();
 
-    require skimRecipient != currentContract => balanceOf(token, skimRecipient) + balanceOf(token, currentContract) <= to_mathint(totalSupply(token));
+    require skimRecipient != currentContract => Util.balanceOf(token, skimRecipient) + Util.balanceOf(token, currentContract) <= to_mathint(Util.totalSupply(token));
 
     skim@withrevert(e, token);
 
