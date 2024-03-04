@@ -49,7 +49,7 @@ diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
  
 diff -ruN MetaMorpho.sol MetaMorpho.sol
 --- MetaMorpho.sol	2024-02-02 13:00:21.238074050 +0100
-+++ MetaMorpho.sol	2024-03-04 17:26:20.800843388 +0100
++++ MetaMorpho.sol	2024-03-04 23:26:21.562604750 +0100
 @@ -9,24 +9,22 @@
      IMetaMorphoBase,
      IMetaMorphoStaticTyping
@@ -114,20 +114,23 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
  
      /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
      /// @dev Calculated to be max(0, 18 - underlyingDecimals) at construction, so the initial conversion rate maximizes
-@@ -107,6 +103,12 @@
+@@ -107,6 +103,15 @@
      /// @inheritdoc IMetaMorphoBase
      uint256 public lastTotalAssets;
  
 +    // HARNESS
++    // The rank of a market identifier in the withdraw queue.
++    // Returns 0 if the corresponding market is not in the withdraw queue.
 +    mapping(Id => uint256) public withdrawRank;
 +
 +    // HARNESS
++    // The last index at which a market identifier has been removed from the withdraw queue.
 +    mapping(Id => uint256) public deletedAt;
 +
      /* CONSTRUCTOR */
  
      /// @dev Initializes the contract.
-@@ -126,7 +128,7 @@
+@@ -126,7 +131,7 @@
      ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
          if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
  
@@ -136,7 +139,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
          DECIMALS_OFFSET = uint8(uint256(18).zeroFloorSub(IERC20Metadata(_asset).decimals()));
  
          _checkTimelockBounds(initialTimelock);
-@@ -338,6 +340,9 @@
+@@ -338,6 +343,9 @@
              seen[prevIndex] = true;
  
              newWithdrawQueue[i] = id;
@@ -146,7 +149,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
          }
  
          for (uint256 i; i < currLength; ++i) {
-@@ -355,6 +360,10 @@
+@@ -355,6 +363,10 @@
                      }
                  }
  
@@ -157,7 +160,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
                  delete config[id];
              }
          }
-@@ -743,6 +752,9 @@
+@@ -743,6 +755,9 @@
  
          if (supplyCap > 0) {
              if (!marketConfig.enabled) {
