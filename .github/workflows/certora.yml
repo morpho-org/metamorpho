@@ -30,12 +30,14 @@ jobs:
           - Tokens
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
+        with:
+          python-version: ">=3.11"
 
       - name: Install certora
         run: pip install certora-cli-beta
@@ -55,7 +57,7 @@ jobs:
       - name: Apply munging
         run: make -C certora munged
 
-      - name: Verify rule ${{ matrix.conf }}
+      - name: Verify ${{ matrix.conf }} specification
         run: certoraRun certora/confs/${{ matrix.conf }}.conf
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}

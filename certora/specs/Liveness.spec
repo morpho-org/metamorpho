@@ -4,9 +4,9 @@ import "ConsistentState.spec";
 // Check that having the allocator role allows to pause supply on the vault.
 rule canPauseSupply() {
     env e1; MetaMorphoHarness.Id[] newSupplyQueue;
-    require newSupplyQueue.length == 0;
     require e1.msg.value == 0;
     require hasAllocatorRole(e1.msg.sender);
+    require newSupplyQueue.length == 0;
 
     setSupplyQueue@withrevert(e1, newSupplyQueue);
     assert !lastReverted;
@@ -34,10 +34,9 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     // Safe require because it is a verified invariant.
     require hasPositiveSupplyCapIsUpdated(id);
 
-    uint184 supplyCap; uint64 removableAt;
-    supplyCap, _, removableAt = config(id);
-    require supplyCap > 0;
-    require removableAt == 0;
+    MetaMorphoHarness.MarketConfig config = config_(id);
+    require config.cap > 0;
+    require config.removableAt == 0;
     // Assume that the withdraw queue is [X, id];
     require withdrawQueue(1) == id;
     require withdrawQueueLength() == 2;
@@ -72,7 +71,5 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     updateWithdrawQueue@withrevert(e4, newWithdrawQueue);
     assert !lastReverted;
 
-    bool enabled;
-    _, enabled, _ = config(id);
-    assert !enabled;
+    assert !config_(id).enabled;
 }

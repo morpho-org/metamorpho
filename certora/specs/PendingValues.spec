@@ -2,11 +2,9 @@
 import "Range.spec";
 
 function hasNoBadPendingTimelock() returns bool {
-    uint192 pendingValue;
-    uint64 validAt;
-    pendingValue, validAt = pendingTimelock();
+    MetaMorphoHarness.PendingUint192 pendingTimelock = pendingTimelock_();
 
-    return validAt == 0 <=> pendingValue == 0;
+    return pendingTimelock.validAt == 0 <=> pendingTimelock.value == 0;
 }
 
 // Check that having no pending timelock value is equivalent to having its valid timestamp at 0.
@@ -22,10 +20,7 @@ invariant noBadPendingTimelock()
 }
 
 function isSmallerPendingTimelock() returns bool {
-    uint192 pendingValue;
-    pendingValue, _ = pendingTimelock();
-
-    return assert_uint256(pendingValue) < timelock();
+    return assert_uint256(pendingTimelock_().value) < timelock();
 }
 
 // Check that the pending timelock value is always strictly smaller than the current timelock value.
@@ -41,11 +36,9 @@ invariant smallerPendingTimelock()
 }
 
 function hasNoBadPendingCap(MetaMorphoHarness.Id id) returns bool {
-    uint192 pendingValue;
-    uint64 validAt;
-    pendingValue, validAt = pendingCap(id);
+    MetaMorphoHarness.PendingUint192 pendingCap = pendingCap_(id);
 
-    return validAt == 0 <=> pendingValue == 0;
+    return pendingCap.validAt == 0 <=> pendingCap.value == 0;
 }
 
 // Check that having no pending cap value is equivalent to having its valid timestamp at 0.
@@ -61,12 +54,10 @@ invariant noBadPendingCap(MetaMorphoHarness.Id id)
 }
 
 function isGreaterPendingCap(MetaMorphoHarness.Id id) returns bool {
-    uint192 pendingValue;
-    pendingValue, _ = pendingCap(id);
-    uint192 currentValue;
-    currentValue, _, _ = config(id);
+    uint192 pendingCapValue = pendingCap_(id).value;
+    uint192 currentCapValue = config_(id).cap;
 
-    return pendingValue != 0 => assert_uint256(pendingValue) > assert_uint256(currentValue);
+    return pendingCapValue != 0 => assert_uint256(pendingCapValue) > assert_uint256(currentCapValue);
 }
 
 // Check that the pending cap value is either 0 or strictly greater than the current timelock value.
@@ -74,12 +65,10 @@ invariant greaterPendingCap(MetaMorphoHarness.Id id)
     isGreaterPendingCap(id);
 
 function hasNoBadPendingGuardian() returns bool {
-    address pendingValue;
-    uint64 validAt;
-    pendingValue, validAt = pendingGuardian();
+    MetaMorphoHarness.PendingAddress pendingGuardian = pendingGuardian_();
 
     // Notice that address(0) is a valid value for a new guardian.
-    return validAt == 0 => pendingValue == 0;
+    return pendingGuardian.validAt == 0 => pendingGuardian.value == 0;
 }
 
 // Check that when its valid timestamp at 0 the pending guardian is the zero address.
@@ -95,10 +84,9 @@ invariant noBadPendingGuardian()
 }
 
 function isDifferentPendingGuardian() returns bool {
-    address pendingValue;
-    pendingValue, _ = pendingGuardian();
+    address pendingGuardianAddress = pendingGuardian_().value;
 
-    return pendingValue != 0 => pendingValue != guardian();
+    return pendingGuardianAddress != 0 => pendingGuardianAddress != guardian();
 }
 
 // Check that the pending guardian is either the zero address or it is different from the current guardian.

@@ -18,11 +18,9 @@ invariant noFeeToUnsetFeeRecipient()
     feeRecipient() == 0 => fee() == 0;
 
 function hasSupplyCapIsEnabled(MetaMorphoHarness.Id id) returns bool {
-    uint192 supplyCap;
-    bool enabled;
-    supplyCap, enabled, _ = config(id);
+    MetaMorphoHarness.MarketConfig config = config_(id);
 
-    return supplyCap > 0 => enabled;
+    return config.cap > 0 => config.enabled;
 }
 
 // Check that having a positive supply cap implies that the market is enabled.
@@ -33,10 +31,7 @@ invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
 function hasPendingSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    uint64 pendingAt;
-    _, pendingAt = pendingCap(id);
-
-    return pendingAt > 0 => marketParams.loanToken == asset();
+    return pendingCap_(id).validAt > 0 => marketParams.loanToken == asset();
 }
 
 // Check that there can only be pending caps on markets where the loan asset is the asset of the vault.
@@ -46,10 +41,7 @@ invariant pendingSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams mark
 function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    bool enabled;
-    _, enabled, _ = config(id);
-
-    return enabled => marketParams.loanToken == asset();
+    return config_(id).enabled => marketParams.loanToken == asset();
 }
 
 // Check that having a positive cap implies that the loan asset is the asset of the vault.
@@ -62,11 +54,9 @@ invariant enabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams)
 }
 
 function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
-    uint192 supplyCap;
-    uint64 removableAt;
-    supplyCap, _, removableAt = config(id);
+    MetaMorphoHarness.MarketConfig config = config_(id);
 
-    return supplyCap > 0 => removableAt == 0;
+    return config.cap > 0 => config.removableAt == 0;
 }
 
 // Check that a market with a positive cap cannot be marked for removal.
@@ -74,12 +64,7 @@ invariant supplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
     hasSupplyCapIsNotMarkedForRemoval(id);
 
 function hasPendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
-    uint64 pendingAt;
-    _, pendingAt = pendingCap(id);
-    uint64 removableAt;
-    _, _, removableAt = config(id);
-
-    return pendingAt > 0 => removableAt == 0;
+    return pendingCap_(id).validAt > 0 => config_(id).removableAt == 0;
 }
 
 // Check that a market with a pending cap cannot be marked for removal.

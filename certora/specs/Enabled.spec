@@ -5,10 +5,8 @@ function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
     if(i >= withdrawQueueLength()) return true;
 
     MetaMorphoHarness.Id id = withdrawQueue(i);
-    bool enabled;
-    _, enabled, _ = config(id);
 
-    return enabled;
+    return config_(id).enabled;
 }
 
 // Check that markets in the withdraw queue are enabled.
@@ -48,12 +46,7 @@ invariant withdrawRankCorrect(MetaMorphoHarness.Id id)
     isWithdrawRankCorrect(id);
 
 function isEnabledHasPositiveRank(MetaMorphoHarness.Id id) returns bool {
-    bool enabled;
-    _, enabled, _ = config(id);
-
-    uint256 rank = withdrawRank(id);
-
-    return enabled => rank > 0;
+    return config_(id).enabled => withdrawRank(id) > 0;
 }
 
 // Checks that enabled markets have a positive withdraw rank, according to the withdrawRank ghost variable.
@@ -62,10 +55,7 @@ invariant enabledHasPositiveRank(MetaMorphoHarness.Id id)
 
 // Check that enabled markets are in the withdraw queue.
 rule enabledIsInWithdrawQueue(MetaMorphoHarness.Id id) {
-    bool enabled;
-    _, enabled, _ = config(id);
-
-    require enabled;
+    require config_(id).enabled;
 
     requireInvariant enabledHasPositiveRank(id);
     requireInvariant withdrawRankCorrect(id);
