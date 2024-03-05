@@ -7,7 +7,7 @@ The code is compiled using 2 versions of solidity, which must be installed to ru
 - `solc` for solidity compiler version 0.8.21 which is used for compiling MetaMorpho
 - `solc8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
 
-The verification is run on modified source files, which is made available by running:
+The verification is run on modified source files, which are made available by running:
 
 ```
 make -C certora munged
@@ -45,7 +45,7 @@ The verification is done for the most common ERC20 implementations, for which we
 MetaMorpho defines different roles to be able to manage the vault, the distinction between roles helps in reducing trust assumptions.
 Roles follow a hierarchy, and this hierarchy is verified to hold in [`Roles.spec`](specs/Roles.spec).
 More precisely, a stronger role is checked to be able to do the same operations of a lesser role.
-Additionally, it is verified in [`Reverts.spec`](specs/Reverts.spec) that the roles are necessary to be able to do permissioned operations
+Additionally, it is verified in [`Reverts.spec`](specs/Reverts.spec) that the roles are necessary to be able to do permissioned operations.
 For example, the following rule makes sure that having the guardian role is necessary to be able to revoke a pending timelock:
 
 ```solidity
@@ -147,7 +147,7 @@ We can prove then that each market of the supply queue has been created on Morph
 
 The liveness properties ensures that some crucial actions cannot be blocked.
 It is notably useful to show that in case of an emergency, it is still possible to make salvaging transactions.
-The `canPauseSupply` rule in [`Liveness.spec`](specs/Liveness.spec) shows that it is always possible to pause supply.
+The `canPauseSupply` rule in [`Liveness.spec`](specs/Liveness.spec) shows that it is always possible to prevent new deposits.
 This is done by first setting the supply queue as the empty queue and checking that it does not revert:
 
 ```solidity
@@ -190,7 +190,7 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`Enabled.spec`](specs/Enabled.spec) checks properties about enabled flag of market, notably that it correctly tracks the fact that the market is in the withdraw queue.
 - [`Immutability.spec`](specs/Immutability.spec) checks that MetaMorpho is immutable.
 - [`LastUpdated.spec`](specs/LastUpdated.spec) checks that all Morpho Blue markets that MetaMorpho interacts with are created markets.
-- [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency solutions are always available.
+- [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency procedures are always available.
 - [`PendingValues.spec`](specs/PendingValues.spec) checks properties on the values that are still under timelock. Those properties are notably useful to prove that actual storage variables, when set to the pending value, use a consistent value.
 - [`Range.spec`](specs/Range.spec) checks the bounds (if any) of storage variables.
 - [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
