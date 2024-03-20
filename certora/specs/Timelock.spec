@@ -126,7 +126,7 @@ rule timelockDecreaseTime(env e, method f, calldataarg args) {
     require isTimelockInRange();
 
     uint256 nextTime = nextTimelockDecreaseTime(ec);
-    uint184 prevTimelock = timelock();
+    uint256 prevTimelock = timelock();
 
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e.block.timestamp >= ec.block.timestamp;
