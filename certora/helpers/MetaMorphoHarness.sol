@@ -47,8 +47,8 @@ contract MetaMorphoHarness is MetaMorpho {
         return ConstantsLib.MAX_FEE;
     }
 
-    function nextGuardianUpdateTime(uint256 currentTime) external view returns (uint256 nextTime) {
-        nextTime = currentTime + timelock;
+    function nextGuardianUpdateTime() external view returns (uint256 nextTime) {
+        nextTime = block.timestamp + timelock;
 
         if (pendingTimelock.validAt != 0) {
             nextTime = Math.min(nextTime, pendingTimelock.validAt + pendingTimelock.value);
