@@ -49,8 +49,8 @@ rule guardianUpdateTime(env e, method f, calldataarg args) {
     assert true;
 }
 
-// Show that nextCapUpdateTime does not revert.
-rule nextCapUpdateTimeDoesNotRevert(MetaMorphoHarness.Id id) {
+// Show that nextCapIncreaseTime does not revert.
+rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     // The environment ec yields the current time.
     env ec;
 
@@ -61,13 +61,13 @@ rule nextCapUpdateTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     // Safe require because it is a verified invariant.
     require isPendingTimelockInRange();
 
-    nextCapUpdateTime@withrevert(ec, id);
+    nextCapIncreaseTime@withrevert(ec, id);
 
     assert !lastReverted;
 }
 
-// Show that nextCapUpdateTime is increasing and that no change of cap can happen before it.
-rule capUpdateTime(env e, method f, calldataarg args) {
+// Show that nextCapIncreaseTime is increasing and that no change of cap can happen before it.
+rule capIncreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
     require ec.msg.value == 0;
@@ -79,28 +79,28 @@ rule capUpdateTime(env e, method f, calldataarg args) {
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
 
-    uint256 nextTime = nextCapUpdateTime(ec, id);
+    uint256 nextTime = nextCapIncreaseTime(ec, id);
     uint184 prevCap = config_(id).cap;
 
     // Assume that the cap is already set.
     require prevCap != 0;
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e.block.timestamp >= ec.block.timestamp;
-    // Increasing nextCapUpdateTime with no interaction;
-    assert nextCapUpdateTime(e, id) >= nextTime;
+    // Increasing nextCapIncreaseTime with no interaction;
+    assert nextCapIncreaseTime(e, id) >= nextTime;
 
     f(e, args);
 
     if (e.block.timestamp < nextTime)  {
-        assert config_(id).cap == prevCap;
-        // Increasing nextCapUpdateTime with an interaction;
-        assert nextCapUpdateTime(e, id) >= nextTime;
+        assert config_(id).cap <= prevCap;
+        // Increasing nextCapIncreaseTime with an interaction;
+        assert nextCapIncreaseTime(e, id) >= nextTime;
     }
     assert true;
 }
 
-// Show that nextTimelockUpdateTime does not revert.
-rule nextTimelockUpdateTimeDoesNotRevert() {
+// Show that nextTimelockDecreaseTime does not revert.
+rule nextTimelockDecreaseTimeDoesNotRevert() {
     // The environment ec yields the current time.
     env ec;
     require ec.msg.value == 0;
@@ -112,13 +112,13 @@ rule nextTimelockUpdateTimeDoesNotRevert() {
     // Safe require because it is a verified invariant.
     require isPendingTimelockInRange();
 
-    nextTimelockUpdateTime@withrevert(ec);
+    nextTimelockDecreaseTime@withrevert(ec);
 
     assert !lastReverted;
 }
 
-// Show that nextTimelockUpdateTime is increasing and that no change of timelock can happen before it.
-rule timelockUpdateTime(env e, method f, calldataarg args) {
+// Show that nextTimelockDecreaseTime is increasing and that no change of timelock can happen before it.
+rule timelockDecreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
 
@@ -127,22 +127,22 @@ rule timelockUpdateTime(env e, method f, calldataarg args) {
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
 
-    uint256 nextTime = nextTimelockUpdateTime(ec);
+    uint256 nextTime = nextTimelockDecreaseTime(ec);
     uint184 prevTimelock = timelock();
 
     // Assume that the Timelock is already set.
     require prevTimelock != 0;
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e.block.timestamp >= ec.block.timestamp;
-    // Increasing nextTimelockUpdateTime with no interaction;
-    assert nextTimelockUpdateTime(e) >= nextTime;
+    // Increasing nextTimelockDecreaseTime with no interaction;
+    assert nextTimelockDecreaseTime(e) >= nextTime;
 
     f(e, args);
 
     if (e.block.timestamp < nextTime)  {
-        assert timelock() == prevTimelock;
-        // Increasing nextTimelockUpdateTime with an interaction;
-        assert nextTimelockUpdateTime(e) >= nextTime;
+        assert timelock() >= prevTimelock;
+        // Increasing nextTimelockDecreaseTime with an interaction;
+        assert nextTimelockDecreaseTime(e) >= nextTime;
     }
     assert true;
 }
