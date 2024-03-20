@@ -82,8 +82,6 @@ rule capIncreaseTime(env e, method f, calldataarg args) {
     uint256 nextTime = nextCapIncreaseTime(ec, id);
     uint184 prevCap = config_(id).cap;
 
-    // Assume that the cap is already set.
-    require prevCap != 0;
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e.block.timestamp >= ec.block.timestamp;
     // Increasing nextCapIncreaseTime with no interaction;
@@ -130,8 +128,6 @@ rule timelockDecreaseTime(env e, method f, calldataarg args) {
     uint256 nextTime = nextTimelockDecreaseTime(ec);
     uint184 prevTimelock = timelock();
 
-    // Assume that the Timelock is already set.
-    require prevTimelock != 0;
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e.block.timestamp >= ec.block.timestamp;
     // Increasing nextTimelockDecreaseTime with no interaction;
