@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import {MetaMorpho, Id, ConstantsLib, PendingUint192, PendingAddress, MarketConfig} from "../munged/MetaMorpho.sol";
+import {
+    Math, MetaMorpho, Id, ConstantsLib, PendingUint192, PendingAddress, MarketConfig
+} from "../munged/MetaMorpho.sol";
 
 contract MetaMorphoHarness is MetaMorpho {
     constructor(
@@ -43,5 +45,15 @@ contract MetaMorphoHarness is MetaMorpho {
 
     function maxFee() external pure returns (uint256) {
         return ConstantsLib.MAX_FEE;
+    }
+
+    function nextGuardianUpdateTime(uint256 currentTime) external view returns (uint256 nextTime) {
+        uint256 minTimelock = timelock;
+        if (pendingTimelock.validAt != 0) minTimelock = Math.min(minTimelock, pendingTimelock.value);
+
+        nextTime = currentTime + minTimelock;
+
+        uint256 validAt = pendingGuardian.validAt;
+        if (validAt != 0) nextTime = Math.min(nextTime, validAt);
     }
 }

@@ -27,6 +27,7 @@ methods {
     function maxTimelock() external returns(uint256) envfree;
     function maxQueueLength() external returns(uint256) envfree;
     function maxFee() external returns(uint256) envfree;
+    function nextGuardianUpdateTime(uint256 currentTime) external returns(uint256) envfree;
 }
 
 function isPendingTimelockInRange() returns bool {
