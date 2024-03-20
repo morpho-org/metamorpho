@@ -23,9 +23,9 @@ rule nextGuardianUpdateTimeDoesNotRevert() {
 rule guardianUpdateTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
-
     // Safe require as it corresponds to some time very far into the future.
     require ec.block.timestamp < 2^63;
+
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
 
@@ -53,9 +53,10 @@ rule guardianUpdateTime(env e, method f, calldataarg args) {
 rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     // The environment ec yields the current time.
     env ec;
-
+    require ec.msg.value == 0;
     // Safe require as it corresponds to some time very far into the future.
     require ec.block.timestamp < 2^63;
+
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
     // Safe require because it is a verified invariant.
@@ -70,7 +71,6 @@ rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
 rule capIncreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
-    require ec.msg.value == 0;
     // Safe require as it corresponds to some time very far into the future.
     require ec.block.timestamp < 2^63;
 
@@ -119,9 +119,9 @@ rule nextTimelockDecreaseTimeDoesNotRevert() {
 rule timelockDecreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
-
     // Safe require as it corresponds to some time very far into the future.
     require ec.block.timestamp < 2^63;
+
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
 
@@ -139,6 +139,55 @@ rule timelockDecreaseTime(env e, method f, calldataarg args) {
         assert timelock() >= prevTimelock;
         // Increasing nextTimelockDecreaseTime with an interaction;
         assert nextTimelockDecreaseTime(e) >= nextTime;
+    }
+    assert true;
+}
+
+// Show that nextRemovableTime does not revert.
+rule nextRemovableTimeDoesNotRevert(MetaMorphoHarness.Id id) {
+    // The environment ec yields the current time.
+    env ec;
+    require ec.msg.value == 0;
+    // Safe require as it corresponds to some time very far into the future.
+    require ec.block.timestamp < 2^63;
+
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+    // Safe require because it is a verified invariant.
+    require isPendingTimelockInRange();
+
+    nextRemovableTime@withrevert(ec, id);
+
+    assert !lastReverted;
+}
+
+// Show that nextRemovableTime is increasing and that no removal can happen before it.
+rule removableTime(env e, method f, calldataarg args) {
+    // The environment ec yields the current time.
+    env ec;
+    // Safe require as it corresponds to some time very far into the future.
+    require ec.block.timestamp < 2^63;
+
+    MetaMorphoHarness.Id id;
+
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+
+    uint256 nextTime = nextRemovableTime(ec, id);
+
+    // Assume that the market is enabled.
+    require config_(id).enabled;
+    // Sane assumption on the current time, as any following transaction should happen after it.
+    require e.block.timestamp >= ec.block.timestamp;
+    // Increasing nextRemovableTime with no interaction;
+    assert nextRemovableTime(e, id) >= nextTime;
+
+    f(e, args);
+
+    if (e.block.timestamp < nextTime)  {
+        assert config_(id).enabled;
+        // Increasing nextRemovableTime with an interaction;
+        assert nextRemovableTime(e, id) >= nextTime;
     }
     assert true;
 }

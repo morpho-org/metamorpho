@@ -74,4 +74,15 @@ contract MetaMorphoHarness is MetaMorpho {
 
         if (pendingTimelock.validAt != 0) nextTime = Math.min(nextTime, pendingTimelock.validAt);
     }
+
+    function nextRemovableTime(Id id) external view returns (uint256 nextTime) {
+        nextTime = block.timestamp + timelock;
+
+        if (pendingTimelock.validAt != 0) {
+            nextTime = Math.min(nextTime, pendingTimelock.validAt + pendingTimelock.value);
+        }
+
+        uint256 removableAt = config[id].removableAt;
+        if (removableAt != 0) nextTime = Math.min(nextTime, removableAt);
+    }
 }
