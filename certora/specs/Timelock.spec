@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "LastUpdated.spec";
 
+rule nextGuardianUpdateTimeDoesNotRevert(uint256 currentTime) {
+    // Safe require as it corresponds to some time very far into the future.
+    require currentTime < 2^63;
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+    // Safe require because it is a verified invariant.
+    require isPendingTimelockInRange();
+
+    nextGuardianUpdateTime@withrevert(currentTime);
+    assert !lastReverted;
+}
+
 rule guardianUpdateTime(uint256 currentTime, env e, method f, calldataarg args) {
     // Safe require as it corresponds to some time very far into the future.
     require currentTime < 2^63;
