@@ -27,6 +27,7 @@ jobs:
           - Reentrancy
           - Reverts
           - Roles
+          - Timelock
           - Tokens
 
     steps:
