@@ -5,9 +5,10 @@ import "LastUpdated.spec";
 rule nextGuardianUpdateTimeDoesNotRevert() {
     // The environment ec yields the current time.
     env ec;
-
+    require ec.msg.value == 0;
     // Safe require as it corresponds to some time very far into the future.
     require ec.block.timestamp < 2^63;
+
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
     // Safe require because it is a verified invariant.
@@ -65,14 +66,16 @@ rule nextCapUpdateTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     assert !lastReverted;
 }
 
-// Show that nextCapUpdateTime is increasing and that no change of Cap can happen before it.
+// Show that nextCapUpdateTime is increasing and that no change of cap can happen before it.
 rule capUpdateTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
-    MetaMorphoHarness.Id id;
-
+    require ec.msg.value == 0;
     // Safe require as it corresponds to some time very far into the future.
     require ec.block.timestamp < 2^63;
+
+    MetaMorphoHarness.Id id;
+
     // Safe require because it is a verified invariant.
     require isTimelockInRange();
 
@@ -92,6 +95,54 @@ rule capUpdateTime(env e, method f, calldataarg args) {
         assert config_(id).cap == prevCap;
         // Increasing nextCapUpdateTime with an interaction;
         assert nextCapUpdateTime(e, id) >= nextTime;
+    }
+    assert true;
+}
+
+// Show that nextTimelockUpdateTime does not revert.
+rule nextTimelockUpdateTimeDoesNotRevert() {
+    // The environment ec yields the current time.
+    env ec;
+    require ec.msg.value == 0;
+    // Safe require as it corresponds to some time very far into the future.
+    require ec.block.timestamp < 2^63;
+
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+    // Safe require because it is a verified invariant.
+    require isPendingTimelockInRange();
+
+    nextTimelockUpdateTime@withrevert(ec);
+
+    assert !lastReverted;
+}
+
+// Show that nextTimelockUpdateTime is increasing and that no change of timelock can happen before it.
+rule timelockUpdateTime(env e, method f, calldataarg args) {
+    // The environment ec yields the current time.
+    env ec;
+
+    // Safe require as it corresponds to some time very far into the future.
+    require ec.block.timestamp < 2^63;
+    // Safe require because it is a verified invariant.
+    require isTimelockInRange();
+
+    uint256 nextTime = nextTimelockUpdateTime(ec);
+    uint184 prevTimelock = timelock();
+
+    // Assume that the Timelock is already set.
+    require prevTimelock != 0;
+    // Sane assumption on the current time, as any following transaction should happen after it.
+    require e.block.timestamp >= ec.block.timestamp;
+    // Increasing nextTimelockUpdateTime with no interaction;
+    assert nextTimelockUpdateTime(e) >= nextTime;
+
+    f(e, args);
+
+    if (e.block.timestamp < nextTime)  {
+        assert timelock() == prevTimelock;
+        // Increasing nextTimelockUpdateTime with an interaction;
+        assert nextTimelockUpdateTime(e) >= nextTime;
     }
     assert true;
 }
