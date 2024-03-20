@@ -17,15 +17,22 @@ rule guardianUpdateTime(uint256 currentTime, env e, method f, calldataarg args) 
     uint256 nextTime = nextGuardianUpdateTime(currentTime);
     address prevGuardian = guardian();
 
+    // Assume that the guardian is already set.
+    require prevGuardian != address(0);
+    // Sane assumption on the current time.
     require e.block.timestamp >= currentTime;
+    // Increasing nextGuardianUpdateTime with no interaction;
+    assert nextGuardianUpdateTime(e.block.timestamp) >= nextTime;
+
     f(e, args);
 
     if (guardian() != prevGuardian) {
         assert e.block.timestamp >= nextTime;
     }
     if (e.block.timestamp < nextTime)  {
-        assert nextGuardianUpdateTime(e.block.timestamp) >= nextTime;
         assert guardian() == prevGuardian;
+        // Increasing nextGuardianUpdateTime with an interaction;
+        assert nextGuardianUpdateTime(e.block.timestamp) >= nextTime;
     }
     assert true;
 }
