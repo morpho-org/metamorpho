@@ -66,7 +66,7 @@ rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     assert !lastReverted;
 }
 
-// Show that nextCapIncreaseTime is increasing and that no change of cap can happen before it.
+// Show that nextCapIncreaseTime is increasing and that no increase of cap can happen before it.
 rule capIncreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
@@ -115,7 +115,7 @@ rule nextTimelockDecreaseTimeDoesNotRevert() {
     assert !lastReverted;
 }
 
-// Show that nextTimelockDecreaseTime is increasing and that no change of timelock can happen before it.
+// Show that nextTimelockDecreaseTime is increasing and that no decrease of timelock can happen before it.
 rule timelockDecreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
