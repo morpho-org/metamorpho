@@ -22,6 +22,7 @@ jobs:
           - Immutability
           - LastUpdated
           - Liveness
+          - MarketInteractions
           - PendingValues
           - Range
           - Reentrancy
