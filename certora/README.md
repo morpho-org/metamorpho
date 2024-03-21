@@ -103,6 +103,7 @@ function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams
 ```
 
 This checks that each market in the withdraw queue has a consistent asset.
+Additionally, every supply and withdraw on Morpho Blue is checked to target an enabled market in [`MarketInteractions.spec`](specs/MarketInteractions.spec).
 
 ### Enabled flag
 
@@ -192,6 +193,7 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`Immutability.spec`](specs/Immutability.spec) checks that MetaMorpho is immutable.
 - [`LastUpdated.spec`](specs/LastUpdated.spec) checks that all Morpho Blue markets that MetaMorpho interacts with are created markets.
 - [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency procedures are always available.
+- [`MarketInteractions.spec`](specs/MarketInteractions.spec) checks that every supply and withdraw from MetaMorpho is targeting an enabled market.
 - [`PendingValues.spec`](specs/PendingValues.spec) checks properties on the values that are still under timelock. Those properties are notably useful to prove that actual storage variables, when set to the pending value, use a consistent value.
 - [`Range.spec`](specs/Range.spec) checks the bounds (if any) of storage variables.
 - [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
@@ -214,6 +216,7 @@ graph
 Tokens --> ConsistentState
 Liveness --> ConsistentState
 Reverts --> ConsistentState
+MarketInteractions --> ConsistentState
 ConsistentState --> Timelock
 Timelock --> LastUpdated
 LastUpdated --> Enabled

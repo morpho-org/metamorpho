@@ -54,9 +54,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
 
     MetaMorphoHarness.Id id = Morpho.libId(marketParams);
 
-    // Safe require because:
-    // - for reallocate this is checked in the code
-    // - for withdraw, it is verified that markets in the withdraw queue are enabled.
+    // Safe require because it is verifed in MarketInteractions.
     require config_(id).enabled;
     // Safe require because it is a verified invariant.
     require isEnabledHasConsistentAsset(marketParams);
