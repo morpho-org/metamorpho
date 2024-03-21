@@ -14,20 +14,20 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     assert onBehalf == currentContract;
     assert data.length == 0;
 
+    // What environment parameter should I give ?
+    return Morpho.supply(marketParams, assets, shares, onBehalf, data);
     // Compile using the following line instead
     // return (assets, shares);
-    return Morpho.supply(marketParams, assets, shares, onBehalf, data);
 }
 
 function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) returns (uint256, uint256) {
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
-    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
-
+    // What environment parameter should I give ?
+    return Morpho.withdraw(marketParams, assets, shares, onBehalf, receiver);
     // Compile using the following line instead
     // return (assets, shares);
-    return Morpho.withdraw(marketParams, assets, shares, onBehalf, receiver);
 }
 
 invariant checkSummaries()
