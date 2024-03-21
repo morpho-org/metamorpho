@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "LastUpdated.spec";
 
+methods {
+    function _.supplyShares(MetaMorphoHarness.Id id, address user) external => summarySupplyshares(id, user) expect uint256;
+}
+
+ghost lastSupplyShares(MetaMorphoHarness.Id, address) returns uint256;
+
+function summarySupplyshares(MetaMorphoHarness.Id id, address user) returns uint256 {
+    uint256 res;
+    require lastSupplyShares(id, user) == res;
+    return res;
+}
+
 // Show that nextGuardianUpdateTime does not revert.
 rule nextGuardianUpdateTimeDoesNotRevert() {
     // The environment ec yields the current time.
@@ -189,7 +201,7 @@ rule removableTime(env e, method f, calldataarg args) {
 
     if (e.block.timestamp < nextTime)  {
         // Check that no forced removal happened.
-        assert Morpho.supplyShares(id, currentContract) > 0 => config_(id).enabled;
+        assert lastSupplyShares(id, currentContract) > 0 => config_(id).enabled;
         // Increasing nextRemovableTime with an interaction;
         assert nextRemovableTime(e, id) >= nextTime;
     }

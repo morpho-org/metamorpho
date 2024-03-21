@@ -6,7 +6,6 @@ using MorphoHarness as Morpho;
 methods {
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
     function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
-    function Morpho.supplyShares(MorphoHarness.Id, address) external returns(uint256) envfree;
 }
 
 // Check that any market with positive cap is created on Morpho Blue.
