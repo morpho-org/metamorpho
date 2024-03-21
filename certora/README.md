@@ -63,6 +63,7 @@ rule revokePendingTimelockRevertCondition(env e) {
 ## Timelock
 
 MetaMorpho features a timelock mechanism that applies to every operation that could potentially increase risk for users.
+There are computations that give a lower bound for the period during which we know the values are under timelock, and this is verified in [`Timelock.spec`](specs/Timelock.spec).
 The following function defined in [`PendingValues.spec`](specs/PendingValues.spec) is verified to always return `true`.
 
 ```solidity
@@ -196,6 +197,7 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
 - [`Reverts.spec`](specs/Reverts.spec) checks the revert conditions on entrypoints.
 - [`Roles.spec`](specs/Roles.spec) checks the access control and authorization granted by the respective MetaMorpho roles. In particular it checks the hierarchy of roles.
+- [`Timelock.spec`](specs/Timelock.spec) gives computations (and verifies them) for periods during which we know the values are under timelock.
 - [`Tokens.spec`](specs/Tokens.spec) checks that tokens are not kept on the MetaMorpho contract. Any deposit ends up in Morpho Blue and any withdrawal is forwarded to the user.
 
 The [`certora/confs`](confs) folder contains a configuration file for each corresponding specification file.
@@ -212,7 +214,8 @@ graph
 Tokens --> ConsistentState
 Liveness --> ConsistentState
 Reverts --> ConsistentState
-ConsistentState --> LastUpdated
+ConsistentState --> Timelock
+Timelock --> LastUpdated
 LastUpdated --> Enabled
 Enabled --> DistinctIdentifiers
 DistinctIdentifiers --> PendingValues

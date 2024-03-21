@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.21;
 
-import {MetaMorpho, Id, ConstantsLib, PendingUint192, PendingAddress, MarketConfig} from "../munged/MetaMorpho.sol";
+import {
+    Math, MetaMorpho, Id, ConstantsLib, PendingUint192, PendingAddress, MarketConfig
+} from "../munged/MetaMorpho.sol";
 
 contract MetaMorphoHarness is MetaMorpho {
     constructor(
@@ -43,5 +45,44 @@ contract MetaMorphoHarness is MetaMorpho {
 
     function maxFee() external pure returns (uint256) {
         return ConstantsLib.MAX_FEE;
+    }
+
+    function nextGuardianUpdateTime() external view returns (uint256 nextTime) {
+        nextTime = block.timestamp + timelock;
+
+        if (pendingTimelock.validAt != 0) {
+            nextTime = Math.min(nextTime, pendingTimelock.validAt + pendingTimelock.value);
+        }
+
+        uint256 validAt = pendingGuardian.validAt;
+        if (validAt != 0) nextTime = Math.min(nextTime, validAt);
+    }
+
+    function nextCapIncreaseTime(Id id) external view returns (uint256 nextTime) {
+        nextTime = block.timestamp + timelock;
+
+        if (pendingTimelock.validAt != 0) {
+            nextTime = Math.min(nextTime, pendingTimelock.validAt + pendingTimelock.value);
+        }
+
+        uint256 validAt = pendingCap[id].validAt;
+        if (validAt != 0) nextTime = Math.min(nextTime, validAt);
+    }
+
+    function nextTimelockDecreaseTime() external view returns (uint256 nextTime) {
+        nextTime = block.timestamp + timelock;
+
+        if (pendingTimelock.validAt != 0) nextTime = Math.min(nextTime, pendingTimelock.validAt);
+    }
+
+    function nextRemovableTime(Id id) external view returns (uint256 nextTime) {
+        nextTime = block.timestamp + timelock;
+
+        if (pendingTimelock.validAt != 0) {
+            nextTime = Math.min(nextTime, pendingTimelock.validAt + pendingTimelock.value);
+        }
+
+        uint256 removableAt = config[id].removableAt;
+        if (removableAt != 0) nextTime = Math.min(nextTime, removableAt);
     }
 }

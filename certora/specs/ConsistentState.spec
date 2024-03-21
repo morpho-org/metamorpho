@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "LastUpdated.spec";
+import "Timelock.spec";
 
 function hasCuratorRole(address user) returns bool {
     return user == owner() || user == curator();
