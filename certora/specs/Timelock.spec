@@ -31,7 +31,7 @@ rule nextGuardianUpdateTimeDoesNotRevert() {
     assert !lastReverted;
 }
 
-// Show that nextGuardianUpdateTime is increasing and that no change of guardian can happen before it.
+// Show that nextGuardianUpdateTime is increasing with time and that no change of guardian can happen before it.
 rule guardianUpdateTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
@@ -80,7 +80,7 @@ rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     assert !lastReverted;
 }
 
-// Show that nextCapIncreaseTime is increasing and that no increase of cap can happen before it.
+// Show that nextCapIncreaseTime is increasing with time and that no increase of cap can happen before it.
 rule capIncreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
@@ -129,7 +129,7 @@ rule nextTimelockDecreaseTimeDoesNotRevert() {
     assert !lastReverted;
 }
 
-// Show that nextTimelockDecreaseTime is increasing and that no decrease of timelock can happen before it.
+// Show that nextTimelockDecreaseTime is increasing with time and that no decrease of timelock can happen before it.
 rule timelockDecreaseTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
@@ -176,7 +176,7 @@ rule nextRemovableTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     assert !lastReverted;
 }
 
-// Show that nextRemovableTime is increasing and that no removal can happen before it.
+// Show that nextRemovableTime is increasing with time and that no removal can happen before it.
 rule removableTime(env e, method f, calldataarg args) {
     // The environment ec yields the current time.
     env ec;
