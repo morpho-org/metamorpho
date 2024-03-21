@@ -48,8 +48,9 @@ rule guardianUpdateTime(env e_next, method f, calldataarg args) {
     require prevGuardian != 0;
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e_next.block.timestamp >= e.block.timestamp;
+    uint256 nextGuardianUpdateTimeBeforeInteraction = nextGuardianUpdateTime(e);
     // Increasing nextGuardianUpdateTime with no interaction;
-    assert nextGuardianUpdateTime(e_next) >= nextTime;
+    assert nextGuardianUpdateTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
@@ -57,7 +58,7 @@ rule guardianUpdateTime(env e_next, method f, calldataarg args) {
         // Check that guardian cannot change.
         assert guardian() == prevGuardian;
         // Increasing nextGuardianUpdateTime with an interaction;
-        assert nextGuardianUpdateTime(e_next) >= nextTime;
+        assert nextGuardianUpdateTime(e_next) >= nextGuardianUpdateTimeBeforeInteraction;
     }
     assert true;
 }
@@ -97,8 +98,9 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
 
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e_next.block.timestamp >= e.block.timestamp;
+    uint256 nextCapIncreaseTimeBeforeInteraction = nextCapIncreaseTime(e_next, id);
     // Increasing nextCapIncreaseTime with no interaction;
-    assert nextCapIncreaseTime(e_next, id) >= nextTime;
+    assert nextCapIncreaseTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
@@ -106,7 +108,7 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
         // Check that cap cannot increase.
         assert config_(id).cap <= prevCap;
         // Increasing nextCapIncreaseTime with an interaction;
-        assert nextCapIncreaseTime(e_next, id) >= nextTime;
+        assert nextCapIncreaseTime(e_next, id) >= nextCapIncreaseTimeBeforeInteraction;
     }
     assert true;
 }
@@ -144,8 +146,9 @@ rule timelockDecreaseTime(env e_next, method f, calldataarg args) {
 
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e_next.block.timestamp >= e.block.timestamp;
+    uint256 nextTimelockDecreaseTimeBeforeInteraction = nextTimelockDecreaseTime(e_next);
     // Increasing nextTimelockDecreaseTime with no interaction;
-    assert nextTimelockDecreaseTime(e_next) >= nextTime;
+    assert nextTimelockDecreaseTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
@@ -153,7 +156,7 @@ rule timelockDecreaseTime(env e_next, method f, calldataarg args) {
         // Check that timelock cannot decrease.
         assert timelock() >= prevTimelock;
         // Increasing nextTimelockDecreaseTime with an interaction;
-        assert nextTimelockDecreaseTime(e_next) >= nextTime;
+        assert nextTimelockDecreaseTime(e_next) >= nextTimelockDecreaseTimeBeforeInteraction;
     }
     assert true;
 }
@@ -194,8 +197,9 @@ rule removableTime(env e_next, method f, calldataarg args) {
     require config_(id).enabled;
     // Sane assumption on the current time, as any following transaction should happen after it.
     require e_next.block.timestamp >= e.block.timestamp;
+    uint256 nextRemovableTimeBeforeInteraction = nextRemovableTime(e_next, id);
     // Increasing nextRemovableTime with no interaction;
-    assert nextRemovableTime(e_next, id) >= nextTime;
+    assert nextRemovableTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
@@ -203,7 +207,7 @@ rule removableTime(env e_next, method f, calldataarg args) {
         // Check that no forced removal happened.
         assert lastSupplyShares(id, currentContract) > 0 => config_(id).enabled;
         // Increasing nextRemovableTime with an interaction;
-        assert nextRemovableTime(e_next, id) >= nextTime;
+        assert nextRemovableTime(e_next, id) >= nextRemovableTimeBeforeInteraction;
     }
     assert true;
 }
