@@ -42,6 +42,7 @@ rule guardianUpdateTime(env e, method f, calldataarg args) {
     f(e, args);
 
     if (e.block.timestamp < nextTime)  {
+        // Check that guardian cannot change.
         assert guardian() == prevGuardian;
         // Increasing nextGuardianUpdateTime with an interaction;
         assert nextGuardianUpdateTime(e) >= nextTime;
@@ -90,6 +91,7 @@ rule capIncreaseTime(env e, method f, calldataarg args) {
     f(e, args);
 
     if (e.block.timestamp < nextTime)  {
+        // Check that cap cannot increase.
         assert config_(id).cap <= prevCap;
         // Increasing nextCapIncreaseTime with an interaction;
         assert nextCapIncreaseTime(e, id) >= nextTime;
@@ -136,6 +138,7 @@ rule timelockDecreaseTime(env e, method f, calldataarg args) {
     f(e, args);
 
     if (e.block.timestamp < nextTime)  {
+        // Check that timelock cannot decrease.
         assert timelock() >= prevTimelock;
         // Increasing nextTimelockDecreaseTime with an interaction;
         assert nextTimelockDecreaseTime(e) >= nextTime;
@@ -185,7 +188,8 @@ rule removableTime(env e, method f, calldataarg args) {
     f(e, args);
 
     if (e.block.timestamp < nextTime)  {
-        assert config_(id).enabled;
+        // Check that no forced removal happened.
+        assert Morpho.supplyShares(id, currentContract) > 0 => config_(id).enabled;
         // Increasing nextRemovableTime with an interaction;
         assert nextRemovableTime(e, id) >= nextTime;
     }
