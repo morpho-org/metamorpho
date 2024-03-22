@@ -5,6 +5,8 @@ methods {
     function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) external => summarySupply(marketParams, assets, shares, onBehalf, data) expect (uint256, uint256) ALL;
     function _.withdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external => summaryWithdraw(marketParams, assets, shares, onBehalf, receiver) expect (uint256, uint256) ALL;
     function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect MetaMorphoHarness.MarketParams ALL;
+
+    function lastIndexWithdraw() external returns(uint256) envfree;
 }
 
 function summaryIdToMarketParams(MetaMorphoHarness.Id id) returns MetaMorphoHarness.MarketParams {
@@ -39,9 +41,9 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert receiver == currentContract;
 
     MetaMorphoHarness.Id id = Util.libId(marketParams);
-    uint256 rank = withdrawRank(id);
+    uint256 index = lastIndexWithdraw();
     // Safe require because it is a verified invariant.
-    require isInWithdrawQueueIsEnabled(assert_uint256(rank - 1));
+    require isInWithdrawQueueIsEnabled(index);
     // Safe require because it is a verified invariant
     require isWithdrawRankCorrect(id);
 
