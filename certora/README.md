@@ -13,7 +13,7 @@ The verification is run on modified source files, which are made available by ru
 make -C certora munged
 ```
 
-Install the `certora-cli-beta` package with `pip install certora-cli-beta`.
+Install the `certora-cli` package with `pip install certora-cli`.
 To verify specification files, pass to `certoraRun` the corresponding configuration file in the [`certora/confs`](confs) folder.
 It requires having set the `CERTORAKEY` environment variable to a valid Certora key.
 You can also pass additional arguments, notably to verify a specific rule.
