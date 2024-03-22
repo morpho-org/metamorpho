@@ -199,7 +199,7 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
 - [`Reverts.spec`](specs/Reverts.spec) checks the revert conditions on entrypoints.
 - [`Roles.spec`](specs/Roles.spec) checks the access control and authorization granted by the respective MetaMorpho roles. In particular it checks the hierarchy of roles.
-- [`Timelock.spec`](specs/Timelock.spec) gives computations (and verifies them) for periods during which we know the values are under timelock.
+- [`Timelock.spec`](specs/Timelock.spec) verifies computations for periods during which we know the values are under timelock.
 - [`Tokens.spec`](specs/Tokens.spec) checks that tokens are not kept on the MetaMorpho contract. Any deposit ends up in Morpho Blue and any withdrawal is forwarded to the user.
 
 The [`certora/confs`](confs) folder contains a configuration file for each corresponding specification file.

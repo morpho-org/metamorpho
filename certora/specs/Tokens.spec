@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "ConsistentState.spec";
-
-using Util as Util;
+import "LastUpdated.spec";
 
 methods {
-    function Util.balanceOf(address, address) external returns(uint256) envfree;
-    function Util.safeTransferFrom(address, address, address, uint256) external envfree;
-    function Util.withdrawnAssets(address, MetaMorphoHarness.Id, uint256, uint256) external returns (uint256) envfree;
-
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
@@ -27,7 +21,7 @@ function summaryIdToMarketParams(MetaMorphoHarness.Id id) returns MetaMorphoHarn
     // Safe require because markets in the supply/withdraw queue have positive last update (see LastUpdated.spec).
     require lastUpdated > 0;
     // Safe require because it is a verified invariant in Morpho Blue.
-    require lastUpdated > 0 => Morpho.libId(marketParams) == id;
+    require lastUpdated > 0 => Util.libId(marketParams) == id;
 
     return marketParams;
 }
@@ -38,7 +32,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     assert data.length == 0;
 
     // Safe require because it is a verified invariant.
-    require hasSupplyCapIsEnabled(Morpho.libId(marketParams));
+    require hasSupplyCapIsEnabled(Util.libId(marketParams));
     // Safe require because it is a verified invariant.
     require isEnabledHasConsistentAsset(marketParams);
 
@@ -52,7 +46,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
-    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    MetaMorphoHarness.Id id = Util.libId(marketParams);
 
     // Safe require because it is verifed in MarketInteractions.
     require config_(id).enabled;

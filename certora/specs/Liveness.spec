@@ -25,7 +25,7 @@ rule canPauseSupply() {
 }
 
 rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
-    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    MetaMorphoHarness.Id id = Util.libId(marketParams);
 
     // Safe require because it is a verified invariant.
     require hasSupplyCapIsEnabled(id);

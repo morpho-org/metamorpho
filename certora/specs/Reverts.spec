@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "ConsistentState.spec";
-
-using Util as Util;
+import "LastUpdated.spec";
 
 methods {
-    function Util.totalSupply(address) external returns(uint256) envfree;
-    function Util.balanceOf(address, address) external returns(uint256) envfree;
-
     function _.transfer(address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
 }
@@ -104,7 +99,7 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
 
 // Check all the revert conditions of the submitCap function.
 rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams, uint256 newSupplyCap) {
-    MorphoHarness.Id id = Morpho.libId(marketParams);
+    MorphoHarness.Id id = Util.libId(marketParams);
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
     address asset = asset();
@@ -134,7 +129,7 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
 
 // Check all the revert conditions of the submitMarketRemoval function.
 rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams) {
-    MorphoHarness.Id id = Morpho.libId(marketParams);
+    MorphoHarness.Id id = Util.libId(marketParams);
 
     bool hasCuratorRole = hasCuratorRole(e.msg.sender);
     uint256 pendingCapValidAt = pendingCap_(id).validAt;
@@ -283,7 +278,7 @@ rule acceptGuardianRevertCondition(env e) {
 // Check the input validation conditions under which the acceptCap function reverts.
 // This function can also revert if interest accrual reverts or if it would lead to growing the withdraw queue past the max length.
 rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams) {
-    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    MetaMorphoHarness.Id id = Util.libId(marketParams);
 
     uint256 pendingCapValidAt = pendingCap_(id).validAt;
 
