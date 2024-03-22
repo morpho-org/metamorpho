@@ -213,13 +213,13 @@ The [`certora/dispatch`](dispatch) folder contains different contracts similar
 
 ```mermaid
 graph
-Tokens --> ConsistentState
-Liveness --> ConsistentState
-Reverts --> ConsistentState
+Tokens --> LastUpdated
+Liveness --> LastUpdated
+Reverts --> LastUpdated
+LastUpdated --> ConsistentState
 MarketInteractions --> ConsistentState
 ConsistentState --> Timelock
-Timelock --> LastUpdated
-LastUpdated --> Enabled
+Timelock --> Enabled
 Enabled --> DistinctIdentifiers
 DistinctIdentifiers --> PendingValues
 PendingValues --> Range

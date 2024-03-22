@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "ConsistentState.spec";
+import "LastUpdated.spec";
 
 // Check that having the allocator role allows to pause supply on the vault.
 rule canPauseSupply() {
