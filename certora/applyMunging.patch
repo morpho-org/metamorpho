@@ -49,7 +49,7 @@ diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
  
 diff -ruN MetaMorpho.sol MetaMorpho.sol
 --- MetaMorpho.sol	2024-03-20 15:13:25.862250553 +0100
-+++ MetaMorpho.sol	2024-03-22 11:25:47.991055286 +0100
++++ MetaMorpho.sol	2024-03-22 14:27:33.670423544 +0100
 @@ -9,24 +9,22 @@
      IMetaMorphoBase,
      IMetaMorphoStaticTyping
@@ -120,7 +120,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
  
 +    // HARNESS
 +    // The index of the identifier of the last market withdrawn.
-+    uint256 lastIndexWithdraw;
++    uint256 public lastIndexWithdraw;
 +
 +    // HARNESS
 +    // The rank of a market identifier in the withdraw queue.
