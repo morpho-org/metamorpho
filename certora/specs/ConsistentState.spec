@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import "Timelock.spec";
 
-function hasCuratorRole(address user) returns bool {
-    return user == owner() || user == curator();
-}
+using Util as Util;
 
-function hasAllocatorRole(address user) returns bool {
-    return user == owner() || user == curator() || isAllocator(user);
-}
-
-function hasGuardianRole(address user) returns bool {
-    return user == owner() || user == guardian();
+methods {
+    function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
+    function Util.balanceOf(address, address) external returns(uint256) envfree;
+    function Util.totalSupply(address) external returns(uint256) envfree;
+    function Util.safeTransferFrom(address, address, address, uint256) external envfree;
+    function Util.withdrawnAssets(address, MetaMorphoHarness.Id, uint256, uint256) external returns (uint256) envfree;
 }
 
 // Check that fee cannot accrue to an unset fee recipient.
@@ -29,7 +27,7 @@ invariant supplyCapIsEnabled(MetaMorphoHarness.Id id)
     hasSupplyCapIsEnabled(id);
 
 function hasPendingSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
-    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    MetaMorphoHarness.Id id = Util.libId(marketParams);
 
     return pendingCap_(id).validAt > 0 => marketParams.loanToken == asset();
 }
@@ -39,7 +37,7 @@ invariant pendingSupplyCapHasConsistentAsset(MetaMorphoHarness.MarketParams mark
     hasPendingSupplyCapHasConsistentAsset(marketParams);
 
 function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams) returns bool {
-    MetaMorphoHarness.Id id = Morpho.libId(marketParams);
+    MetaMorphoHarness.Id id = Util.libId(marketParams);
 
     return config_(id).enabled => marketParams.loanToken == asset();
 }

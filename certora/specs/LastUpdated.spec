@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import "Enabled.spec";
+import "ConsistentState.spec";
 
 using MorphoHarness as Morpho;
 
 methods {
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
-    function Morpho.libId(MorphoHarness.MarketParams) external returns(MorphoHarness.Id) envfree;
+}
+
+function hasCuratorRole(address user) returns bool {
+    return user == owner() || user == curator();
+}
+
+function hasAllocatorRole(address user) returns bool {
+    return user == owner() || user == curator() || isAllocator(user);
+}
+
+function hasGuardianRole(address user) returns bool {
+    return user == owner() || user == guardian();
 }
 
 // Check that any market with positive cap is created on Morpho Blue.

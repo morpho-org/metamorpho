@@ -103,6 +103,7 @@ function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams
 ```
 
 This checks that each market in the withdraw queue has a consistent asset.
+Additionally, every supply and withdraw on Morpho Blue is checked to target an enabled market in [`MarketInteractions.spec`](specs/MarketInteractions.spec).
 
 ### Enabled flag
 
@@ -192,12 +193,13 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`Immutability.spec`](specs/Immutability.spec) checks that MetaMorpho is immutable.
 - [`LastUpdated.spec`](specs/LastUpdated.spec) checks that all Morpho Blue markets that MetaMorpho interacts with are created markets.
 - [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency procedures are always available.
+- [`MarketInteractions.spec`](specs/MarketInteractions.spec) checks that every supply and withdraw from MetaMorpho is targeting an enabled market.
 - [`PendingValues.spec`](specs/PendingValues.spec) checks properties on the values that are still under timelock. Those properties are notably useful to prove that actual storage variables, when set to the pending value, use a consistent value.
 - [`Range.spec`](specs/Range.spec) checks the bounds (if any) of storage variables.
 - [`Reentrancy.spec`](specs/Reentrancy.spec) checks that MetaMorpho is reentrancy safe by making sure that there are no untrusted external calls.
 - [`Reverts.spec`](specs/Reverts.spec) checks the revert conditions on entrypoints.
 - [`Roles.spec`](specs/Roles.spec) checks the access control and authorization granted by the respective MetaMorpho roles. In particular it checks the hierarchy of roles.
-- [`Timelock.spec`](specs/Timelock.spec) gives computations (and verifies them) for periods during which we know the values are under timelock.
+- [`Timelock.spec`](specs/Timelock.spec) verifies computations for periods during which we know the values are under timelock.
 - [`Tokens.spec`](specs/Tokens.spec) checks that tokens are not kept on the MetaMorpho contract. Any deposit ends up in Morpho Blue and any withdrawal is forwarded to the user.
 
 The [`certora/confs`](confs) folder contains a configuration file for each corresponding specification file.
@@ -211,12 +213,13 @@ The [`certora/dispatch`](dispatch) folder contains different contracts similar
 
 ```mermaid
 graph
-Tokens --> ConsistentState
-Liveness --> ConsistentState
-Reverts --> ConsistentState
+Tokens --> LastUpdated
+Liveness --> LastUpdated
+Reverts --> LastUpdated
+LastUpdated --> ConsistentState
+MarketInteractions --> ConsistentState
 ConsistentState --> Timelock
-Timelock --> LastUpdated
-LastUpdated --> Enabled
+Timelock --> Enabled
 Enabled --> DistinctIdentifiers
 DistinctIdentifiers --> PendingValues
 PendingValues --> Range
