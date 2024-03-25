@@ -22,6 +22,7 @@ function summaryIdToMarketParams(MetaMorphoHarness.Id id) returns MetaMorphoHarn
 
 function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) returns(uint256, uint256) {
     assert shares == 0;
+    assert assets != 0;
     assert onBehalf == currentContract;
     assert data.length == 0;
 
@@ -37,6 +38,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
 }
 
 function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) returns (uint256, uint256) {
+    assert shares == 0 <=> assets != 0;
     assert onBehalf == currentContract;
     assert receiver == currentContract;
 
@@ -44,8 +46,6 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     uint256 index = lastIndexWithdraw();
     // Safe require because it is a verified invariant.
     require isInWithdrawQueueIsEnabled(index);
-    // Safe require because it is a verified invariant
-    require isWithdrawRankCorrect(id);
 
     // Check that all markets from which MetaMorpho withdraws are enabled markets.
     assert config_(id).enabled;
