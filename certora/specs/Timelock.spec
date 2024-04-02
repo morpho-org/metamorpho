@@ -13,7 +13,7 @@ function summarySupplyshares(MetaMorphoHarness.Id id, address user) returns uint
     return res;
 }
 
-ghost uint256 lastTimestamp;
+persistent ghost uint256 lastTimestamp;
 
 hook TIMESTAMP uint v {
     // Safe require because timestamps are guaranteed to be increasing.
