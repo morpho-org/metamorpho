@@ -15,12 +15,12 @@ function summarySupplyshares(MetaMorphoHarness.Id id, address user) returns uint
 
 persistent ghost uint256 lastTimestamp;
 
-hook TIMESTAMP uint v {
+hook TIMESTAMP uint newTimestamp {
     // Safe require because timestamps are guaranteed to be increasing.
-    require v >= lastTimestamp;
+    require newTimestamp >= lastTimestamp;
     // Safe require as it corresponds to some time very far into the future.
-    require v < 2^63;
-    lastTimestamp = v;
+    require newTimestamp < 2^63;
+    lastTimestamp = newTimestamp;
 }
 
 // Show that nextGuardianUpdateTime does not revert.
