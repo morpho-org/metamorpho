@@ -44,7 +44,7 @@ jobs:
           FOUNDRY_PROFILE: test
 
       - name: Save forge compilation cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: |
             cache
