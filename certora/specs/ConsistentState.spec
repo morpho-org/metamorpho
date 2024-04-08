@@ -61,6 +61,16 @@ function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool
 invariant supplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
     hasSupplyCapIsNotMarkedForRemoval(id);
 
+function isNotEnabledIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
+    MetaMorphoHarness.MarketConfig config = config_(id);
+
+    return !config.enabled => config.removableAt == 0;
+}
+
+// Check that a non-enabled market cannot be marked for removal.
+invariant notEnabledIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
+    isNotEnabledIsNotMarkedForRemoval(id);
+
 function hasPendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
     return pendingCap_(id).validAt > 0 => config_(id).removableAt == 0;
 }
