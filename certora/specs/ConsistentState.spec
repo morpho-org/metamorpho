@@ -61,10 +61,6 @@ function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool
 invariant supplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
     hasSupplyCapIsNotMarkedForRemoval(id);
 
-function hasPendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
-    return pendingCap_(id).validAt > 0 => config_(id).removableAt == 0;
-}
-
 // Check that a market with a pending cap cannot be marked for removal.
 invariant pendingCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id)
-    hasPendingCapIsNotMarkedForRemoval(id);
+    pendingCap_(id).validAt > 0 => config_(id).removableAt == 0;

@@ -21,10 +21,8 @@ rule nextGuardianUpdateTimeDoesNotRevert() {
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
-    // Safe require because it is a verified invariant.
-    require isPendingTimelockInRange();
+    requireInvariant timelockInRange();
+    requireInvariant pendingTimelockInRange();
 
     nextGuardianUpdateTime@withrevert(e);
 
@@ -38,8 +36,7 @@ rule guardianUpdateTime(env e_next, method f, calldataarg args) {
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
 
     uint256 nextTime = nextGuardianUpdateTime(e);
     address prevGuardian = guardian();
@@ -71,10 +68,8 @@ rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
-    // Safe require because it is a verified invariant.
-    require isPendingTimelockInRange();
+    requireInvariant timelockInRange();
+    requireInvariant pendingTimelockInRange();
 
     nextCapIncreaseTime@withrevert(e, id);
 
@@ -90,8 +85,7 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
 
     MetaMorphoHarness.Id id;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
 
     uint256 nextTime = nextCapIncreaseTime(e, id);
     uint184 prevCap = config_(id).cap;
@@ -121,10 +115,8 @@ rule nextTimelockDecreaseTimeDoesNotRevert() {
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
-    // Safe require because it is a verified invariant.
-    require isPendingTimelockInRange();
+    requireInvariant timelockInRange();
+    requireInvariant pendingTimelockInRange();
 
     nextTimelockDecreaseTime@withrevert(e);
 
@@ -138,8 +130,7 @@ rule timelockDecreaseTime(env e_next, method f, calldataarg args) {
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
 
     uint256 nextTime = nextTimelockDecreaseTime(e);
     uint256 prevTimelock = timelock();
@@ -169,10 +160,8 @@ rule nextRemovableTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
-    // Safe require because it is a verified invariant.
-    require isPendingTimelockInRange();
+    requireInvariant timelockInRange();
+    requireInvariant pendingTimelockInRange();
 
     nextRemovableTime@withrevert(e, id);
 
@@ -188,8 +177,7 @@ rule removableTime(env e_next, method f, calldataarg args) {
 
     MetaMorphoHarness.Id id;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
 
     uint256 nextTime = nextRemovableTime(e, id);
 
