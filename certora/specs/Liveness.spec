@@ -29,7 +29,8 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
 
     requireInvariant supplyCapIsEnabled(id);
     requireInvariant enabledHasConsistentAsset(marketParams);
-    requireInvariant positiveSupplyCapIsUpdated(id);
+    // Safe require because this holds as an invariant.
+    require hasPositiveSupplyCapIsUpdated(id);
 
     MetaMorphoHarness.MarketConfig config = config_(id);
     require config.cap > 0;
