@@ -83,8 +83,7 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
     address oldGuardian = guardian();
     uint64 pendingGuardianValidAt = pendingGuardian_().validAt;
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
@@ -107,12 +106,10 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
     uint256 pendingCapValidAt = pendingCap_(id).validAt;
     MetaMorphoHarness.MarketConfig config = config_(id);
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
-    // Safe require because it is a verified invariant.
-    require hasSupplyCapIsEnabled(id);
+    requireInvariant supplyCapIsEnabled(id);
 
     submitCap@withrevert(e, marketParams, newSupplyCap);
 
@@ -135,8 +132,7 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     uint256 pendingCapValidAt = pendingCap_(id).validAt;
     MetaMorphoHarness.MarketConfig config = config_(id);
 
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
     // Safe require as it corresponds to some time very far into the future.
     require e.block.timestamp < 2^63;
 
