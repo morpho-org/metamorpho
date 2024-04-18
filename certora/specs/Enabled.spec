@@ -20,8 +20,7 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
     uint256 j;
     require isInWithdrawQueueIsEnabled(indexes[i]);
 
-    // Safe require because it is a verified invariant.
-    require hasDistinctIdentifiers(indexes[i], j);
+    requireInvariant distinctIdentifiers(indexes[i], j);
 
     updateWithdrawQueue(e, indexes);
 
@@ -45,13 +44,9 @@ function isWithdrawRankCorrect(MetaMorphoHarness.Id id) returns bool {
 invariant withdrawRankCorrect(MetaMorphoHarness.Id id)
     isWithdrawRankCorrect(id);
 
-function isEnabledHasPositiveRank(MetaMorphoHarness.Id id) returns bool {
-    return config_(id).enabled => withdrawRank(id) > 0;
-}
-
 // Checks that enabled markets have a positive withdraw rank, according to the withdrawRank ghost variable.
 invariant enabledHasPositiveRank(MetaMorphoHarness.Id id)
-    isEnabledHasPositiveRank(id);
+    config_(id).enabled => withdrawRank(id) > 0;
 
 // Check that enabled markets are in the withdraw queue.
 rule enabledIsInWithdrawQueue(MetaMorphoHarness.Id id) {

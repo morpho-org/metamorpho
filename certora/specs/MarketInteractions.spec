@@ -27,8 +27,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     assert data.length == 0;
 
     MetaMorphoHarness.Id id = Util.libId(marketParams);
-    // Safe require because it is a verified invariant
-    require hasSupplyCapIsEnabled(id);
+    requireInvariant supplyCapIsEnabled(id);
 
     // Check that all markets on which MetaMorpho supplies are enabled markets.
     assert config_(id).enabled;
@@ -44,8 +43,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
 
     MetaMorphoHarness.Id id = Util.libId(marketParams);
     uint256 index = lastIndexWithdraw();
-    // Safe require because it is a verified invariant.
-    require isInWithdrawQueueIsEnabled(index);
+    requireInvariant inWithdrawQueueIsEnabled(index);
 
     // Check that all markets from which MetaMorpho withdraws are enabled markets.
     assert config_(id).enabled;

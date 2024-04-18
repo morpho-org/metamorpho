@@ -12,26 +12,19 @@ invariant noBadPendingTimelock()
     hasNoBadPendingTimelock()
 {
     preserved with (env e) {
-        // Safe require because it is a verified invariant.
-        require isTimelockInRange();
+        requireInvariant timelockInRange();
         // Safe require as it corresponds to some time very far into the future.
         require e.block.timestamp < 2^63;
     }
 }
 
-function isSmallerPendingTimelock() returns bool {
-    return assert_uint256(pendingTimelock_().value) < timelock();
-}
-
 // Check that the pending timelock value is always strictly smaller than the current timelock value.
 invariant smallerPendingTimelock()
-    isSmallerPendingTimelock()
+    assert_uint256(pendingTimelock_().value) < timelock()
 {
     preserved {
-        // safe require as it is a verified invariant.
-        require isPendingTimelockInRange();
-        // Safe require because it is a verified invariant.
-        require isTimelockInRange();
+        requireInvariant pendingTimelockInRange();
+        requireInvariant timelockInRange();
     }
 }
 
@@ -46,8 +39,7 @@ invariant noBadPendingCap(MetaMorphoHarness.Id id)
     hasNoBadPendingCap(id)
 {
     preserved with (env e) {
-        // Safe require because it is a verified invariant.
-        require isTimelockInRange();
+        requireInvariant timelockInRange();
         // Safe require as it corresponds to some time very far into the future.
         require e.block.timestamp < 2^63;
     }
@@ -76,8 +68,7 @@ invariant noBadPendingGuardian()
     hasNoBadPendingGuardian()
 {
     preserved with (env e) {
-        // Safe require because it is a verified invariant.
-        require isTimelockInRange();
+        requireInvariant timelockInRange();
         // Safe require as it corresponds to some time very far into the future.
         require e.block.timestamp < 2^63;
     }

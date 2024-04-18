@@ -27,11 +27,9 @@ rule canPauseSupply() {
 rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     MetaMorphoHarness.Id id = Util.libId(marketParams);
 
-    // Safe require because it is a verified invariant.
-    require hasSupplyCapIsEnabled(id);
-    // Safe require because it is a verified invariant.
-    require isEnabledHasConsistentAsset(marketParams);
-    // Safe require because it is a verified invariant.
+    requireInvariant supplyCapIsEnabled(id);
+    requireInvariant enabledHasConsistentAsset(marketParams);
+    // Safe require because this holds as an invariant.
     require hasPositiveSupplyCapIsUpdated(id);
 
     MetaMorphoHarness.MarketConfig config = config_(id);
@@ -55,8 +53,7 @@ rule canForceRemoveMarket(MetaMorphoHarness.MarketParams marketParams) {
     assert !lastReverted;
 
     require e3.msg.value == 0;
-    // Safe require because it is a verified invariant.
-    require isTimelockInRange();
+    requireInvariant timelockInRange();
     // Safe require as it corresponds to some time very far into the future.
     require e3.block.timestamp < 2^63;
     submitMarketRemoval@withrevert(e3, marketParams);
