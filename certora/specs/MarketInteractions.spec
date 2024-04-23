@@ -53,6 +53,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
 }
 
 // Check assertions in the summaries.
-// This requires to turn off sanity checks for this invariant that appears vacuous.
-invariant checkSummaries()
-    true;
+rule checkSummary(method f, env e, calldataarg args) {
+    f(e, args);
+    assert true;
+}
