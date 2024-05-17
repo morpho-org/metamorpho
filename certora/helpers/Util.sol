@@ -42,6 +42,17 @@ contract Util {
         }
     }
 
+    function accrueInterest(IMorphoHarness morpho, Id id) external {
+        morpho.accrueInterest(id);
+    }
+
+    function supplyAssets(IMorphoHarness morpho, Id id, address user) external view returns (uint256) {
+        uint256 supplyShares = morpho.supplyShares(id, user);
+        Market memory market = morpho.market(id);
+
+        return supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
+    }
+
     function libId(MarketParams memory marketParams) external pure returns (Id) {
         return marketParams.id();
     }
