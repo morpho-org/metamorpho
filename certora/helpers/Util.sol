@@ -12,14 +12,10 @@ import {
     Market
 } from "../munged/MetaMorpho.sol";
 
-import {MorphoBalancesLib} from "../../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
-import {IMorpho} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
-
 contract Util {
     using SafeERC20 for IERC20;
     using SharesMathLib for uint256;
     using MarketParamsLib for MarketParams;
-    using MorphoBalancesLib for IMorpho;
 
     function balanceOf(address token, address user) external view returns (uint256) {
         return IERC20(token).balanceOf(user);
@@ -46,12 +42,10 @@ contract Util {
         }
     }
 
-    function expectedSupplyAssets(address morpho, MarketParams memory marketParams, address user)
-        external
-        view
-        returns (uint256)
-    {
-        return IMorpho(morpho).expectedSupplyAssets(marketParams, user);
+    function supplyAssets(IMorphoHarness morpho, Id id, address user) external view returns (uint256) {
+        uint256 shares = morpho.supplyShares(id, user);
+        Market memory market = morpho.market(id);
+        return shares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
     }
 
     function libId(MarketParams memory marketParams) external pure returns (Id) {
