@@ -42,13 +42,11 @@ contract Util {
         }
     }
 
-    function supplyAssets(IMorphoHarness morpho, Id id, address user) external view returns (uint256) {
-        uint256 shares = morpho.supplyShares(id, user);
-        Market memory market = morpho.market(id);
-        return shares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares);
-    }
-
     function libId(MarketParams memory marketParams) external pure returns (Id) {
         return marketParams.id();
+    }
+
+    function toAssetsDown(uint256 shares, uint256 totalAssets, uint256 totalShares) external pure returns (uint256) {
+        return shares.toAssetsDown(totalAssets, totalShares);
     }
 }
