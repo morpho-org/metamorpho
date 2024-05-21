@@ -15,7 +15,8 @@ methods {
     function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
     function Util.toAssetsDown(uint256, uint256, uint256) external returns(uint256) envfree;
 
-    function _.balanceOf(address) external => NONDET;
+    function _.balanceOf(address) external => DISPATCHER(true);
+    function _.transfer(address, uint256) external => DISPATCHER(true);
 }
 
 function supplyAssets(MetaMorphoHarness.Id id, address user) returns uint256 {
