@@ -164,8 +164,6 @@ interface IMetaMorphoBase {
     function updateWithdrawQueue(uint256[] calldata indexes) external;
 
     /// @notice Reallocates the vault's liquidity so as to reach a given allocation of assets on each given market.
-    /// @notice The allocator can withdraw from any market, even if it's not in the withdraw queue, as long as the loan
-    /// token of the market is the same as the vault's asset.
     /// @dev The behavior of the reallocation can be altered by state changes, including:
     /// - Deposits on the vault that supplies to markets that are expected to be supplied to during reallocation.
     /// - Withdrawals from the vault that withdraws from markets that are expected to be withdrawn from during
@@ -174,6 +172,8 @@ interface IMetaMorphoBase {
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
     /// @dev Sender is expected to pass `assets = type(uint256).max` with the last MarketAllocation of `allocations` to
     /// supply all the remaining withdrawn liquidity, which would ensure that `totalWithdrawn` = `totalSupplied`.
+    /// @dev A supply in a reallocation step will make the reallocation revert if the amount is greater than the amount
+    /// extracted (i.e. total withdrawn minus total supplied) in the previous steps.
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
