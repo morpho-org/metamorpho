@@ -37,10 +37,10 @@ rule respectSupplyCap(method f, env e, calldataarg args)
 
     require Morpho.lastUpdate(id) == e.block.timestamp;
 
-    require supplyAssets(id, currentContract) < cap;
+    require supplyAssets(id, currentContract) <= cap;
 
     f(e, args);
     require assert_uint256(config_(id).cap) == cap;
 
-    assert supplyAssets(id, currentContract) < cap;
+    assert supplyAssets(id, currentContract) <= cap;
 }
