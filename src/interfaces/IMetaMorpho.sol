@@ -172,8 +172,8 @@ interface IMetaMorphoBase {
     /// - Withdrawals from markets that are expected to be withdrawn from during reallocation.
     /// @dev Sender is expected to pass `assets = type(uint256).max` with the last MarketAllocation of `allocations` to
     /// supply all the remaining withdrawn liquidity, which would ensure that `totalWithdrawn` = `totalSupplied`.
-    /// @dev A supply in a reallocation step will make the reallocation revert if the amount is greater than the amount
-    /// extracted (i.e. total withdrawn minus total supplied) in the previous steps.
+    /// @dev A supply in a reallocation step will make the reallocation revert if the amount is greater than the net
+    /// amount from previous steps (i.e. total withdrawn minus total supplied).
     function reallocate(MarketAllocation[] calldata allocations) external;
 }
 
