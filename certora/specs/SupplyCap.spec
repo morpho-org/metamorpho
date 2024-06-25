@@ -7,6 +7,7 @@ methods {
     function MORPHO() external returns(address) envfree;
     function config_(MetaMorphoHarness.Id) external returns(MetaMorphoHarness.MarketConfig) envfree;
 
+    function Morpho.idToMarketParams(MetaMorphoHarness.Id) external returns(address, address, address, address, uint256) envfree;
     function Morpho.lastUpdate(MetaMorphoHarness.Id) external returns(uint256) envfree;
     function Morpho.supplyShares(MetaMorphoHarness.Id, address) external returns(uint256) envfree;
     function Morpho.totalSupplyAssets(MetaMorphoHarness.Id) external returns(uint256) envfree;
@@ -34,6 +35,14 @@ rule respectSupplyCap(method f, env e, calldataarg args)
 
     address morpho = MORPHO();
     uint256 cap = config_(id).cap;
+
+    address loanToken; address collateralToken; address oracle; address irm; uint256 lltv;
+    (loanToken, collateralToken, oracle, irm, lltv) = Morpho.idToMarketParams(id);
+    require loanToken == marketParams.loanToken;
+    require collateralToken == marketParams.collateralToken;
+    require oracle == marketParams.oracle;
+    require irm == marketParams.irm;
+    require lltv == marketParams.lltv;
 
     require Morpho.lastUpdate(id) == e.block.timestamp;
 
