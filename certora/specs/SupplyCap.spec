@@ -21,6 +21,20 @@ methods {
     function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
 }
 
+hook Sload uint184 cap config[KEY MetaMorphoHarness.Id id].cap {
+    address loanToken; address collateralToken; address oracle; address irm; uint256 lltv;
+    (loanToken, collateralToken, oracle, irm, lltv) = Morpho.idToMarketParams(id);
+
+    MetaMorphoHarness.MarketParams marketParams;
+    require loanToken == marketParams.loanToken;
+    require collateralToken == marketParams.collateralToken;
+    require oracle == marketParams.oracle;
+    require irm == marketParams.irm;
+    require lltv == marketParams.lltv;
+
+    require Util.libId(marketParams) == id;
+}
+
 function supplyAssets(MetaMorphoHarness.Id id, address user) returns uint256 {
     uint256 shares = Morpho.supplyShares(id, user);
     uint256 totalSupplyAssets = Morpho.totalSupplyAssets(id);
@@ -35,14 +49,6 @@ rule respectSupplyCap(method f, env e, calldataarg args)
 
     address morpho = MORPHO();
     uint256 cap = config_(id).cap;
-
-    address loanToken; address collateralToken; address oracle; address irm; uint256 lltv;
-    (loanToken, collateralToken, oracle, irm, lltv) = Morpho.idToMarketParams(id);
-    require loanToken == marketParams.loanToken;
-    require collateralToken == marketParams.collateralToken;
-    require oracle == marketParams.oracle;
-    require irm == marketParams.irm;
-    require lltv == marketParams.lltv;
 
     require Morpho.lastUpdate(id) == e.block.timestamp;
 
