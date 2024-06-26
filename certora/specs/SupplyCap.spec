@@ -39,6 +39,7 @@ function supplyAssets(MetaMorphoHarness.Id id, address user) returns uint256 {
     uint256 shares = Morpho.supplyShares(id, user);
     uint256 totalSupplyAssets = Morpho.totalSupplyAssets(id);
     uint256 totalSupplyShares = Morpho.totalSupplyShares(id);
+    require shares <= totalSupplyShares;
     return Util.toAssetsDown(shares, totalSupplyAssets, totalSupplyShares);
 }
 
