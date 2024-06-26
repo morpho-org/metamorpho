@@ -28,6 +28,7 @@ jobs:
           - Reentrancy
           - Reverts
           - Roles
+          - SupplyCap
           - Timelock
           - Tokens
 
