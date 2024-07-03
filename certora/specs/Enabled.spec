@@ -25,7 +25,7 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
     updateWithdrawQueue(e, indexes);
 
     MetaMorphoHarness.Id id = withdrawQueue(i);
-    // Safe require because j is not otherwise constrained.
+    // Safe is required because j is not otherwise constrained.
     // The ghost variable deletedAt is useful to make sure that markets are not permuted and deleted at the same time in updateWithdrawQueue.
     require j == deletedAt(id);
 
