@@ -11,7 +11,7 @@ methods {
     function Util.withdrawnAssets(address, MetaMorphoHarness.Id, uint256, uint256) external returns (uint256) envfree;
 }
 
-// Check that fee cannot accrue to an unset fee recipient.
+// Check that the fee cannot accrue to an unset fee recipient.
 invariant noFeeToUnsetFeeRecipient()
     feeRecipient() == 0 => fee() == 0;
 
