@@ -19,10 +19,10 @@ function hasGuardianRole(address user) returns bool {
     return user == owner() || user == guardian();
 }
 
-// Check that any market with positive cap is created on Morpho Blue.
+// Check that any market with a positive cap is created on Morpho Blue.
 // The corresponding invariant is difficult to verify because it requires to check properties on MetaMorpho and on Blue at the same time:
 // - on MetaMorpho, that it holds when the cap is positive for the first time
-// - on Blue, that a created market always has positive last update
+// - on Blue, that a created market always has a positive last update
 function hasPositiveSupplyCapIsUpdated(MetaMorphoHarness.Id id) returns bool {
     return config_(id).cap > 0 => Morpho.lastUpdate(id) > 0;
 }

@@ -13,7 +13,7 @@ methods {
     function guardian() external returns(address) envfree;
     function isAllocator(address target) external returns(bool) envfree;
 
-    // Sumarize Morpho external calls, as they don't depend on the authorization system of MetaMorpho.
+    // Summarize Morpho external calls, as they don't depend on the authorization system of MetaMorpho.
     function _.idToMarketParams(MetaMorphoHarness.Id) external => CONSTANT;
     function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => CONSTANT;
