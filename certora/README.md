@@ -90,7 +90,7 @@ Note also that these properties are ensured to always hold, because the contract
 
 ### Consistent asset
 
-For deposit and withdraw, it is checked that markets have a the same loan token as the loan token of the vault.
+For deposit and withdraw, it is checked that markets have the same loan token as the loan token of the vault.
 We say that such market has a consistent asset.
 The following function defined in [`ConsistentState.spec`](specs/ConsistentState.spec) is verified to always return `true` and contributes to verifying the property above.
 
