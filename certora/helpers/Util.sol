@@ -45,4 +45,8 @@ contract Util {
     function libId(MarketParams memory marketParams) external pure returns (Id) {
         return marketParams.id();
     }
+
+    function toAssetsDown(uint256 shares, uint256 totalAssets, uint256 totalShares) external pure returns (uint256) {
+        return shares.toAssetsDown(totalAssets, totalShares);
+    }
 }
