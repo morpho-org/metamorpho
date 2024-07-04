@@ -182,6 +182,33 @@ If one of the allocators starts setting the withdraw queue and/or supply queue t
 
 ## Getting Started
 
+### Installation
+
+```bash
+npm install @morpho-org/morpho-blue-bundlers
+```
+
+```bash
+yarn add @morpho-org/morpho-blue-bundlers
+```
+
+### Usage
+
+```typescript
+import { MetaMorphoAction } from "@morpho-org/metamorpho";
+
+await metamorpho.connect(curator).multicall([
+  MetaMorphoAction.acceptCap(marketParams2),
+  MetaMorphoAction.setSupplyQueue([id1, id2, id3]),
+  MetaMorphoAction.reallocate([
+    { marketParams: marketParams1, assets: 600_000000000000000000n },
+    { marketParams: marketParams2, assets: 100_000000000000000000n },
+  ]),
+]);
+```
+
+## Development
+
 Install dependencies: `yarn`
 
 Run forge tests: `yarn test:forge`
