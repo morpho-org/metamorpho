@@ -182,20 +182,38 @@ If one of the allocators starts setting the withdraw queue and/or supply queue t
 
 ## Getting Started
 
-### Installation
+### Package installation
 
 ```bash
-npm install @morpho-org/morpho-blue-bundlers
+npm install @morpho-org/metamorpho
 ```
 
 ```bash
-yarn add @morpho-org/morpho-blue-bundlers
+yarn add @morpho-org/metamorpho
 ```
 
 ### Usage
 
+Bundle a supply cap raise and a reallocation to the market:
+
 ```typescript
 import { MetaMorphoAction } from "@morpho-org/metamorpho";
+
+const marketParams1 = {
+  collateralToken: "0x...",
+  loanToken: "0x...",
+  irm: "0x...",
+  oracle: "0x...",
+  lltv: 86_0000000000000000n,
+};
+
+const marketParams2 = {
+  collateralToken: "0x...",
+  loanToken: marketParams1.loanToken,
+  irm: "0x...",
+  oracle: "0x...",
+  lltv: 96_5000000000000000n,
+};
 
 await metamorpho.connect(curator).multicall([
   MetaMorphoAction.acceptCap(marketParams2),
