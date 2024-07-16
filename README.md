@@ -217,7 +217,6 @@ const marketParams2 = {
 
 await metamorpho.connect(curator).multicall([
   MetaMorphoAction.acceptCap(marketParams2),
-  MetaMorphoAction.setSupplyQueue([id1, id2, id3]),
   MetaMorphoAction.reallocate([
     { marketParams: marketParams1, assets: 600_000000000000000000n },
     { marketParams: marketParams2, assets: 100_000000000000000000n },
