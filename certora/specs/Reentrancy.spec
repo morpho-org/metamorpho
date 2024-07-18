@@ -46,7 +46,7 @@ hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, ui
     }
 }
 
-// Check that there are no untrusted external calls, ensuring notable reentrancy safety.
+// Check that there are no untrusted external calls, ensuring notably reentrancy safety.
 rule reentrancySafe(method f, env e, calldataarg data) {
     // Set up the initial state.
     require !ignoredCall && !hasCall;
