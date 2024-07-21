@@ -26,7 +26,7 @@ certoraRun certora/confs/Range.conf --rule timelockInRange
 # High-level description
 
 A MetaMorpho vault is an ERC4626 vault that defines a list of Morpho Blue markets to allocate its funds.
-See [`README.md`](../README.md) for a in depth description of MetaMorpho.
+See [`README.md`](../README.md) for an in depth description of MetaMorpho.
 
 ## ERC20 tokens and transfers
 
