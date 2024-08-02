@@ -7,7 +7,7 @@ runs:
     - uses: ./.github/actions/install
 
     - name: Restore forge compilation cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: |
           cache
