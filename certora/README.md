@@ -38,7 +38,7 @@ The verification is done for the most common ERC20 implementations, for which we
 
 - [ERC20Standard](dispatch/ERC20Standard.sol) which respects the standard and reverts in case of insufficient funds or in case of insufficient allowance.
 - [ERC20NoRevert](dispatch/ERC20NoRevert.sol) which respects the standard but does not revert (and returns false instead).
-- [ERC20USDT](dispatch/ERC20USDT.sol) which does not strictly respects the standard because it omits the return value of the `transfer` and `transferFrom` functions.
+- [ERC20USDT](dispatch/ERC20USDT.sol) which does not strictly respect the standard because it omits the return value of the `transfer` and `transferFrom` functions.
 
 ## Roles
 
@@ -120,7 +120,7 @@ function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
 }
 ```
 
-Thorough the code of MetaMorpho, this enabled flag is checked to be set to true, which is an efficient check that does not require to go through the whole withdraw queue.
+Throughout the code of MetaMorpho, this enabled flag is checked to be set to true, which is an efficient check that does not require to go through the whole withdraw queue.
 This check also ensures that such markets have some properties, since verifying those are necessary to be added to the withdraw queue.
 For example, markets added to the withdraw queue necessarily have a consistent asset.
 
@@ -143,11 +143,11 @@ rule newSupplyQueueEnsuresPositiveCap(env e, MetaMorphoHarness.Id[] newSupplyQue
 
 The previous rule ensures that when setting a new supply queue, each market has a positive supply cap.
 Markets can have a positive supply cap only if they are created on Morpho Blue.
-We can prove then that each market of the supply queue has been created on Morpho, because if a market has ben created it cannot be "destroyed" later.
+We can prove then that each market of the supply queue has been created on Morpho, because if a market has been created it cannot be "destroyed" later.
 
 ## Liveness
 
-The liveness properties ensures that some crucial actions cannot be blocked.
+The liveness properties ensure that some crucial actions cannot be blocked.
 It is notably useful to show that in case of an emergency, it is still possible to make salvaging transactions.
 The `canPauseSupply` rule in [`Liveness.spec`](specs/Liveness.spec) shows that it is always possible to prevent new deposits.
 This is done by first setting the supply queue as the empty queue and checking that it does not revert:
