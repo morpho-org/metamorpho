@@ -97,7 +97,7 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
     f(e_next, args);
 
     if (e_next.block.timestamp < nextTime)  {
-        // Check that cap cannot increase.
+        // Check that the cap cannot increase.
         assert config_(id).cap <= prevCap;
         // Increasing nextCapIncreaseTime with an interaction;
         assert nextCapIncreaseTime(e_next, id) >= nextCapIncreaseTimeBeforeInteraction;

@@ -6,7 +6,7 @@ MetaMorpho is a protocol for noncustodial risk management on top of [Morpho Blue
 It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
 It offers a seamless experience similar to Aave and Compound.
 
-Users of MetaMorpho are liquidity providers that want to earn from borrowing interest without having to actively manage the risk of their position.
+Users of MetaMorpho are liquidity providers who want to earn from borrowing interest without having to actively manage the risk of their position.
 The active management of the deposited assets is the responsibility of a set of different roles (owner, curator and allocators).
 These roles are primarily responsible for enabling and disabling markets on Morpho Blue and managing the allocation of users’ funds.
 
@@ -181,6 +181,50 @@ If one of the allocators starts setting the withdraw queue and/or supply queue t
 - 4. Set a new supply queue that is in line with the vault risk strategy with the `setSupplyQueue` function (this can also be done by the curator or the other allocators).
 
 ## Getting Started
+
+### Package installation
+
+```bash
+npm install @morpho-org/metamorpho
+```
+
+```bash
+yarn add @morpho-org/metamorpho
+```
+
+### Usage
+
+Bundle a supply cap raise and a reallocation to the market:
+
+```typescript
+import { MetaMorphoAction } from "@morpho-org/metamorpho";
+
+const marketParams1 = {
+  collateralToken: "0x...",
+  loanToken: "0x...",
+  irm: "0x...",
+  oracle: "0x...",
+  lltv: 86_0000000000000000n,
+};
+
+const marketParams2 = {
+  collateralToken: "0x...",
+  loanToken: marketParams1.loanToken,
+  irm: "0x...",
+  oracle: "0x...",
+  lltv: 96_5000000000000000n,
+};
+
+await metamorpho.connect(curator).multicall([
+  MetaMorphoAction.acceptCap(marketParams2),
+  MetaMorphoAction.reallocate([
+    { marketParams: marketParams1, assets: 600_000000000000000000n },
+    { marketParams: marketParams2, assets: 100_000000000000000000n },
+  ]),
+]);
+```
+
+## Development
 
 Install dependencies: `yarn`
 
