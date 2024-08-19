@@ -4,8 +4,8 @@ This folder contains the verification of MetaMorpho using CVL, Certora's Verific
 
 The code is compiled using 2 versions of solidity, which must be installed to run the verification as:
 
-- `solc` for solidity compiler version 0.8.21 which is used for compiling MetaMorpho
-- `solc8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
+- `solc-0.8.21` for solidity compiler version 0.8.21 which is used for compiling MetaMorpho
+- `solc-0.8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
 
 The verification is run on modified source files, which are made available by running:
 
