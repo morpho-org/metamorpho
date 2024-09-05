@@ -16,7 +16,7 @@ methods {
     function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
     function Util.toAssetsDown(uint256, uint256, uint256) external returns(uint256) envfree;
 
-    function _.expectedSupplyAssets(MetaMorphoHarness.Id id, address user) external => supplyAssets(id, user) expect(uint256);
+    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams marketParams, address user) external => supplyAssets(marketParams, user) expect(uint256);
 
     function _.balanceOf(address) external => DISPATCHER(true);
     function _.transfer(address, uint256) external => DISPATCHER(true);
@@ -37,7 +37,8 @@ hook Sload uint184 cap config[KEY MetaMorphoHarness.Id id].cap {
     require Util.libId(marketParams) == id;
 }
 
-function supplyAssets(MetaMorphoHarness.Id id, address user) returns uint256 {
+function supplyAssets(MetaMorphoHarness.MarketParams marketParams, address user) returns uint256 {
+    MetaMorphoHarness.Id id = Util.libId(marketParams);
     uint256 shares = Morpho.supplyShares(id, user);
     uint256 totalSupplyAssets = Morpho.totalSupplyAssets(id);
     uint256 totalSupplyShares = Morpho.totalSupplyShares(id);
@@ -55,10 +56,10 @@ rule respectSupplyCap(method f, env e, calldataarg args)
 
     require Morpho.lastUpdate(id) == e.block.timestamp;
 
-    require supplyAssets(id, currentContract) <= cap;
+    require supplyAssets(marketParams, currentContract) <= cap;
 
     f(e, args);
     require assert_uint256(config_(id).cap) == cap;
 
-    assert supplyAssets(id, currentContract) <= cap;
+    assert supplyAssets(marketParams, currentContract) <= cap;
 }
