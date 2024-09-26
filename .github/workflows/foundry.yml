@@ -44,12 +44,12 @@ jobs:
           FOUNDRY_PROFILE: test
 
       - name: Save forge compilation cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: |
             cache
             out
-          key: forge-${{ github.ref_name }}
+          key: forge-${{ github.ref_name }}-${{ github.run_id }}
 
   test:
     needs: build-no-ir
