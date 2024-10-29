@@ -5,10 +5,6 @@ using Util as Util;
 
 methods {
     function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
-    function Util.balanceOf(address, address) external returns(uint256) envfree;
-    function Util.totalSupply(address) external returns(uint256) envfree;
-    function Util.safeTransferFrom(address, address, address, uint256) external envfree;
-    function Util.withdrawnAssets(address, MetaMorphoHarness.Id, uint256, uint256) external returns (uint256) envfree;
 }
 
 // Check that the fee cannot accrue to an unset fee recipient.

@@ -290,7 +290,7 @@ rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
 rule skimRevertCondition(env e, address token) {
     address skimRecipient = skimRecipient();
 
-    require skimRecipient != currentContract => Util.balanceOf(token, skimRecipient) + Util.balanceOf(token, currentContract) <= to_mathint(Util.totalSupply(token));
+    require skimRecipient != currentContract => ERC20.balanceOf(token, skimRecipient) + ERC20.balanceOf(token, currentContract) <= to_mathint(ERC20.totalSupply(token));
 
     skim@withrevert(e, token);
 
