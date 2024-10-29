@@ -5,6 +5,7 @@ using Util as Util;
 
 methods {
     function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
+    function Util.libMulDivDown(uint256, uint256, uint256) external returns(uint256) envfree;
 }
 
 // Check that the fee cannot accrue to an unset fee recipient.

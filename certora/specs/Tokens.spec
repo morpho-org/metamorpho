@@ -51,7 +51,14 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     requireInvariant enabledHasConsistentAsset(marketParams);
 
     // Use effective withdrawn assets if shares are given as input.
-    uint256 withdrawn = ERC20.withdrawnAssets(MORPHO(), id, assets, shares);
+    uint256 withdrawn;
+    if (shares == 0) {
+        require withdrawn == assets;
+    } else {
+        uint256 totalAssets = Morpho.virtualTotalSupplyAssets(id);
+        uint256 totalShares = Morpho.virtualTotalSupplyShares(id);
+        require withdrawn == Util.libMulDivDown(shares, totalAssets, totalShares);
+    }
     // Summarize withdraw as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
     ERC20.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, withdrawn);
 
