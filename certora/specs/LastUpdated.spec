@@ -2,9 +2,16 @@
 import "ConsistentState.spec";
 
 using MorphoHarness as Morpho;
+using ERC20Helper as ERC20;
 
 methods {
+    function ERC20.balanceOf(address, address) external returns(uint256) envfree;
+    function ERC20.totalSupply(address) external returns(uint256) envfree;
+    function ERC20.safeTransferFrom(address, address, address, uint256) external envfree;
+
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
+    function Morpho.virtualTotalSupplyAssets(MorphoHarness.Id) external returns(uint256) envfree;
+    function Morpho.virtualTotalSupplyShares(MorphoHarness.Id) external returns(uint256) envfree;
 }
 
 function hasCuratorRole(address user) returns bool {

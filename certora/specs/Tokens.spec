@@ -35,7 +35,7 @@ function summarySupply(MetaMorphoHarness.MarketParams marketParams, uint256 asse
     requireInvariant enabledHasConsistentAsset(marketParams);
 
     // Summarize supply as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
-    Util.safeTransferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
+    ERC20.safeTransferFrom(marketParams.loanToken, currentContract, MORPHO(), assets);
 
     return (assets, shares);
 }
@@ -51,9 +51,16 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
     requireInvariant enabledHasConsistentAsset(marketParams);
 
     // Use effective withdrawn assets if shares are given as input.
-    uint256 withdrawn = Util.withdrawnAssets(MORPHO(), id, assets, shares);
+    uint256 withdrawn;
+    if (shares == 0) {
+        require withdrawn == assets;
+    } else {
+        uint256 totalAssets = Morpho.virtualTotalSupplyAssets(id);
+        uint256 totalShares = Morpho.virtualTotalSupplyShares(id);
+        require withdrawn == Util.libMulDivDown(shares, totalAssets, totalShares);
+    }
     // Summarize withdraw as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
-    Util.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, withdrawn);
+    ERC20.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, withdrawn);
 
     return (withdrawn, shares);
 }
@@ -69,13 +76,13 @@ rule depositTokenChange(env e, uint256 assets, address receiver) {
     require currentContract == 0x12;
     require e.msg.sender == 0x13;
 
-    uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
-    uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
-    uint256 balanceSenderBefore = Util.balanceOf(asset, e.msg.sender);
+    uint256 balanceMorphoBefore = ERC20.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoBefore = ERC20.balanceOf(asset, currentContract);
+    uint256 balanceSenderBefore = ERC20.balanceOf(asset, e.msg.sender);
     deposit(e, assets, receiver);
-    uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
-    uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
-    uint256 balanceSenderAfter = Util.balanceOf(asset, e.msg.sender);
+    uint256 balanceMorphoAfter = ERC20.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoAfter = ERC20.balanceOf(asset, currentContract);
+    uint256 balanceSenderAfter = ERC20.balanceOf(asset, e.msg.sender);
 
     assert assert_uint256(balanceMorphoAfter - balanceMorphoBefore) == assets;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
@@ -93,13 +100,13 @@ rule withdrawTokenChange(env e, uint256 assets, address receiver, address owner)
     require currentContract == 0x12;
     require receiver == 0x13;
 
-    uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
-    uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
-    uint256 balanceReceiverBefore = Util.balanceOf(asset, receiver);
+    uint256 balanceMorphoBefore = ERC20.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoBefore = ERC20.balanceOf(asset, currentContract);
+    uint256 balanceReceiverBefore = ERC20.balanceOf(asset, receiver);
     withdraw(e, assets, receiver, owner);
-    uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
-    uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
-    uint256 balanceReceiverAfter = Util.balanceOf(asset, receiver);
+    uint256 balanceMorphoAfter = ERC20.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoAfter = ERC20.balanceOf(asset, currentContract);
+    uint256 balanceReceiverAfter = ERC20.balanceOf(asset, receiver);
 
     assert assert_uint256(balanceMorphoBefore - balanceMorphoAfter) == assets;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
@@ -116,13 +123,13 @@ rule reallocateTokenChange(env e, MetaMorphoHarness.MarketAllocation[] allocatio
     require asset == 0x11;
     require currentContract == 0x12;
 
-    uint256 balanceMorphoBefore = Util.balanceOf(asset, morpho);
-    uint256 balanceMetaMorphoBefore = Util.balanceOf(asset, currentContract);
-    uint256 balanceSenderBefore = Util.balanceOf(asset, e.msg.sender);
+    uint256 balanceMorphoBefore = ERC20.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoBefore = ERC20.balanceOf(asset, currentContract);
+    uint256 balanceSenderBefore = ERC20.balanceOf(asset, e.msg.sender);
     reallocate(e, allocations);
-    uint256 balanceMorphoAfter = Util.balanceOf(asset, morpho);
-    uint256 balanceMetaMorphoAfter = Util.balanceOf(asset, currentContract);
-    uint256 balanceSenderAfter = Util.balanceOf(asset, e.msg.sender);
+    uint256 balanceMorphoAfter = ERC20.balanceOf(asset, morpho);
+    uint256 balanceMetaMorphoAfter = ERC20.balanceOf(asset, currentContract);
+    uint256 balanceSenderAfter = ERC20.balanceOf(asset, e.msg.sender);
 
     assert balanceMorphoAfter == balanceMorphoAfter;
     assert balanceMetaMorphoAfter == balanceMetaMorphoBefore;
