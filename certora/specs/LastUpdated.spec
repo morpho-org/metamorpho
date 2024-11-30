@@ -10,6 +10,8 @@ methods {
     function ERC20.safeTransferFrom(address, address, address, uint256) external envfree;
 
     function Morpho.lastUpdate(MorphoHarness.Id) external returns(uint256) envfree;
+    function Morpho.virtualTotalSupplyAssets(MorphoHarness.Id) external returns(uint256) envfree;
+    function Morpho.virtualTotalSupplyShares(MorphoHarness.Id) external returns(uint256) envfree;
 }
 
 function hasCuratorRole(address user) returns bool {
