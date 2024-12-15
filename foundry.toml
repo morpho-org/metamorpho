@@ -3,6 +3,7 @@ src = "src"
 test = "test/forge"
 libs = ["lib"]
 evm_version = "paris"
+via-ir = true
 fs_permissions = [
     { access = "read", path = "./config/"},
     { access = "read", path = "./out/"}
@@ -14,13 +15,6 @@ tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 
 [profile.default.fmt]
 wrap_comments = true
-
-
-[profile.build]
-via-ir = true
-test = "/dev/null"
-script = "/dev/null"
-
 
 [profile.test]
 via-ir = false
