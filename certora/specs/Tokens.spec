@@ -46,7 +46,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
 
     MetaMorphoHarness.Id id = Util.libId(marketParams);
 
-    // Safe require because it is verifed in MarketInteractions.
+    // Safe require because it is verified in MarketInteractions.
     require config_(id).enabled;
     requireInvariant enabledHasConsistentAsset(marketParams);
 
