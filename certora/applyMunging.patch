@@ -1,6 +1,6 @@
 diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
---- interfaces/IMetaMorpho.sol	2024-03-20 15:13:25.818251404 +0100
-+++ interfaces/IMetaMorpho.sol	2024-03-22 11:22:35.598510490 +0100
+--- interfaces/IMetaMorpho.sol
++++ interfaces/IMetaMorpho.sol
 @@ -1,9 +1,9 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity >=0.5.0;
@@ -24,8 +24,8 @@ diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
  
      /// @notice The address of the curator.
 diff -ruN libraries/ErrorsLib.sol libraries/ErrorsLib.sol
---- libraries/ErrorsLib.sol	2024-03-20 15:13:25.802251714 +0100
-+++ libraries/ErrorsLib.sol	2024-03-22 11:22:35.598510490 +0100
+--- libraries/ErrorsLib.sol
++++ libraries/ErrorsLib.sol
 @@ -1,7 +1,7 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity ^0.8.0;
@@ -36,8 +36,8 @@ diff -ruN libraries/ErrorsLib.sol libraries/ErrorsLib.sol
  /// @title ErrorsLib
  /// @author Morpho Labs
 diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
---- libraries/EventsLib.sol	2024-03-20 15:13:25.802251714 +0100
-+++ libraries/EventsLib.sol	2024-03-22 11:22:35.598510490 +0100
+--- libraries/EventsLib.sol
++++ libraries/EventsLib.sol
 @@ -1,7 +1,7 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  pragma solidity ^0.8.0;
@@ -48,8 +48,8 @@ diff -ruN libraries/EventsLib.sol libraries/EventsLib.sol
  import {PendingAddress} from "./PendingLib.sol";
  
 diff -ruN MetaMorpho.sol MetaMorpho.sol
---- MetaMorpho.sol	2024-03-20 15:13:25.862250553 +0100
-+++ MetaMorpho.sol	2024-03-22 14:27:33.670423544 +0100
+--- MetaMorpho.sol
++++ MetaMorpho.sol
 @@ -9,24 +9,22 @@
      IMetaMorphoBase,
      IMetaMorphoStaticTyping
