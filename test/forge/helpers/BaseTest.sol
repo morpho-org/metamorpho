@@ -130,7 +130,7 @@ contract BaseTest is Test {
     }
 
     /// @dev Bounds the fuzzing input to a realistic number of blocks.
-    function _boundBlocks(uint256 blocks) internal view returns (uint256) {
+    function _boundBlocks(uint256 blocks) internal pure returns (uint256) {
         return bound(blocks, 2, type(uint24).max);
     }
 
