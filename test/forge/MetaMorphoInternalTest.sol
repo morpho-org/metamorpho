@@ -14,6 +14,7 @@ contract MetaMorphoInternalTest is InternalTest {
     using SharesMathLib for uint256;
     using UtilsLib for uint256;
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function testSetCapMaxQueueLengthExcedeed() public {
         for (uint256 i; i < NB_MARKETS - 1; ++i) {
             _setCap(allMarkets[i], allMarkets[i].id(), CAP);
