@@ -37,7 +37,7 @@ contract PermitTest is IntegrationTest {
         assertEq(vault.nonces(owner), 1);
     }
 
-    function testRevertExpiredPermit(uint256 deadline) public {
+    function testExpiredPermit(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit =
@@ -52,7 +52,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertInvalidSigner(uint256 deadline) public {
+    function testInvalidSigner(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit =
@@ -65,7 +65,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertInvalidNonce(uint256 deadline) public {
+    function testInvalidNonce(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit = Permit({
@@ -83,7 +83,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertSignatureReplay(uint256 deadline) public {
+    function testSignatureReplay(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: deadline});
