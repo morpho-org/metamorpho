@@ -4,6 +4,8 @@ test = "test/forge"
 libs = ["lib"]
 evm_version = "paris"
 via-ir = true
+optimizer = true
+optimizer_runs = 200
 fs_permissions = [
     { access = "read", path = "./config/" },
     { access = "read", path = "./out/" },
@@ -12,18 +14,6 @@ fs_permissions = [
 [profile.default.rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
 tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
-
-[[profile.default.compilation_restrictions]]
-paths = "src/mocks/MorphoImport.sol"
-optimizer = true
-optimizer_runs = 999999
-evm_version = "paris"
-
-[[profile.default.additional_compiler_profiles]]
-name = "via-ir-999999-paris"
-optimizer = true
-optimizer_runs = 999999
-evm_version = "paris"
 
 [profile.default.fmt]
 wrap_comments = true
