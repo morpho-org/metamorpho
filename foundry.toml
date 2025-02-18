@@ -4,9 +4,12 @@ test = "test/forge"
 libs = ["lib"]
 evm_version = "paris"
 via-ir = true
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
 fs_permissions = [
-    { access = "read", path = "./config/"},
-    { access = "read", path = "./out/"}
+    { access = "read", path = "./config/" },
+    { access = "read", path = "./out/" },
 ]
 
 [profile.default.rpc_endpoints]

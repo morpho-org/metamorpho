@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./helpers/SigUtils.sol";
 
 import {ERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {IERC20Errors} from "../../lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol";
 import "./helpers/IntegrationTest.sol";
 
 contract PermitTest is IntegrationTest {
@@ -36,7 +37,7 @@ contract PermitTest is IntegrationTest {
         assertEq(vault.nonces(owner), 1);
     }
 
-    function testRevertExpiredPermit(uint256 deadline) public {
+    function testExpiredPermit(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit =
@@ -51,7 +52,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertInvalidSigner(uint256 deadline) public {
+    function testInvalidSigner(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit =
@@ -64,7 +65,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertInvalidNonce(uint256 deadline) public {
+    function testInvalidNonce(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit = Permit({
@@ -82,7 +83,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
     }
 
-    function testRevertSignatureReplay(uint256 deadline) public {
+    function testSignatureReplay(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit = Permit({owner: owner, spender: spender, value: 1e18, nonce: 0, deadline: deadline});
@@ -133,7 +134,7 @@ contract PermitTest is IntegrationTest {
         assertEq(vault.allowance(owner, spender), type(uint256).max);
     }
 
-    function testFailInvalidAllowance(uint256 deadline) public {
+    function testInvalidAllowance(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit = Permit({
@@ -150,10 +151,11 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
         vm.prank(spender);
+        vm.expectPartialRevert(IERC20Errors.ERC20InsufficientAllowance.selector);
         vault.transferFrom(owner, spender, 1e18); // attempt to transfer 1 vault
     }
 
-    function testFailInvalidBalance(uint256 deadline) public {
+    function testInvalidBalance(uint256 deadline) public {
         deadline = bound(deadline, block.timestamp, type(uint48).max);
 
         Permit memory permit = Permit({
@@ -170,6 +172,7 @@ contract PermitTest is IntegrationTest {
         vault.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
         vm.prank(spender);
+        vm.expectPartialRevert(IERC20Errors.ERC20InsufficientBalance.selector);
         vault.transferFrom(owner, spender, 2e18); // attempt to transfer 2 tokens (owner only owns 1)
     }
 }

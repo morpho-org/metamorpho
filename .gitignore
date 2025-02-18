@@ -27,7 +27,7 @@ node_modules/
 # Certora
 .certora**
 emv-*-certora*
-certora/munged/
+munged/
 
 # Hardhat
 /types
