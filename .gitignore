@@ -25,9 +25,7 @@ broadcast/
 node_modules/
 
 # Certora
-.certora**
-emv-*-certora*
-munged/
+.certora_internal
 
 # Hardhat
 /types
