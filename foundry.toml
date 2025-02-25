@@ -4,10 +4,9 @@ test = "test/forge"
 libs = ["lib"]
 evm_version = "paris"
 via-ir = true
-fs_permissions = [
-    { access = "read", path = "./config/"},
-    { access = "read", path = "./out/"}
-]
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
 
 [profile.default.rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"

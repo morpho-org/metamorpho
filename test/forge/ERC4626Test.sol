@@ -391,7 +391,7 @@ contract ERC4626Test is IntegrationTest, IMorphoFlashLoanCallback {
         assertEq(vault.maxDeposit(SUPPLIER), 0);
     }
 
-    function onMorphoFlashLoan(uint256, bytes memory) external {
+    function onMorphoFlashLoan(uint256, bytes memory) external view {
         assertEq(vault.maxWithdraw(ONBEHALF), 0);
     }
 }
