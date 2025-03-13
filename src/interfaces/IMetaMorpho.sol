@@ -4,7 +4,7 @@ pragma solidity >=0.5.0;
 import {IMorpho, Id, MarketParams} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 import {IERC4626} from "../../lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 import {IERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol";
-
+import {IKeyringChecker} from "../../src/interfaces/IKeyringChecker.sol";
 import {MarketConfig, PendingUint192, PendingAddress} from "../libraries/PendingLib.sol";
 
 struct MarketAllocation {
@@ -74,6 +74,12 @@ interface IMetaMorphoBase {
     /// This difference will decrease the fee accrued until one of the functions updating `lastTotalAssets` is
     /// triggered (deposit/mint/withdraw/redeem/setFee/setFeeRecipient).
     function lastTotalAssets() external view returns (uint256);
+
+    /// @notice The keyring checker address. Address(0) if no keyring checker is set.
+    function keyringChecker() external view returns (IKeyringChecker);
+
+    /// @notice The keyring policy ID used to check if a user is whitelisted.
+    function keyringPolicyId() external view returns (uint256);
 
     /// @notice Submits a `newTimelock`.
     /// @dev Warning: Reverts if a timelock is already pending. Revoke the pending timelock to overwrite it.
@@ -173,6 +179,9 @@ interface IMetaMorphoBase {
     /// @dev A supply in a reallocation step will make the reallocation revert if the amount is greater than the net
     /// amount from previous steps (i.e. total withdrawn minus total supplied).
     function reallocate(MarketAllocation[] calldata allocations) external;
+
+    /// @notice Sets the keyring checker and policy ID.
+    function setKeyringConfig(IKeyringChecker newKeyringChecker, uint256 newKeyringPolicyId) external;
 }
 
 /// @dev This interface is inherited by MetaMorpho so that function signatures are checked by the compiler.

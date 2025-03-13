@@ -69,6 +69,9 @@ library ErrorsLib {
     /// @notice Thrown when the requested liquidity cannot be withdrawn from Morpho.
     error NotEnoughLiquidity();
 
+    /// @notice Thrown when the user is not whitelisted by the keyring checker.
+    error NotKeyringWhitelisted();
+
     /// @notice Thrown when submitting a cap for a market which does not exist.
     error MarketNotCreated();
 

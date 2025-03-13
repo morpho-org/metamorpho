@@ -25,9 +25,9 @@ contract MetaMorphoSetKeyringConfigTest is InternalTest {
         uint256 policyId = 123;
 
         vm.expectEmit(true, true, false, true);
-        emit EventsLib.SetKeyringConfig(address(mockKeyringChecker), policyId);
+        emit EventsLib.SetKeyringConfig(mockKeyringChecker, policyId);
 
-        this.setKeyringConfig(address(mockKeyringChecker), policyId);
+        this.setKeyringConfig(mockKeyringChecker, policyId);
 
         vm.stopPrank();
     }
@@ -37,7 +37,7 @@ contract MetaMorphoSetKeyringConfigTest is InternalTest {
         vm.startPrank(nonOwner);
 
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", nonOwner));
-        this.setKeyringConfig(address(mockKeyringChecker), 123);
+        this.setKeyringConfig(mockKeyringChecker, 123);
 
         vm.stopPrank();
     }
@@ -48,9 +48,9 @@ contract MetaMorphoSetKeyringConfigTest is InternalTest {
         uint256 policyId = 123;
 
         vm.expectEmit(true, true, false, true);
-        emit EventsLib.SetKeyringConfig(address(0), policyId);
+        emit EventsLib.SetKeyringConfig(IKeyringChecker(address(0)), policyId);
 
-        this.setKeyringConfig(address(0), policyId);
+        this.setKeyringConfig(IKeyringChecker(address(0)), policyId);
 
         vm.stopPrank();
     }
@@ -60,16 +60,16 @@ contract MetaMorphoSetKeyringConfigTest is InternalTest {
 
         // First configuration
         uint256 firstPolicyId = 123;
-        this.setKeyringConfig(address(mockKeyringChecker), firstPolicyId);
+        this.setKeyringConfig(mockKeyringChecker, firstPolicyId);
 
         // Second configuration
         uint256 secondPolicyId = 456;
         MockKeyringChecker newMockChecker = new MockKeyringChecker();
 
         vm.expectEmit(true, true, false, true);
-        emit EventsLib.SetKeyringConfig(address(newMockChecker), secondPolicyId);
+        emit EventsLib.SetKeyringConfig(newMockChecker, secondPolicyId);
 
-        this.setKeyringConfig(address(newMockChecker), secondPolicyId);
+        this.setKeyringConfig(newMockChecker, secondPolicyId);
 
         vm.stopPrank();
     }

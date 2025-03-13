@@ -23,6 +23,7 @@ import {MorphoLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoLib.so
 import {MarketParamsLib} from "../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
 import {IERC20Metadata} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {MorphoBalancesLib} from "../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
+import {IKeyringChecker} from "./interfaces/IKeyringChecker.sol";
 
 import {Multicall} from "../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
 import {Ownable2Step, Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
@@ -107,6 +108,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     uint256 public lastTotalAssets;
 
+    /// @inheritdoc IMetaMorphoBase
+    IKeyringChecker public keyringChecker;
+
+    /// @inheritdoc IMetaMorphoBase
+    uint256 public keyringPolicyId;
+
     /* CONSTRUCTOR */
 
     /// @dev Initializes the contract.
@@ -166,6 +173,14 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     modifier onlyCuratorOrGuardianRole() {
         if (_msgSender() != guardian && _msgSender() != curator && _msgSender() != owner()) {
             revert ErrorsLib.NotCuratorNorGuardianRole();
+        }
+
+        _;
+    }
+
+    modifier onlyKeyringWhitelisted(address caller) {
+        if (address(keyringChecker) != address(0) && !keyringChecker.checkCredential(keyringPolicyId, caller)) {
+            revert ErrorsLib.NotKeyringWhitelisted();
         }
 
         _;
@@ -267,6 +282,13 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
 
             emit EventsLib.SubmitGuardian(newGuardian);
         }
+    }
+
+    function setKeyringConfig(IKeyringChecker newKeyringChecker, uint256 newKeyringPolicyId) external onlyOwner {
+        keyringChecker = IKeyringChecker(newKeyringChecker);
+        keyringPolicyId = newKeyringPolicyId;
+
+        emit EventsLib.SetKeyringConfig(newKeyringChecker, newKeyringPolicyId);
     }
 
     /* ONLY CURATOR FUNCTIONS */
@@ -528,7 +550,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
+    function deposit(uint256 assets, address receiver)
+        public
+        override
+        onlyKeyringWhitelisted(receiver)
+        returns (uint256 shares)
+    {
         uint256 newTotalAssets = _accrueFee();
 
         // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context.
@@ -541,7 +568,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
+    function mint(uint256 shares, address receiver)
+        public
+        override
+        onlyKeyringWhitelisted(receiver)
+        returns (uint256 assets)
+    {
         uint256 newTotalAssets = _accrueFee();
 
         // Update `lastTotalAssets` to avoid an inconsistent state in a re-entrant context.
@@ -554,7 +586,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
+    function withdraw(uint256 assets, address receiver, address owner)
+        public
+        override
+        onlyKeyringWhitelisted(owner)
+        returns (uint256 shares)
+    {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxWithdraw` and optimistically withdraw assets.
@@ -568,7 +605,12 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
+    function redeem(uint256 shares, address receiver, address owner)
+        public
+        override
+        onlyKeyringWhitelisted(owner)
+        returns (uint256 assets)
+    {
         uint256 newTotalAssets = _accrueFee();
 
         // Do not call expensive `maxRedeem` and optimistically redeem shares.

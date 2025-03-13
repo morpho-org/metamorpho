@@ -49,7 +49,7 @@ contract MetaMorphoKeyringWhitelist is IntegrationTest {
 
         // Configure keyring on vault
         vm.prank(OWNER);
-        vault.setKeyringConfig(address(keyringChecker), POLICY_ID);
+        vault.setKeyringConfig(keyringChecker, POLICY_ID);
 
         // Set supply queue (following MarketTest pattern)
         Id[] memory supplyQueue = new Id[](1);

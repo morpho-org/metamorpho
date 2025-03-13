@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Id} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
-
+import {IKeyringChecker} from "./../interfaces/IKeyringChecker.sol";
 import {PendingAddress} from "./PendingLib.sol";
 
 /// @title EventsLib
@@ -24,6 +24,9 @@ library EventsLib {
 
     /// @notice Emitted when a new `newFeeRecipient` is set.
     event SetFeeRecipient(address indexed newFeeRecipient);
+
+    /// @notice Emitted when a new keyring checker and policy ID are set.
+    event SetKeyringConfig(IKeyringChecker indexed newKeyringChecker, uint256 newKeyringPolicyId);
 
     /// @notice Emitted when a pending `newGuardian` is submitted.
     event SubmitGuardian(address indexed newGuardian);
