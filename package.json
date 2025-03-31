@@ -1,13 +1,4 @@
 {
-  "name": "@morpho-org/metamorpho",
-  "description": "MetaMorpho",
-  "license": "GPL-2.0-or-later",
-  "version": "1.1.0",
-  "main": "lib/index.js",
-  "bin": "lib/cli.js",
-  "files": [
-    "lib/**/*"
-  ],
   "scripts": {
     "prepare": "husky install && forge install",
     "build:pkg": "yarn build:hardhat --force && tsc --build ./tsconfig.build.json",
@@ -26,19 +17,6 @@
     "lint:forge:fix": "forge fmt",
     "clean": "hardhat clean && forge clean"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/morpho-org/metamorpho.git"
-  },
-  "author": {
-    "name": "Morpho Labs",
-    "email": "security@morpho.org",
-    "url": "https://github.com/morpho-labs"
-  },
-  "bugs": {
-    "url": "https://github.com/morpho-org/metamorpho/issues"
-  },
-  "homepage": "https://github.com/morpho-org/metamorpho#readme",
   "dependencies": {
     "ethers": "^6.9.2",
     "evm-maths": "^6.0.0",

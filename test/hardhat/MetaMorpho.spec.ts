@@ -1,7 +1,6 @@
 import { AbiCoder, MaxUint256, ZeroAddress, ZeroHash, keccak256, toBigInt } from "ethers";
 import hre from "hardhat";
 import _range from "lodash/range";
-import { MetaMorphoAction } from "pkg";
 import { ERC20Mock, OracleMock, MetaMorpho, IMorpho, MetaMorphoFactory, MetaMorpho__factory, IIrm } from "types";
 import { MarketParamsStruct } from "types/src/MetaMorpho";
 
@@ -208,21 +207,16 @@ describe("MetaMorpho", () => {
       await collateral.connect(user).approve(morphoAddress, MaxUint256);
     }
 
-    await metaMorpho.multicall([
-      MetaMorphoAction.setCurator(curator.address),
-      MetaMorphoAction.setIsAllocator(allocator.address, true),
-      MetaMorphoAction.setFeeRecipient(admin.address),
-      MetaMorphoAction.setFee(BigInt.WAD / 10n),
-    ]);
+    await metaMorpho.setCurator(curator.address);
+    await metaMorpho.setIsAllocator(allocator.address, true);
+    await metaMorpho.setFeeRecipient(admin.address);
+    await metaMorpho.setFee(BigInt.WAD / 10n);
 
     supplyCap = (BigInt.WAD * 50n * toBigInt(suppliers.length * 2)) / toBigInt(nbMarkets);
 
-    const supplyCapData: string[] = [];
-    for (const marketParams of allMarketParams) supplyCapData.push(MetaMorphoAction.submitCap(marketParams, supplyCap));
+    for (const marketParams of allMarketParams) await metaMorpho.connect(curator).submitCap(marketParams, supplyCap);
 
-    supplyCapData.push(MetaMorphoAction.submitCap(idleParams, 2n ** 184n - 1n));
-
-    await metaMorpho.connect(curator).multicall(supplyCapData);
+    await metaMorpho.connect(curator).submitCap(idleParams, 2n ** 184n - 1n);
 
     await forwardTimestamp(timelock);
 
@@ -282,19 +276,18 @@ describe("MetaMorpho", () => {
 
       await randomForwardTimestamp();
 
-      const allocation = await Promise.all(
-        allMarketParams.map(async (marketParams) => {
-          const market = await expectedMarket(marketParams);
-          const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
+      const allocation = [];
+      for (let marketParams of allMarketParams) {
+        const market = await expectedMarket(marketParams);
+        const position = await morpho.position(identifier(marketParams), metaMorphoAddress);
 
-          return {
-            marketParams,
-            market,
-            liquidity: market.totalSupplyAssets - market.totalBorrowAssets,
-            supplyAssets: position.supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
-          };
-        }),
-      );
+        allocation.push({
+          marketParams,
+          market,
+          liquidity: market.totalSupplyAssets - market.totalBorrowAssets,
+          supplyAssets: position.supplyShares.toAssetsDown(market.totalSupplyAssets, market.totalSupplyShares),
+        });
+      }
 
       const withdrawnAllocation = allocation.map(({ marketParams, liquidity, supplyAssets }) => {
         // Always withdraw all, up to the liquidity.
