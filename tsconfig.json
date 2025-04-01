@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "declaration": true
   },
-  "include": ["pkg", "test/hardhat", "types"],
+  "include": ["test/hardhat", "types"],
   "files": ["hardhat.config.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
