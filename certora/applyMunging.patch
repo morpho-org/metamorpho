@@ -122,14 +122,12 @@ diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
  import {IERC4626} from "../../lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
  import {IERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol";
  
-@@ -30,8 +30,8 @@
+@@ -30,7 +30,7 @@
  /// @dev Consider using the IMetaMorpho interface instead of this one.
  interface IMetaMorphoBase {
      /// @notice The address of the Morpho contract.
 -    function MORPHO() external view returns (IMorpho);
--
 +    function MORPHO() external view returns (IMorphoHarness);
-+    
+ 
      /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
      /// @dev Calculated to be max(0, 18 - underlyingDecimals).
-     /// @dev When equals to zero (<=> token decimals = 18), the protection against the donation front-running attack on
