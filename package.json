@@ -1,7 +1,6 @@
 {
   "scripts": {
     "prepare": "husky install && forge install",
-    "build:pkg": "yarn build:hardhat --force && tsc --build ./tsconfig.build.json",
     "build:forge": "forge build",
     "build:hardhat": "hardhat compile",
     "build:blue": "yarn --cwd lib/morpho-blue/ build:forge",
