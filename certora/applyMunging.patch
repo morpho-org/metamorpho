@@ -1,24 +1,3 @@
-diff -ruN interfaces/IMetaMorpho.sol interfaces/IMetaMorpho.sol
---- interfaces/IMetaMorpho.sol
-+++ interfaces/IMetaMorpho.sol
-@@ -1,7 +1,7 @@
- // SPDX-License-Identifier: GPL-2.0-or-later
- pragma solidity >=0.5.0;
- 
--import {IMorpho, Id, MarketParams} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
-+import {IMorphoHarness, Id, MarketParams} from "../../certora/helpers/IMorphoHarness.sol";
- import {IERC4626} from "../../lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
- import {IERC20Permit} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol";
- 
-@@ -30,7 +30,7 @@
- /// @dev Consider using the IMetaMorpho interface instead of this one.
- interface IMetaMorphoBase {
-     /// @notice The address of the Morpho contract.
--    function MORPHO() external view returns (IMorpho);
-+    function MORPHO() external view returns (IMorphoHarness);
-     function DECIMALS_OFFSET() external view returns (uint8);
- 
-     /// @notice The address of the curator.
 diff -ruN MetaMorpho.sol MetaMorpho.sol
 --- MetaMorpho.sol
 +++ MetaMorpho.sol
@@ -111,7 +90,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
                  delete config[id];
              }
          }
-@@ -743,6 +759,9 @@
+@@ -744,6 +760,9 @@
  
          if (supplyCap > 0) {
              if (!marketConfig.enabled) {
@@ -121,7 +100,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
                  withdrawQueue.push(id);
  
                  if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
-@@ -802,6 +821,9 @@
+@@ -803,6 +822,9 @@
      /// @dev Withdraws `assets` from Morpho.
      function _withdrawMorpho(uint256 assets) internal {
          for (uint256 i; i < withdrawQueue.length; ++i) {
