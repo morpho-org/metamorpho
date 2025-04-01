@@ -58,9 +58,7 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @inheritdoc IMetaMorphoBase
     IMorpho public immutable MORPHO;
 
-    /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
-    /// @dev Calculated to be max(0, 18 - underlyingDecimals) at construction, so the initial conversion rate maximizes
-    /// precision between shares and assets.
+    /// @inheritdoc IMetaMorphoBase
     uint8 public immutable DECIMALS_OFFSET;
 
     /* STORAGE */

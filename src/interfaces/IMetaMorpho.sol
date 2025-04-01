@@ -32,13 +32,12 @@ interface IMetaMorphoBase {
     /// @notice The address of the Morpho contract.
     function MORPHO() external view returns (IMorpho);
 
-    /// @notice The decimal offset. See
-    /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC4626.sol#L31.
-    /// @dev The decimal offset is max(0, 18 - token decimals). When equals to zero (<=> token decimals = 18), the
-    /// protection against the donation front-running attack on empty vault is low (see
-    /// https://docs.openzeppelin.com/contracts/4.x/erc4626#inflation-attack). To protect against this attack, vault
-    /// deployers should make an initial deposit of a non-trivial amount in the vault or depositors should check that
-    /// the share price does not exceed a certain limit.
+    /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
+    /// @dev Calculated to be max(0, 18 - underlyingDecimals).
+    /// @dev When equals to zero (<=> token decimals = 18), the protection against the donation front-running attack on
+    /// empty vault is low (see https://docs.openzeppelin.com/contracts/4.x/erc4626#inflation-attack). To protect
+    /// against this attack, vault deployers should make an initial deposit of a non-trivial amount in the vault or
+    /// depositors should check that the share price does not exceed a certain limit.
     function DECIMALS_OFFSET() external view returns (uint8);
 
     /// @notice The address of the curator.
