@@ -38,9 +38,9 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
 -    IMorpho public immutable MORPHO;
 +    IMorphoHarness public immutable MORPHO;
  
-     /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
-     /// @dev Calculated to be max(0, 18 - underlyingDecimals) at construction, so the initial conversion rate maximizes
-@@ -107,6 +103,19 @@
+     /// @inheritdoc IMetaMorphoBase
+     uint8 public immutable DECIMALS_OFFSET;
+@@ -105,6 +101,19 @@
      /// @inheritdoc IMetaMorphoBase
      uint256 public lastTotalAssets;
  
@@ -60,7 +60,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
      /* CONSTRUCTOR */
  
      /// @dev Initializes the contract.
-@@ -126,7 +135,7 @@
+@@ -124,7 +133,7 @@
      ) ERC4626(IERC20(_asset)) ERC20Permit(_name) ERC20(_name, _symbol) Ownable(owner) {
          if (morpho == address(0)) revert ErrorsLib.ZeroAddress();
  
@@ -69,7 +69,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
          DECIMALS_OFFSET = uint8(uint256(18).zeroFloorSub(IERC20Metadata(_asset).decimals()));
  
          _checkTimelockBounds(initialTimelock);
-@@ -338,6 +347,9 @@
+@@ -336,6 +345,9 @@
              seen[prevIndex] = true;
  
              newWithdrawQueue[i] = id;
@@ -79,7 +79,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
          }
  
          for (uint256 i; i < currLength; ++i) {
-@@ -355,6 +367,10 @@
+@@ -353,6 +365,10 @@
                      }
                  }
  
@@ -90,7 +90,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
                  delete config[id];
              }
          }
-@@ -744,6 +760,9 @@
+@@ -742,6 +758,9 @@
  
          if (supplyCap > 0) {
              if (!marketConfig.enabled) {
@@ -100,7 +100,7 @@ diff -ruN MetaMorpho.sol MetaMorpho.sol
                  withdrawQueue.push(id);
  
                  if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
-@@ -803,6 +822,9 @@
+@@ -801,6 +820,9 @@
      /// @dev Withdraws `assets` from Morpho.
      function _withdrawMorpho(uint256 assets) internal {
          for (uint256 i; i < withdrawQueue.length; ++i) {
