@@ -526,7 +526,9 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     }
 
     /// @inheritdoc IERC4626
-    /// @dev See https://github.com/morpho-org/metamorpho/blob/main/src/interfaces/IMetaMorpho.sol#L37.
+    /// @notice For tokens with 18 decimals, the protection against the inflation front-running attack is low. To
+    /// protect against this attack, vault deployers should make an initial deposit of a non-trivial amount in the vault
+    /// or depositors should check that the share price does not exceed a certain limit.
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         uint256 newTotalAssets = _accrueFee();
 
