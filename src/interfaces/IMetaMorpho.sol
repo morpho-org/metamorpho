@@ -31,6 +31,13 @@ interface IOwnable {
 interface IMetaMorphoBase {
     /// @notice The address of the Morpho contract.
     function MORPHO() external view returns (IMorpho);
+
+    /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
+    /// @dev Calculated to be max(0, 18 - underlyingDecimals).
+    /// @dev When equal to zero (<=> token decimals >= 18), the protection against the inflation front-running attack on
+    /// empty vault is low (see https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack). To protect
+    /// against this attack, vault deployers should make an initial deposit of a non-trivial amount in the vault or
+    /// depositors should check that the share price does not exceed a certain limit.
     function DECIMALS_OFFSET() external view returns (uint8);
 
     /// @notice The address of the curator.
