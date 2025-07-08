@@ -26,6 +26,7 @@ node_modules/
 
 # Certora
 .certora_internal
+munged/
 
 # Hardhat
 /types
