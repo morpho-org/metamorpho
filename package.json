@@ -6,7 +6,7 @@
     "build:blue": "yarn --cwd lib/morpho-blue/ build:forge",
     "build:irm": "yarn --cwd lib/morpho-blue-irm/ build:forge",
     "typecheck": "tsc --noEmit",
-    "test:forge": "yarn build:blue && FOUNDRY_PROFILE=test forge test",
+    "test:forge": "yarn build:blue && FOUNDRY_PROFILE=no_via_ir forge test",
     "test:hardhat": "yarn build:blue && yarn build:irm && hardhat test",
     "lint": "yarn lint:forge && yarn lint:ts",
     "lint:ts": "prettier --check test/hardhat",

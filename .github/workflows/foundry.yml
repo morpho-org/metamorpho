@@ -41,7 +41,7 @@ jobs:
       - name: Build contracts without IR
         run: yarn build:forge
         env:
-          FOUNDRY_PROFILE: test
+          FOUNDRY_PROFILE: no_via_ir
 
       - name: Save forge compilation cache
         uses: actions/cache/save@v4
