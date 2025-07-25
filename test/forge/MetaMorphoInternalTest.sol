@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 import {UtilsLib} from "../../lib/morpho-blue/src/libraries/UtilsLib.sol";
 import {SharesMathLib} from "../../lib/morpho-blue/src/libraries/SharesMathLib.sol";
 
-import "./helpers/InternalTest.sol";
+import "./helpers/BaseTest.sol";
+import {MetaMorphoMock} from "../../src/mocks/MetaMorphoMock.sol";
 
-contract MetaMorphoInternalTest is InternalTest {
+contract MetaMorphoInternalTest is BaseTest {
     using MathLib for uint256;
     using MorphoLib for IMorpho;
     using MorphoBalancesLib for IMorpho;
@@ -14,26 +15,48 @@ contract MetaMorphoInternalTest is InternalTest {
     using SharesMathLib for uint256;
     using UtilsLib for uint256;
 
+    MetaMorphoMock internal metaMorphoMock;
+
+    function setUp() public virtual override {
+        super.setUp();
+
+        metaMorphoMock =
+            new MetaMorphoMock(OWNER, address(morpho), 1 days, address(loanToken), "MetaMorpho Vault", "MM");
+
+        vm.startPrank(OWNER);
+        metaMorphoMock.setCurator(CURATOR);
+        metaMorphoMock.setIsAllocator(ALLOCATOR, true);
+        vm.stopPrank();
+
+        vm.startPrank(SUPPLIER);
+        loanToken.approve(address(metaMorphoMock), type(uint256).max);
+        collateralToken.approve(address(metaMorphoMock), type(uint256).max);
+        vm.stopPrank();
+    }
+
     /// forge-config: default.allow_internal_expect_revert = true
     function testSetCapMaxQueueLengthExcedeed() public {
         for (uint256 i; i < NB_MARKETS - 1; ++i) {
-            _setCap(allMarkets[i], allMarkets[i].id(), CAP);
+            metaMorphoMock.mockSetCap(allMarkets[i], allMarkets[i].id(), CAP);
         }
 
         vm.expectRevert(ErrorsLib.MaxQueueLengthExceeded.selector);
-        _setCap(allMarkets[NB_MARKETS - 1], allMarkets[NB_MARKETS - 1].id(), CAP);
+        metaMorphoMock.mockSetCap(allMarkets[NB_MARKETS - 1], allMarkets[NB_MARKETS - 1].id(), CAP);
     }
 
     function testSimulateWithdraw(uint256 suppliedAmount, uint256 borrowedAmount, uint256 assets) public {
         suppliedAmount = bound(suppliedAmount, MIN_TEST_ASSETS, MAX_TEST_ASSETS);
         borrowedAmount = bound(borrowedAmount, MIN_TEST_ASSETS, suppliedAmount);
 
-        _setCap(allMarkets[0], allMarkets[0].id(), CAP);
-        supplyQueue = [allMarkets[0].id()];
+        metaMorphoMock.mockSetCap(allMarkets[0], allMarkets[0].id(), CAP);
+
+        Id[] memory ids = new Id[](1);
+        ids[0] = allMarkets[0].id();
+        metaMorphoMock.mockSetSupplyQueue(ids);
 
         loanToken.setBalance(SUPPLIER, suppliedAmount);
         vm.prank(SUPPLIER);
-        this.deposit(suppliedAmount, SUPPLIER);
+        metaMorphoMock.deposit(suppliedAmount, SUPPLIER);
 
         uint256 collateral = suppliedAmount.wDivUp(allMarkets[0].lltv);
         collateralToken.setBalance(BORROWER, collateral);
@@ -43,9 +66,10 @@ contract MetaMorphoInternalTest is InternalTest {
         morpho.borrow(allMarkets[0], borrowedAmount, 0, BORROWER, BORROWER);
         vm.stopPrank();
 
-        uint256 remaining = _simulateWithdrawMorpho(assets);
+        uint256 remaining = metaMorphoMock.mockSimulateWithdrawMorpho(assets);
 
-        uint256 expectedWithdrawable = MORPHO.expectedSupplyAssets(allMarkets[0], address(this)) - borrowedAmount;
+        uint256 expectedWithdrawable =
+            morpho.expectedSupplyAssets(allMarkets[0], address(metaMorphoMock)) - borrowedAmount;
         uint256 expectedRemaining = assets.zeroFloorSub(expectedWithdrawable);
 
         assertEq(remaining, expectedRemaining, "remaining");
