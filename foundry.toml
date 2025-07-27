@@ -15,7 +15,7 @@ tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 [profile.default.fmt]
 wrap_comments = true
 
-[profile.test]
+[profile.no_via_ir]
 via-ir = false
 
 
