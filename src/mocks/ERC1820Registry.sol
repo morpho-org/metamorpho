@@ -28,6 +28,7 @@
  *
  */
 pragma solidity ^0.8.0;
+
 // IV is value needed to have a vanity address starting with '0x1820'.
 // IV: 53759
 
@@ -205,15 +206,14 @@ contract ERC1820Registry {
             mstore(x, erc165ID) // Place signature at beginning of empty storage
             mstore(add(x, 0x04), _interfaceId) // Place first argument directly next to signature
 
-            success :=
-                staticcall(
-                    30000, // 30k gas
-                    _contract, // To addr
-                    x, // Inputs are stored at location x
-                    0x24, // Inputs are 36 (4 + 32) bytes long
-                    x, // Store output over input (saves space)
-                    0x20 // Outputs are 32 bytes long
-                )
+            success := staticcall(
+                30000, // 30k gas
+                _contract, // To addr
+                x, // Inputs are stored at location x
+                0x24, // Inputs are 36 (4 + 32) bytes long
+                x, // Store output over input (saves space)
+                0x20 // Outputs are 32 bytes long
+            )
 
             result := mload(x) // Load the result
         }
