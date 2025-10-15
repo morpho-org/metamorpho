@@ -1,0 +1,17 @@
+{
+  "lib/erc4626-tests": {
+    "rev": "232ff9ba8194e406967f52ecc5cb52ed764209e9"
+  },
+  "lib/forge-std": {
+    "rev": "bf909b22fa55e244796dfa920c9639fdffa1c545"
+  },
+  "lib/morpho-blue": {
+    "rev": "e701e7ea524633682f81e355bec0d7c88fe02f65"
+  },
+  "lib/morpho-blue-irm": {
+    "rev": "a7d9cce3451b4a106bfd40933ac57a785b5228f3"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "c64a1edb67b6e3f4a15cca8909c9482ad33a02b0"
+  }
+}
