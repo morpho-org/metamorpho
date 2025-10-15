@@ -8,12 +8,23 @@ optimizer = true
 optimizer_runs = 200
 bytecode_hash = "none"
 
-[profile.default.rpc_endpoints]
+[rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}"
 tenderly = "https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}"
 
 [profile.default.fmt]
 wrap_comments = true
+
+[lint]
+exclude_lints = [
+    "unaliased-plain-import",
+    "unused-import",
+    "erc20-unchecked-transfer",
+    "unwrapped-modifier-logic",
+    "mixed-case-variable",
+    "unsafe-typecast",
+    "asm-keccak256",
+]
 
 [profile.no_via_ir]
 via-ir = false
