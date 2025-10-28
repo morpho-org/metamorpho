@@ -34,11 +34,11 @@ contract ReallocateIdleTest is IntegrationTest {
         suppliedAssets[1] = bound(suppliedAssets[1], 1, CAP2);
         suppliedAssets[2] = bound(suppliedAssets[2], 1, CAP2);
 
-        allocations.push(MarketAllocation(idleParams, 0));
-        allocations.push(MarketAllocation(allMarkets[0], suppliedAssets[0]));
-        allocations.push(MarketAllocation(allMarkets[1], suppliedAssets[1]));
-        allocations.push(MarketAllocation(allMarkets[2], suppliedAssets[2]));
-        allocations.push(MarketAllocation(idleParams, type(uint256).max));
+        allocations.push(MarketAllocation({marketParams: idleParams, assets: 0}));
+        allocations.push(MarketAllocation({marketParams: allMarkets[0], assets: suppliedAssets[0]}));
+        allocations.push(MarketAllocation({marketParams: allMarkets[1], assets: suppliedAssets[1]}));
+        allocations.push(MarketAllocation({marketParams: allMarkets[2], assets: suppliedAssets[2]}));
+        allocations.push(MarketAllocation({marketParams: idleParams, assets: type(uint256).max}));
 
         uint256 idleBefore = _idle();
 

@@ -74,11 +74,7 @@ contract BaseTest is Test {
         irm.setApr(0.5 ether); // 50%.
 
         idleParams = MarketParams({
-            loanToken: address(loanToken),
-            collateralToken: address(0),
-            oracle: address(0),
-            irm: address(irm),
-            lltv: 0
+            loanToken: address(loanToken), collateralToken: address(0), oracle: address(0), irm: address(irm), lltv: 0
         });
 
         vm.startPrank(MORPHO_OWNER);

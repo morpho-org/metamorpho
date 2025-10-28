@@ -51,8 +51,9 @@ contract IntegrationTest is BaseTest {
         string memory name,
         string memory symbol
     ) public returns (IMetaMorpho) {
-        return
-            IMetaMorpho(deployCode("MetaMorpho.sol", abi.encode(owner, morpho, initialTimelock, asset, name, symbol)));
+        return IMetaMorpho(
+            deployCode("MetaMorpho.sol", abi.encode(owner, morpho, initialTimelock, asset, name, symbol))
+        );
     }
 
     function _idle() internal view returns (uint256) {

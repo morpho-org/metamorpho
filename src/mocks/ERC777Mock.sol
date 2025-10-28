@@ -296,10 +296,7 @@ contract ERC777 is Context, IERC777, IERC20 {
      * - if `account` is a contract, it must implement the {IERC777Recipient}
      * interface.
      */
-    function _mint(address account, uint256 amount, bytes memory userData, bytes memory operatorData)
-        internal
-        virtual
-    {
+    function _mint(address account, uint256 amount, bytes memory userData, bytes memory operatorData) internal virtual {
         _mint(account, amount, userData, operatorData, true);
     }
 
