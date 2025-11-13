@@ -16,7 +16,9 @@ The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) is deploying immutable on
 
 Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
-Each market has a supply cap that guarantees lenders a maximum absolute exposure to the specific market. By default, the supply cap of a market is set to 0.
+Each market has a supply cap that guarantees that allocators cannot reallocate more than that limit to that market.
+The vault can have more exposure to a given market than its supply cap because of donations or because of interests.
+By default, the supply cap of a market is set to 0.
 
 There are 4 different roles for a MetaMorpho vault: owner, curator, guardian & allocator.
 
@@ -150,9 +152,10 @@ If an enabled market is considered unsafe (e.g., risk too high), the curator/own
      If there is not enough liquidity on the market, remove the maximum available liquidity with the `reallocate` function, then put the market at the beginning of the withdraw queue (with the `updateWithdrawQueue` function).
 - 4. Once all the supply has been removed from the market, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
 
-### An enabled market reverts
+### Market funds are lost
 
-If an enabled market starts reverting, many of the vault functions would revert as well (because of the call to `totalAssets`). To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps:
+To write off the funds in a faulty market, the curator can force remove that market.
+If an enabled market starts reverting notably, many of the vault functions would revert as well (because of the call to `totalAssets`). To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps:
 
 - 1. Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
 - 2. Set the cap of the market to 0 with the `submitCap` function.
@@ -161,7 +164,7 @@ If an enabled market starts reverting, many of the vault functions would revert 
 - 4. Wait for the timelock to elapse
 - 5. Once the timelock has elapsed, the market can be removed from the withdraw queue with the `updateWithdrawQueue` function.
 
-Warning : Funds supplied in forced removed markets will be lost, this is why only markets expected to always revert should be disabled this way (because funds supplied in such markets can be considered lost anyway).
+Warning : Funds previously supplied in forced removed markets will be lost permanently.
 
 ### Curator takeover
 
