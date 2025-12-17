@@ -155,7 +155,8 @@ If an enabled market is considered unsafe (e.g., risk too high), the curator/own
 ### Market funds are lost
 
 To write off the funds in a faulty market, the curator can force remove that market.
-If an enabled market starts reverting notably, many of the vault functions would revert as well (because of the call to `totalAssets`). To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps:
+If an enabled market starts reverting notably, many of the vault functions would revert as well (because of the call to `totalAssets`).
+To turn the vault back to an operating state, the market must be forced removed by the owner/curator, who should follow these steps:
 
 - 1. Revoke the pending cap of the market with the `revokePendingCap` function (this can also be done by the guardian).
 - 2. Set the cap of the market to 0 with the `submitCap` function.
