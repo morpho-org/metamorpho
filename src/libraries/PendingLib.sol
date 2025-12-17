@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 struct MarketConfig {
     /// @notice The maximum amount of assets that can be allocated to the market.
+    /// @dev The exposure to a given market can go beyond the cap in case of interest or donations.
     uint184 cap;
     /// @notice Whether the market is in the withdraw queue.
     bool enabled;
