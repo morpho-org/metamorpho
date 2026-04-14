@@ -11,9 +11,6 @@ dist/
 # Docs
 docs/
 
-# Dotenv file
-.env
-
 # IDE
 .vscode
 
@@ -21,16 +18,8 @@ docs/
 data/
 broadcast/
 
-# Node.js
-node_modules/
-
 # Certora
 .certora_internal
 munged/
-
-# Hardhat
-/types
-/cache_hardhat
-/artifacts
 
 *.log

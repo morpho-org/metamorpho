@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/actions/install
 
       - name: Build contracts via IR & check sizes
-        run: yarn build:forge --force --sizes # don't use compilation cache
+        run: forge build --force --sizes # don't use compilation cache
 
   build-no-ir:
     name: Compilation (without IR)
@@ -39,7 +39,7 @@ jobs:
       - uses: ./.github/actions/install-cache
 
       - name: Build contracts without IR
-        run: yarn build:forge
+        run: forge build
         env:
           FOUNDRY_PROFILE: no_via_ir
 
@@ -81,8 +81,11 @@ jobs:
 
       - uses: ./.github/actions/install-cache
 
+      - name: Build morpho-blue
+        run: cd lib/morpho-blue && forge build
+
       - name: Run tests in ${{ matrix.type }} mode
-        run: yarn test:forge -vvv
+        run: FOUNDRY_PROFILE=no_via_ir forge test -vvv
         env:
           FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
           FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}

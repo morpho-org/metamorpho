@@ -21,4 +21,4 @@ jobs:
       - uses: ./.github/actions/install
 
       - name: Run Linter
-        run: yarn lint
+        run: forge fmt --check
