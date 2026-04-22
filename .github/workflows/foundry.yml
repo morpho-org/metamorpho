@@ -55,6 +55,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@8789b3e21e6c11b2697f5eb56eddae542f746c10 # v1
+
       - name: Build morpho-blue
         run: cd lib/morpho-blue && forge build
 
