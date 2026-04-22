@@ -1,8 +1,0 @@
-name: Install repository
-
-runs:
-  using: composite
-
-  steps:
-    - name: Install Foundry
-      uses: foundry-rs/foundry-toolchain@v1

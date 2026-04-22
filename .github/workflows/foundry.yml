@@ -21,7 +21,8 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ./.github/actions/install
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@8789b3e21e6c11b2697f5eb56eddae542f746c10 # v1
 
       - name: Build contracts & check sizes
         run: forge build --force --sizes # don't use compilation cache
@@ -53,8 +54,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           submodules: recursive
-
-      - uses: ./.github/actions/install-cache
 
       - name: Build morpho-blue
         run: cd lib/morpho-blue && forge build
