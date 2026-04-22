@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-via-ir:
-    name: Compilation (via IR)
+  build:
+    name: Compilation
     runs-on: ubuntu-latest
 
     steps:
@@ -23,36 +23,11 @@ jobs:
 
       - uses: ./.github/actions/install
 
-      - name: Build contracts via IR & check sizes
+      - name: Build contracts & check sizes
         run: forge build --force --sizes # don't use compilation cache
 
-  build-no-ir:
-    name: Compilation (without IR)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          submodules: recursive
-
-      - uses: ./.github/actions/install-cache
-
-      - name: Build contracts without IR
-        run: forge build
-        env:
-          FOUNDRY_PROFILE: no_via_ir
-
-      - name: Save forge compilation cache
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-        with:
-          path: |
-            cache
-            out
-          key: forge-${{ github.ref_name }}-${{ github.run_id }}
-
   test:
-    needs: build-no-ir
+    needs: build
 
     name: Tests
     runs-on: ubuntu-latest
@@ -85,7 +60,7 @@ jobs:
         run: cd lib/morpho-blue && forge build
 
       - name: Run tests in ${{ matrix.type }} mode
-        run: FOUNDRY_PROFILE=no_via_ir forge test -vvv
+        run: forge test -vvv
         env:
           FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
           FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
