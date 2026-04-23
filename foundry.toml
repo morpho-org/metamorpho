@@ -1,7 +1,4 @@
 [profile.default]
-src = "src"
-test = "test/forge"
-libs = ["lib"]
 evm_version = "paris"
 via-ir = true
 optimizer = true
@@ -25,9 +22,5 @@ exclude_lints = [
     "unsafe-typecast",
     "asm-keccak256",
 ]
-
-[profile.no_via_ir]
-via-ir = false
-
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/crates/config

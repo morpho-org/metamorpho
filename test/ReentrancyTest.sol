@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import {IMetaMorpho} from "../../src/interfaces/IMetaMorpho.sol";
+import {IMetaMorpho} from "../src/interfaces/IMetaMorpho.sol";
 
-import {ERC1820Registry} from "../../src/mocks/ERC1820Registry.sol";
-import {ERC777Mock, IERC1820Registry} from "../../src/mocks/ERC777Mock.sol";
-import {IERC1820Implementer} from "../../lib/openzeppelin-contracts/contracts/interfaces/IERC1820Implementer.sol";
+import {ERC1820Registry} from "../src/mocks/ERC1820Registry.sol";
+import {ERC777Mock, IERC1820Registry} from "../src/mocks/ERC777Mock.sol";
+import {IERC1820Implementer} from "../lib/openzeppelin-contracts/contracts/interfaces/IERC1820Implementer.sol";
 
-import "../../src/MetaMorphoFactory.sol";
+import "../src/MetaMorphoFactory.sol";
 import "./helpers/IntegrationTest.sol";
 
 uint256 constant FEE = 0.1 ether; // 50%
