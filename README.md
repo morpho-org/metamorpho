@@ -1,5 +1,8 @@
 # Morpho Vault V1 (MetaMorpho)
 
+> [!NOTE]
+> The latest version of Morpho Vault is [Morpho Vault V2](https://github.com/morpho-org/vault-v2).
+
 ## Overview
 
 MetaMorpho is a protocol for noncustodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
