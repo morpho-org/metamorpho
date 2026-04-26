@@ -196,3 +196,11 @@ All audits are stored in the [audits](./audits/)' folder.
 ## License
 
 MetaMorpho is licensed under `GPL-2.0-or-later`, see [`LICENSE`](./LICENSE).
+
+## 💰 Bounty Contribution
+
+- **Task:** Pre-contest audit triage — Metamorpho vault upgrade + reallocation security
+- **Reward:** $1500
+- **Source:** GitHub-Bounty
+- **Date:** 2026-04-27
+
