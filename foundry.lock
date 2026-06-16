@@ -3,7 +3,10 @@
     "rev": "232ff9ba8194e406967f52ecc5cb52ed764209e9"
   },
   "lib/forge-std": {
-    "rev": "bf909b22fa55e244796dfa920c9639fdffa1c545"
+    "tag": {
+      "name": "v1.15.0",
+      "rev": "0844d7e1fc5e60d77b68e469bff60265f236c398"
+    }
   },
   "lib/morpho-blue": {
     "rev": "e701e7ea524633682f81e355bec0d7c88fe02f65"
