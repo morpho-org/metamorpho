@@ -5,7 +5,7 @@
 
 ## Overview
 
-MetaMorpho is a protocol for noncustodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
+MetaMorpho is a protocol for non-custodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
 It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
 It offers a seamless experience similar to Aave and Compound.
 
