@@ -1,4 +1,5 @@
 [profile.default]
+libs = ["lib"]
 evm_version = "paris"
 via_ir = true
 optimizer = true
