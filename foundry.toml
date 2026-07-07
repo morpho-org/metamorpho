@@ -1,4 +1,5 @@
 [profile.default]
+libs = ["lib"]
 evm_version = "paris"
 via_ir = true
 optimizer = true
@@ -17,6 +18,5 @@ exclude_lints = [
     "mixed-case-variable",
     "unsafe-typecast",
     "asm-keccak256",
+    "block-timestamp",
 ]
-
-# See more config options https://github.com/foundry-rs/foundry/tree/master/crates/config
