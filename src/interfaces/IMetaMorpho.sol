@@ -98,9 +98,12 @@ interface IMetaMorphoBase {
     /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
     /// @dev Warning: Reverts if a market removal is pending.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
+    /// @dev Market's loan token and IRM should not reenter.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
     /// @notice Accepts the pending cap of the market defined by `marketParams`.
+    /// @dev Accepting a market for which the vault has supply works the same way as a donation to the vault.
+    /// In particular, it can be extracted by front-running the transaction.
     function acceptCap(MarketParams memory marketParams) external;
 
     /// @notice Revokes the pending cap of the market defined by `id`.
@@ -108,6 +111,7 @@ interface IMetaMorphoBase {
     function revokePendingCap(Id id) external;
 
     /// @notice Submits a forced market removal from the vault, eventually losing all funds supplied to the market.
+    /// @notice Notably, adding back a removed market should be considered the same as adding a new market.
     /// @notice This forced removal is expected to be used as an emergency process in case a market constantly reverts.
     /// To softly remove a sane market, the curator role is expected to bundle a reallocation that empties the market
     /// first (using `reallocate`), followed by the removal of the market (using `updateWithdrawQueue`).
