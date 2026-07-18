@@ -64,6 +64,16 @@ rule guardianUpdateTime(env e_next, method f, calldataarg args) {
     assert true;
 }
 
+// Show that revoking the pending guardian restarts a full timelock before any guardian change.
+rule guardianUpdateTimeAfterRevoke(env e) {
+    // Assume that there is no pending timelock, which the guardian can ensure by revoking it.
+    require pendingTimelock_().validAt == 0;
+
+    revokePendingGuardian(e);
+
+    assert nextGuardianUpdateTime(e) == e.block.timestamp + timelock();
+}
+
 // Show that nextCapIncreaseTime does not revert.
 rule nextCapIncreaseTimeDoesNotRevert(MetaMorphoHarness.Id id) {
     // The environment e yields the current time.
@@ -105,6 +115,16 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
     assert true;
 }
 
+// Show that revoking a pending cap restarts a full timelock before any cap increase.
+rule capIncreaseTimeAfterRevoke(env e, MetaMorphoHarness.Id id) {
+    // Assume that there is no pending timelock, which the guardian can ensure by revoking it.
+    require pendingTimelock_().validAt == 0;
+
+    revokePendingCap(e, id);
+
+    assert nextCapIncreaseTime(e, id) == e.block.timestamp + timelock();
+}
+
 // Show that nextTimelockDecreaseTime does not revert.
 rule nextTimelockDecreaseTimeDoesNotRevert() {
     // The environment e yields the current time.
@@ -142,6 +162,13 @@ rule timelockDecreaseTime(env e_next, method f, calldataarg args) {
         assert nextTimelockDecreaseTime(e_next) >= nextTimelockDecreaseTimeBeforeInteraction;
     }
     assert true;
+}
+
+// Show that revoking the pending timelock restarts a full timelock before any timelock decrease.
+rule timelockDecreaseTimeAfterRevoke(env e) {
+    revokePendingTimelock(e);
+
+    assert nextTimelockDecreaseTime(e) == e.block.timestamp + timelock();
 }
 
 // Show that nextRemovableTime does not revert.
@@ -186,4 +213,14 @@ rule removableTime(env e_next, method f, calldataarg args) {
         assert nextRemovableTime(e_next, id) >= nextRemovableTimeBeforeInteraction;
     }
     assert true;
+}
+
+// Show that revoking a pending market removal restarts a full timelock before any forced removal.
+rule removableTimeAfterRevoke(env e, MetaMorphoHarness.Id id) {
+    // Assume that there is no pending timelock, which the guardian can ensure by revoking it.
+    require pendingTimelock_().validAt == 0;
+
+    revokePendingMarketRemoval(e, id);
+
+    assert nextRemovableTime(e, id) == e.block.timestamp + timelock();
 }
