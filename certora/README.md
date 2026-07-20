@@ -82,7 +82,7 @@ It follows by induction on the sequence of transactions from the verified lemmas
 
 1. **Notice period.** The rule `capIncreaseTime` in [`Timelock.spec`](specs/Timelock.spec) shows that the cap cannot increase before `nextCapIncreaseTime`, and that no interaction can decrease this bound.
 2. **The guardian can always revoke.** The rule `revokePendingCapRevertCondition` in [`Reverts.spec`](specs/Reverts.spec) shows that `revokePendingCap` never reverts when called by the guardian.
-3. **Revocation increases the notice period meaningfully.** The rule `capIncreaseTimeAfterRevoke` in [`Timelock.spec`](specs/Timelock.spec) shows that right after a revocation the cap cannot increase for one full timelock, so the curator has to submit again, which gives the guardian a fresh notice period.
+3. **Revocation resets the notice period.** The rule `capIncreaseTimeAfterRevoke` in [`Timelock.spec`](specs/Timelock.spec) shows that right after a revocation the cap cannot increase for one full timelock.
 
 Thus a guardian that checks the pending values at least once every timelock period and revokes the unwanted ones ensures that the cap never increases.
 
