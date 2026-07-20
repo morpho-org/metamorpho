@@ -78,7 +78,7 @@ Indeed, a greater timelock means that the user would have more time to react to 
 ### Responsive guardian
 
 Together, the verified rules entail the following property: if the guardian is responsive, then the curator cannot enact a change that is under timelock.
-It follows by induction on the sequence of transactions from the verified lemmas, given here for the example of a cap increase.
+It follows by induction on the sequence of transactions from the verified lemmas, given here for the example of a cap increase, but it also applies to the forced removal of a market.
 
 1. **Notice period.** The rule `capIncreaseTime` in [`Timelock.spec`](specs/Timelock.spec) shows that the cap cannot increase before `nextCapIncreaseTime`, and that no interaction can decrease this bound.
 2. **The guardian can always revoke.** The rule `revokePendingCapRevertCondition` in [`Reverts.spec`](specs/Reverts.spec) shows that `revokePendingCap` never reverts when called by the guardian.
@@ -87,8 +87,6 @@ It follows by induction on the sequence of transactions from the verified lemmas
 Thus a guardian that checks the pending values at least once every timelock period and revokes the unwanted ones ensures that the cap never increases.
 
 The assumptions that the guardian stays in charge, and that a meaningful notice period is kept are self-sustaining: changing the guardian and the timelock are themselves under timelock and revocable, with the same lemmas verified (`guardianUpdateTime` and `timelockDecreaseTime` with their `AfterRevoke` and revert condition counterparts).
-
-The same argument applies to forced market removals through `removableTime`, `removableTimeAfterRevoke` and `revokePendingMarketRemovalRevertCondition`.
 
 ## Interactions with other contracts
 
