@@ -18,6 +18,7 @@ jobs:
         conf:
           - ConsistentState
           - DistinctIdentifiers
+          - ERC4626
           - Enabled
           - Immutability
           - LastUpdated
