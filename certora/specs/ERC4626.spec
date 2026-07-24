@@ -41,32 +41,42 @@ function cvlMulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding roun
     }
 }
 
-// convertToAssets(convertToShares(a)) <= a.
-rule convertRoundTripAssets(uint256 assets) { assert convertToAssets(convertToShares(assets)) <= assets; }
+rule convertRoundTripAssets(uint256 assets) {
+    assert convertToAssets(convertToShares(assets)) <= assets;
+}
 
-// convertToShares(convertToAssets(s)) <= s.
-rule convertRoundTripShares(uint256 shares) { assert convertToShares(convertToAssets(shares)) <= shares; }
+rule convertRoundTripShares(uint256 shares) {
+    assert convertToShares(convertToAssets(shares)) <= shares;
+}
 
-// redeem(deposit(a)) <= a.
-rule roundTripDepositRedeem(uint256 assets) { assert previewRedeem(previewDeposit(assets)) <= assets; }
+rule roundTripDepositRedeem(uint256 assets) {
+    assert previewRedeem(previewDeposit(assets)) <= assets;
+}
 
-// withdraw(a) burns at least as many shares as deposit(a) mints.
-rule roundTripDepositWithdraw(uint256 assets) { assert previewWithdraw(assets) >= previewDeposit(assets); }
+rule roundTripDepositWithdraw(uint256 assets) {
+    assert previewWithdraw(assets) >= previewDeposit(assets);
+}
 
-// deposit(redeem(s)) <= s.
-rule roundTripRedeemDeposit(uint256 shares) { assert previewDeposit(previewRedeem(shares)) <= shares; }
+rule roundTripRedeemDeposit(uint256 shares) {
+    assert previewDeposit(previewRedeem(shares)) <= shares;
+}
 
-// mint(s) pays at least as many assets as redeem(s) returns.
-rule roundTripRedeemMint(uint256 shares) { assert previewMint(shares) >= previewRedeem(shares); }
+rule roundTripRedeemMint(uint256 shares) {
+    assert previewMint(shares) >= previewRedeem(shares);
+}
 
-// withdraw(mint(s)) >= s.
-rule roundTripMintWithdraw(uint256 shares) { assert previewWithdraw(previewMint(shares)) >= shares; }
+rule roundTripMintWithdraw(uint256 shares) {
+    assert previewWithdraw(previewMint(shares)) >= shares;
+}
 
-// redeem(s) returns at most as many assets as mint(s) pays.
-rule roundTripMintRedeem(uint256 shares) { assert previewRedeem(shares) <= previewMint(shares); }
+rule roundTripMintRedeem(uint256 shares) {
+    assert previewRedeem(shares) <= previewMint(shares);
+}
 
-// mint(withdraw(a)) >= a.
-rule roundTripWithdrawMint(uint256 assets) { assert previewMint(previewWithdraw(assets)) >= assets; }
+rule roundTripWithdrawMint(uint256 assets) {
+    assert previewMint(previewWithdraw(assets)) >= assets;
+}
 
-// deposit(a) mints at most as many shares as withdraw(a) burns.
-rule roundTripWithdrawDeposit(uint256 assets) { assert previewDeposit(assets) <= previewWithdraw(assets); }
+rule roundTripWithdrawDeposit(uint256 assets) {
+    assert previewDeposit(assets) <= previewWithdraw(assets);
+}
