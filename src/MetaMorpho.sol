@@ -520,7 +520,6 @@ contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorph
     /// @dev May overestimate the real result when called in the middle of a Blue callback execution. The reason is that
     /// _simulateWithdrawMorpho counts the Blue loan token balance once per market instead of once. But when not in a
     /// Blue callback, the Blue balance cannot be the limiting factor so it does not overestimate then.
-
     /// @dev Warning: May be lower than the actual amount of shares that can be redeemed by `owner` due to conversion
     /// roundings between shares and assets.
     function maxRedeem(address owner) public view override returns (uint256) {
