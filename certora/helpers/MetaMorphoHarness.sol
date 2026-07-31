@@ -37,6 +37,14 @@ contract MetaMorphoHarness is MetaMorpho {
         return pendingCap[id];
     }
 
+    function mulDivWrapper(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding)
+        external
+        pure
+        returns (uint256)
+    {
+        return Math.mulDiv(x, y, denominator, rounding);
+    }
+
     function minTimelock() external pure returns (uint256) {
         return ConstantsLib.MIN_TIMELOCK;
     }

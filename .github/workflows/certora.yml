@@ -24,6 +24,7 @@ jobs:
           - LastUpdated
           - Liveness
           - MarketInteractions
+          - MulDivCorrectness
           - PendingValues
           - Range
           - Reentrancy
