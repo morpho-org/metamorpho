@@ -5,9 +5,12 @@
 // redeem(deposit(a)) <= a and mint(withdraw(a)) >= a. The Morpho Blue- and
 // fee-dependent totals are summarized to an arbitrary but fixed pair (a sound
 // over-approximation that removes the Morpho Blue state and loop behind
-// _accruedFeeShares), the decimals offset is fixed to 0 to keep
-// 10 ** _decimalsOffset() concrete, and OZ's 512-bit mulDiv is replaced by its
-// exact floor/ceil meaning.
+// _accruedFeeShares), the decimals offset is an arbitrary but fixed value bounded
+// to its real 0..18 range (DECIMALS_OFFSET = 18.zeroFloorSub(assetDecimals) in the
+// constructor) so the round trips are proven for any decimals offset rather than
+// only 0; the bound also keeps the symbolic-exponent 10 ** _decimalsOffset() term
+// away from overflow-revert paths and within uint256. OZ's 512-bit mulDiv is
+// replaced by its exact floor/ceil meaning.
 
 methods {
     function convertToShares(uint256) external returns(uint256) envfree;
@@ -24,13 +27,15 @@ methods {
 
 ghost uint256 gTotalAssets;
 ghost uint256 gFeeShares;
+persistent ghost uint8 gDecimalsOffset;
 
 function summaryAccruedFeeShares() returns (uint256, uint256) {
     return (gFeeShares, gTotalAssets);
 }
 
 function summaryDecimalsOffset() returns uint8 {
-    return 0;
+    require to_mathint(gDecimalsOffset) <= 18;
+    return gDecimalsOffset;
 }
 
 function cvlMulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) returns uint256 {
