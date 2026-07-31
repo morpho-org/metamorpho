@@ -1,17 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// ERC4626 round-trip properties (issue #333, a16z erc4626-tests/ERC4626.prop.sol
-// L244-318): no round trip lets a user extract more value than they put in, e.g.
-// redeem(deposit(a)) <= a and mint(withdraw(a)) >= a. The Morpho Blue- and
-// fee-dependent totals are summarized to an arbitrary but fixed pair (a sound
-// over-approximation that removes the Morpho Blue state and loop behind
-// _accruedFeeShares), the decimals offset is an arbitrary but fixed value bounded
-// to its real 0..18 range (DECIMALS_OFFSET = 18.zeroFloorSub(assetDecimals) in the
-// constructor) so the round trips are proven for any decimals offset rather than
-// only 0; the bound also keeps the symbolic-exponent 10 ** _decimalsOffset() term
-// away from overflow-revert paths and within uint256. OZ's 512-bit mulDiv is
-// replaced by its exact floor/ceil meaning.
-
 methods {
     function convertToShares(uint256) external returns(uint256) envfree;
     function convertToAssets(uint256) external returns(uint256) envfree;
