@@ -75,6 +75,19 @@ function isSmallerPendingTimelock() returns bool {
 Notice how increasing the timelock is itself not subject to a timelock, as it does not increase the risk for the user.
 Indeed, a greater timelock means that the user would have more time to react to the vault's management operations that would not align with the user risk profile.
 
+### Responsive guardian
+
+Together, the verified rules entail the following property: if the guardian is responsive, then the curator cannot enact a change that is under timelock.
+It follows by induction on the sequence of transactions from the verified lemmas, given here for the example of a cap increase, but it also applies to the forced removal of a market.
+
+1. **Notice period.** The rule `capIncreaseTime` in [`Timelock.spec`](specs/Timelock.spec) shows that the cap cannot increase before `nextCapIncreaseTime`, and that no interaction can decrease this bound.
+2. **The guardian can always revoke.** The rule `revokePendingCapRevertCondition` in [`Reverts.spec`](specs/Reverts.spec) shows that `revokePendingCap` never reverts when called by the guardian.
+3. **Revocation resets the notice period.** The rule `capIncreaseTimeAfterRevoke` in [`Timelock.spec`](specs/Timelock.spec) shows that right after a revocation the cap cannot increase for one full timelock.
+
+Thus a guardian that checks the pending values at least once every timelock period and revokes the unwanted ones ensures that the cap never increases.
+
+The assumptions that the guardian stays in charge, and that a meaningful notice period is kept are self-sustaining: changing the guardian and the timelock are themselves under timelock and revocable, with the same lemmas verified (`guardianUpdateTime` and `timelockDecreaseTime` with their `AfterRevoke` and revert condition counterparts).
+
 ## Interactions with other contracts
 
 This section details how externals calls are checked to be scoped, which ensures the safety of MetaMorpho.
