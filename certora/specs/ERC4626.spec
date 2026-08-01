@@ -26,6 +26,7 @@ function summaryDecimalsOffset() returns uint8 {
     return gDecimalsOffset;
 }
 
+// necessary because metamorpho uses unmodelable 512 bits math.
 function cvlMulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) returns uint256 {
     if (rounding == Math.Rounding.Ceil || rounding == Math.Rounding.Expand) {
         return require_uint256((x * y + (denominator - 1)) / denominator);
