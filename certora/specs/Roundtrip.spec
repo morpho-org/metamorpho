@@ -1,28 +1,24 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 methods {
-    function convertToShares(uint256) external returns(uint256) envfree;
-    function convertToAssets(uint256) external returns(uint256) envfree;
-    function previewDeposit(uint256) external returns(uint256) envfree;
-    function previewMint(uint256) external returns(uint256) envfree;
-    function previewWithdraw(uint256) external returns(uint256) envfree;
-    function previewRedeem(uint256) external returns(uint256) envfree;
+    function convertToShares(uint256) external returns (uint256) envfree;
+    function convertToAssets(uint256) external returns (uint256) envfree;
+    function previewDeposit(uint256) external returns (uint256) envfree;
+    function previewMint(uint256) external returns (uint256) envfree;
+    function previewWithdraw(uint256) external returns (uint256) envfree;
+    function previewRedeem(uint256) external returns (uint256) envfree;
 
-    function MetaMorpho._accruedFeeShares() internal returns (uint256, uint256) => summaryAccruedFeeShares();
+    // Constant summary so that 2 preview calls get the same view on the accrued state.
+    // Only view functions are called in this spec, so this only assumes _accruedFeeShares is constant on the same state.
+    function MetaMorpho._accruedFeeShares() internal returns (uint256, uint256) => CONSTANT;
     function ERC4626._decimalsOffset() internal returns (uint8) => summaryDecimalsOffset();
     function Math.mulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) internal returns (uint256) => cvlMulDiv(x, y, denominator, rounding);
 }
 
-ghost uint256 gTotalAssets;
-ghost uint256 gFeeShares;
 persistent ghost uint8 gDecimalsOffset;
 
-function summaryAccruedFeeShares() returns (uint256, uint256) {
-    return (gFeeShares, gTotalAssets);
-}
-
 function summaryDecimalsOffset() returns uint8 {
-    require to_mathint(gDecimalsOffset) <= 18;
+    require gDecimalsOffset <= 18, "decimal offset is defined as 18.zeroFlooSub(...)";
     return gDecimalsOffset;
 }
 

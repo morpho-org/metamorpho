@@ -18,7 +18,6 @@ jobs:
         conf:
           - ConsistentState
           - DistinctIdentifiers
-          - ERC4626
           - Enabled
           - Immutability
           - LastUpdated
@@ -28,6 +27,7 @@ jobs:
           - Range
           - Reentrancy
           - Reverts
+          - Roundtrip
           - Roles
           - Timelock
           - Tokens
