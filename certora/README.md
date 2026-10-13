@@ -92,14 +92,14 @@ The assumptions that the guardian stays in charge, and that a meaningful notice 
 
 This section details how externals calls are checked to be scoped, which ensures the safety of MetaMorpho.
 
-### Reentrancy and immutability
+### Reentrancy and delegate calls
 
 MetaMorpho only interacts with Morpho Blue and with the loan token of the vault.
 This is checked in [`Reentrancy.spec`](specs/Reentrancy.spec).
 Informally, the loan token and the markets of MetaMorpho are trusted.
 The former is known upfront by users, while markets are added through a timelock mechanism, which allows users (or by proxy, the guardian) to make sure that this addition is aligned with the desired risk profile.
 
-Note also that these properties are ensured to always hold, because the contract is verified to be immutable in [`Immutability.spec`](specs/Immutability.spec).
+Note also that these properties are ensured to always hold, because the contract is verified to make no delegate call in [`NoExternalDelegateCall.spec`](specs/NoExternalDelegateCall.spec).
 
 ### Consistent asset
 
@@ -203,7 +203,7 @@ The [`certora/specs`](specs) folder contains the following files:
 - [`ConsistentState.spec`](specs/ConsistentState.spec) checks various properties specifying what is the consistent state of MetaMorpho, what are the reachable setting configurations (such as caps and fee).
 - [`DistinctIdentifiers.spec`](specs/DistinctIdentifiers.spec) checks that the withdraw queue has no duplicate markets.
 - [`Enabled.spec`](specs/Enabled.spec) checks properties about enabled flag of market, notably that it correctly tracks the fact that the market is in the withdraw queue.
-- [`Immutability.spec`](specs/Immutability.spec) checks that MetaMorpho is immutable.
+- [`NoExternalDelegateCall.spec`](specs/NoExternalDelegateCall.spec) checks that MetaMorpho makes no delegate call.
 - [`LastUpdated.spec`](specs/LastUpdated.spec) checks that all Morpho Blue markets that MetaMorpho interacts with are created markets.
 - [`Liveness.spec`](specs/Liveness.spec) checks some liveness properties of MetaMorpho, notably that some emergency procedures are always available.
 - [`MarketInteractions.spec`](specs/MarketInteractions.spec) checks that every supply and withdraw from MetaMorpho is targeting an enabled market.
@@ -238,5 +238,5 @@ DistinctIdentifiers --> PendingValues
 PendingValues --> Range
 Roles
 Reentrancy
-Immutability
+NoExternalDelegateCall
 ```

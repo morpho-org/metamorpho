@@ -9,7 +9,7 @@ hook DELEGATECALL(uint g, address addr, uint argsOffset, uint argsLength, uint r
     delegateCall = true;
 }
 
-// Check that the contract is truly immutable.
+// Check that the contract makes no delegate call.
 rule noDelegateCalls(method f, env e, calldataarg data) {
     // Set up the initial state.
     require !delegateCall;

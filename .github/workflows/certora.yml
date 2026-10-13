@@ -19,7 +19,7 @@ jobs:
           - ConsistentState
           - DistinctIdentifiers
           - Enabled
-          - Immutability
+          - NoExternalDelegateCall
           - LastUpdated
           - Liveness
           - MarketInteractions
