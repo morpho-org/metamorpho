@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
     function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
+    function SafeERC20.forceApprove(address token, address spender, uint256 value) internal => NONDET;
 
     function MORPHO() external returns(address) envfree;
     function asset() external returns(address) envfree;
