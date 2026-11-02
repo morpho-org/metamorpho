@@ -10,7 +10,7 @@ contract BytecodeTest is Test {
     /// 0xA9c3D3a366466Fa809d1Ae982Fb2c46E5fC41101 in transaction
     /// 0x05504ab1f9d86603298083de89f7a07e3be7633e354c78a626a11f06ad71efca, without the constructor argument.
     function testFactoryCreationCodeMatchesEthereumDeployment() public view {
-        bytes memory deployed = vm.parseBytes(vm.readLine("test/MetaMorphoFactoryCreationCode.hex"));
+        bytes memory deployed = vm.parseBytes(vm.readLine("test/helpers/MetaMorphoFactoryCreationCode.hex"));
         assertEq(maskIpfsHashes(deployed), maskIpfsHashes(type(MetaMorphoFactory).creationCode));
     }
 
