@@ -16,9 +16,9 @@ import {ErrorsLib} from "../../src/libraries/ErrorsLib.sol";
 import {EventsLib} from "../../src/libraries/EventsLib.sol";
 import {ORACLE_PRICE_SCALE} from "../../lib/morpho-blue/src/libraries/ConstantsLib.sol";
 
-import {IrmMock} from "../../src/mocks/IrmMock.sol";
-import {ERC20Mock} from "../../src/mocks/ERC20Mock.sol";
-import {OracleMock} from "../../src/mocks/OracleMock.sol";
+import {IrmMock} from "../mocks/IrmMock.sol";
+import {ERC20Mock} from "../mocks/ERC20Mock.sol";
+import {OracleMock} from "../mocks/OracleMock.sol";
 
 import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
