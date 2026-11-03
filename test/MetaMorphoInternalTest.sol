@@ -5,7 +5,7 @@ import {UtilsLib} from "../lib/morpho-blue/src/libraries/UtilsLib.sol";
 import {SharesMathLib} from "../lib/morpho-blue/src/libraries/SharesMathLib.sol";
 
 import "./helpers/BaseTest.sol";
-import {MetaMorphoMock} from "../src/mocks/MetaMorphoMock.sol";
+import {MetaMorphoMock} from "./mocks/MetaMorphoMock.sol";
 
 contract MetaMorphoInternalTest is BaseTest {
     using MathLib for uint256;
