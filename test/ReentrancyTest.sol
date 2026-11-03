@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import {IMetaMorpho} from "../src/interfaces/IMetaMorpho.sol";
 
-import {ERC1820Registry} from "../src/mocks/ERC1820Registry.sol";
-import {ERC777Mock, IERC1820Registry} from "../src/mocks/ERC777Mock.sol";
+import {ERC1820Registry} from "./mocks/ERC1820Registry.sol";
+import {ERC777Mock, IERC1820Registry} from "./mocks/ERC777Mock.sol";
 import {IERC1820Implementer} from "../lib/openzeppelin-contracts/contracts/interfaces/IERC1820Implementer.sol";
 
 import "../src/MetaMorphoFactory.sol";
