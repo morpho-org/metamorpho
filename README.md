@@ -17,6 +17,8 @@ These roles are primarily responsible for enabling and disabling markets on Morp
 One MetaMorpho vault is related to one loan asset on Morpho Blue.
 The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) is deploying immutable onchain instances of MetaMorpho vaults.
 
+The [Public Allocator](./src/periphery/public-allocator/) lets anyone reallocate liquidity within limits set by vault owners.
+
 Users can supply or withdraw assets at any time, depending on the available liquidity on Morpho Blue.
 A maximum of 30 markets can be enabled on a given MetaMorpho vault.
 Each market has a supply cap that guarantees that allocators cannot reallocate more than that limit to that market.
