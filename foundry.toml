@@ -4,12 +4,12 @@ evm_version = "paris"
 via_ir = true
 optimizer = true
 optimizer_runs = 200
-bytecode_hash = "none"
+bytecode_hash = "ipfs"
 additional_compiler_profiles = [
-    { name = "public-allocator", optimizer_runs = 999999 },
+    { name = "public-allocator", optimizer_runs = 999999, bytecode_hash = "None" },
 ]
 compilation_restrictions = [
-    { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999 },
+    { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999, bytecode_hash = "None" },
     { paths = "src/MetaMorpho*.sol", optimizer_runs = 200 },
 ]
 
