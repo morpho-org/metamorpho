@@ -28,7 +28,8 @@ jobs:
       - name: Install solc into svm cache
         run: |
           echo "0.8.19 7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48
-          0.8.21 f2857a898be15c69e8de5598dcd3f3e169e94964a0ce9a0bbb1b111f145a81df" |
+          0.8.21 f2857a898be15c69e8de5598dcd3f3e169e94964a0ce9a0bbb1b111f145a81df
+          0.8.24 fb03a29a517452b9f12bcf459ef37d0a543765bb3bbc911e70a87d6a37c30d5f" |
           while read -r version sha256; do
             solc="$HOME/.svm/$version/solc-$version"
             mkdir -p "${solc%/*}"
