@@ -33,4 +33,4 @@ All audits are stored in the [audits](../../../audits/)' folder.
 
 ## License
 
-All files are licenced under `GPL-2.0-or-later`, see [`LICENSE`](../../../LICENSE).
+Public Allocator source files and tests are licensed under [MIT](https://opensource.org/license/mit).

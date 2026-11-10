@@ -201,3 +201,4 @@ All audits are stored in the [audits](./audits/)' folder.
 ## License
 
 MetaMorpho is licensed under `GPL-2.0-or-later`, see [`LICENSE`](./LICENSE).
+Public Allocator source files in [`src/periphery/public-allocator`](./src/periphery/public-allocator/) and tests in [`test/periphery/public-allocator`](./test/periphery/public-allocator/) are licensed under [MIT](https://opensource.org/license/mit).
