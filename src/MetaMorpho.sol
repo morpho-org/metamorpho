@@ -40,6 +40,7 @@ import {
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org
 /// @notice ERC4626 compliant vault allowing users to deposit assets to Morpho.
+/// @dev The asset must satisfy Morpho Blue's token requirements (see IMorpho.createMarket).
 contract MetaMorpho is ERC4626, ERC20Permit, Ownable2Step, Multicall, IMetaMorphoStaticTyping {
     using Math for uint256;
     using UtilsLib for uint256;
