@@ -25,7 +25,7 @@ See the [documentation](https://docs.morpho.org/addresses#public-allocator).
 ## Testing
 
 To run tests: `forge test`.
-Note that running the tests this way will use this repository's compilation settings for dependencies (Morpho & MetaMorpho), potentially different from the settings used for deployment of those dependencies.
+Note that running the tests this way will use this repository's compilation settings for Morpho Blue, potentially different from the settings used for its deployment.
 
 ## Audits
 
@@ -33,4 +33,4 @@ All audits are stored in the [audits](../../../audits/)' folder.
 
 ## License
 
-Public Allocator source files and tests are licensed under [MIT](https://opensource.org/license/mit).
+Public Allocator source files and tests are licensed under `MIT`, see [`LICENSE-MIT`](../../../LICENSE-MIT).
