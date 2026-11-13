@@ -98,7 +98,7 @@ interface IMetaMorphoBase {
     /// @dev Warning: Reverts if a cap is already pending. Revoke the pending cap to overwrite it.
     /// @dev Warning: Reverts if a market removal is pending.
     /// @dev In case the new cap is lower than the current one, the cap is set immediately.
-    /// @dev Market's IRM should not reenter.
+    /// @dev Market's loan token and IRM should not reenter MetaMorpho.
     function submitCap(MarketParams memory marketParams, uint256 newSupplyCap) external;
 
     /// @notice Accepts the pending cap of the market defined by `marketParams`.
