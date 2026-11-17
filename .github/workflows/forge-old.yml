@@ -7,11 +7,12 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   test:
+    permissions:
+      contents: read
     strategy:
       fail-fast: true
       matrix:
@@ -66,6 +67,8 @@ jobs:
           FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
 
   forge-old:
+    permissions:
+      contents: read
     if: ${{ always() }}
     needs: test
     runs-on: ubuntu-latest
