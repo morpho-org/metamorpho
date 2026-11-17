@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 methods {
-    function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
+    function multicall(bytes[]) external returns (bytes[]) => NONDET DELETE;
 
-    function lostAssets() external returns(uint256) envfree;
-    function totalAssets() external returns(uint256) envfree;
-    function totalSupply() external returns(uint256) envfree;
-    function lastTotalAssets() external returns(uint256) envfree;
-    function realTotalAssets() external returns(uint256) envfree;
-    function fee() external returns(uint96) envfree;
-    function maxFee() external returns(uint256) envfree;
-    function DECIMALS_OFFSET() external returns(uint8) envfree;
+    function lostAssets() external returns (uint256) envfree;
+    function totalAssets() external returns (uint256) envfree;
+    function totalSupply() external returns (uint256) envfree;
+    function lastTotalAssets() external returns (uint256) envfree;
+    function realTotalAssets() external returns (uint256) envfree;
+    function fee() external returns (uint96) envfree;
+    function maxFee() external returns (uint256) envfree;
+    function DECIMALS_OFFSET() external returns (uint8) envfree;
 
     // We assume that Morpho and the ERC20s can't reenter Metamorpho.
     function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => NONDET;
@@ -26,7 +26,7 @@ methods {
     function _.balanceOf(address) external => NONDET;
 
     // Summarise mulDiv because its implementation is too complex.
-    function _.mulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) internal => summaryMulDiv(x, y, denominator, rounding) expect (uint256);
+    function _.mulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) internal => summaryMulDiv(x, y, denominator, rounding) expect(uint256);
 }
 
 function summaryMulDiv(uint256 x, uint256 y, uint256 d, Math.Rounding rounding) returns uint256 {
@@ -56,13 +56,7 @@ rule lastTotalAssetsSmallerThanTotalAssets() {
 }
 
 // Check that the last total assets increase except on withdrawal and redeem.
-rule lastTotalAssetsIncreases(method f, env e, calldataarg args)
-filtered {
-    f -> f.selector != sig:withdraw(uint256, address, address).selector &&
-        f.selector != sig:redeem(uint256, address, address).selector &&
-        f.selector != sig:updateWithdrawQueue(uint256[]).selector
-}
-{
+rule lastTotalAssetsIncreases(method f, env e, calldataarg args) filtered { f -> f.selector != sig:withdraw(uint256, address, address).selector && f.selector != sig:redeem(uint256, address, address).selector && f.selector != sig:updateWithdrawQueue(uint256[]).selector } {
     uint256 lastTotalAssetsBefore = lastTotalAssets();
 
     f(e, args);
@@ -129,5 +123,5 @@ rule sharePriceIncreases(method f, env e, calldataarg args) {
     uint256 decimalsOffset = assert_uint256(DECIMALS_OFFSET());
     require decimalsOffset == 18;
 
-    assert (lastTotalAssetsBefore + 1) * (totalSupplyAfter + 10^decimalsOffset) <= (totalAssetsAfter + 1) * (totalSupplyBefore + 10^decimalsOffset);
+    assert (lastTotalAssetsBefore + 1) * (totalSupplyAfter + 10 ^ decimalsOffset) <= (totalAssetsAfter + 1) * (totalSupplyBefore + 10 ^ decimalsOffset);
 }

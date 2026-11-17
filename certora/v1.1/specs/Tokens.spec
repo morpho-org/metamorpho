@@ -6,9 +6,9 @@ methods {
     function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
     function _.balanceOf(address) external => DISPATCHER(true);
 
-    function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) external => summarySupply(marketParams, assets, shares, onBehalf, data) expect (uint256, uint256) ALL;
-    function _.withdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external => summaryWithdraw(marketParams, assets, shares, onBehalf, receiver) expect (uint256, uint256) ALL;
-    function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect MetaMorphoHarness.MarketParams ALL;
+    function _.supply(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, bytes data) external => summarySupply(marketParams, assets, shares, onBehalf, data) expect(uint256, uint256) ALL;
+    function _.withdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external => summaryWithdraw(marketParams, assets, shares, onBehalf, receiver) expect(uint256, uint256) ALL;
+    function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect(MetaMorphoHarness.MarketParams) ALL;
 
     function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => NONDET;
     function _.borrowRate(MetaMorphoHarness.MarketParams, MetaMorphoHarness.Market) external => NONDET;
@@ -20,6 +20,7 @@ function summaryIdToMarketParams(MetaMorphoHarness.Id id) returns MetaMorphoHarn
 
     // Safe require because markets in the supply/withdraw queue have positive last update (see LastUpdated.spec).
     require lastUpdated > 0;
+
     // Safe require because it is a verified invariant in Morpho Blue.
     require lastUpdated > 0 => Util.libId(marketParams) == id;
 
@@ -60,6 +61,7 @@ function summaryWithdraw(MetaMorphoHarness.MarketParams marketParams, uint256 as
         uint256 totalShares = Morpho.virtualTotalSupplyShares(id);
         require withdrawn == Util.libMulDivDown(shares, totalAssets, totalShares);
     }
+
     // Summarize withdraw as just a transfer for the purpose of this specification file, which is sound because only the properties about tokens are verified in this file.
     ERC20.safeTransferFrom(marketParams.loanToken, MORPHO(), currentContract, withdrawn);
 

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
-    function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
+    function multicall(bytes[]) external returns (bytes[]) => NONDET DELETE;
 
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => voidSummary() expect void;
-    function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => uintPairSummary() expect (uint256, uint256);
-    function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => uintPairSummary() expect (uint256, uint256);
+    function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => uintPairSummary() expect(uint256, uint256);
+    function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => uintPairSummary() expect(uint256, uint256);
 
-    function _.transfer(address, uint256) external => boolSummary() expect bool;
-    function _.transferFrom(address, address, uint256) external => boolSummary() expect bool;
-    function _.balanceOf(address) external => uintSummary() expect uint256;
+    function _.transfer(address, uint256) external => boolSummary() expect(bool);
+    function _.transferFrom(address, address, uint256) external => boolSummary() expect(bool);
+    function _.balanceOf(address) external => uintSummary() expect(uint256);
 }
 
 function voidSummary() {
@@ -35,6 +35,7 @@ function boolSummary() returns bool {
 }
 
 persistent ghost bool ignoredCall;
+
 persistent ghost bool hasCall;
 
 hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, uint retOffset, uint retLength) uint rc {
@@ -50,6 +51,6 @@ hook CALL(uint g, address addr, uint value, uint argsOffset, uint argsLength, ui
 rule reentrancySafe(method f, env e, calldataarg data) {
     // Set up the initial state.
     require !ignoredCall && !hasCall;
-    f(e,data);
+    f(e, data);
     assert !hasCall;
 }

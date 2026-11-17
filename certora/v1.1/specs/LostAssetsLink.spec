@@ -4,19 +4,19 @@ using MorphoHarness as Morpho;
 using Util as Util;
 
 methods {
-    function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
+    function multicall(bytes[]) external returns (bytes[]) => NONDET DELETE;
 
-    function lostAssets() external returns(uint256) envfree;
-    function totalAssets() external returns(uint256) envfree;
-    function totalSupply() external returns(uint256) envfree;
-    function lastTotalAssets() external returns(uint256) envfree;
-    function realTotalAssets() external returns(uint256) envfree;
-    function newLostAssets() external returns(uint256) envfree;
-    function MORPHO() external returns(address) envfree;
+    function lostAssets() external returns (uint256) envfree;
+    function totalAssets() external returns (uint256) envfree;
+    function totalSupply() external returns (uint256) envfree;
+    function lastTotalAssets() external returns (uint256) envfree;
+    function realTotalAssets() external returns (uint256) envfree;
+    function newLostAssets() external returns (uint256) envfree;
+    function MORPHO() external returns (address) envfree;
 
     // Summaries.
-    function _.expectedSupplyAssets(MorphoHarness.MarketParams marketParams, address user) external => summaryExpectedSupplyAssets(marketParams, user) expect (uint256);
-    function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect MetaMorphoHarness.MarketParams ALL;
+    function _.expectedSupplyAssets(MorphoHarness.MarketParams marketParams, address user) external => summaryExpectedSupplyAssets(marketParams, user) expect(uint256);
+    function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect(MetaMorphoHarness.MarketParams) ALL;
 
     // We assume that the erc20 is view since what happens in the token is not relevant.
     function _.transfer(address, uint256) external => NONDET;
@@ -34,11 +34,11 @@ methods {
     function _.onMorphoLiquidate(uint256, bytes) external => NONDET;
     function _.onMorphoFlashLoan(uint256, bytes) external => NONDET;
 
-    function Morpho.supplyShares(MorphoHarness.Id, address) external returns uint256 envfree;
-    function Morpho.virtualTotalSupplyAssets(MorphoHarness.Id) external returns uint256 envfree;
-    function Morpho.virtualTotalSupplyShares(MorphoHarness.Id) external returns uint256 envfree;
+    function Morpho.supplyShares(MorphoHarness.Id, address) external returns (uint256) envfree;
+    function Morpho.virtualTotalSupplyAssets(MorphoHarness.Id) external returns (uint256) envfree;
+    function Morpho.virtualTotalSupplyShares(MorphoHarness.Id) external returns (uint256) envfree;
 
-    function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
+    function Util.libId(MetaMorphoHarness.MarketParams) external returns (MetaMorphoHarness.Id) envfree;
 }
 
 ghost ghostExpectedSupply(address, address, address, address, uint256, address) returns uint256;

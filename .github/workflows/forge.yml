@@ -1,0 +1,122 @@
+name: Forge
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  solidity-lint:
+    permissions:
+      contents: read
+    name: Solidity lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: nightly # Catch upstream Foundry changes before the next stable release.
+      - name: Prepare verification harness imports
+        run: |
+          make -C certora munged
+          make -C certora/v1.1 munged
+      - name: Lint contracts and verification harnesses
+        run: forge lint src certora --deny notes
+      - name: Lint tests
+        run: FOUNDRY_PROFILE=lint-test forge lint test --deny notes
+
+  build:
+    permissions:
+      contents: read
+    name: Compilation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: nightly # Catch upstream Foundry changes before the next stable release.
+
+      - name: Build contracts & check sizes
+        run: forge build --sizes
+
+      - name: Check foundry.lock matches submodule pins
+        run: forge build --locked
+
+  test:
+    permissions:
+      contents: read
+    needs: build
+
+    name: Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        type: ["slow", "fast"]
+        include:
+          - type: "slow"
+            fuzz-runs: 1024
+            max-test-rejects: 1048576
+            invariant-runs: 32
+            invariant-depth: 512
+          - type: "fast"
+            fuzz-runs: 256
+            max-test-rejects: 65536
+            invariant-runs: 16
+            invariant-depth: 256
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: nightly # Catch upstream Foundry changes before the next stable release.
+
+      - name: Build morpho-blue
+        run: cd lib/morpho-blue && forge build
+
+      - name: Run tests in ${{ matrix.type }} mode
+        run: forge test --deny warnings -vvv
+        env:
+          FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
+          FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
+          FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
+          FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
+          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
+
+  lint:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: nightly # Catch upstream Foundry changes before the next stable release.
+
+      - name: Run Linter
+        run: forge fmt src test certora --check

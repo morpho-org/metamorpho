@@ -2,7 +2,7 @@
 import "Enabled.spec";
 
 methods {
-    function _.supplyShares(MetaMorphoHarness.Id id, address user) external => summarySupplyshares(id, user) expect uint256;
+    function _.supplyShares(MetaMorphoHarness.Id id, address user) external => summarySupplyshares(id, user) expect(uint256);
 }
 
 ghost lastSupplyShares(MetaMorphoHarness.Id, address) returns uint256;
@@ -15,11 +15,12 @@ function summarySupplyshares(MetaMorphoHarness.Id id, address user) returns uint
 
 persistent ghost uint256 lastTimestamp;
 
-hook TIMESTAMP uint newTimestamp {
+hook TIMESTAMP() uint newTimestamp {
     // Safe require because timestamps are guaranteed to be increasing.
     require newTimestamp >= lastTimestamp;
+
     // Safe require as it corresponds to some time very far into the future.
-    require newTimestamp < 2^63;
+    require newTimestamp < 2 ^ 63;
     lastTimestamp = newTimestamp;
 }
 
@@ -50,14 +51,16 @@ rule guardianUpdateTime(env e_next, method f, calldataarg args) {
     // Assume that the guardian is already set.
     require prevGuardian != 0;
     uint256 nextGuardianUpdateTimeBeforeInteraction = nextGuardianUpdateTime(e);
+
     // Increasing nextGuardianUpdateTime with no interaction;
     assert nextGuardianUpdateTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
-    if (e_next.block.timestamp < nextTime)  {
+    if (e_next.block.timestamp < nextTime) {
         // Check that guardian cannot change.
         assert guardian() == prevGuardian;
+
         // Increasing nextGuardianUpdateTime with an interaction;
         assert nextGuardianUpdateTime(e_next) >= nextGuardianUpdateTimeBeforeInteraction;
     }
@@ -101,14 +104,16 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
     uint184 prevCap = config_(id).cap;
 
     uint256 nextCapIncreaseTimeBeforeInteraction = nextCapIncreaseTime(e_next, id);
+
     // Increasing nextCapIncreaseTime with no interaction;
     assert nextCapIncreaseTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
-    if (e_next.block.timestamp < nextTime)  {
+    if (e_next.block.timestamp < nextTime) {
         // Check that the cap cannot increase.
         assert config_(id).cap <= prevCap;
+
         // Increasing nextCapIncreaseTime with an interaction;
         assert nextCapIncreaseTime(e_next, id) >= nextCapIncreaseTimeBeforeInteraction;
     }
@@ -150,14 +155,16 @@ rule timelockDecreaseTime(env e_next, method f, calldataarg args) {
     uint256 prevTimelock = timelock();
 
     uint256 nextTimelockDecreaseTimeBeforeInteraction = nextTimelockDecreaseTime(e_next);
+
     // Increasing nextTimelockDecreaseTime with no interaction;
     assert nextTimelockDecreaseTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
-    if (e_next.block.timestamp < nextTime)  {
+    if (e_next.block.timestamp < nextTime) {
         // Check that timelock cannot decrease.
         assert timelock() >= prevTimelock;
+
         // Increasing nextTimelockDecreaseTime with an interaction;
         assert nextTimelockDecreaseTime(e_next) >= nextTimelockDecreaseTimeBeforeInteraction;
     }
@@ -189,8 +196,9 @@ rule nextRemovableTimeDoesNotRevert(MetaMorphoHarness.Id id) {
 rule removableTime(env e_next, method f, calldataarg args) {
     // The environment e yields the current time.
     env e;
+
     // Safe require as it corresponds to some time very far into the future.
-    require e.block.timestamp < 2^63;
+    require e.block.timestamp < 2 ^ 63;
 
     MetaMorphoHarness.Id id;
 
@@ -201,14 +209,16 @@ rule removableTime(env e_next, method f, calldataarg args) {
     // Assume that the market is enabled.
     require config_(id).enabled;
     uint256 nextRemovableTimeBeforeInteraction = nextRemovableTime(e_next, id);
+
     // Increasing nextRemovableTime with no interaction;
     assert nextRemovableTimeBeforeInteraction >= nextTime;
 
     f(e_next, args);
 
-    if (e_next.block.timestamp < nextTime)  {
+    if (e_next.block.timestamp < nextTime) {
         // Check that no forced removal happened.
         assert lastSupplyShares(id, currentContract) > 0 => config_(id).enabled;
+
         // Increasing nextRemovableTime with an interaction;
         assert nextRemovableTime(e_next, id) >= nextRemovableTimeBeforeInteraction;
     }

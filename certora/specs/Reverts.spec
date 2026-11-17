@@ -13,10 +13,7 @@ rule setCuratorRevertCondition(env e, address newCurator) {
 
     setCurator@withrevert(e, newCurator);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        e.msg.sender != owner ||
-        newCurator == oldCurator;
+    assert lastReverted <=> e.msg.value != 0 || e.msg.sender != owner || newCurator == oldCurator;
 }
 
 // Check all the revert conditions of the setIsAllocator function.
@@ -26,10 +23,7 @@ rule setIsAllocatorRevertCondition(env e, address newAllocator, bool newIsAlloca
 
     setIsAllocator@withrevert(e, newAllocator, newIsAllocator);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        e.msg.sender != owner ||
-        newIsAllocator == wasAllocator;
+    assert lastReverted <=> e.msg.value != 0 || e.msg.sender != owner || newIsAllocator == wasAllocator;
 }
 
 // Check all the revert conditions of the setSkimRecipient function.
@@ -39,10 +33,7 @@ rule setSkimRecipientRevertCondition(env e, address newSkimRecipient) {
 
     setSkimRecipient@withrevert(e, newSkimRecipient);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        e.msg.sender != owner ||
-        newSkimRecipient == oldSkimRecipient;
+    assert lastReverted <=> e.msg.value != 0 || e.msg.sender != owner || newSkimRecipient == oldSkimRecipient;
 }
 
 // Check the input validation conditions under which the setFee function reverts.
@@ -54,11 +45,7 @@ rule setFeeInputValidation(env e, uint256 newFee) {
 
     setFee@withrevert(e, newFee);
 
-    assert e.msg.value != 0 ||
-           e.msg.sender != owner ||
-           newFee == assert_uint256(oldFee) ||
-           (newFee != 0 && feeRecipient == 0)
-        => lastReverted;
+    assert e.msg.value != 0 || e.msg.sender != owner || newFee == assert_uint256(oldFee) || (newFee != 0 && feeRecipient == 0) => lastReverted;
 }
 
 // Check the input validation conditions under which the setFeeRecipient function reverts.
@@ -70,11 +57,7 @@ rule setFeeRecipientInputValidation(env e, address newFeeRecipient) {
 
     setFeeRecipient@withrevert(e, newFeeRecipient);
 
-    assert e.msg.value != 0 ||
-           e.msg.sender != owner ||
-           newFeeRecipient == oldFeeRecipient ||
-           (fee != 0 && newFeeRecipient == 0)
-        => lastReverted;
+    assert e.msg.value != 0 || e.msg.sender != owner || newFeeRecipient == oldFeeRecipient || (fee != 0 && newFeeRecipient == 0) => lastReverted;
 }
 
 // Check all the revert conditions of the submitGuardian function.
@@ -84,16 +67,13 @@ rule submitGuardianRevertCondition(env e, address newGuardian) {
     uint64 pendingGuardianValidAt = pendingGuardian_().validAt;
 
     requireInvariant timelockInRange();
+
     // Safe require as it corresponds to some time very far into the future.
-    require e.block.timestamp < 2^63;
+    require e.block.timestamp < 2 ^ 63;
 
     submitGuardian@withrevert(e, newGuardian);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        e.msg.sender != owner ||
-        newGuardian == oldGuardian ||
-        pendingGuardianValidAt != 0;
+    assert lastReverted <=> e.msg.value != 0 || e.msg.sender != owner || newGuardian == oldGuardian || pendingGuardianValidAt != 0;
 }
 
 // Check all the revert conditions of the submitCap function.
@@ -107,21 +87,14 @@ rule submitCapRevertCondition(env e, MetaMorphoHarness.MarketParams marketParams
     MetaMorphoHarness.MarketConfig config = config_(id);
 
     requireInvariant timelockInRange();
+
     // Safe require as it corresponds to some time very far into the future.
-    require e.block.timestamp < 2^63;
+    require e.block.timestamp < 2 ^ 63;
     requireInvariant supplyCapIsEnabled(id);
 
     submitCap@withrevert(e, marketParams, newSupplyCap);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        !hasCuratorRole ||
-        marketParams.loanToken != asset ||
-        lastUpdate == 0 ||
-        pendingCapValidAt != 0 ||
-        config.removableAt != 0 ||
-        newSupplyCap == assert_uint256(config.cap) ||
-        newSupplyCap >= 2^184;
+    assert lastReverted <=> e.msg.value != 0 || !hasCuratorRole || marketParams.loanToken != asset || lastUpdate == 0 || pendingCapValidAt != 0 || config.removableAt != 0 || newSupplyCap == assert_uint256(config.cap) || newSupplyCap >= 2 ^ 184;
 }
 
 // Check all the revert conditions of the submitMarketRemoval function.
@@ -133,18 +106,13 @@ rule submitMarketRemovalRevertCondition(env e, MetaMorphoHarness.MarketParams ma
     MetaMorphoHarness.MarketConfig config = config_(id);
 
     requireInvariant timelockInRange();
+
     // Safe require as it corresponds to some time very far into the future.
-    require e.block.timestamp < 2^63;
+    require e.block.timestamp < 2 ^ 63;
 
     submitMarketRemoval@withrevert(e, marketParams);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        !hasCuratorRole ||
-        pendingCapValidAt != 0 ||
-        config.cap != 0 ||
-        !config.enabled ||
-        config.removableAt != 0;
+    assert lastReverted <=> e.msg.value != 0 || !hasCuratorRole || pendingCapValidAt != 0 || config.cap != 0 || !config.enabled || config.removableAt != 0;
 }
 
 // Check the input validation conditions under which the setSupplyQueue function reverts.
@@ -158,11 +126,7 @@ rule setSupplyQueueInputValidation(env e, MorphoHarness.Id[] newSupplyQueue) {
 
     setSupplyQueue@withrevert(e, newSupplyQueue);
 
-    assert e.msg.value != 0 ||
-           !hasAllocatorRole ||
-           newSupplyQueue.length > maxQueueLength ||
-           anyCap == 0
-        => lastReverted;
+    assert e.msg.value != 0 || !hasAllocatorRole || newSupplyQueue.length > maxQueueLength || anyCap == 0 => lastReverted;
 }
 
 // Check the input validation conditions under which the updateWithdrawQueue function reverts.
@@ -182,11 +146,7 @@ rule updateWithdrawQueueInputValidation(env e, uint256[] indexes) {
 
     updateWithdrawQueue@withrevert(e, indexes);
 
-    assert e.msg.value != 0 ||
-           !hasAllocatorRole ||
-           anyIndex > oldLength ||
-           (i != j && anyOtherIndex == anyIndex)
-        => lastReverted;
+    assert e.msg.value != 0 || !hasAllocatorRole || anyIndex > oldLength || (i != j && anyOtherIndex == anyIndex) => lastReverted;
 }
 
 // Check the input validation conditions under which the reallocate function reverts.
@@ -196,9 +156,7 @@ rule reallocateInputValidation(env e, MetaMorphoHarness.MarketAllocation[] alloc
 
     reallocate@withrevert(e, allocations);
 
-    assert e.msg.value != 0 ||
-           !hasAllocatorRole
-        => lastReverted;
+    assert e.msg.value != 0 || !hasAllocatorRole => lastReverted;
 }
 
 // Check all the revert conditions of the revokePendingTimelock function.
@@ -207,9 +165,7 @@ rule revokePendingTimelockRevertCondition(env e) {
 
     revokePendingTimelock@withrevert(e);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        !hasGuardianRole;
+    assert lastReverted <=> e.msg.value != 0 || !hasGuardianRole;
 }
 
 // Check all the revert conditions of the revokePendingGuardian function.
@@ -218,9 +174,7 @@ rule revokePendingGuardianRevertCondition(env e) {
 
     revokePendingGuardian@withrevert(e);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        !hasGuardianRole;
+    assert lastReverted <=> e.msg.value != 0 || !hasGuardianRole;
 }
 
 // Check all the revert conditions of the revokePendingCap function.
@@ -230,9 +184,7 @@ rule revokePendingCapRevertCondition(env e, MorphoHarness.Id id) {
 
     revokePendingCap@withrevert(e, id);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        !(hasGuardianRole || hasCuratorRole);
+    assert lastReverted <=> e.msg.value != 0 || !(hasGuardianRole || hasCuratorRole);
 }
 
 // Check all the revert conditions of the revokePendingMarketRemoval function.
@@ -242,9 +194,7 @@ rule revokePendingMarketRemovalRevertCondition(env e, MorphoHarness.Id id) {
 
     revokePendingMarketRemoval@withrevert(e, id);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        !(hasGuardianRole || hasCuratorRole);
+    assert lastReverted <=> e.msg.value != 0 || !(hasGuardianRole || hasCuratorRole);
 }
 
 // Check all the revert conditions of the acceptTimelock function.
@@ -253,10 +203,7 @@ rule acceptTimelockRevertCondition(env e) {
 
     acceptTimelock@withrevert(e);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        pendingTimelockValidAt == 0 ||
-        pendingTimelockValidAt > e.block.timestamp;
+    assert lastReverted <=> e.msg.value != 0 || pendingTimelockValidAt == 0 || pendingTimelockValidAt > e.block.timestamp;
 }
 
 // Check all the revert conditions of the acceptGuardian function.
@@ -265,10 +212,7 @@ rule acceptGuardianRevertCondition(env e) {
 
     acceptGuardian@withrevert(e);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        pendingGuardianValidAt == 0 ||
-        pendingGuardianValidAt > e.block.timestamp;
+    assert lastReverted <=> e.msg.value != 0 || pendingGuardianValidAt == 0 || pendingGuardianValidAt > e.block.timestamp;
 }
 
 // Check the input validation conditions under which the acceptCap function reverts.
@@ -280,10 +224,7 @@ rule acceptCapInputValidation(env e, MetaMorphoHarness.MarketParams marketParams
 
     acceptCap@withrevert(e, marketParams);
 
-    assert e.msg.value != 0 ||
-           pendingCapValidAt == 0 ||
-           pendingCapValidAt > e.block.timestamp
-        => lastReverted;
+    assert e.msg.value != 0 || pendingCapValidAt == 0 || pendingCapValidAt > e.block.timestamp => lastReverted;
 }
 
 // Check all the revert conditions of the skim function.
@@ -294,9 +235,7 @@ rule skimRevertCondition(env e, address token) {
 
     skim@withrevert(e, token);
 
-    assert lastReverted <=>
-        e.msg.value != 0 ||
-        skimRecipient == 0;
+    assert lastReverted <=> e.msg.value != 0 || skimRecipient == 0;
 }
 
 // The mint, deposit, withdraw and redeem functions do not require to validate their input.

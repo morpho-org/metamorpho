@@ -4,8 +4,8 @@ import "Timelock.spec";
 using Util as Util;
 
 methods {
-    function Util.libId(MetaMorphoHarness.MarketParams) external returns(MetaMorphoHarness.Id) envfree;
-    function Util.libMulDivDown(uint256, uint256, uint256) external returns(uint256) envfree;
+    function Util.libId(MetaMorphoHarness.MarketParams) external returns (MetaMorphoHarness.Id) envfree;
+    function Util.libMulDivDown(uint256, uint256, uint256) external returns (uint256) envfree;
 }
 
 // Check that the fee cannot accrue to an unset fee recipient.
@@ -42,11 +42,12 @@ function isEnabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams
 // Check that having a positive cap implies that the loan asset is the asset of the vault.
 invariant enabledHasConsistentAsset(MetaMorphoHarness.MarketParams marketParams)
     isEnabledHasConsistentAsset(marketParams)
-{ preserved acceptCap(MetaMorphoHarness.MarketParams _mp) with (env e) {
-    requireInvariant pendingSupplyCapHasConsistentAsset(marketParams);
-    require e.block.timestamp > 0;
-  }
-}
+    {
+        preserved acceptCap(MetaMorphoHarness.MarketParams _mp) with (env e) {
+            requireInvariant pendingSupplyCapHasConsistentAsset(marketParams);
+            require e.block.timestamp > 0;
+        }
+    }
 
 function hasSupplyCapIsNotMarkedForRemoval(MetaMorphoHarness.Id id) returns bool {
     MetaMorphoHarness.MarketConfig config = config_(id);

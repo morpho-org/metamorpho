@@ -2,7 +2,7 @@
 import "DistinctIdentifiers.spec";
 
 function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
-    if(i >= withdrawQueueLength()) return true;
+    if (i >= withdrawQueueLength()) return true;
 
     MetaMorphoHarness.Id id = withdrawQueue(i);
 
@@ -12,9 +12,7 @@ function isInWithdrawQueueIsEnabled(uint256 i) returns bool {
 // Check that markets in the withdraw queue are enabled.
 invariant inWithdrawQueueIsEnabled(uint256 i)
     isInWithdrawQueueIsEnabled(i)
-filtered {
-    f -> f.selector != sig:updateWithdrawQueue(uint256[]).selector
-}
+    filtered { f -> f.selector != sig:updateWithdrawQueue(uint256[]).selector }
 
 rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint256[] indexes) {
     uint256 j;
@@ -25,6 +23,7 @@ rule inWithdrawQueueIsEnabledPreservedUpdateWithdrawQueue(env e, uint256 i, uint
     updateWithdrawQueue(e, indexes);
 
     MetaMorphoHarness.Id id = withdrawQueue(i);
+
     // Safe require because j is not otherwise constrained.
     // The ghost variable deletedAt is useful to make sure that markets are not permuted and deleted at the same time in updateWithdrawQueue.
     require j == deletedAt(id);

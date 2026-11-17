@@ -10,23 +10,24 @@ function hasNoBadPendingTimelock() returns bool {
 // Check that having no pending timelock value is equivalent to having its valid timestamp at 0.
 invariant noBadPendingTimelock()
     hasNoBadPendingTimelock()
-{
-    preserved with (env e) {
-        requireInvariant timelockInRange();
-        // Safe require as it corresponds to some time very far into the future.
-        require e.block.timestamp < 2^63;
+    {
+        preserved with (env e) {
+            requireInvariant timelockInRange();
+
+            // Safe require as it corresponds to some time very far into the future.
+            require e.block.timestamp < 2 ^ 63;
+        }
     }
-}
 
 // Check that the pending timelock value is always strictly smaller than the current timelock value.
 invariant smallerPendingTimelock()
     assert_uint256(pendingTimelock_().value) < timelock()
-{
-    preserved {
-        requireInvariant pendingTimelockInRange();
-        requireInvariant timelockInRange();
+    {
+        preserved {
+            requireInvariant pendingTimelockInRange();
+            requireInvariant timelockInRange();
+        }
     }
-}
 
 function hasNoBadPendingCap(MetaMorphoHarness.Id id) returns bool {
     MetaMorphoHarness.PendingUint192 pendingCap = pendingCap_(id);
@@ -37,13 +38,14 @@ function hasNoBadPendingCap(MetaMorphoHarness.Id id) returns bool {
 // Check that having no pending cap value is equivalent to having its valid timestamp at 0.
 invariant noBadPendingCap(MetaMorphoHarness.Id id)
     hasNoBadPendingCap(id)
-{
-    preserved with (env e) {
-        requireInvariant timelockInRange();
-        // Safe require as it corresponds to some time very far into the future.
-        require e.block.timestamp < 2^63;
+    {
+        preserved with (env e) {
+            requireInvariant timelockInRange();
+
+            // Safe require as it corresponds to some time very far into the future.
+            require e.block.timestamp < 2 ^ 63;
+        }
     }
-}
 
 function isGreaterPendingCap(MetaMorphoHarness.Id id) returns bool {
     uint192 pendingCapValue = pendingCap_(id).value;
@@ -66,13 +68,14 @@ function hasNoBadPendingGuardian() returns bool {
 // Check that when its valid timestamp at 0 the pending guardian is the zero address.
 invariant noBadPendingGuardian()
     hasNoBadPendingGuardian()
-{
-    preserved with (env e) {
-        requireInvariant timelockInRange();
-        // Safe require as it corresponds to some time very far into the future.
-        require e.block.timestamp < 2^63;
+    {
+        preserved with (env e) {
+            requireInvariant timelockInRange();
+
+            // Safe require as it corresponds to some time very far into the future.
+            require e.block.timestamp < 2 ^ 63;
+        }
     }
-}
 
 function isDifferentPendingGuardian() returns bool {
     address pendingGuardianAddress = pendingGuardian_().value;

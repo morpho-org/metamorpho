@@ -7,13 +7,110 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
+  matrix:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      confs: ${{ steps.list.outputs.confs }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: list
+        run: echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+
+  format:
+    permissions:
+      contents: read
+    name: Certora formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ">=3.15.2"
+      - run: pip install certora-cli==8.20.3
+      - name: Check every config and spec, including shared helpers
+        run: |
+          formatted="$(mktemp)"
+          trap 'rm -f "$formatted"' EXIT
+          while IFS= read -r -d '' file; do
+            jq . "$file" > "$formatted"
+            diff -u "$file" "$formatted"
+          done < <(find certora/confs certora/v1.1/confs -type f -name '*.conf' -print0 | sort -z)
+          while IFS= read -r -d '' file; do
+            certoraCVLFormatter "$file" | sed 's/[[:blank:]]*$//' > "$formatted"
+            diff -u "$file" "$formatted"
+          done < <(find certora -type f -name '*.spec' -print0 | sort -z)
+
   verify:
+    permissions:
+      contents: read
+    needs: [matrix, format]
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: false
+      matrix:
+        conf: ${{ fromJson(needs.matrix.outputs.confs) }}
 
+    steps:
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ">=3.15.2"
+
+      - name: Install certora
+        run: pip install certora-cli==8.20.3
+
+      - name: Install solc (0.8.19)
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux
+          echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  solc-static-linux" | sha256sum --check --strict
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.19
+
+      - name: Install solc (0.8.21)
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+          echo "f2857a898be15c69e8de5598dcd3f3e169e94964a0ce9a0bbb1b111f145a81df  solc-static-linux" | sha256sum --check --strict
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.21
+
+      - name: Apply munging
+        run: make -C certora munged
+
+      - name: Verify ${{ matrix.conf }} specification
+        run: certoraRun "certora/confs/$CONF.conf"
+        env:
+          CONF: ${{ matrix.conf }}
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
+
+  verify-v1-1:
+    permissions:
+      contents: read
+    needs: format
+    runs-on: ubuntu-latest
+
+    strategy:
       matrix:
         conf:
           - ConsistentState
@@ -22,6 +119,8 @@ jobs:
           - Immutability
           - LastUpdated
           - Liveness
+          - LostAssetsLink
+          - LostAssetsNoLink
           - MarketInteractions
           - PendingValues
           - Range
@@ -33,34 +132,42 @@ jobs:
           - Tokens
 
     steps:
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           submodules: recursive
 
       - name: Install python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.15.2"
+          python-version: ">=3.15.2"
 
       - name: Install certora
-        run: pip install certora-cli
+        run: pip install certora-cli==8.20.3
 
       - name: Install solc (0.8.19)
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux
+          echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  solc-static-linux" | sha256sum --check --strict
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc-0.8.19
 
-      - name: Install solc (0.8.21)
+      - name: Install solc (0.8.26)
         run: |
-          wget https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.26/solc-static-linux
+          echo "d5f23436f443edb85d8e76906d12f0a86ce0490e7663a9e608efeb7a93f149ef  solc-static-linux" | sha256sum --check --strict
           chmod +x solc-static-linux
-          sudo mv solc-static-linux /usr/local/bin/solc-0.8.21
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.26
 
       - name: Apply munging
-        run: make -C certora munged
+        run: make -C certora/v1.1 munged
 
       - name: Verify ${{ matrix.conf }} specification
-        run: certoraRun certora/confs/${{ matrix.conf }}.conf
+        run: certoraRun "certora/v1.1/confs/$CONF.conf"
         env:
+          CONF: ${{ matrix.conf }}
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
