@@ -1,0 +1,68 @@
+name: Certora V1.1
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        conf:
+          - ConsistentState
+          - DistinctIdentifiers
+          - Enabled
+          - Immutability
+          - LastUpdated
+          - Liveness
+          - LostAssetsLink
+          - LostAssetsNoLink
+          - MarketInteractions
+          - PendingValues
+          - Range
+          - Reentrancy
+          - Reverts
+          - Roundtrip
+          - Roles
+          - Timelock
+          - Tokens
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Install python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15.2"
+
+      - name: Install certora
+        run: pip install certora-cli
+
+      - name: Install solc (0.8.19)
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.19
+
+      - name: Install solc (0.8.26)
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.26/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.26
+
+      - name: Apply munging
+        run: make -C certora/v1.1 munged
+
+      - name: Verify ${{ matrix.conf }} specification
+        run: certoraRun certora/v1.1/confs/${{ matrix.conf }}.conf
+        env:
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}

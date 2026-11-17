@@ -1,15 +1,20 @@
 [profile.default]
 libs = ["lib"]
-evm_version = "paris"
+evm_version = "cancun"
 via_ir = true
 optimizer = true
 optimizer_runs = 200
 bytecode_hash = "ipfs"
 additional_compiler_profiles = [
-    { name = "public-allocator", optimizer_runs = 999999, bytecode_hash = "None" },
+    { name = "v1.0", evm_version = "paris" },
+    { name = "public-allocator", optimizer_runs = 999999, evm_version = "paris", bytecode_hash = "None" },
+    { name = "v1.1", evm_version = "cancun", bytecode_hash = "None" },
 ]
 compilation_restrictions = [
-    { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999, bytecode_hash = "None" },
+    { paths = "src/MetaMorpho*.sol", optimizer_runs = 200, evm_version = "paris", bytecode_hash = "Ipfs" },
+    { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999, evm_version = "paris", bytecode_hash = "None" },
+    { paths = "src/v1.1/**", evm_version = "cancun", bytecode_hash = "None" },
+    { paths = "test/v1.1/**", evm_version = "cancun", bytecode_hash = "None" },
 ]
 
 [profile.default.fmt]
