@@ -12,9 +12,6 @@ compilation_restrictions = [
     { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999, bytecode_hash = "None" },
 ]
 
-[profile.default.fmt]
-wrap_comments = true
-
 [lint]
 exclude_lints = [
     "arbitrary-send-erc20",
