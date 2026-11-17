@@ -25,4 +25,37 @@ exclude_lints = [
     "unsafe-typecast",
     "asm-keccak256",
     "block-timestamp",
+    # Existing implementation baseline; enabling CI must preserve audited bytecode.
+    "arbitrary-send-erc20",
+    "arbitrary-send-eth",
+    "calls-loop",
+    "missing-zero-check",
+    "reentrancy-events",
+    "reentrancy-no-eth",
+    "require-revert-in-loop",
+    "uninitialized-local",
+    "unused-return",
+]
+
+# Test-only baseline. Lists replace rather than extend the default exclusions.
+[profile.lint-test.lint]
+exclude_lints = [
+    "unaliased-plain-import",
+    "unused-import",
+    "erc20-unchecked-transfer",
+    "unwrapped-modifier-logic",
+    "mixed-case-variable",
+    "unsafe-typecast",
+    "asm-keccak256",
+    "block-timestamp",
+    "arbitrary-send-erc20",
+    "arbitrary-send-eth",
+    "calls-loop",
+    "missing-zero-check",
+    "reentrancy-events",
+    "reentrancy-no-eth",
+    "require-revert-in-loop",
+    "uninitialized-local",
+    "unused-return",
+    "environment-read-across-mutation",
 ]

@@ -7,32 +7,60 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      confs: ${{ steps.list.outputs.confs }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: list
+        run: echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+
+  format:
+    name: Certora formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15.2"
+      - run: pip install certora-cli==8.20.3
+      - name: Check every config and spec, including shared helpers
+        run: |
+          formatted="$(mktemp)"
+          trap 'rm -f "$formatted"' EXIT
+          while IFS= read -r -d '' file; do
+            jq . "$file" > "$formatted"
+            diff -u "$file" "$formatted"
+          done < <(find certora/confs -type f -name '*.conf' -print0 | sort -z)
+          while IFS= read -r -d '' file; do
+            certoraCVLFormatter "$file" | sed 's/[[:blank:]]*$//' > "$formatted"
+            diff -u "$file" "$formatted"
+          done < <(find certora -type f -name '*.spec' -print0 | sort -z)
+
   verify:
+    needs: [matrix, format]
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
 
       matrix:
-        conf:
-          - ConsistentState
-          - DistinctIdentifiers
-          - Enabled
-          - Immutability
-          - LastUpdated
-          - Liveness
-          - MarketInteractions
-          - PendingValues
-          - Range
-          - Reentrancy
-          - Reverts
-          - Roundtrip
-          - Roles
-          - Timelock
-          - Tokens
+        conf: ${{ fromJson(needs.matrix.outputs.confs) }}
 
     steps:
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
@@ -43,17 +71,19 @@ jobs:
           python-version: "3.15.2"
 
       - name: Install certora
-        run: pip install certora-cli
+        run: pip install certora-cli==8.20.3
 
       - name: Install solc (0.8.19)
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux
+          echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  solc-static-linux" | sha256sum --check --strict
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc-0.8.19
 
       - name: Install solc (0.8.21)
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+          echo "f2857a898be15c69e8de5598dcd3f3e169e94964a0ce9a0bbb1b111f145a81df  solc-static-linux" | sha256sum --check --strict
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc-0.8.21
 
@@ -61,6 +91,7 @@ jobs:
         run: make -C certora munged
 
       - name: Verify ${{ matrix.conf }} specification
-        run: certoraRun certora/confs/${{ matrix.conf }}.conf
+        run: certoraRun "certora/confs/$CONF.conf"
         env:
+          CONF: ${{ matrix.conf }}
           CERTORAKEY: ${{ secrets.CERTORAKEY }}

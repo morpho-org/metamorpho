@@ -10,8 +10,28 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 jobs:
-  forge-old:
+  test:
+    strategy:
+      fail-fast: true
+      matrix:
+        type: ["slow", "fast"]
+        include:
+          - type: "slow"
+            fuzz-runs: 1024
+            max-test-rejects: 1048576
+            invariant-runs: 32
+            invariant-depth: 512
+          - type: "fast"
+            fuzz-runs: 256
+            max-test-rejects: 65536
+            invariant-runs: 16
+            invariant-depth: 256
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -40,4 +60,20 @@ jobs:
       - name: Build morpho-blue
         run: cd lib/morpho-blue && forge build --offline
       - name: Run Forge tests
-        run: forge test --offline
+        run: forge test --offline -vvv
+        env:
+          FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
+          FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
+          FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
+          FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
+          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
+
+  forge-old:
+    if: ${{ always() }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every legacy test combination
+        env:
+          RESULT: ${{ needs.test.result }}
+        run: test "$RESULT" = success

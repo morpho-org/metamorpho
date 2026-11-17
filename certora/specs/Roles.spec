@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 methods {
     // Only verify the admin functions, not the main entrypoints.
-    function multicall(bytes[]) external returns(bytes[]) => NONDET DELETE;
-    function deposit(uint256, address) external returns(uint256) => NONDET DELETE;
-    function mint(uint256, address) external returns(uint256) => NONDET DELETE;
-    function withdraw(uint256, address, address) external returns(uint256) => NONDET DELETE;
-    function redeem(uint256, address, address) external returns(uint256) => NONDET DELETE;
+    function multicall(bytes[]) external returns (bytes[]) => NONDET DELETE;
+    function deposit(uint256, address) external returns (uint256) => NONDET DELETE;
+    function mint(uint256, address) external returns (uint256) => NONDET DELETE;
+    function withdraw(uint256, address, address) external returns (uint256) => NONDET DELETE;
+    function redeem(uint256, address, address) external returns (uint256) => NONDET DELETE;
 
-    function owner() external returns(address) envfree;
-    function pendingOwner() external returns(address) envfree;
-    function curator() external returns(address) envfree;
-    function guardian() external returns(address) envfree;
-    function isAllocator(address target) external returns(bool) envfree;
+    function owner() external returns (address) envfree;
+    function pendingOwner() external returns (address) envfree;
+    function curator() external returns (address) envfree;
+    function guardian() external returns (address) envfree;
+    function isAllocator(address target) external returns (bool) envfree;
 
     // Summarize Morpho external calls, as they don't depend on the authorization system of MetaMorpho.
     function _.idToMarketParams(MetaMorphoHarness.Id) external => CONSTANT;
@@ -24,7 +24,7 @@ methods {
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => CONSTANT;
 
     // Summarize MetaMorpho seen as a token, useful for `transferFrom`.
-    function allowance(address, address) internal returns(uint256) => CONSTANT;
+    function allowance(address, address) internal returns (uint256) => CONSTANT;
     function ERC20._transfer(address, address, uint256) internal => CONSTANT;
 
     // Summarize other tokens, useful for `skim`.
@@ -33,14 +33,11 @@ methods {
 }
 
 // Check that the owner has more power than the guardian.
-rule ownerIsGuardian(method f, calldataarg args)
-filtered {
-    f -> !f.isView
-}
-{
+rule ownerIsGuardian(method f, calldataarg args) filtered { f -> !f.isView } {
     storage initial = lastStorage;
 
-    env e1; env e2;
+    env e1;
+    env e2;
     require e1.block.timestamp == e2.block.timestamp;
     require e1.msg.value == e2.msg.value;
 
@@ -61,14 +58,11 @@ filtered {
 }
 
 // Check that the owner has more power than the curator.
-rule ownerIsCurator(method f, calldataarg args)
-filtered {
-    f -> !f.isView
-}
-{
+rule ownerIsCurator(method f, calldataarg args) filtered { f -> !f.isView } {
     storage initial = lastStorage;
 
-    env e1; env e2;
+    env e1;
+    env e2;
     require e1.block.timestamp == e2.block.timestamp;
     require e1.msg.value == e2.msg.value;
 
@@ -89,14 +83,11 @@ filtered {
 }
 
 // Check that the curator has more power than allocators.
-rule curatorIsAllocator(method f, calldataarg args)
-filtered {
-    f -> !f.isView
-}
-{
+rule curatorIsAllocator(method f, calldataarg args) filtered { f -> !f.isView } {
     storage initial = lastStorage;
 
-    env e1; env e2;
+    env e1;
+    env e2;
     require e1.block.timestamp == e2.block.timestamp;
     require e1.msg.value == e2.msg.value;
 
