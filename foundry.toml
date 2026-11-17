@@ -17,9 +17,6 @@ compilation_restrictions = [
     { paths = "test/v1.1/**", evm_version = "cancun", bytecode_hash = "None" },
 ]
 
-[profile.default.fmt]
-wrap_comments = true
-
 [lint]
 exclude_lints = [
     "arbitrary-send-erc20",
