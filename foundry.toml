@@ -38,8 +38,14 @@ exclude_lints = [
 ]
 
 # Test-only baseline. Lists replace rather than extend the default exclusions.
+# Lint test/ as ordinary Solidity instead of applying Forge's test-only rule filter.
+[profile.lint-test]
+test = ".forge-lint-unused"
+
 [profile.lint-test.lint]
 exclude_lints = [
+    # Test stubs intentionally have empty bodies.
+    "empty-block",
     "unaliased-plain-import",
     "unused-import",
     "erc20-unchecked-transfer",
