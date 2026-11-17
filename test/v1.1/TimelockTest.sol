@@ -241,7 +241,7 @@ contract TimelockTest is IntegrationTest {
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
-        vm.warp(block.timestamp + elapsed);
+        vm.warp(vm.getBlockTimestamp() + elapsed);
 
         address guardian = makeAddr("Guardian2");
 
@@ -398,7 +398,7 @@ contract TimelockTest is IntegrationTest {
         vm.prank(OWNER);
         vault.submitTimelock(timelock);
 
-        vm.warp(block.timestamp + elapsed);
+        vm.warp(vm.getBlockTimestamp() + elapsed);
 
         MarketParams memory marketParams = allMarkets[0];
 

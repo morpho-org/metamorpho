@@ -76,7 +76,7 @@ contract IntegrationTest is BaseTest {
         if (newTimelock == timelock) return;
 
         // block.timestamp defaults to 1 which may lead to an unrealistic state: block.timestamp < timelock.
-        if (block.timestamp < timelock) vm.warp(block.timestamp + timelock);
+        if (vm.getBlockTimestamp() < timelock) vm.warp(vm.getBlockTimestamp() + timelock);
 
         PendingUint192 memory pendingTimelock = vault.pendingTimelock();
         if (pendingTimelock.validAt == 0 || newTimelock != pendingTimelock.value) {
@@ -86,7 +86,7 @@ contract IntegrationTest is BaseTest {
 
         if (newTimelock > timelock) return;
 
-        vm.warp(block.timestamp + timelock);
+        vm.warp(vm.getBlockTimestamp() + timelock);
 
         vault.acceptTimelock();
 
@@ -136,7 +136,7 @@ contract IntegrationTest is BaseTest {
 
         if (newCap < cap) return;
 
-        vm.warp(block.timestamp + vault.timelock());
+        vm.warp(vm.getBlockTimestamp() + vault.timelock());
 
         vault.acceptCap(marketParams);
 
