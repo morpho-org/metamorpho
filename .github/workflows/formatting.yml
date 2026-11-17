@@ -26,7 +26,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
         with:
-          version: stable # Deliberately exercise the current stable release.
+          version: nightly # Catch upstream Foundry changes before the next stable release.
 
       - name: Run Linter
         run: forge fmt --check
