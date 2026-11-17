@@ -10,8 +10,8 @@ It enables anyone to create a vault depositing liquidity into multiple Morpho Bl
 It offers a seamless experience similar to Aave and Compound.
 
 Users of MetaMorpho are liquidity providers who want to earn from borrowing interest without having to actively manage the risk of their position.
-The active management of the deposited assets is the responsibility of a set of different roles (owner, curator and allocators).
-These roles are primarily responsible for enabling and disabling markets on Morpho Blue and managing the allocation of users’ funds.
+The curation of the deposited assets is handled by a set of different roles (owner, curator and allocators).
+These roles are primarily responsible for enabling and disabling markets on Morpho Blue and allocating the vault's liquidity across them.
 
 [`MetaMorpho`](./src/MetaMorpho.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
 One MetaMorpho vault is related to one loan asset on Morpho Blue.
@@ -87,7 +87,7 @@ It can:
   - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the `withdrawQueue` in the order set.
   - The `supplyQueue` only contains markets which cap has previously been non-zero.
   - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
-- Instantaneously reallocate funds by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
+- Instantaneously reallocate liquidity by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
 
 > **Warning**
 > If `supplyQueue` is empty, depositing to the vault is disabled.
@@ -142,7 +142,7 @@ Below is a typical example of how this use case would take place:
   Thus, this step might be already performed by some third-party.
   Note: the amount of rewards transferred corresponds to the vault's balance of reward asset.
 
-- Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault manager’s rewards re-distribution strategy.
+- Compute the new root for the vault’s rewards distributor, submit it, wait for the timelock (if any), accept the root, and let vault depositors claim their rewards according to the vault owner’s rewards re-distribution rules.
 
 ## Emergency
 
@@ -174,7 +174,7 @@ Warning : Funds previously supplied in forced removed markets will be lost perma
 
 ### Curator takeover
 
-If the curator starts to submit positive caps for unsafe markets that are not in line with the vault risk strategy, the owner of the vault can:
+If the curator starts to submit positive caps for unsafe markets that are not in line with the vault risk parameters, the owner of the vault can:
 
 - 1. Set a new curator with the `setCurator` function.
 - 2. Revoke the pending caps submitted by the curator (this can also be done by the guardian or the new curator).
@@ -182,12 +182,12 @@ If the curator starts to submit positive caps for unsafe markets that are not in
 
 ### Allocator takeover
 
-If one of the allocators starts setting the withdraw queue and/or supply queue that are not in line with the vault risk strategy, or incoherently reallocating the funds, the owner of the vault should:
+If one of the allocators starts setting the withdraw queue and/or supply queue that are not in line with the vault risk parameters, or incoherently reallocating liquidity, the owner of the vault should:
 
 - 1. Deprive the faulty allocator from his privileges with the `setIsAllocator` function.
-- 2. Reallocate the funds in a way consistent with the vault risk strategy with the `reallocate` function (this can also be done by the curator or the other allocators).
-- 3. Set a new withdraw queue that is in line with the vault risk strategy with the `updateWithdrawQueue` function (this can also be done by the curator or the other allocators).
-- 4. Set a new supply queue that is in line with the vault risk strategy with the `setSupplyQueue` function (this can also be done by the curator or the other allocators).
+- 2. Reallocate liquidity in a way consistent with the vault risk parameters with the `reallocate` function (this can also be done by the curator or the other allocators).
+- 3. Set a new withdraw queue that is in line with the vault risk parameters with the `updateWithdrawQueue` function (this can also be done by the curator or the other allocators).
+- 4. Set a new supply queue that is in line with the vault risk parameters with the `setSupplyQueue` function (this can also be done by the curator or the other allocators).
 
 ## Developers
 
