@@ -81,7 +81,7 @@ contract PublicAllocatorTest is IntegrationTest {
         _sortSupplyQueueIdleLast();
     }
 
-    function testAdmin() public {
+    function testAdmin() public view {
         assertEq(publicAllocator.admin(address(vault)), address(0));
     }
 
@@ -549,7 +549,7 @@ contract PublicAllocatorTest is IntegrationTest {
         publicAllocator.reallocateTo(address(vault), withdrawals, allMarkets[0]);
     }
 
-    function testMaxFlowCapValue() public {
+    function testMaxFlowCapValue() public pure {
         assertEq(MAX_SETTABLE_FLOW_CAP, 170141183460469231731687303715884105727);
     }
 
