@@ -52,5 +52,3 @@ exclude_lints = [
     "unused-return",
     "unwrapped-modifier-logic",
 ]
-
-# Lint test/ as ordinary Solidity instead of applying Forge's test-only rule filter.
