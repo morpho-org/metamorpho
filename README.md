@@ -11,7 +11,7 @@ It offers a seamless experience similar to Aave and Compound.
 
 Users of MetaMorpho are liquidity providers who want to earn from borrowing interest without having to actively manage the risk of their position.
 The curation of the deposited assets is handled by a set of different roles (owner, curator and allocators).
-These roles are primarily responsible for enabling and disabling markets on Morpho Blue and allocating the vault's liquidity across them.
+These roles are primarily responsible for enabling and disabling markets on Morpho Blue and allocating the vault's assets across them.
 
 [`MetaMorpho`](./src/MetaMorpho.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
 One MetaMorpho vault is related to one loan asset on Morpho Blue.
@@ -87,7 +87,7 @@ It can:
   - Upon a withdrawal, the vault will withdraw up to the liquidity of each Morpho Blue market in the `withdrawQueue` in the order set.
   - The `supplyQueue` only contains markets which cap has previously been non-zero.
   - The `withdrawQueue` contains all markets that have a non-zero cap or a non-zero vault allocation.
-- Instantaneously reallocate liquidity by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
+- Instantaneously reallocate assets by supplying on markets of the `withdrawQueue` and withdrawing from markets that have the same loan asset as the vault's asset.
 
 > **Warning**
 > If `supplyQueue` is empty, depositing to the vault is disabled.
@@ -182,10 +182,10 @@ If the curator starts to submit positive caps for unsafe markets that are not in
 
 ### Allocator takeover
 
-If one of the allocators starts setting the withdraw queue and/or supply queue that are not in line with the vault risk parameters, or incoherently reallocating liquidity, the owner of the vault should:
+If one of the allocators starts setting the withdraw queue and/or supply queue that are not in line with the vault risk parameters, or incoherently reallocating assets, the owner of the vault should:
 
 - 1. Deprive the faulty allocator from his privileges with the `setIsAllocator` function.
-- 2. Reallocate liquidity in a way consistent with the vault risk parameters with the `reallocate` function (this can also be done by the curator or the other allocators).
+- 2. Reallocate assets in a way consistent with the vault risk parameters with the `reallocate` function (this can also be done by the curator or the other allocators).
 - 3. Set a new withdraw queue that is in line with the vault risk parameters with the `updateWithdrawQueue` function (this can also be done by the curator or the other allocators).
 - 4. Set a new supply queue that is in line with the vault risk parameters with the `setSupplyQueue` function (this can also be done by the curator or the other allocators).
 
