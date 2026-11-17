@@ -151,7 +151,7 @@ jobs:
           python-version: ">=3.15.2"
 
       - name: Install certora
-        run: pip install certora-cli==8.20.3
+        run: pip install certora-cli
 
       - name: Install solc (0.8.19)
         run: |
