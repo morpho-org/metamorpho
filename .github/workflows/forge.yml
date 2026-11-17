@@ -49,7 +49,7 @@ jobs:
           version: nightly # Catch upstream Foundry changes before the next stable release.
 
       - name: Build contracts & check sizes
-        run: forge build --force --sizes # don't use compilation cache
+        run: forge build --sizes
 
       - name: Check foundry.lock matches submodule pins
         run: forge build --locked
@@ -117,4 +117,4 @@ jobs:
           version: nightly # Catch upstream Foundry changes before the next stable release.
 
       - name: Run Linter
-        run: forge fmt --check
+        run: forge fmt src test certora --check
