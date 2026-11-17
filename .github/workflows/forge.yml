@@ -98,7 +98,7 @@ jobs:
           FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
           FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
-          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
+          FOUNDRY_FUZZ_SEED: 0x${{ github.sha }}
 
   lint:
     permissions:
