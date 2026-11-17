@@ -57,7 +57,6 @@ jobs:
   test:
     permissions:
       contents: read
-    needs: build
 
     name: Tests
     runs-on: ubuntu-latest
