@@ -13,7 +13,7 @@ invariant noBadPendingTimelock()
     {
         preserved with (env e) {
             requireInvariant timelockInRange();
-
+        
             // Safe require as it corresponds to some time very far into the future.
             require e.block.timestamp < 2 ^ 63;
         }
@@ -41,7 +41,7 @@ invariant noBadPendingCap(MetaMorphoHarness.Id id)
     {
         preserved with (env e) {
             requireInvariant timelockInRange();
-
+        
             // Safe require as it corresponds to some time very far into the future.
             require e.block.timestamp < 2 ^ 63;
         }
@@ -71,7 +71,7 @@ invariant noBadPendingGuardian()
     {
         preserved with (env e) {
             requireInvariant timelockInRange();
-
+        
             // Safe require as it corresponds to some time very far into the future.
             require e.block.timestamp < 2 ^ 63;
         }

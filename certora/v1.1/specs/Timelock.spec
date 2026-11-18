@@ -60,7 +60,7 @@ rule guardianUpdateTime(env e_next, method f, calldataarg args) {
     if (e_next.block.timestamp < nextTime) {
         // Check that guardian cannot change.
         assert guardian() == prevGuardian;
-
+    
         // Increasing nextGuardianUpdateTime with an interaction;
         assert nextGuardianUpdateTime(e_next) >= nextGuardianUpdateTimeBeforeInteraction;
     }
@@ -113,7 +113,7 @@ rule capIncreaseTime(env e_next, method f, calldataarg args) {
     if (e_next.block.timestamp < nextTime) {
         // Check that the cap cannot increase.
         assert config_(id).cap <= prevCap;
-
+    
         // Increasing nextCapIncreaseTime with an interaction;
         assert nextCapIncreaseTime(e_next, id) >= nextCapIncreaseTimeBeforeInteraction;
     }
@@ -164,7 +164,7 @@ rule timelockDecreaseTime(env e_next, method f, calldataarg args) {
     if (e_next.block.timestamp < nextTime) {
         // Check that timelock cannot decrease.
         assert timelock() >= prevTimelock;
-
+    
         // Increasing nextTimelockDecreaseTime with an interaction;
         assert nextTimelockDecreaseTime(e_next) >= nextTimelockDecreaseTimeBeforeInteraction;
     }
@@ -218,7 +218,7 @@ rule removableTime(env e_next, method f, calldataarg args) {
     if (e_next.block.timestamp < nextTime) {
         // Check that no forced removal happened.
         assert lastSupplyShares(id, currentContract) > 0 => config_(id).enabled;
-
+    
         // Increasing nextRemovableTime with an interaction;
         assert nextRemovableTime(e_next, id) >= nextRemovableTimeBeforeInteraction;
     }
