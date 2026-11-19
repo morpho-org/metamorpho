@@ -49,7 +49,7 @@ After the timelock, the action can be executed by anyone.
 
 V1.1 differs from V1.0 in four ways:
 
-- It does not realize bad debt (see the [`lostAssets` documentation](./src/v1.1/interfaces/IMetaMorphoV1_1.sol#L82-L85)).
+- It does not realize bad debt (see the `lostAssets` comments in [documentation](./src/v1.1/interfaces/IMetaMorphoV1_1.sol)).
 - The timelock can be set to 0 at deployment.
 - The owner can change the vault's name and symbol.
 - `reallocate` always reverts if the market is not enabled in the vault.
