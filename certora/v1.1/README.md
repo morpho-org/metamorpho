@@ -198,7 +198,7 @@ Other checks are done to ensure the safety of the code:
 
 ## Folders and file structure
 
-The [`certora/specs`](specs) folder contains the following files:
+The [`certora/v1.1/specs`](specs) folder contains the following files:
 
 - [`ConsistentState.spec`](specs/ConsistentState.spec) checks various properties specifying what is the consistent state of MetaMorpho, what are the reachable setting configurations (such as caps and fee).
 - [`DistinctIdentifiers.spec`](specs/DistinctIdentifiers.spec) checks that the withdraw queue has no duplicate markets.
@@ -217,10 +217,10 @@ The [`certora/specs`](specs) folder contains the following files:
 
 The [`certora/v1.1/confs`](confs) folder contains a configuration file for each corresponding specification file.
 
-The [`certora/helpers`](helpers) folder contains helper contracts that enable the verification of MetaMorpho.
+The [`certora/v1.1/helpers`](helpers) folder contains helper contracts that enable the verification of MetaMorpho.
 Notably, this allows handling the fact that library functions should be called from a contract to be verified independently, and it allows defining needed getters.
 
-The [`certora/dispatch`](dispatch) folder contains different contracts similar to the ones that are expected to be called from MetaMorpho.
+The [`certora/v1.1/dispatch`](dispatch) folder contains different contracts similar to the ones that are expected to be called from MetaMorpho.
 
 ## Specification imports graph
 

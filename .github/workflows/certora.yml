@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - id: list
         run: |
-          echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+          echo "confs=$(find certora/v1.0/confs -type f -name '*.conf' | sed 's|^certora/v1.0/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
           echo "confs-v1-1=$(find certora/v1.1/confs -type f -name '*.conf' | sed 's|^certora/v1.1/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
 
   format:
@@ -54,7 +54,7 @@ jobs:
       - run: pip install certora-cli
       - name: Run Certora Config Linter
         run: |
-          find certora/confs certora/v1.1/confs -type f -name '*.conf' | sort |
+          find certora/v1.0/confs certora/v1.1/confs -type f -name '*.conf' | sort |
           while read -r file; do
             jq . "$file" | diff -u "$file" -
           done
@@ -116,10 +116,10 @@ jobs:
           sudo mv solc-static-linux /usr/local/bin/solc-0.8.21
 
       - name: Apply munging
-        run: make -C certora munged
+        run: make -C certora/v1.0 munged
 
       - name: Verify ${{ matrix.conf }} specification
-        run: certoraRun "certora/confs/$CONF.conf"
+        run: certoraRun "certora/v1.0/confs/$CONF.conf"
         env:
           CONF: ${{ matrix.conf }}
           CERTORAKEY: ${{ secrets.CERTORAKEY }}

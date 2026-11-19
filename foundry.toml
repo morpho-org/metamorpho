@@ -12,7 +12,7 @@ additional_compiler_profiles = [
     { name = "v1.1", evm_version = "cancun", bytecode_hash = "None" },
 ]
 compilation_restrictions = [
-    { paths = "src/MetaMorpho*.sol", optimizer_runs = 200, evm_version = "paris", bytecode_hash = "Ipfs" },
+    { paths = "src/v1.0/MetaMorpho*.sol", optimizer_runs = 200, evm_version = "paris", bytecode_hash = "Ipfs" },
     { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999, evm_version = "paris", bytecode_hash = "None" },
     { paths = "src/v1.1/**", evm_version = "cancun", bytecode_hash = "None" },
     { paths = "test/v1.1/**", evm_version = "cancun", bytecode_hash = "None" },

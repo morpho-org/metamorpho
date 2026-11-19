@@ -10,7 +10,7 @@ import {
     IMorpho,
     Id,
     stdError
-} from "../../helpers/IntegrationTest.sol";
+} from "../../v1.0/helpers/IntegrationTest.sol";
 import {
     PublicAllocator,
     FlowCapsConfig,

@@ -5,9 +5,9 @@
 
 ## Overview
 
-This repository contains MetaMorpho [V1.0](./src/MetaMorpho.sol), [V1.1](./src/v1.1/MetaMorphoV1_1.sol), and the [Public Allocator](./src/periphery/public-allocator/).
+This repository contains MetaMorpho [V1.0](./src/v1.0/MetaMorpho.sol), [V1.1](./src/v1.1/MetaMorphoV1_1.sol), and the [Public Allocator](./src/periphery/public-allocator/).
 See [V1.1 differences](#v11-differences) for the version-specific behavior.
-The contracts, tests, and Certora verification for V1.1 live in `src/v1.1`, `test/v1.1`, and `certora/v1.1`, respectively.
+The contracts, tests, and Certora verification of each version live in `src/<version>`, `test/<version>`, and `certora/<version>`, respectively.
 
 MetaMorpho is a protocol for non-custodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
 It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
@@ -17,9 +17,9 @@ Users of MetaMorpho are liquidity providers who want to earn from borrowing inte
 The curation of the deposited assets is handled by a set of different roles (owner, curator and allocators).
 These roles are primarily responsible for enabling and disabling markets on Morpho Blue and allocating the vault's assets across them.
 
-[`MetaMorpho`](./src/MetaMorpho.sol) and [`MetaMorphoV1_1`](./src/v1.1/MetaMorphoV1_1.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
+[`MetaMorpho`](./src/v1.0/MetaMorpho.sol) and [`MetaMorphoV1_1`](./src/v1.1/MetaMorphoV1_1.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
 One MetaMorpho vault is related to one loan asset on Morpho Blue.
-The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) (V1.0) and [`MetaMorphoV1_1Factory`](./src/v1.1/MetaMorphoV1_1Factory.sol) (V1.1) deploy immutable onchain instances of MetaMorpho vaults.
+The [`MetaMorphoFactory`](./src/v1.0/MetaMorphoFactory.sol) (V1.0) and [`MetaMorphoV1_1Factory`](./src/v1.1/MetaMorphoV1_1Factory.sol) (V1.1) deploy immutable onchain instances of MetaMorpho vaults.
 
 The [Public Allocator](./src/periphery/public-allocator/) lets anyone reallocate liquidity within limits set by vault owners.
 

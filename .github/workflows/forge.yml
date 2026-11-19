@@ -24,7 +24,7 @@ jobs:
           version: nightly
       - name: Prepare verification harness imports
         run: |
-          make -C certora munged
+          make -C certora/v1.0 munged
           make -C certora/v1.1 munged
       - name: Lint contracts and verification harnesses
         run: forge lint src certora --deny notes
