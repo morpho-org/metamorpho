@@ -77,6 +77,7 @@ jobs:
     needs: [matrix, format]
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         conf: ${{ fromJson(needs.matrix.outputs.confs) }}
 
@@ -142,6 +143,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         conf: ${{ fromJson(needs.matrix.outputs.confs-v1-1) }}
 
