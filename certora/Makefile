@@ -1,12 +1,13 @@
-munged: ../munged
+munged: ../munged/.patched
 
-../munged: $(wildcard ../src/*.sol) applyMunging.patch
-	@rm -rf ../munged
-	@cp -r ../src ../munged
+../munged/.patched: $(wildcard ../src/*.sol) applyMunging.patch
+	@mkdir -p ../munged
+	@cp -r $(filter-out ../src/v1.1,$(wildcard ../src/*)) ../munged
 	@patch -p0 -d ../munged < applyMunging.patch
+	@touch $@
 
 record:
-	diff -ruN ../src ../munged | sed -E 's,\.\./src/|\.\./munged/,,g' | sed -E 's,((\-\-\-|\+\+\+) [^[:space:]]*).*,\1,' > applyMunging.patch
+	diff -ruN --exclude=v1.1 --exclude=.patched ../src ../munged | sed -E 's,\.\./src/|\.\./munged/,,g' | sed -E 's,((\-\-\-|\+\+\+) [^[:space:]]*).*,\1,' > applyMunging.patch
 
 clean:
 	rm -rf ../munged

@@ -5,6 +5,10 @@
 
 ## Overview
 
+This repository contains MetaMorpho [V1.0](./src/MetaMorpho.sol), [V1.1](./src/v1.1/MetaMorphoV1_1.sol), and the [Public Allocator](./src/periphery/public-allocator/).
+See [V1.1 differences](#v11-differences) for the version-specific behavior.
+The contracts, tests, and Certora verification for V1.1 live in `src/v1.1`, `test/v1.1`, and `certora/v1.1`, respectively.
+
 MetaMorpho is a protocol for non-custodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
 It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
 It offers a seamless experience similar to Aave and Compound.
@@ -13,9 +17,9 @@ Users of MetaMorpho are liquidity providers who want to earn from borrowing inte
 The curation of the deposited assets is handled by a set of different roles (owner, curator and allocators).
 These roles are primarily responsible for enabling and disabling markets on Morpho Blue and allocating the vault's assets across them.
 
-[`MetaMorpho`](./src/MetaMorpho.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
+[`MetaMorpho`](./src/MetaMorpho.sol) and [`MetaMorphoV1_1`](./src/v1.1/MetaMorphoV1_1.sol) vaults are [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) vaults, with ([ERC-2612](https://eips.ethereum.org/EIPS/eip-2612)) permit.
 One MetaMorpho vault is related to one loan asset on Morpho Blue.
-The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) is deploying immutable onchain instances of MetaMorpho vaults.
+The [`MetaMorphoFactory`](./src/MetaMorphoFactory.sol) (V1.0) and [`MetaMorphoV1_1Factory`](./src/v1.1/MetaMorphoV1_1Factory.sol) (V1.1) deploy immutable onchain instances of MetaMorpho vaults.
 
 The [Public Allocator](./src/periphery/public-allocator/) lets anyone reallocate liquidity within limits set by vault owners.
 
@@ -35,9 +39,20 @@ Those rewards can be transferred to the `skimRecipient`.
 The vault's owner has the choice to distribute back these rewards to vault depositors however they want.
 For more information about this use case, see the [Rewards](#rewards) section.
 
-All actions that may be against users' interests (e.g. enabling a market with a high exposure) are subject to a timelock of minimum 24 hours.
+All actions that may be against users' interests (e.g. enabling a market with a high exposure) are subject to a timelock.
+The timelock must be between 24 hours and 2 weeks, except that V1.1 allows an initial timelock of 0 to simplify vault setup.
+Any subsequent timelock change must be between 24 hours and 2 weeks.
 The `owner`, or the `guardian` if set, can revoke the action during the timelock.
 After the timelock, the action can be executed by anyone.
+
+### V1.1 differences
+
+V1.1 differs from V1.0 in four ways:
+
+- It does not realize bad debt (see the `lostAssets` comments in [documentation](./src/v1.1/interfaces/IMetaMorphoV1_1.sol)).
+- The timelock can be set to 0 at deployment.
+- The owner can change the vault's name and symbol.
+- `reallocate` always reverts if the market is not enabled in the vault.
 
 ### Roles
 
@@ -58,6 +73,7 @@ It can:
 - [Timelocked if already set] Set the guardian.
 - Set the performance fee (capped at 50%).
 - Set the fee recipient.
+- [V1.1 only] Set the name and symbol of the vault.
 
 #### Curator
 
@@ -193,6 +209,9 @@ If one of the allocators starts setting the withdraw queue and/or supply queue t
 
 Compilation, testing and formatting done with `forge`.
 Formal verification done with `certora`.
+
+> [!NOTE]
+> `MetaMorphoV1_1Factory` has been deployed on Ethereum and Base with the [metadata hash](https://docs.soliditylang.org/en/latest/metadata.html) included, which appears at two places in the bytecode as it is a factory.
 
 ## Audits
 

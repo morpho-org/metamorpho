@@ -16,12 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       confs: ${{ steps.list.outputs.confs }}
+      confs-v1-1: ${{ steps.list.outputs.confs-v1-1 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - id: list
-        run: echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+          echo "confs-v1-1=$(find certora/v1.1/confs -type f -name '*.conf' | sed 's|^certora/v1.1/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
 
   format:
     permissions:
@@ -51,7 +54,7 @@ jobs:
       - run: pip install certora-cli
       - name: Run Certora Config Linter
         run: |
-          find certora/confs -type f -name '*.conf' | sort |
+          find certora/confs certora/v1.1/confs -type f -name '*.conf' | sort |
           while read -r file; do
             jq . "$file" | diff -u "$file" -
           done
@@ -117,6 +120,65 @@ jobs:
 
       - name: Verify ${{ matrix.conf }} specification
         run: certoraRun "certora/confs/$CONF.conf"
+        env:
+          CONF: ${{ matrix.conf }}
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
+
+  verify-v1-1:
+    permissions:
+      contents: read
+    needs: [matrix, format]
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        conf: ${{ fromJson(needs.matrix.outputs.confs-v1-1) }}
+
+    steps:
+      - name: Install Java
+        run: |
+          java_dir="$RUNNER_TEMP/temurin-21.0.13+9"
+          curl -fsSL -o "$RUNNER_TEMP/java.tar.gz" "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_linux_hotspot_21.0.13_9.tar.gz"
+          # setup-java has no hardcoded Java hash; this check is needed.
+          echo "d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041ab447ea740c7d66d1c  $RUNNER_TEMP/java.tar.gz" | sha256sum --check --strict
+          mkdir -p "$java_dir"
+          tar -xzf "$RUNNER_TEMP/java.tar.gz" -C "$java_dir" --strip-components=1
+          echo "JAVA_HOME=$java_dir" >> "$GITHUB_ENV"
+          echo "$java_dir/bin" >> "$GITHUB_PATH"
+          "$java_dir/bin/java" -version
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      # setup-python is commit-SHA-pinned and checks a hardcoded Python hash; no explicit check needed.
+      - name: Install Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15.2"
+
+      - name: Install certora
+        run: pip install certora-cli
+
+      - name: Install solc (0.8.19)
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux
+          echo "7a5c1d3dc9a8eba62bb2ec37192c9178ae5fe8a54a56e5573fd3c9c17cd9eb48  solc-static-linux" | sha256sum --check --strict
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.19
+
+      - name: Install solc (0.8.26)
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.26/solc-static-linux
+          echo "d5f23436f443edb85d8e76906d12f0a86ce0490e7663a9e608efeb7a93f149ef  solc-static-linux" | sha256sum --check --strict
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc-0.8.26
+
+      - name: Apply munging
+        run: make -C certora/v1.1 munged
+
+      - name: Verify ${{ matrix.conf }} specification
+        run: certoraRun "certora/v1.1/confs/$CONF.conf"
         env:
           CONF: ${{ matrix.conf }}
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
