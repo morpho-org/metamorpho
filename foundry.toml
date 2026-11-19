@@ -18,6 +18,9 @@ compilation_restrictions = [
     { paths = "test/v1.1/**", evm_version = "cancun", bytecode_hash = "None" },
 ]
 
+[profile.default.fuzz]
+runs = 2048
+
 [lint]
 exclude_lints = [
     "unaliased-plain-import",
