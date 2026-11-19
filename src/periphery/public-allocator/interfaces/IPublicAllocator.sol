@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0;
 
-import {IMetaMorpho, IMorpho, MarketAllocation, Id, MarketParams} from "../../../v1.0/interfaces/IMetaMorpho.sol";
+import {IMorpho, Id, MarketParams} from "../../../v1.0/interfaces/IMetaMorpho.sol";
 
 /// @dev Max settable flow cap, such that caps can always be stored on 128 bits.
 /// @dev The actual max possible flow cap is type(uint128).max-1.

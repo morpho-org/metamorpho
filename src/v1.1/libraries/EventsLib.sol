@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Id} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 
-import {PendingAddress} from "./PendingLib.sol";
-
 /// @title EventsLib
 /// @author Morpho Labs
 /// @custom:contact security@morpho.org

@@ -11,6 +11,7 @@ contract ERC20USDT {
         owner = msg.sender;
     }
 
+    // forge-lint: disable-next-line(modifier-used-only-once) Certora test token, not deployed.
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;

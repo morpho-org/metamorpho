@@ -10,6 +10,24 @@ on:
 permissions: {}
 
 jobs:
+  fmt:
+    name: format
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: nightly
+
+      - name: Run Linter
+        run: forge fmt src test certora --check
+
   lint:
     permissions:
       contents: read
@@ -19,20 +37,19 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
         with:
           version: nightly
       - name: Prepare verification harness imports
         run: |
           make -C certora/v1.0 munged
           make -C certora/v1.1 munged
-      - name: Lint contracts and verification harnesses
-        run: forge lint src certora --deny notes
-      - name: Lint tests
-        run: forge lint test --deny notes
+      - name: Run forge lint
+        run: forge lint src certora test --deny notes
 
   build:
-    name: sizes
+    name: sizes-and-locked
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -96,21 +113,3 @@ jobs:
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
           FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
           FOUNDRY_FUZZ_SEED: 0x${{ github.sha }}
-
-  fmt:
-    name: format
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
-        with:
-          version: nightly
-
-      - name: Run Linter
-        run: forge fmt src test certora --check

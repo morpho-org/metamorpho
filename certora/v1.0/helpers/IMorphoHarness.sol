@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
+// forge-lint: disable-next-line(unused-import) the munged MetaMorpho imports Market from this file.
 import {Id, MarketParams, Market, IMorpho} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
 
 interface IMorphoHarness is IMorpho {

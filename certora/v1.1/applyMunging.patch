@@ -21,7 +21,7 @@ diff -ruN MetaMorphoV1_1.sol MetaMorphoV1_1.sol
  
  import {Multicall} from "../../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
  import {Ownable2Step, Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
-@@ -45,9 +43,7 @@
+@@ -46,9 +44,7 @@
      using UtilsLib for uint256;
      using SafeCast for uint256;
      using SafeERC20 for IERC20;
@@ -29,8 +29,8 @@ diff -ruN MetaMorphoV1_1.sol MetaMorphoV1_1.sol
      using SharesMathLib for uint256;
 -    using MorphoBalancesLib for IMorpho;
      using MarketParamsLib for MarketParams;
-     using PendingLib for MarketConfig;
      using PendingLib for PendingUint192;
+     using PendingLib for PendingAddress;
 @@ -56,7 +52,7 @@
      /* IMMUTABLES */
  

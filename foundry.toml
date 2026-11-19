@@ -1,4 +1,5 @@
 [profile.default]
+ignored_error_codes_from = [["test", ["code-size", "init-code-size"]]]
 ignored_warnings_from = ["lib"]
 libs = ["lib"]
 evm_version = "cancun"
@@ -22,22 +23,33 @@ compilation_restrictions = [
 runs = 1024
 
 [lint]
+severity = ["high", "medium", "low", "info"]
 exclude_lints = [
-    "unaliased-plain-import",
-    "unused-import",
-    "erc20-unchecked-transfer",
-    "unwrapped-modifier-logic",
-    "mixed-case-variable",
-    "unsafe-typecast",
-    "asm-keccak256",
-    "block-timestamp",
-    "require-revert-in-loop",
-    "calls-loop",
-    "reentrancy-events",
-    "uninitialized-local",
-    "reentrancy-no-eth",
-    "missing-zero-check",
-    "unused-return",
-    "arbitrary-send-eth",
     "arbitrary-send-erc20",
+    "block-timestamp",
+    "boolean-cst",
+    "calls-loop",
+    "cyclomatic-complexity",
+    "incorrect-shift",
+    "inline-assembly",
+    "internal-function-used-once",
+    "literal-instead-of-constant",
+    "low-level-calls",
+    "missing-events-access-control",
+    "missing-zero-check",
+    "mixed-case-variable",
+    "multi-contract-file",
+    "pragma-inconsistent",
+    "reentrancy-events",
+    "require-revert-in-loop",
+    "screaming-snake-case-immutable",
+    "too-many-digits",
+    "uninitialized-local",
+    "unsafe-cheatcode",
+    "unused-return",
+    # Those exclusions are added to not add inline lint suppressors in the following contracts: MetaMorpho, PublicAllocator, MetaMorphoV1_1.
+    "arbitrary-send-eth",
+    "missing-inheritance",
+    "reentrancy-no-eth",
+    "unsafe-typecast",
 ]
