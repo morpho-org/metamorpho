@@ -8,7 +8,6 @@
 This repository contains MetaMorpho [V1.0](./src/MetaMorpho.sol), [V1.1](./src/v1.1/MetaMorphoV1_1.sol), and the [Public Allocator](./src/periphery/public-allocator/).
 See [V1.1 differences](#v11-differences) for the version-specific behavior.
 The contracts, tests, and Certora verification for V1.1 live in `src/v1.1`, `test/v1.1`, and `certora/v1.1`, respectively.
-Run `forge test` to test both versions and the Public Allocator.
 
 MetaMorpho is a protocol for non-custodial risk management on top of [Morpho Blue](https://github.com/morpho-org/morpho-blue).
 It enables anyone to create a vault depositing liquidity into multiple Morpho Blue markets.
