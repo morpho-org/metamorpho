@@ -65,15 +65,3 @@ jobs:
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
           FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
           FOUNDRY_FUZZ_SEED: 0x${{ github.sha }}
-
-  forge-old:
-    permissions:
-      contents: read
-    if: ${{ always() }}
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require every legacy test combination
-        env:
-          RESULT: ${{ needs.test.result }}
-        run: test "$RESULT" = success

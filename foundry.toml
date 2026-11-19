@@ -5,9 +5,9 @@ evm_version = "cancun"
 via_ir = true
 optimizer = true
 optimizer_runs = 200
-bytecode_hash = "ipfs"
+bytecode_hash = "none"
 additional_compiler_profiles = [
-    { name = "v1.0", evm_version = "paris" },
+    { name = "v1.0", evm_version = "paris", bytecode_hash = "Ipfs" },
     { name = "public-allocator", optimizer_runs = 999999, evm_version = "paris", bytecode_hash = "None" },
     { name = "v1.1", evm_version = "cancun", bytecode_hash = "None" },
 ]

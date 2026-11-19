@@ -16,12 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       confs: ${{ steps.list.outputs.confs }}
+      confs-v1-1: ${{ steps.list.outputs.confs-v1-1 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - id: list
-        run: echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "confs=$(find certora/confs -type f -name '*.conf' | sed 's|^certora/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
+          echo "confs-v1-1=$(find certora/v1.1/confs -type f -name '*.conf' | sed 's|^certora/v1.1/confs/||;s|\.conf$||' | sort | jq -nRc '[inputs]')" >> "$GITHUB_OUTPUT"
 
   format:
     permissions:
@@ -132,29 +135,12 @@ jobs:
   verify-v1-1:
     permissions:
       contents: read
-    needs: format
+    needs: [matrix, format]
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        conf:
-          - ConsistentState
-          - DistinctIdentifiers
-          - Enabled
-          - Immutability
-          - LastUpdated
-          - Liveness
-          - LostAssetsLink
-          - LostAssetsNoLink
-          - MarketInteractions
-          - PendingValues
-          - Range
-          - Reentrancy
-          - Reverts
-          - Roundtrip
-          - Roles
-          - Timelock
-          - Tokens
+        conf: ${{ fromJson(needs.matrix.outputs.confs-v1-1) }}
 
     steps:
       - name: Install Java
