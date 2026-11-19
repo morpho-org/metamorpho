@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Id} from "../../../interfaces/IMetaMorpho.sol";
+import {Id} from "../../../v1.0/interfaces/IMetaMorpho.sol";
 
 /// @title ErrorsLib
 /// @author Morpho Labs
