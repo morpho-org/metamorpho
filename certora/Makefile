@@ -1,6 +1,6 @@
 munged: ../munged/.patched
 
-../munged/.patched: $(wildcard ../src/*.sol) applyMunging.patch
+../munged/.patched: $(shell find ../src -path ../src/v1.1 -prune -o -type f -name '*.sol' -print) applyMunging.patch
 	@mkdir -p ../munged
 	@cp -r $(filter-out ../src/v1.1,$(wildcard ../src/*)) ../munged
 	@patch -p0 -d ../munged < applyMunging.patch
