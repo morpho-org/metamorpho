@@ -13,6 +13,9 @@ compilation_restrictions = [
     { paths = "src/periphery/public-allocator/**", optimizer_runs = 999999, bytecode_hash = "None" },
 ]
 
+[profile.default.fuzz]
+runs = 2048
+
 [lint]
 exclude_lints = [
     "unaliased-plain-import",

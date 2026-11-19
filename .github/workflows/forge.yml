@@ -10,7 +10,7 @@ on:
 permissions: {}
 
 jobs:
-  solidity-lint:
+  lint:
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -32,7 +32,6 @@ jobs:
   build:
     permissions:
       contents: read
-    name: Compilation
     runs-on: ubuntu-latest
 
     steps:
@@ -57,7 +56,6 @@ jobs:
     permissions:
       contents: read
 
-    name: Tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -65,12 +63,10 @@ jobs:
         type: ["slow", "fast"]
         include:
           - type: "slow"
-            fuzz-runs: 1024
             max-test-rejects: 1048576
             invariant-runs: 32
             invariant-depth: 512
           - type: "fast"
-            fuzz-runs: 256
             max-test-rejects: 65536
             invariant-runs: 16
             invariant-depth: 256
@@ -93,13 +89,12 @@ jobs:
       - name: Run tests in ${{ matrix.type }} mode
         run: forge test --deny warnings -vvv
         env:
-          FOUNDRY_FUZZ_RUNS: ${{ matrix.fuzz-runs }}
           FOUNDRY_FUZZ_MAX_TEST_REJECTS: ${{ matrix.max-test-rejects }}
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
           FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
           FOUNDRY_FUZZ_SEED: 0x${{ github.sha }}
 
-  lint:
+  fmt:
     permissions:
       contents: read
     runs-on: ubuntu-latest
