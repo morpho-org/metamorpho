@@ -9,7 +9,7 @@ import {
     PendingUint192,
     PendingAddress,
     MarketConfig
-} from "../../../munged/v1.0/MetaMorpho.sol";
+} from "../../../src/v1.0/MetaMorpho.sol";
 
 contract MetaMorphoHarness is MetaMorpho {
     constructor(
