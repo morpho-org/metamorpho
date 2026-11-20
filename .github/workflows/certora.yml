@@ -127,9 +127,6 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc-0.8.21
 
-      - name: Apply munging
-        run: make -C certora/v1.0 munged
-
       - name: Verify ${{ matrix.conf }} specification
         run: certoraRun "certora/v1.0/confs/$CONF.conf"
         env:

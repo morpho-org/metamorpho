@@ -7,11 +7,9 @@ The code is compiled using 2 versions of solidity, which must be installed to ru
 - `solc-0.8.21` for solidity compiler version 0.8.21 which is used for compiling MetaMorpho
 - `solc-0.8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
 
-The verification is run on modified source files, which are made available by running:
-
-```
-make -C certora/v1.0 munged
-```
+Verification compiles the contracts directly from `src/v1.0`.
+Morpho library summaries model the same getters as the Morpho harness, and storage hooks in
+[`WithdrawQueue.spec`](specs/WithdrawQueue.spec) track queue ranks, removal indexes and the last queue index read.
 
 Install the `certora-cli` package with `pip install certora-cli`.
 To verify specification files, pass to `certoraRun` the corresponding configuration file in the [`certora/v1.0/confs`](confs) folder.

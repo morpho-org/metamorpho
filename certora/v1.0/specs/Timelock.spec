@@ -2,7 +2,7 @@
 import "Enabled.spec";
 
 methods {
-    function _.supplyShares(MetaMorphoHarness.Id id, address user) external => summarySupplyshares(id, user) expect(uint256);
+    function MorphoLib.supplyShares(address, MetaMorphoHarness.Id id, address user) internal returns (uint256) => summarySupplyshares(id, user);
 }
 
 ghost lastSupplyShares(MetaMorphoHarness.Id, address) returns uint256;
