@@ -7,7 +7,12 @@ The code is compiled using 2 versions of solidity, which must be installed to ru
 - `solc-0.8.26` for solidity compiler version 0.8.26 which is used for compiling MetaMorpho
 - `solc-0.8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
 
-The verification is run on modified source files, which are made available by running:
+The verification copy only renames the vault's private `_name` and `_symbol` fields.
+This works around Certora's storage analysis failing on fields shadowing ERC20's
+`_name` and `_symbol`; storage layout and contract logic are unchanged.
+Morpho library summaries model the harness getters, while storage hooks in
+[`WithdrawQueue.spec`](specs/WithdrawQueue.spec) track queue ranks and removal indexes.
+Prepare the verification copy by running:
 
 ```
 make -C certora/v1.1 munged

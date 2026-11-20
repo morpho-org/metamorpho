@@ -15,7 +15,7 @@ methods {
     function MORPHO() external returns (address) envfree;
 
     // Summaries.
-    function _.expectedSupplyAssets(MorphoHarness.MarketParams marketParams, address user) external => summaryExpectedSupplyAssets(marketParams, user) expect(uint256);
+    function MorphoBalancesLib.expectedSupplyAssets(address, MorphoHarness.MarketParams memory marketParams, address user) internal returns (uint256) => summaryExpectedSupplyAssets(marketParams, user);
     function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect(MetaMorphoHarness.MarketParams) ALL;
 
     // We assume that the erc20 is view since what happens in the token is not relevant.
