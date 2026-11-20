@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+import "WithdrawQueue.spec";
+
 methods {
     function multicall(bytes[]) external returns (bytes[]) => NONDET DELETE;
 
@@ -14,8 +16,6 @@ methods {
     function supplyQueue(uint256) external returns (MetaMorphoHarness.Id) envfree;
     function withdrawQueueLength() external returns (uint256) envfree;
     function withdrawQueue(uint256) external returns (MetaMorphoHarness.Id) envfree;
-    function withdrawRank(MetaMorphoHarness.Id) external returns (uint256) envfree;
-    function deletedAt(MetaMorphoHarness.Id) external returns (uint256) envfree;
     function fee() external returns (uint96) envfree;
     function feeRecipient() external returns (address) envfree;
     function owner() external returns (address) envfree;

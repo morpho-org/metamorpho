@@ -1,133 +1,59 @@
-diff -ruN MetaMorphoV1_1.sol MetaMorphoV1_1.sol
+# Work around Certora storage analysis failing on fields shadowing ERC20's _name/_symbol.
 --- MetaMorphoV1_1.sol
 +++ MetaMorphoV1_1.sol
-@@ -9,7 +9,7 @@
-     IMetaMorphoV1_1Base,
-     IMetaMorphoV1_1StaticTyping
- } from "./interfaces/IMetaMorphoV1_1.sol";
--import {Id, MarketParams, Market, IMorpho} from "../../lib/morpho-blue/src/interfaces/IMorpho.sol";
-+import {Id, MarketParams, Market, IMorphoHarness} from "../../certora/v1.1/helpers/IMorphoHarness.sol";
+@@ -109,10 +109,10 @@
+     uint256 public lostAssets;
  
- import {PendingUint192, PendingAddress, PendingLib} from "./libraries/PendingLib.sol";
- import {ConstantsLib} from "./libraries/ConstantsLib.sol";
-@@ -19,10 +19,8 @@
- import {UtilsLib} from "../../lib/morpho-blue/src/libraries/UtilsLib.sol";
- import {SafeCast} from "../../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
- import {SharesMathLib} from "../../lib/morpho-blue/src/libraries/SharesMathLib.sol";
--import {MorphoLib} from "../../lib/morpho-blue/src/libraries/periphery/MorphoLib.sol";
- import {MarketParamsLib} from "../../lib/morpho-blue/src/libraries/MarketParamsLib.sol";
- import {IERC20Metadata} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
--import {MorphoBalancesLib} from "../../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
- 
- import {Multicall} from "../../lib/openzeppelin-contracts/contracts/utils/Multicall.sol";
- import {Ownable2Step, Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
-@@ -46,9 +44,7 @@
-     using UtilsLib for uint256;
-     using SafeCast for uint256;
-     using SafeERC20 for IERC20;
--    using MorphoLib for IMorpho;
-     using SharesMathLib for uint256;
--    using MorphoBalancesLib for IMorpho;
-     using MarketParamsLib for MarketParams;
-     using PendingLib for PendingUint192;
-     using PendingLib for PendingAddress;
-@@ -56,7 +52,7 @@
-     /* IMMUTABLES */
- 
-     /// @inheritdoc IMetaMorphoV1_1Base
--    IMorpho public immutable MORPHO;
-+    IMorphoHarness public immutable MORPHO;
- 
-     /// @inheritdoc IMetaMorphoV1_1Base
-     uint8 public immutable DECIMALS_OFFSET;
-@@ -114,6 +110,19 @@
      /// @dev "Overrides" the ERC20's storage variable to be able to modify it.
-     string private _symbol;
+-    string private _name;
++    string private _vaultName;
  
-+    // HARNESS
-+    // The index of the identifier of the last market withdrawn.
-+    uint256 public lastIndexWithdraw;
-+
-+    // HARNESS
-+    // The rank of a market identifier in the withdraw queue.
-+    // Returns 0 if the corresponding market is not in the withdraw queue.
-+    mapping(Id => uint256) public withdrawRank;
-+
-+    // HARNESS
-+    // The last index at which a market identifier has been removed from the withdraw queue.
-+    mapping(Id => uint256) public deletedAt;
-+
+     /// @dev "Overrides" the ERC20's storage variable to be able to modify it.
+-    string private _symbol;
++    string private _vaultSymbol;
+ 
      /* CONSTRUCTOR */
  
-     /// @dev Initializes the contract.
-@@ -143,7 +152,7 @@
-         _symbol = __symbol;
+@@ -137,10 +137,10 @@
+         if (initialTimelock != 0) _checkTimelockBounds(initialTimelock);
+         _setTimelock(initialTimelock);
+ 
+-        _name = __name;
++        _vaultName = __name;
+         emit EventsLib.SetName(__name);
+ 
+-        _symbol = __symbol;
++        _vaultSymbol = __symbol;
          emit EventsLib.SetSymbol(__symbol);
  
--        MORPHO = IMorpho(morpho);
-+        MORPHO = IMorphoHarness(morpho);
-         DECIMALS_OFFSET = uint8(uint256(18).zeroFloorSub(IERC20Metadata(_asset).decimals()));
+         MORPHO = IMorpho(morpho);
+@@ -199,13 +199,13 @@
+     /* ONLY OWNER FUNCTIONS */
  
-         IERC20(_asset).forceApprove(morpho, type(uint256).max);
-@@ -364,6 +373,9 @@
-             seen[prevIndex] = true;
+     function setName(string memory newName) external onlyOwner {
+-        _name = newName;
++        _vaultName = newName;
  
-             newWithdrawQueue[i] = id;
-+
-+            // HARNESS
-+            withdrawRank[id] = i + 1;
-         }
+         emit EventsLib.SetName(newName);
+     }
  
-         for (uint256 i; i < currLength; ++i) {
-@@ -381,6 +393,10 @@
-                     }
-                 }
+     function setSymbol(string memory newSymbol) external onlyOwner {
+-        _symbol = newSymbol;
++        _vaultSymbol = newSymbol;
  
-+                // HARNESS
-+                deletedAt[id] = i;
-+                delete withdrawRank[id];
-+
-                 delete config[id];
-             }
-         }
-@@ -774,6 +790,9 @@
+         emit EventsLib.SetSymbol(newSymbol);
+     }
+@@ -518,11 +518,11 @@
+     }
  
-         if (supplyCap > 0) {
-             if (!marketConfig.enabled) {
-+                // HARNESS
-+                withdrawRank[id] = withdrawQueue.length + 1;
-+
-                 withdrawQueue.push(id);
+     function name() public view override(IERC20Metadata, ERC20) returns (string memory) {
+-        return _name;
++        return _vaultName;
+     }
  
-                 if (withdrawQueue.length > ConstantsLib.MAX_QUEUE_LENGTH) revert ErrorsLib.MaxQueueLengthExceeded();
-@@ -833,6 +852,9 @@
-     /// @dev Withdraws `assets` from Morpho.
-     function _withdrawMorpho(uint256 assets) internal {
-         for (uint256 i; i < withdrawQueue.length; ++i) {
-+            // HARNESS
-+            lastIndexWithdraw = i;
-+
-             Id id = withdrawQueue[i];
-             MarketParams memory marketParams = _marketParams(id);
-             (uint256 supplyAssets,, Market memory market) = _accruedSupplyBalance(marketParams, id);
-diff -ruN interfaces/IMetaMorphoV1_1.sol interfaces/IMetaMorphoV1_1.sol
---- interfaces/IMetaMorphoV1_1.sol
-+++ interfaces/IMetaMorphoV1_1.sol
-@@ -1,7 +1,7 @@
- // SPDX-License-Identifier: GPL-2.0-or-later
- pragma solidity >=0.5.0;
+     function symbol() public view override(IERC20Metadata, ERC20) returns (string memory) {
+-        return _symbol;
++        return _vaultSymbol;
+     }
  
--import {IMorpho, Id, MarketParams} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
-+import {IMorphoHarness, Id, MarketParams} from "../../../certora/v1.1/helpers/IMorphoHarness.sol";
- import {IERC4626} from "../../../lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
- import {IERC20Permit} from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol";
- 
-@@ -30,7 +30,7 @@
- /// @dev Consider using the IMetaMorphoV1_1 interface instead of this one.
- interface IMetaMorphoV1_1Base {
-     /// @notice The address of the Morpho contract.
--    function MORPHO() external view returns (IMorpho);
-+    function MORPHO() external view returns (IMorphoHarness);
- 
-     /// @notice OpenZeppelin decimals offset used by the ERC4626 implementation.
-     /// @dev Calculated to be max(0, 18 - underlyingDecimals).
+     /// @inheritdoc IERC4626

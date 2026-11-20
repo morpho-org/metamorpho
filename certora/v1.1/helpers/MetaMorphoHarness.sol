@@ -10,8 +10,12 @@ import {
     PendingAddress,
     MarketConfig
 } from "../../../munged/v1.1/MetaMorphoV1_1.sol";
+import {IMorpho} from "../../../lib/morpho-blue/src/interfaces/IMorpho.sol";
+import {MorphoBalancesLib} from "../../../lib/morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
 
 contract MetaMorphoHarness is MetaMorphoV1_1 {
+    using MorphoBalancesLib for IMorpho;
+
     constructor(
         address owner,
         address morpho,
