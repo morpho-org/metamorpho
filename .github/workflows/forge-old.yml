@@ -12,6 +12,8 @@ permissions: {}
 jobs:
   test:
     name: Forge old tests
+    outputs:
+      matrix-size: ${{ strategy.job-total }}
     permissions:
       contents: read
     strategy:
@@ -69,11 +71,21 @@ jobs:
   forge-old:
     permissions:
       contents: read
+      actions: read
     if: ${{ always() }}
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Require every legacy test combination
         env:
-          RESULT: ${{ needs.test.result }}
-        run: test "$RESULT" = success
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_TESTS: ${{ needs.test.outputs.matrix-size }}
+        run: |
+          # Partial reruns can hide earlier failures in needs.test.result.
+          gh api --paginate \
+            "/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?filter=all&per_page=100" |
+            jq --slurp --exit-status --argjson expected "$EXPECTED_TESTS" '
+              [.[].jobs[] | select(.name | startswith("Forge old tests ("))]
+              | group_by(.name) | map(max_by(.run_attempt))
+              | length == $expected and all(.conclusion == "success")
+            '
