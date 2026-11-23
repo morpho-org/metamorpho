@@ -10,8 +10,7 @@ on:
 permissions: {}
 
 jobs:
-  fmt:
-    name: format
+  format:
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -25,7 +24,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Run Linter
+      - name: Run forge fmt
         run: forge fmt src test certora --check
 
   lint:
