@@ -108,3 +108,4 @@ jobs:
           FOUNDRY_INVARIANT_RUNS: ${{ matrix.invariant-runs }}
           FOUNDRY_INVARIANT_DEPTH: ${{ matrix.invariant-depth }}
           FOUNDRY_FUZZ_SEED: 0x${{ github.sha }}
+          FOUNDRY_FUZZ_RUNS: 10000
