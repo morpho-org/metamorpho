@@ -8,9 +8,6 @@
   "lib/morpho-blue": {
     "rev": "78a059bd7318418465b06b8da96dc133e31ed3d9"
   },
-  "lib/morpho-blue-irm": {
-    "rev": "a7d9cce3451b4a106bfd40933ac57a785b5228f3"
-  },
   "lib/openzeppelin-contracts": {
     "rev": "932fddf69a699a9a80fd2396fd1a2ab91cdda123"
   }
