@@ -10,7 +10,7 @@ methods {
     function _.withdraw(MetaMorphoHarness.MarketParams marketParams, uint256 assets, uint256 shares, address onBehalf, address receiver) external => summaryWithdraw(marketParams, assets, shares, onBehalf, receiver) expect(uint256, uint256) ALL;
     function _.idToMarketParams(MetaMorphoHarness.Id id) external => summaryIdToMarketParams(id) expect(MetaMorphoHarness.MarketParams) ALL;
 
-    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => NONDET;
+    function MorphoBalancesLib.expectedSupplyAssets(address, MetaMorphoHarness.MarketParams memory, address) internal returns (uint256) => NONDET;
     function _.borrowRate(MetaMorphoHarness.MarketParams, MetaMorphoHarness.Market) external => NONDET;
 }
 

@@ -12,6 +12,11 @@ methods {
     function Morpho.lastUpdate(MorphoHarness.Id) external returns (uint256) envfree;
     function Morpho.virtualTotalSupplyAssets(MorphoHarness.Id) external returns (uint256) envfree;
     function Morpho.virtualTotalSupplyShares(MorphoHarness.Id) external returns (uint256) envfree;
+    function MorphoLib.lastUpdate(address, MetaMorphoHarness.Id id) internal returns (uint256) => summaryLastUpdate(id);
+}
+
+function summaryLastUpdate(MetaMorphoHarness.Id id) returns uint256 {
+    return Morpho.lastUpdate(id);
 }
 
 function hasCuratorRole(address user) returns bool {

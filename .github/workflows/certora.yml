@@ -83,9 +83,6 @@ jobs:
             sudo mv solc "/usr/local/bin/solc-$version"
           done
 
-      - name: Apply munging
-        run: make -C certora/v1.0 munged
-
       - name: Verify ${{ matrix.conf }} specification
         run: certoraRun "certora/v1.0/confs/$CONF.conf"
         env:

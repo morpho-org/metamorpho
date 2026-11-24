@@ -15,10 +15,10 @@ methods {
 
     // Summarize Morpho external calls, as they don't depend on the authorization system of MetaMorpho.
     function _.idToMarketParams(MetaMorphoHarness.Id) external => CONSTANT;
-    function _.supplyShares(MetaMorphoHarness.Id, address) external => CONSTANT;
+    function MorphoLib.supplyShares(address, MetaMorphoHarness.Id, address) internal returns (uint256) => CONSTANT;
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => CONSTANT;
-    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => CONSTANT;
-    function _.lastUpdate(MetaMorphoHarness.Id) external => CONSTANT;
+    function MorphoBalancesLib.expectedSupplyAssets(address, MetaMorphoHarness.MarketParams memory, address) internal returns (uint256) => CONSTANT;
+    function MorphoLib.lastUpdate(address, MetaMorphoHarness.Id) internal returns (uint256) => CONSTANT;
     function _.market(MetaMorphoHarness.Id) external => CONSTANT;
     function _.supply(MetaMorphoHarness.MarketParams, uint256, uint256, address, bytes) external => CONSTANT;
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => CONSTANT;

@@ -7,12 +7,6 @@ The code is compiled using 2 versions of solidity, which must be installed to ru
 - `solc-0.8.21` for solidity compiler version 0.8.21 which is used for compiling MetaMorpho
 - `solc-0.8.19` for solidity compiler version 0.8.19 which is used for compiling Morpho Blue.
 
-The verification is run on modified source files, which are made available by running:
-
-```
-make -C certora/v1.0 munged
-```
-
 Install the `certora-cli` package with `pip install certora-cli`.
 To verify specification files, pass to `certoraRun` the corresponding configuration file in the [`certora/v1.0/confs`](confs) folder.
 It requires having set the `CERTORAKEY` environment variable to a valid Certora key.
