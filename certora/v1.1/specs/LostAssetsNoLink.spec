@@ -17,8 +17,9 @@ methods {
     function _.withdraw(MetaMorphoHarness.MarketParams, uint256, uint256, address, address) external => NONDET;
     function _.accrueInterest(MetaMorphoHarness.MarketParams) external => NONDET;
     function _.idToMarketParams(MetaMorphoHarness.Id) external => NONDET;
-    function _.supplyShares(MetaMorphoHarness.Id, address) external => NONDET;
-    function _.expectedSupplyAssets(MetaMorphoHarness.MarketParams, address) external => CONSTANT;
+    function MorphoLib.supplyShares(address, MetaMorphoHarness.Id, address) internal returns (uint256) => NONDET;
+    function MorphoLib.lastUpdate(address, MetaMorphoHarness.Id) internal returns (uint256) => NONDET;
+    function MorphoBalancesLib.expectedSupplyAssets(address, MetaMorphoHarness.MarketParams memory, address) internal returns (uint256) => CONSTANT;
     function _.market(MetaMorphoHarness.Id) external => NONDET;
 
     function _.transfer(address, uint256) external => NONDET;
